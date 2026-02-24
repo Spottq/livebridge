@@ -65,7 +65,10 @@ internal data class LiveParserDictionary(
                 parseRegexList(root.optJSONArray("entity_token_patterns"), ignoreCase = false).ifEmpty {
                     defaults.entityTokenPatterns
                 }
-            val statusLabels = parseStatusLabels(root.optJSONObject("status_labels")).ifEmpty { defaults.statusLabels }
+            val statusLabels = mergeStatusLabels(
+                defaults = defaults.statusLabels,
+                overrides = parseStatusLabels(root.optJSONObject("status_labels"))
+            )
 
             return LiveParserDictionary(
                 smartRules = smartRules,
@@ -167,6 +170,32 @@ internal data class LiveParserDictionary(
                 values[ruleId] = StageLabelsByLocale(ru = ru, en = en)
             }
             return values
+        }
+
+        private fun mergeStatusLabels(
+            defaults: Map<String, StageLabelsByLocale>,
+            overrides: Map<String, StageLabelsByLocale>
+        ): Map<String, StageLabelsByLocale> {
+            if (defaults.isEmpty()) {
+                return overrides
+            }
+            if (overrides.isEmpty()) {
+                return defaults
+            }
+
+            val merged = defaults.toMutableMap()
+            overrides.forEach { (ruleId, overrideLabels) ->
+                val baseLabels = merged[ruleId]
+                merged[ruleId] = if (baseLabels == null) {
+                    overrideLabels
+                } else {
+                    StageLabelsByLocale(
+                        ru = baseLabels.ru + overrideLabels.ru,
+                        en = baseLabels.en + overrideLabels.en
+                    )
+                }
+            }
+            return merged
         }
 
         private fun parseStageLabelMap(raw: JSONObject?): Map<Int, String> {
