@@ -31,6 +31,7 @@ import kotlin.math.roundToInt
 
 object LiveUpdateNotifier {
     const val CHANNEL_ID = "livebridge_promoted_updates"
+    private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
 
     private const val CHANNEL_NAME = "LiveBridge Updates"
     private const val TAG = "LiveUpdateNotifier"
@@ -45,7 +46,7 @@ object LiveUpdateNotifier {
         "ru.dublgis.dgismobile"
     )
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
-        "ru.yandex.yandexmaps",
+        YANDEX_MAPS_PACKAGE,
         "com.google.android.apps.maps",
         "com.waze"
     )
@@ -673,6 +674,7 @@ object LiveUpdateNotifier {
             } else {
                 displayText
             }
+            val preferCompactNowBarRemoteView = sbn.packageName == YANDEX_MAPS_PACKAGE
             val chipText = samsungReparse?.chipText?.takeIf { it.isNotBlank() }
                 ?: otpShortTextOverride
                 ?: smartShortTextOverride
@@ -688,7 +690,8 @@ object LiveUpdateNotifier {
                 hasProgress = hasProgress,
                 progressValue = progressValue,
                 progressMax = progressMax,
-                showSecondaryInNowBar = smartRuleId != "navigation"
+                showSecondaryInNowBar = smartRuleId != "navigation",
+                preferCompactNowBarRemoteView = preferCompactNowBarRemoteView
             )
         }
 

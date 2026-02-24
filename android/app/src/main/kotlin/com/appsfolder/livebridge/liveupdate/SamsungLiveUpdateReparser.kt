@@ -22,7 +22,8 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         hasProgress: Boolean,
         progressValue: Int,
         progressMax: Int,
-        showSecondaryInNowBar: Boolean = true
+        showSecondaryInNowBar: Boolean = true,
+        preferCompactNowBarRemoteView: Boolean = false
     ) {
         val normalizedPrimary = primaryText.trim()
         if (normalizedPrimary.isEmpty()) {
@@ -31,15 +32,15 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         val normalizedSecondary = secondaryText.trim()
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
 
-        val remoteView = resolveRemoteView(source)
-        val hasRemoteView = remoteView != null
+        val nowBarRemoteView = resolveRemoteView(source, preferCompactNowBarRemoteView)
+        val hasNowBarRemoteView = nowBarRemoteView != null
         applyRemoteViewsIfPresent(builder, source)
 
         val extras = Bundle().apply {
             putInt(KEY_STYLE, 1)
             putCharSequence(KEY_PRIMARY_INFO, normalizedPrimary)
             // Avoid duplicated bottom subtitle when custom RemoteViews is used.
-            if (showSecondaryInNowBar && normalizedSecondary.isNotEmpty() && !hasRemoteView) {
+            if (showSecondaryInNowBar && normalizedSecondary.isNotEmpty() && !hasNowBarRemoteView) {
                 putCharSequence(KEY_SECONDARY_INFO, normalizedSecondary)
             }
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, normalizedChipText)
@@ -59,12 +60,12 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
 
         // Do not expose progress style in collapsed Samsung chip/Now Bar.
-        if (hasProgress && progressMax > 0 && !hasRemoteView) {
+        if (hasProgress && progressMax > 0 && !hasNowBarRemoteView) {
             extras.putInt(KEY_PROGRESS, progressValue.coerceIn(0, progressMax))
             extras.putInt(KEY_PROGRESS_MAX, progressMax.coerceAtLeast(1))
         }
 
-        remoteView?.let { view ->
+        nowBarRemoteView?.let { view ->
             val sourceExtras = source.extras
             val remoteViewPosition = parseInt(sourceExtras.get(KEY_REMOTE_VIEW_POSITION)) ?: 1
             val nowBarChronometerPosition =
@@ -118,6 +119,20 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         return (extras.get(KEY_REMOTE_VIEW) as? RemoteViews)
             ?: source.bigContentView
             ?: source.contentView
+            ?: source.headsUpContentView
+    }
+
+    private fun resolveRemoteView(
+        source: Notification,
+        preferCompactNowBarRemoteView: Boolean
+    ): RemoteViews? {
+        if (!preferCompactNowBarRemoteView) {
+            return resolveRemoteView(source)
+        }
+        val extras = source.extras
+        return source.contentView
+            ?: (extras.get(KEY_REMOTE_VIEW) as? RemoteViews)
+            ?: source.bigContentView
             ?: source.headsUpContentView
     }
 
