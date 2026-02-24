@@ -691,7 +691,6 @@ object LiveUpdateNotifier {
                 progressValue = progressValue,
                 progressMax = progressMax,
                 showSecondaryInNowBar = smartRuleId != "navigation",
-                reserveSecondaryLineWithSpacer = smartRuleId == "navigation",
                 preferCompactNowBarRemoteView = preferCompactNowBarRemoteView
             )
         }
