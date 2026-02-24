@@ -404,6 +404,7 @@ object LiveUpdateNotifier {
                         progressOverride = ProgressOverride(routeState.stageValue, routeState.stageMax),
                         otpOverride = null,
                         smartShortTextOverride = smartStatusText,
+                        compactCodeOverride = routeState.compactOrderCode,
                         smartRuleId = smartRuleId,
                         requestPromoted = true,
                         samsungReparse = samsungReparse,
@@ -419,6 +420,7 @@ object LiveUpdateNotifier {
                         progressOverride = ProgressOverride(routeState.stageValue, routeState.stageMax),
                         otpOverride = null,
                         smartShortTextOverride = smartStatusText,
+                        compactCodeOverride = routeState.compactOrderCode,
                         smartRuleId = smartRuleId,
                         samsungReparse = samsungReparse,
                         samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
@@ -515,6 +517,7 @@ object LiveUpdateNotifier {
         progressOverride: ProgressOverride?,
         otpOverride: OtpMatch?,
         smartShortTextOverride: String?,
+        compactCodeOverride: String? = null,
         smartRuleId: String? = null,
         requestPromoted: Boolean,
         otpShortTextOverride: String? = null,
@@ -561,6 +564,12 @@ object LiveUpdateNotifier {
         } else {
             text
         }
+        val compactPrimaryText = sequenceOf(
+            otpShortTextOverride?.trim(),
+            otpOverride?.code?.trim(),
+            compactCodeOverride?.trim(),
+            displayTitle.trim()
+        ).firstOrNull { !it.isNullOrEmpty() } ?: displayTitle
         val aospCuttingEnabled = ConverterPrefs(context).getAospCuttingEnabled()
 
         val sourceHasProgress = hasProgress(source)
@@ -586,7 +595,7 @@ object LiveUpdateNotifier {
         val hasProgress = progressOverride != null || sourceHasProgress || samsungProgressMax > 0
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(displayTitle)
+            .setContentTitle(compactPrimaryText)
             .setContentText(displayText)
             .setSubText(appName)
             .setOnlyAlertOnce(true)
@@ -675,15 +684,19 @@ object LiveUpdateNotifier {
                 displayText
             }
             val preferCompactNowBarRemoteView = sbn.packageName == YANDEX_MAPS_PACKAGE
-            val chipText = samsungReparse?.chipText?.takeIf { it.isNotBlank() }
-                ?: otpShortTextOverride
-                ?: smartShortTextOverride
-                ?: displayTitle
+            val chipText = sequenceOf(
+                otpShortTextOverride?.trim(),
+                otpOverride?.code?.trim(),
+                compactCodeOverride?.trim(),
+                samsungReparse?.chipText?.trim(),
+                smartShortTextOverride?.trim(),
+                compactPrimaryText.trim()
+            ).firstOrNull { !it.isNullOrEmpty() }
             SamsungLiveUpdateReparser(context).applyNowBarBridge(
                 builder = builder,
                 source = source,
                 sourcePackageName = sbn.packageName,
-                primaryText = displayTitle,
+                primaryText = compactPrimaryText,
                 secondaryText = effectiveSecondaryText,
                 chipText = chipText,
                 chipIcon = preferredSmallIcon,
@@ -708,6 +721,7 @@ object LiveUpdateNotifier {
         progressOverride: ProgressOverride?,
         otpOverride: OtpMatch?,
         smartShortTextOverride: String?,
+        compactCodeOverride: String? = null,
         smartRuleId: String? = null,
         otpShortTextOverride: String? = null,
         samsungReparse: SamsungReparsePayload? = null,
@@ -723,6 +737,7 @@ object LiveUpdateNotifier {
                 progressOverride = progressOverride,
                 otpOverride = otpOverride,
                 smartShortTextOverride = smartShortTextOverride,
+                compactCodeOverride = compactCodeOverride,
                 smartRuleId = smartRuleId,
                 requestPromoted = false,
                 otpShortTextOverride = otpShortTextOverride,
