@@ -23,7 +23,8 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         progressValue: Int,
         progressMax: Int,
         showSecondaryInNowBar: Boolean = true,
-        preferCompactNowBarRemoteView: Boolean = false
+        preferCompactNowBarRemoteView: Boolean = false,
+        reserveSecondaryLineWithSpacer: Boolean = false
     ) {
         val normalizedPrimary = primaryText.trim()
         if (normalizedPrimary.isEmpty()) {
@@ -31,6 +32,11 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
         val normalizedSecondary = secondaryText.trim()
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
+        val secondarySpacer = if (reserveSecondaryLineWithSpacer && hasProgress) {
+            SECONDARY_SPACER
+        } else {
+            null
+        }
 
         val nowBarRemoteView = resolveRemoteView(source, preferCompactNowBarRemoteView)
         val hasNowBarRemoteView = nowBarRemoteView != null
@@ -42,11 +48,15 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
             // Avoid duplicated bottom subtitle when custom RemoteViews is used.
             if (showSecondaryInNowBar && normalizedSecondary.isNotEmpty() && !hasNowBarRemoteView) {
                 putCharSequence(KEY_SECONDARY_INFO, normalizedSecondary)
+            } else if (secondarySpacer != null && !hasNowBarRemoteView) {
+                putCharSequence(KEY_SECONDARY_INFO, secondarySpacer)
             }
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, normalizedChipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, normalizedPrimary)
             if (showSecondaryInNowBar && normalizedSecondary.isNotEmpty()) {
                 putCharSequence(KEY_NOWBAR_SECONDARY_INFO, normalizedSecondary)
+            } else if (secondarySpacer != null) {
+                putCharSequence(KEY_NOWBAR_SECONDARY_INFO, secondarySpacer)
             }
             putInt(KEY_CHIP_BG_COLOR, resolveChipBackgroundColor(source))
         }
@@ -168,6 +178,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
 
         private const val DEFAULT_CHIP_BG_COLOR = 0xFF0F766E.toInt()
+        private const val SECONDARY_SPACER = "\u00A0"
 
         fun isSamsungDevice(): Boolean {
             val manufacturer = (Build.MANUFACTURER ?: "").lowercase(Locale.ROOT)
