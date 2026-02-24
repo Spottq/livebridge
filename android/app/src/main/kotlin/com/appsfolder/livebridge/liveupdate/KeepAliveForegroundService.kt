@@ -1,4 +1,4 @@
-package com.appsfolder.livebridge.liveupdate
+package ai.perplexity.app.android.liveupdate
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -12,8 +12,8 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.appsfolder.livebridge.MainActivity
-import com.appsfolder.livebridge.R
+import ai.perplexity.app.android.MainActivity
+import ai.perplexity.app.android.R
 
 class KeepAliveForegroundService : Service() {
     override fun onCreate() {

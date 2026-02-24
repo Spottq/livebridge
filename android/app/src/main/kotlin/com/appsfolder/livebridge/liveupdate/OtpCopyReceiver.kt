@@ -1,4 +1,4 @@
-package com.appsfolder.livebridge.liveupdate
+package ai.perplexity.app.android.liveupdate
 
 import android.content.BroadcastReceiver
 import android.content.ClipData
@@ -38,7 +38,7 @@ class OtpCopyReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        const val ACTION_COPY_OTP = "com.appsfolder.livebridge.action.COPY_OTP"
+        const val ACTION_COPY_OTP = "ai.perplexity.app.android.action.COPY_OTP"
         const val EXTRA_OTP_CODE = "otp_code"
     }
 }

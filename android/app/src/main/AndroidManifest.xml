@@ -60,6 +60,10 @@
             android:exported="false"
         />
 
+        <meta-data
+            android:name="com.samsung.android.support.ongoing_activity"
+            android:value="true"
+        />
         <meta-data android:name="flutterEmbedding" android:value="2" />
     </application>
 

@@ -1,0 +1,163 @@
+package ai.perplexity.app.android.liveupdate
+
+import android.app.Notification
+import android.content.Context
+import android.graphics.Color
+import android.os.Build
+import android.os.Bundle
+import android.widget.RemoteViews
+import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.IconCompat
+import java.util.Locale
+
+internal class SamsungLiveUpdateReparser(private val context: Context) {
+    fun applyNowBarBridge(
+        builder: NotificationCompat.Builder,
+        source: Notification,
+        sourcePackageName: String,
+        primaryText: String,
+        secondaryText: String,
+        chipText: String?,
+        chipIcon: IconCompat?,
+        hasProgress: Boolean,
+        progressValue: Int,
+        progressMax: Int,
+        showSecondaryInNowBar: Boolean = true
+    ) {
+        val normalizedPrimary = primaryText.trim()
+        if (normalizedPrimary.isEmpty()) {
+            return
+        }
+        val normalizedSecondary = secondaryText.trim()
+        val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
+
+        val remoteView = resolveRemoteView(source)
+        val hasRemoteView = remoteView != null
+        applyRemoteViewsIfPresent(builder, source)
+
+        val extras = Bundle().apply {
+            putInt(KEY_STYLE, 1)
+            putCharSequence(KEY_PRIMARY_INFO, normalizedPrimary)
+            // Avoid duplicated bottom subtitle when custom RemoteViews is used.
+            if (showSecondaryInNowBar && normalizedSecondary.isNotEmpty() && !hasRemoteView) {
+                putCharSequence(KEY_SECONDARY_INFO, normalizedSecondary)
+            }
+            putCharSequence(KEY_CHIP_EXPANDED_TEXT, normalizedChipText)
+            putCharSequence(KEY_NOWBAR_PRIMARY_INFO, normalizedPrimary)
+            if (showSecondaryInNowBar && normalizedSecondary.isNotEmpty()) {
+                putCharSequence(KEY_NOWBAR_SECONDARY_INFO, normalizedSecondary)
+            }
+            putInt(KEY_CHIP_BG_COLOR, resolveChipBackgroundColor(source))
+        }
+
+        val frameworkIcon = runCatching { chipIcon?.toIcon(context) }.getOrNull()
+        frameworkIcon?.let { extras.putParcelable(KEY_CHIP_ICON, it) }
+
+        if (source.actions?.isNotEmpty() == true) {
+            extras.putInt(KEY_ACTION_TYPE, 1)
+            extras.putInt(KEY_ACTION_PRIMARY_SET, 0)
+        }
+
+        // Do not expose progress style in collapsed Samsung chip/Now Bar.
+        if (hasProgress && progressMax > 0 && !hasRemoteView) {
+            extras.putInt(KEY_PROGRESS, progressValue.coerceIn(0, progressMax))
+            extras.putInt(KEY_PROGRESS_MAX, progressMax.coerceAtLeast(1))
+        }
+
+        remoteView?.let { view ->
+            val sourceExtras = source.extras
+            val remoteViewPosition = parseInt(sourceExtras.get(KEY_REMOTE_VIEW_POSITION)) ?: 1
+            val nowBarChronometerPosition =
+                parseInt(sourceExtras.get(KEY_NOWBAR_CHRONOMETER_POSITION)) ?: remoteViewPosition
+            val remoteTag = sourceExtras.getString(KEY_REMOTE_VIEW_TAG)
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: "livebridge_remote_${sourcePackageName.replace('.', '_')}"
+
+            extras.putParcelable(KEY_REMOTE_VIEW, view)
+            extras.putInt(KEY_REMOTE_VIEW_POSITION, remoteViewPosition)
+            extras.putString(KEY_REMOTE_VIEW_TAG, remoteTag)
+            extras.putInt(KEY_NOWBAR_CHRONOMETER_POSITION, nowBarChronometerPosition)
+        }
+
+        builder.addExtras(extras)
+    }
+
+    private fun applyRemoteViewsIfPresent(
+        builder: NotificationCompat.Builder,
+        source: Notification
+    ) {
+        // Keep collapsed layout system-driven to prevent progress bar in mini chip mode.
+        val collapsed: RemoteViews? = null
+        val expanded = source.bigContentView ?: source.contentView
+        val headsUp = source.headsUpContentView
+
+        if (collapsed != null) {
+            builder.setCustomContentView(collapsed)
+            builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+        }
+        if (expanded != null) {
+            builder.setCustomBigContentView(expanded)
+            if (collapsed == null) {
+                builder.setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            }
+        }
+        headsUp?.let(builder::setCustomHeadsUpContentView)
+    }
+
+    private fun resolveChipBackgroundColor(source: Notification): Int {
+        val sourceColor = source.color
+        if (sourceColor != Color.TRANSPARENT) {
+            return sourceColor
+        }
+        return DEFAULT_CHIP_BG_COLOR
+    }
+
+    private fun resolveRemoteView(source: Notification): RemoteViews? {
+        val extras = source.extras
+        return (extras.get(KEY_REMOTE_VIEW) as? RemoteViews)
+            ?: source.bigContentView
+            ?: source.contentView
+            ?: source.headsUpContentView
+    }
+
+    private fun parseInt(value: Any?): Int? {
+        return when (value) {
+            is Int -> value
+            is Long -> value.toInt()
+            is Float -> value.toInt()
+            is Double -> value.toInt()
+            is String -> value.trim().toIntOrNull()
+            is Number -> value.toInt()
+            else -> null
+        }
+    }
+
+    companion object {
+        private const val ONGOING_PREFIX = "android.ongoingActivityNoti."
+        private const val KEY_STYLE = "${ONGOING_PREFIX}style"
+        private const val KEY_PRIMARY_INFO = "${ONGOING_PREFIX}primaryInfo"
+        private const val KEY_SECONDARY_INFO = "${ONGOING_PREFIX}secondaryInfo"
+        private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
+        private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
+        private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
+        private const val KEY_ACTION_TYPE = "${ONGOING_PREFIX}actionType"
+        private const val KEY_ACTION_PRIMARY_SET = "${ONGOING_PREFIX}actionPrimarySet"
+        private const val KEY_PROGRESS = "${ONGOING_PREFIX}progress"
+        private const val KEY_PROGRESS_MAX = "${ONGOING_PREFIX}progressMax"
+        private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
+        private const val KEY_NOWBAR_SECONDARY_INFO = "${ONGOING_PREFIX}nowbarSecondaryInfo"
+        private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
+        private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"
+        private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"
+        private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
+
+        private const val DEFAULT_CHIP_BG_COLOR = 0xFF0F766E.toInt()
+
+        fun isSamsungDevice(): Boolean {
+            val manufacturer = (Build.MANUFACTURER ?: "").lowercase(Locale.ROOT)
+            val brand = (Build.BRAND ?: "").lowercase(Locale.ROOT)
+            return manufacturer.contains("samsung") || brand.contains("samsung")
+        }
+    }
+}

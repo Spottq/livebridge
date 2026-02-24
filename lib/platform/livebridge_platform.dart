@@ -169,6 +169,10 @@ class LiveBridgePlatform {
       _askBool('getSamsungWarningDismissed');
   static Future<bool> setSamsungWarningDismissed(bool value) =>
       _askBool('setSamsungWarningDismissed', {'value': value});
+  static Future<bool> getSamsungRemoteReparserEnabled() =>
+      _askBool('getSamsungRemoteReparserEnabled');
+  static Future<bool> setSamsungRemoteReparserEnabled(bool value) =>
+      _askBool('setSamsungRemoteReparserEnabled', {'value': value});
   static Future<bool> hasExpandedSectionsState() =>
       _askBool('hasExpandedSectionsState');
   static Future<String> getExpandedSections() => _askStr('getExpandedSections');

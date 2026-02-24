@@ -1,4 +1,4 @@
-package com.appsfolder.livebridge.liveupdate
+package ai.perplexity.app.android.liveupdate
 
 import android.content.ComponentName
 import android.content.Context

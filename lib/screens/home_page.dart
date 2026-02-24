@@ -58,7 +58,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _showBackgroundWarning = false;
   bool _showSamsungDeveloperWarning = false;
   bool _hidePromotedAccess = false;
+  bool _isSamsungDevice = false;
   bool _isAospDevice = false;
+  bool _samsungRemoteReparserEnabled = true;
   bool _updateChecksEnabled = true;
   bool _updateAvailable = false;
   String _latestReleaseVersion = '';
@@ -212,6 +214,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getBackgroundWarningDismissed();
       final bool samsungWarningDismissed =
           await LiveBridgePlatform.getSamsungWarningDismissed();
+      final bool samsungRemoteReparserEnabled =
+          await LiveBridgePlatform.getSamsungRemoteReparserEnabled();
       final bool hasExpandedSectionsState =
           await LiveBridgePlatform.hasExpandedSectionsState();
       final String expandedSectionsRaw = hasExpandedSectionsState
@@ -275,7 +279,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _currentAppVersion = currentAppVersion;
         _hasCustomParserDictionary = hasCustomParserDictionary;
         _hidePromotedAccess = deviceInfo.shouldHideLiveUpdatesPromotion;
+        _isSamsungDevice = deviceInfo.isSamsung;
         _isAospDevice = deviceInfo.isAospDevice;
+        _samsungRemoteReparserEnabled = samsungRemoteReparserEnabled;
         _showBackgroundWarning =
             !deviceInfo.isPixel &&
             !deviceInfo.isSamsung &&
@@ -355,6 +361,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     HapticFeedback.selectionClick();
     setState(() => _aospCuttingEnabled = value);
     await LiveBridgePlatform.setAospCuttingEnabled(value);
+  }
+
+  Future<void> _setSamsungRemoteReparserEnabled(bool value) async {
+    HapticFeedback.selectionClick();
+    setState(() => _samsungRemoteReparserEnabled = value);
+    await LiveBridgePlatform.setSamsungRemoteReparserEnabled(value);
   }
 
   Future<void> _setUpdateChecksEnabled(bool value) async {
@@ -1216,6 +1228,26 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             contentPadding: EdgeInsets.zero,
             activeThumbColor: colorScheme.primary,
           ),
+          if (_isSamsungDevice) ...<Widget>[
+            const SizedBox(height: 8),
+            SwitchListTile.adaptive(
+              value: _samsungRemoteReparserEnabled,
+              onChanged: _setSamsungRemoteReparserEnabled,
+              title: Text(
+                s.samsungRemoteParserTitle,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                s.samsungRemoteParserSubtitle,
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
+              ),
+              contentPadding: EdgeInsets.zero,
+              activeThumbColor: colorScheme.primary,
+            ),
+          ],
           if (_isAospDevice) ...<Widget>[
             const SizedBox(height: 8),
             SwitchListTile.adaptive(

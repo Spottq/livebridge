@@ -113,6 +113,11 @@ class AppStrings {
   String get updateChecksSubtitle => isRu
       ? 'Проверять обновления при входе и не чаще одного раза в 6 часов.'
       : 'Check updates on app start, and no more than once every 6 hours.';
+  String get samsungRemoteParserTitle =>
+      isRu ? 'Samsung RemoteViews репарсер' : 'Samsung RemoteViews reparser';
+  String get samsungRemoteParserSubtitle => isRu
+      ? 'Использует Samsung ongoingActivity extras и RemoteViews для более точного парсинга уведомлений.'
+      : 'Uses Samsung ongoingActivity extras and RemoteViews for improved parsing on One UI.';
   String updateAvailableBanner(String version) => isRu
       ? 'Доступно обновление${version.isNotEmpty ? ': $version' : ''}'
       : 'Update available${version.isNotEmpty ? ': $version' : ''}';

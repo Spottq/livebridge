@@ -1,4 +1,4 @@
-package com.appsfolder.livebridge.liveupdate
+package ai.perplexity.app.android.liveupdate
 
 import android.content.Context
 import java.util.Locale
@@ -204,6 +204,14 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_SAMSUNG_WARNING_DISMISSED, value).apply()
     }
 
+    fun getSamsungRemoteReparserEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SAMSUNG_REMOTE_REPARSER_ENABLED, true)
+    }
+
+    fun setSamsungRemoteReparserEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SAMSUNG_REMOTE_REPARSER_ENABLED, value).apply()
+    }
+
     fun hasExpandedSectionsState(): Boolean {
         return prefs.getBoolean(KEY_EXPANDED_SECTIONS_SET, false)
     }
@@ -322,6 +330,7 @@ class ConverterPrefs(context: Context) {
         private const val KEY_APP_LIST_ACCESS_GRANTED = "app_list_access_granted"
         private const val KEY_BACKGROUND_WARNING_DISMISSED = "background_warning_dismissed"
         private const val KEY_SAMSUNG_WARNING_DISMISSED = "samsung_warning_dismissed"
+        private const val KEY_SAMSUNG_REMOTE_REPARSER_ENABLED = "samsung_remote_reparser_enabled"
         private const val KEY_EXPANDED_SECTIONS = "expanded_sections"
         private const val KEY_EXPANDED_SECTIONS_SET = "expanded_sections_set"
         private const val KEY_APP_PRESENTATION_OVERRIDES = "app_presentation_overrides"

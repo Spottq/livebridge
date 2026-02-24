@@ -1,4 +1,4 @@
-package com.appsfolder.livebridge
+package ai.perplexity.app.android
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -25,16 +25,16 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
-import com.appsfolder.livebridge.liveupdate.AppPresentationOverridesCodec
-import com.appsfolder.livebridge.liveupdate.AppPresentationOverridesLoader
-import com.appsfolder.livebridge.liveupdate.ConverterPrefs
-import com.appsfolder.livebridge.liveupdate.DeviceBlocker
-import com.appsfolder.livebridge.liveupdate.DeviceProps
-import com.appsfolder.livebridge.liveupdate.KeepAliveForegroundService
-import com.appsfolder.livebridge.liveupdate.LiveParserDictionary
-import com.appsfolder.livebridge.liveupdate.LiveParserDictionaryLoader
-import com.appsfolder.livebridge.liveupdate.LiveUpdateNotifier
-import com.appsfolder.livebridge.liveupdate.LiveUpdateNotificationListenerService
+import ai.perplexity.app.android.liveupdate.AppPresentationOverridesCodec
+import ai.perplexity.app.android.liveupdate.AppPresentationOverridesLoader
+import ai.perplexity.app.android.liveupdate.ConverterPrefs
+import ai.perplexity.app.android.liveupdate.DeviceBlocker
+import ai.perplexity.app.android.liveupdate.DeviceProps
+import ai.perplexity.app.android.liveupdate.KeepAliveForegroundService
+import ai.perplexity.app.android.liveupdate.LiveParserDictionary
+import ai.perplexity.app.android.liveupdate.LiveParserDictionaryLoader
+import ai.perplexity.app.android.liveupdate.LiveUpdateNotifier
+import ai.perplexity.app.android.liveupdate.LiveUpdateNotificationListenerService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -114,6 +114,12 @@ class MainActivity : FlutterActivity() {
             "getSamsungWarningDismissed" -> res.success(prefs.getSamsungWarningDismissed())
             "setSamsungWarningDismissed" -> {
                 prefs.setSamsungWarningDismissed(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+
+            "getSamsungRemoteReparserEnabled" -> res.success(prefs.getSamsungRemoteReparserEnabled())
+            "setSamsungRemoteReparserEnabled" -> {
+                prefs.setSamsungRemoteReparserEnabled(call.argument<Boolean>("value") ?: true)
                 res.success(true)
             }
 
