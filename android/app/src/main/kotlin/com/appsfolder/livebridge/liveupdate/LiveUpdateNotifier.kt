@@ -683,7 +683,8 @@ object LiveUpdateNotifier {
             } else {
                 displayText
             }
-            val preferCompactNowBarRemoteView = sbn.packageName == YANDEX_MAPS_PACKAGE
+            val preferCompactNowBarRemoteView =
+                sbn.packageName == YANDEX_MAPS_PACKAGE && !hasProgress
             val chipText = sequenceOf(
                 otpShortTextOverride?.trim(),
                 otpOverride?.code?.trim(),
