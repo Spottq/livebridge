@@ -671,12 +671,15 @@ object LiveUpdateNotifier {
             builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
         }
 
-        if (samsungNowBarBridgeEnabled && smartRuleId == "navigation") {
-            // Prevent duplicated navigation direction line under the custom card.
-            builder.setContentText("")
-        }
-
         if (samsungNowBarBridgeEnabled) {
+            val hasCustomRemoteCard =
+                source.contentView != null ||
+                        source.bigContentView != null ||
+                        source.headsUpContentView != null
+            if (hasCustomRemoteCard || smartRuleId == "navigation") {
+                // Prevent duplicated bottom subtitle under Samsung custom card.
+                builder.setContentText("")
+            }
             val effectiveSecondaryText = if (smartShortTextOverride != null && !hasProgress) {
                 smartShortTextOverride
             } else {
