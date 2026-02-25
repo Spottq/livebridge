@@ -590,6 +590,7 @@ object LiveUpdateNotifier {
             else -> false
         }
         val hasProgress = sourceHasProgress || progressOverride != null || samsungProgressMax > 0
+        var resolvedProgressChipText: String? = null
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(compactPrimaryText)
@@ -652,8 +653,9 @@ object LiveUpdateNotifier {
                         .setProgress(percent)
                         .setStyledByProgress(true)
                 )
+                resolvedProgressChipText = smartShortTextOverride ?: "$percent%"
                 builder.setShortCriticalText(
-                    limitIslandText(smartShortTextOverride ?: "$percent%", aospCuttingEnabled)
+                    limitIslandText(resolvedProgressChipText, aospCuttingEnabled)
                 )
             }
         } else if (otpOverride != null) {
@@ -683,6 +685,7 @@ object LiveUpdateNotifier {
             val preferCompactNowBarRemoteView =
                 sbn.packageName == YANDEX_MAPS_PACKAGE && !hasProgress
             val chipText = sequenceOf(
+                resolvedProgressChipText?.trim(),
                 otpShortTextOverride?.trim(),
                 otpOverride?.code?.trim(),
                 compactCodeOverride?.trim(),
