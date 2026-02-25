@@ -40,8 +40,6 @@ object LiveUpdateNotifier {
     private const val OTP_AUTOCOPY_COPIED_SHOW_DELAY_MS = 1_000L
     private const val OTP_AUTOCOPY_COPIED_SHOW_DURATION_MS = 1_500L
     private const val AOSP_ISLAND_TEXT_LIMIT = 7
-    private const val POST_PROMOTED_NOTIFICATIONS_PERMISSION =
-        "android.permission.POST_PROMOTED_NOTIFICATIONS"
     private val BLOCKED_SOURCE_PACKAGES = setOf(
         "ru.dublgis.dgismobile"
     )
@@ -575,24 +573,23 @@ object LiveUpdateNotifier {
         val sourceHasProgress = hasProgress(source)
         val samsungProgressMax = samsungReparse?.progressMax ?: 0
         val samsungProgressValue = samsungReparse?.progressValue ?: 0
-        val progressMax = progressOverride?.max ?: if (sourceHasProgress) {
-            source.extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0)
-        } else {
-            samsungProgressMax
+        val progressMax = when {
+            sourceHasProgress -> source.extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0)
+            progressOverride != null -> progressOverride.max
+            else -> samsungProgressMax
         }
-        val progressValue = progressOverride?.value ?: if (sourceHasProgress) {
-            source.extras.getInt(Notification.EXTRA_PROGRESS, 0)
-        } else {
-            samsungProgressValue
+        val progressValue = when {
+            sourceHasProgress -> source.extras.getInt(Notification.EXTRA_PROGRESS, 0)
+            progressOverride != null -> progressOverride.value
+            else -> samsungProgressValue
         }
-        val indeterminate = if (progressOverride != null) {
-            false
-        } else if (sourceHasProgress) {
-            source.extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false)
-        } else {
-            false
+        val indeterminate = when {
+            sourceHasProgress ->
+                source.extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false)
+            progressOverride != null -> false
+            else -> false
         }
-        val hasProgress = progressOverride != null || sourceHasProgress || samsungProgressMax > 0
+        val hasProgress = sourceHasProgress || progressOverride != null || samsungProgressMax > 0
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(compactPrimaryText)
@@ -616,7 +613,7 @@ object LiveUpdateNotifier {
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
 
-        if (requestPromoted && canRequestPromotedOngoing(context)) {
+        if (requestPromoted) {
             builder.setRequestPromotedOngoing(true)
         }
 
@@ -747,14 +744,6 @@ object LiveUpdateNotifier {
             )
             manager.notify(notificationId, fallback)
         }
-    }
-
-    private fun canRequestPromotedOngoing(context: Context): Boolean {
-        if (Build.VERSION.SDK_INT < 36) {
-            return true
-        }
-        return context.checkSelfPermission(POST_PROMOTED_NOTIFICATIONS_PERMISSION) ==
-                PackageManager.PERMISSION_GRANTED
     }
 
     private fun detectSmartStage(
