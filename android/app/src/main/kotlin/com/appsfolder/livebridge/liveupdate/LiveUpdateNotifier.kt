@@ -538,7 +538,6 @@ object LiveUpdateNotifier {
             }
         val sourceLargeIcon = resolveSourceLargeIconBitmap(context, source)
         val preferredLargeIcon = when {
-            samsungNowBarBridgeEnabled -> sourceLargeIcon
             appPresentationOverride.iconSource == NotificationIconSource.APP -> sourceLargeIcon
             shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
             else -> samsungLargeIcon ?: sourceLargeIcon
@@ -607,14 +606,10 @@ object LiveUpdateNotifier {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
-        val preferredSmallIcon = if (samsungNowBarBridgeEnabled) {
-            sourceSmallIcon ?: appSmallIcon
-        } else {
-            when (appPresentationOverride.iconSource) {
-                NotificationIconSource.NOTIFICATION ->
-                    samsungSmallIcon ?: navigationDrawable?.icon ?: sourceSmallIcon ?: appSmallIcon
-                NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
-            }
+        val preferredSmallIcon = when (appPresentationOverride.iconSource) {
+            NotificationIconSource.NOTIFICATION ->
+                samsungSmallIcon ?: navigationDrawable?.icon ?: sourceSmallIcon ?: appSmallIcon
+            NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
         }
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
