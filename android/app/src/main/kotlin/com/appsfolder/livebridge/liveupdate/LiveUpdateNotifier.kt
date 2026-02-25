@@ -530,12 +530,6 @@ object LiveUpdateNotifier {
             }
         val sourceLargeIcon = resolveSourceLargeIconBitmap(context, source)
         val appLargeIcon = resolveAppLargeIconBitmap(context, sbn.packageName)
-        val sourceLargeIconCompat = sourceLargeIcon?.let { bitmap ->
-            runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
-        }
-        val appLargeIconCompat = appLargeIcon?.let { bitmap ->
-            runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
-        }
         val preferredLargeIcon = when {
             samsungBridge.enabled -> sourceLargeIcon ?: samsungLargeIcon ?: appLargeIcon
             appPresentationOverride.iconSource == NotificationIconSource.APP -> appLargeIcon ?: sourceLargeIcon
@@ -619,17 +613,6 @@ object LiveUpdateNotifier {
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
 
-        val samsungChipIcon = if (samsungBridge.enabled) {
-            samsungSmallIcon
-                ?: sourceLargeIconCompat
-                ?: appLargeIconCompat
-                ?: sourceSmallIcon
-                ?: appSmallIcon
-                ?: navigationDrawable?.icon
-        } else {
-            preferredSmallIcon
-        }
-
         if (requestPromoted) {
             builder.setRequestPromotedOngoing(true)
         }
@@ -709,7 +692,7 @@ object LiveUpdateNotifier {
                 sourcePackageName = sbn.packageName,
                 primaryText = compactPrimaryText,
                 texts = samsungTexts,
-                chipIcon = samsungChipIcon,
+                chipIcon = preferredSmallIcon,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
                 progressMax = progressMax
