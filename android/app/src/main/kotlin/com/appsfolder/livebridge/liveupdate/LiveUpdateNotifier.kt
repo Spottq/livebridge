@@ -529,10 +529,13 @@ object LiveUpdateNotifier {
                 null
             }
         val sourceLargeIcon = resolveSourceLargeIconBitmap(context, source)
+        val appLargeIcon = resolveAppLargeIconBitmap(context, sbn.packageName)
         val preferredLargeIcon = when {
-            appPresentationOverride.iconSource == NotificationIconSource.APP -> sourceLargeIcon
-            shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
-            else -> samsungLargeIcon ?: sourceLargeIcon
+            samsungBridge.enabled -> sourceLargeIcon ?: samsungLargeIcon ?: appLargeIcon
+            appPresentationOverride.iconSource == NotificationIconSource.APP -> appLargeIcon ?: sourceLargeIcon
+            shouldTryNavigationArrowIcon ->
+                navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon ?: appLargeIcon
+            else -> samsungLargeIcon ?: sourceLargeIcon ?: appLargeIcon
         }
 
         val appName = resolveAppName(context, sbn.packageName)
@@ -598,10 +601,14 @@ object LiveUpdateNotifier {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
-        val preferredSmallIcon = when (appPresentationOverride.iconSource) {
-            NotificationIconSource.NOTIFICATION ->
-                samsungSmallIcon ?: navigationDrawable?.icon ?: sourceSmallIcon ?: appSmallIcon
-            NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
+        val preferredSmallIcon = if (samsungBridge.enabled) {
+            sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon ?: navigationDrawable?.icon
+        } else {
+            when (appPresentationOverride.iconSource) {
+                NotificationIconSource.NOTIFICATION ->
+                    samsungSmallIcon ?: navigationDrawable?.icon ?: sourceSmallIcon ?: appSmallIcon
+                NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
+            }
         }
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
@@ -1172,6 +1179,16 @@ object LiveUpdateNotifier {
                     appInfo.icon
                 )
             }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun resolveAppLargeIconBitmap(context: Context, packageName: String): Bitmap? {
+        return try {
+            val packageManager = context.packageManager
+            val appInfo = packageManager.getApplicationInfo(packageName, 0)
+            packageManager.getApplicationIcon(appInfo)?.let(::drawableToBitmap)
         } catch (_: Exception) {
             null
         }
