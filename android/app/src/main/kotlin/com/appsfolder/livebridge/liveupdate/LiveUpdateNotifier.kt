@@ -707,7 +707,7 @@ object LiveUpdateNotifier {
                 hasProgress = hasProgress,
                 progressValue = progressValue,
                 progressMax = progressMax,
-                showSecondaryInNowBar = smartRuleId != "navigation",
+                showSecondaryInNowBar = smartRuleId != "navigation" && !hasCustomRemoteCard,
                 preferCompactNowBarRemoteView = preferCompactNowBarRemoteView
             )
         }
