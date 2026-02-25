@@ -32,16 +32,9 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         val normalizedSecondary = secondaryText.trim()
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
 
-        val shouldBridgeRemoteViews = !hasProgress
-        val nowBarRemoteView = if (shouldBridgeRemoteViews) {
-            resolveRemoteView(source, preferCompactNowBarRemoteView)
-        } else {
-            null
-        }
+        val nowBarRemoteView = resolveRemoteView(source, preferCompactNowBarRemoteView)
         val hasNowBarRemoteView = nowBarRemoteView != null
-        if (shouldBridgeRemoteViews) {
-            applyRemoteViewsIfPresent(builder, source)
-        }
+        applyRemoteViewsIfPresent(builder, source)
 
         val extras = Bundle().apply {
             putInt(KEY_STYLE, 1)
