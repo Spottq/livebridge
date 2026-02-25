@@ -149,14 +149,13 @@ object LiveUpdateNotifier {
                 .get(prefs)
                 .resolve(sbn.packageName.lowercase(Locale.ROOT))
             val source = sbn.notification
-            val samsungNowBarBridgeEnabled =
-                prefs.getSamsungRemoteReparserEnabled() && SamsungLiveUpdateReparser.isSamsungDevice()
-            val samsungReparse = if (samsungNowBarBridgeEnabled) {
-                SamsungNotificationReparser.parse(context, sbn)
-            } else {
-                null
-            }
-            val hasNativeProgress = hasProgress(source) || (samsungReparse?.hasProgress == true)
+            val samsungBridge = SamsungBridgePreprocessor.build(
+                context = context,
+                prefs = prefs,
+                sbn = sbn,
+                sourceHasNativeProgress = hasProgress(source)
+            )
+            val hasNativeProgress = samsungBridge.hasNativeOrSamsungProgress
 
             val otpMatch = if (!hasNativeProgress &&
                 prefs.getOtpDetectionEnabled() &&
@@ -270,8 +269,7 @@ object LiveUpdateNotifier {
                             otpOverride = otpMatch,
                             smartShortTextOverride = null,
                             requestPromoted = true,
-                            samsungReparse = samsungReparse,
-                            samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                            samsungBridge = samsungBridge
                         )
                         notifyWithPromotionFallback(
                             context = context,
@@ -283,8 +281,7 @@ object LiveUpdateNotifier {
                             progressOverride = null,
                             otpOverride = otpMatch,
                             smartShortTextOverride = null,
-                            samsungReparse = samsungReparse,
-                            samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                            samsungBridge = samsungBridge
                         )
                     }
                     if (routeState.shouldAutoCopy) {
@@ -296,8 +293,7 @@ object LiveUpdateNotifier {
                                 sbn = sbn,
                                 appPresentationOverride = appPresentationOverride,
                                 otpMatch = otpMatch,
-                                samsungReparse = samsungReparse,
-                                samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                                samsungBridge = samsungBridge
                             )
                         }
                     }
@@ -321,8 +317,7 @@ object LiveUpdateNotifier {
                         otpOverride = null,
                         smartShortTextOverride = textProgressMatch.shortText,
                         requestPromoted = true,
-                        samsungReparse = samsungReparse,
-                        samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                        samsungBridge = samsungBridge
                     )
                     notifyWithPromotionFallback(
                         context = context,
@@ -337,8 +332,7 @@ object LiveUpdateNotifier {
                         ),
                         otpOverride = null,
                         smartShortTextOverride = textProgressMatch.shortText,
-                        samsungReparse = samsungReparse,
-                        samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                        samsungBridge = samsungBridge
                     )
                     true
                 }
@@ -405,8 +399,7 @@ object LiveUpdateNotifier {
                         compactCodeOverride = routeState.compactOrderCode,
                         smartRuleId = smartRuleId,
                         requestPromoted = true,
-                        samsungReparse = samsungReparse,
-                        samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                        samsungBridge = samsungBridge
                     )
                     notifyWithPromotionFallback(
                         context = context,
@@ -420,8 +413,7 @@ object LiveUpdateNotifier {
                         smartShortTextOverride = smartStatusText,
                         compactCodeOverride = routeState.compactOrderCode,
                         smartRuleId = smartRuleId,
-                        samsungReparse = samsungReparse,
-                        samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                        samsungBridge = samsungBridge
                     )
                     true
                 }
@@ -440,8 +432,7 @@ object LiveUpdateNotifier {
                         otpOverride = null,
                         smartShortTextOverride = null,
                         requestPromoted = true,
-                        samsungReparse = samsungReparse,
-                        samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                        samsungBridge = samsungBridge
                     )
                     notifyWithPromotionFallback(
                         context = context,
@@ -453,8 +444,7 @@ object LiveUpdateNotifier {
                         progressOverride = null,
                         otpOverride = null,
                         smartShortTextOverride = null,
-                        samsungReparse = samsungReparse,
-                        samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                        samsungBridge = samsungBridge
                     )
                     true
                 }
@@ -519,10 +509,12 @@ object LiveUpdateNotifier {
         smartRuleId: String? = null,
         requestPromoted: Boolean,
         otpShortTextOverride: String? = null,
-        samsungReparse: SamsungReparsePayload? = null,
-        samsungNowBarBridgeEnabled: Boolean = false
+        samsungBridge: SamsungBridgeContext = SamsungBridgeContext.disabled(
+            sourceHasNativeProgress = false
+        )
     ): Notification {
         val source = sbn.notification
+        val samsungReparse = samsungBridge.reparsePayload
         val sourceSmallIcon = resolveSourceSmallIcon(context, sbn)
         val appSmallIcon = resolveAppSmallIcon(context, sbn.packageName)
         val samsungSmallIcon = samsungReparse?.icon
@@ -671,44 +663,32 @@ object LiveUpdateNotifier {
             builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
         }
 
-        if (samsungNowBarBridgeEnabled) {
-            val hasCustomRemoteCard =
-                source.contentView != null ||
-                        source.bigContentView != null ||
-                        source.headsUpContentView != null
-            if (hasCustomRemoteCard || smartRuleId == "navigation") {
-                // Prevent duplicated bottom subtitle under Samsung custom card.
-                builder.setContentText("")
-            }
-            val effectiveSecondaryText = if (smartShortTextOverride != null && !hasProgress) {
-                smartShortTextOverride
-            } else {
-                displayText
-            }
-            val preferCompactNowBarRemoteView =
-                sbn.packageName == YANDEX_MAPS_PACKAGE && !hasProgress
-            val chipText = sequenceOf(
-                resolvedProgressChipText?.trim(),
-                otpShortTextOverride?.trim(),
-                otpOverride?.code?.trim(),
-                compactCodeOverride?.trim(),
-                samsungReparse?.chipText?.trim(),
-                smartShortTextOverride?.trim(),
-                compactPrimaryText.trim()
-            ).firstOrNull { !it.isNullOrEmpty() }
-            SamsungLiveUpdateReparser(context).applyNowBarBridge(
+        if (samsungBridge.enabled) {
+            val samsungTexts = SamsungBridgeContentPolicy.resolve(
+                sourcePackageName = sbn.packageName,
+                hasCustomRemoteCard = samsungBridge.hasCustomRemoteCard,
+                hasProgress = hasProgress,
+                smartRuleId = smartRuleId,
+                smartShortTextOverride = smartShortTextOverride,
+                displayText = displayText,
+                compactPrimaryText = compactPrimaryText,
+                resolvedProgressChipText = resolvedProgressChipText,
+                otpShortTextOverride = otpShortTextOverride,
+                otpCode = otpOverride?.code,
+                compactCodeOverride = compactCodeOverride,
+                samsungReparseChipText = samsungReparse?.chipText
+            )
+            SamsungNowBarApplier.apply(
+                context = context,
                 builder = builder,
                 source = source,
                 sourcePackageName = sbn.packageName,
                 primaryText = compactPrimaryText,
-                secondaryText = effectiveSecondaryText,
-                chipText = chipText,
+                texts = samsungTexts,
                 chipIcon = preferredSmallIcon,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
-                progressMax = progressMax,
-                showSecondaryInNowBar = smartRuleId != "navigation" && !hasCustomRemoteCard,
-                preferCompactNowBarRemoteView = preferCompactNowBarRemoteView
+                progressMax = progressMax
             )
         }
 
@@ -728,8 +708,9 @@ object LiveUpdateNotifier {
         compactCodeOverride: String? = null,
         smartRuleId: String? = null,
         otpShortTextOverride: String? = null,
-        samsungReparse: SamsungReparsePayload? = null,
-        samsungNowBarBridgeEnabled: Boolean = false
+        samsungBridge: SamsungBridgeContext = SamsungBridgeContext.disabled(
+            sourceHasNativeProgress = false
+        )
     ) {
         try {
             manager.notify(notificationId, promotedNotification)
@@ -745,8 +726,7 @@ object LiveUpdateNotifier {
                 smartRuleId = smartRuleId,
                 requestPromoted = false,
                 otpShortTextOverride = otpShortTextOverride,
-                samsungReparse = samsungReparse,
-                samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                samsungBridge = samsungBridge
             )
             manager.notify(notificationId, fallback)
         }
@@ -1048,8 +1028,7 @@ object LiveUpdateNotifier {
         sbn: StatusBarNotification,
         appPresentationOverride: AppPresentationOverride,
         otpMatch: OtpMatch,
-        samsungReparse: SamsungReparsePayload?,
-        samsungNowBarBridgeEnabled: Boolean
+        samsungBridge: SamsungBridgeContext
     ) {
         val generation = synchronized(stateLock) {
             val nextGeneration = (otpAnimationGenerations[otpMatch.aggregateKey] ?: 0L) + 1L
@@ -1065,8 +1044,7 @@ object LiveUpdateNotifier {
             sbn = sbn,
             appPresentationOverride = appPresentationOverride,
             otpMatch = otpMatch,
-            samsungReparse = samsungReparse,
-            samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled,
+            samsungBridge = samsungBridge,
             generation = generation,
             delayMs = OTP_AUTOCOPY_COPIED_SHOW_DELAY_MS,
             otpShortTextOverride = copiedLabel
@@ -1078,8 +1056,7 @@ object LiveUpdateNotifier {
             sbn = sbn,
             appPresentationOverride = appPresentationOverride,
             otpMatch = otpMatch,
-            samsungReparse = samsungReparse,
-            samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled,
+            samsungBridge = samsungBridge,
             generation = generation,
             delayMs = OTP_AUTOCOPY_COPIED_SHOW_DELAY_MS + OTP_AUTOCOPY_COPIED_SHOW_DURATION_MS,
             otpShortTextOverride = null
@@ -1092,8 +1069,7 @@ object LiveUpdateNotifier {
         sbn: StatusBarNotification,
         appPresentationOverride: AppPresentationOverride,
         otpMatch: OtpMatch,
-        samsungReparse: SamsungReparsePayload?,
-        samsungNowBarBridgeEnabled: Boolean,
+        samsungBridge: SamsungBridgeContext,
         generation: Long,
         delayMs: Long,
         otpShortTextOverride: String?
@@ -1112,8 +1088,7 @@ object LiveUpdateNotifier {
                     smartShortTextOverride = null,
                     requestPromoted = true,
                     otpShortTextOverride = otpShortTextOverride,
-                    samsungReparse = samsungReparse,
-                    samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                    samsungBridge = samsungBridge
                 )
                 notifyWithPromotionFallback(
                     context = context,
@@ -1126,8 +1101,7 @@ object LiveUpdateNotifier {
                     otpOverride = otpMatch,
                     smartShortTextOverride = null,
                     otpShortTextOverride = otpShortTextOverride,
-                    samsungReparse = samsungReparse,
-                    samsungNowBarBridgeEnabled = samsungNowBarBridgeEnabled
+                    samsungBridge = samsungBridge
                 )
             } catch (error: Throwable) {
                 Log.e(TAG, "Failed OTP auto-copy animation update: ${otpMatch.aggregateKey}", error)
