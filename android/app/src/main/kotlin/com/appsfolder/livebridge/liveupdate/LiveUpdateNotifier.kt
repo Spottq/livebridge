@@ -531,8 +531,8 @@ object LiveUpdateNotifier {
         val sourceLargeIcon = resolveSourceLargeIconBitmap(context, source)
         val preferredLargeIcon = when {
             appPresentationOverride.iconSource == NotificationIconSource.APP -> sourceLargeIcon
-            shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: sourceLargeIcon ?: samsungLargeIcon
-            else -> sourceLargeIcon ?: samsungLargeIcon
+            shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
+            else -> samsungLargeIcon ?: sourceLargeIcon
         }
 
         val appName = resolveAppName(context, sbn.packageName)
@@ -601,18 +601,6 @@ object LiveUpdateNotifier {
         val preferredSmallIcon = when (appPresentationOverride.iconSource) {
             NotificationIconSource.NOTIFICATION ->
                 samsungSmallIcon ?: navigationDrawable?.icon ?: sourceSmallIcon ?: appSmallIcon
-            NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
-        }
-        val preferredLargeIconCompat = preferredLargeIcon?.let { bitmap ->
-            runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
-        }
-        val samsungIslandIcon = when (appPresentationOverride.iconSource) {
-            NotificationIconSource.NOTIFICATION ->
-                preferredLargeIconCompat
-                    ?: samsungSmallIcon
-                    ?: navigationDrawable?.icon
-                    ?: sourceSmallIcon
-                    ?: appSmallIcon
             NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
         }
         applySmallIcon(context, builder, preferredSmallIcon)
@@ -695,10 +683,9 @@ object LiveUpdateNotifier {
                 builder = builder,
                 source = source,
                 sourcePackageName = sbn.packageName,
-                appName = appName,
                 primaryText = compactPrimaryText,
                 texts = samsungTexts,
-                chipIcon = samsungIslandIcon,
+                chipIcon = preferredSmallIcon,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
                 progressMax = progressMax
