@@ -40,9 +40,12 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
 
         val extras = Bundle().apply {
             putInt(KEY_STYLE, 1)
-            putCharSequence(KEY_PRIMARY_INFO, normalizedPrimary)
-            if (normalizedAppName.isNotEmpty()) {
-                putCharSequence(KEY_SECONDARY_INFO, normalizedAppName)
+            putCharSequence(
+                KEY_PRIMARY_INFO,
+                if (normalizedAppName.isNotEmpty()) normalizedAppName else normalizedPrimary
+            )
+            if (showSecondaryInNowBar && normalizedSecondary.isNotEmpty() && !hasNowBarRemoteView) {
+                putCharSequence(KEY_SECONDARY_INFO, normalizedSecondary)
             }
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, normalizedChipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, normalizedPrimary)
