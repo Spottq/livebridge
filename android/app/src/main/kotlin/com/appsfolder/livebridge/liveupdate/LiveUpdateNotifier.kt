@@ -171,6 +171,12 @@ object LiveUpdateNotifier {
                     clearAggregateTrackingForSbnKeyLocked(sbn.key)
                 }
                 staleAggregateIds.forEach(manager::cancel)
+                val bypassSamsungBridge = SamsungBridgePreprocessor.build(
+                    context = context,
+                    prefs = prefs,
+                    sbn = sbn,
+                    sourceHasNativeProgress = hasProgress(sbn.notification)
+                )
 
                 val notification = buildMirroredNotification(
                     context = context,
@@ -180,6 +186,7 @@ object LiveUpdateNotifier {
                     otpOverride = null,
                     smartShortTextOverride = null,
                     requestPromoted = true,
+                    samsungBridge = bypassSamsungBridge,
                     allowNavigationIconHeuristics = false
                 )
                 notifyWithPromotionFallback(
@@ -192,6 +199,7 @@ object LiveUpdateNotifier {
                     progressOverride = null,
                     otpOverride = null,
                     smartShortTextOverride = null,
+                    samsungBridge = bypassSamsungBridge,
                     allowNavigationIconHeuristics = false
                 )
                 return true
@@ -557,7 +565,8 @@ object LiveUpdateNotifier {
                             progressOverride = smartProgressOverride,
                             smartRuleId = smartRuleId,
                             tokens = animatedTokens,
-                            initialToken = smartStatusText
+                            initialToken = smartStatusText,
+                            samsungBridge = samsungBridge
                         )
                     }
                     true
@@ -1904,7 +1913,8 @@ object LiveUpdateNotifier {
         progressOverride: ProgressOverride?,
         smartRuleId: String,
         tokens: List<String?>,
-        initialToken: String?
+        initialToken: String?,
+        samsungBridge: SamsungBridgeContext
     ) {
         if (tokens.isEmpty()) {
             return
@@ -1929,6 +1939,7 @@ object LiveUpdateNotifier {
                 existingState.progressOverride = progressOverride
                 existingState.smartRuleId = smartRuleId
                 existingState.tokens = normalizedTokens
+                existingState.samsungBridge = samsungBridge
                 if (!normalizedInitial.isNullOrBlank() &&
                     normalizedTokens.any { it.equals(normalizedInitial, ignoreCase = true) } &&
                     existingState.lastShownToken.isNullOrBlank()
@@ -1947,7 +1958,8 @@ object LiveUpdateNotifier {
                 smartRuleId = smartRuleId,
                 tokens = normalizedTokens,
                 nextIndex = 0,
-                lastShownToken = normalizedInitial
+                lastShownToken = normalizedInitial,
+                samsungBridge = samsungBridge
             )
             nextGeneration
         } ?: return
@@ -1992,7 +2004,8 @@ object LiveUpdateNotifier {
                     appPresentationOverride = animationState.appPresentationOverride,
                     progressOverride = animationState.progressOverride,
                     smartRuleId = animationState.smartRuleId,
-                    token = nextToken.token
+                    token = nextToken.token,
+                    samsungBridge = animationState.samsungBridge
                 )
             } ?: return@postDelayed
 
@@ -2005,7 +2018,8 @@ object LiveUpdateNotifier {
                     otpOverride = null,
                     smartShortTextOverride = frame.token,
                     smartRuleId = frame.smartRuleId,
-                    requestPromoted = true
+                    requestPromoted = true,
+                    samsungBridge = frame.samsungBridge
                 )
                 notifyWithPromotionFallback(
                     context = context,
@@ -2017,7 +2031,8 @@ object LiveUpdateNotifier {
                     progressOverride = frame.progressOverride,
                     otpOverride = null,
                     smartShortTextOverride = frame.token,
-                    smartRuleId = frame.smartRuleId
+                    smartRuleId = frame.smartRuleId,
+                    samsungBridge = frame.samsungBridge
                 )
             } catch (error: Throwable) {
                 Log.e(TAG, "Failed smart island animation update: $aggregateKey", error)
@@ -2990,7 +3005,8 @@ object LiveUpdateNotifier {
         var smartRuleId: String,
         var tokens: List<String?>,
         var nextIndex: Int,
-        var lastShownToken: String?
+        var lastShownToken: String?,
+        var samsungBridge: SamsungBridgeContext
     )
 
     private data class SmartAnimationFrame(
@@ -2998,7 +3014,8 @@ object LiveUpdateNotifier {
         val appPresentationOverride: AppPresentationOverride,
         val progressOverride: ProgressOverride?,
         val smartRuleId: String,
-        val token: String
+        val token: String,
+        val samsungBridge: SamsungBridgeContext
     )
 
     private data class SmartAnimationToken(
