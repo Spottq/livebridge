@@ -1373,7 +1373,7 @@ object LiveUpdateNotifier {
         val normalized = raw.orEmpty()
             .replace(Regex("\\s+"), " ")
             .trim()
-            .trim('"', '\'', 'В«', 'В»', '.', ',', ':', ';')
+            .trim('"', '\'', '«', '»', '.', ',', ':', ';')
         if (normalized.length < 2) {
             return null
         }
@@ -1529,10 +1529,10 @@ object LiveUpdateNotifier {
         val numericValue = normalized.substring(0, numberEnd).toDoubleOrNull() ?: return null
         val unitChar = normalized.drop(numberEnd).firstOrNull()
         val multiplier = when (unitChar) {
-            'k', 'Рє' -> 1_000.0
-            'm', 'Рј' -> 1_000_000.0
-            'g', 'Рі' -> 1_000_000_000.0
-            't', 'С‚' -> 1_000_000_000_000.0
+            'k', 'к' -> 1_000.0
+            'm', 'м' -> 1_000_000.0
+            'g', 'г' -> 1_000_000_000.0
+            't', 'т' -> 1_000_000_000_000.0
             else -> 1.0
         }
         return numericValue * multiplier
@@ -1681,15 +1681,15 @@ object LiveUpdateNotifier {
     ): String? {
         val match = parserDictionary.weatherTemperaturePattern.find(combinedText) ?: return null
         val rawNumber = match.groupValues.getOrNull(1).orEmpty()
-            .replace('в€’', '-')
+            .replace('−', '-')
             .trim()
         if (rawNumber.isBlank()) {
             return null
         }
-        val baseTemperature = "$rawNumberВ°"
+        val baseTemperature = "${rawNumber}°"
         val conditionEmoji = extractWeatherConditionEmoji(combinedText, parserDictionary)
         return if (conditionEmoji != null) {
-            "$baseTemperature В· $conditionEmoji"
+            "$baseTemperature · $conditionEmoji"
         } else {
             baseTemperature
         }
