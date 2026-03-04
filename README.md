@@ -5,7 +5,7 @@ LiveBridge is a Flutter Android app with native Kotlin logic that converts regul
 ## Core features
 
 - Converts progress notifications into Live Updates
-- Smart status detection (taxi, delivery, food order flows)
+- Smart status detection (taxi, delivery, food order flows, even weather)
 - OTP code extraction from notifications
 - Real-time island navigation
 - App filtering modes
@@ -17,7 +17,13 @@ LiveBridge is a Flutter Android app with native Kotlin logic that converts regul
 - Predictive back gesture
 - Edge-to-edge layout without app bars
 - Customizable parsing dictionaries
+- Dictionary auto-update
 - Decent FGS
+- Animated dynamic island
+
+## Exclusive features
+
+- Xiaomi's native Hyper Island (shout out to [D4vidDf](https://github.com/D4vidDf/HyperIsland-ToolKit))
 
 ## Requirements
 

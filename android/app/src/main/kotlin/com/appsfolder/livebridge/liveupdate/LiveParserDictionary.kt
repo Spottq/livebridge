@@ -8,9 +8,37 @@ import java.util.Locale
 
 internal data class LiveParserDictionary(
     val smartRules: List<SmartRuleEntry>,
+    val blockedSourcePackages: Set<String>,
+    val knownNavigationPackages: Set<String>,
+    val navigationPackageMarkers: Set<String>,
+    val navigationDistancePattern: Regex,
     val otpStrongTriggers: Set<String>,
     val otpLooseTriggerPattern: Regex,
     val moneyContextPattern: Regex,
+    val textProgressPercentPattern: Regex,
+    val textProgressIncludeContextPattern: Regex,
+    val textProgressExcludeContextPattern: Regex,
+    val textProgressContextWindow: Int,
+    val weatherPackageHints: Set<String>,
+    val weatherContextPattern: Regex,
+    val weatherTemperaturePattern: Regex,
+    val weatherDayPattern: Regex,
+    val weatherConditionPattern: Regex,
+    val weatherConditionThunderPattern: Regex,
+    val weatherConditionRainPattern: Regex,
+    val weatherConditionSnowPattern: Regex,
+    val weatherConditionFogPattern: Regex,
+    val weatherConditionWindPattern: Regex,
+    val weatherConditionSunPattern: Regex,
+    val weatherConditionCloudPattern: Regex,
+    val vpnSpeedPattern: Regex,
+    val vpnContextPattern: Regex,
+    val vpnPackageMarkers: Set<String>,
+    val vpnDownloadMarkers: Set<String>,
+    val vpnUploadMarkers: Set<String>,
+    val externalDeviceNamePatterns: List<Regex>,
+    val externalDeviceGenericNames: Set<String>,
+    val navigationInstructionPattern: Regex,
     val otpCodePatterns: List<Regex>,
     val orderContextHints: Set<String>,
     val entityTokenPatterns: List<Regex>,
@@ -26,9 +54,37 @@ internal data class LiveParserDictionary(
             val emptyRegex = Regex("(?!)")
             return LiveParserDictionary(
                 smartRules = emptyList(),
+                blockedSourcePackages = emptySet(),
+                knownNavigationPackages = emptySet(),
+                navigationPackageMarkers = emptySet(),
+                navigationDistancePattern = emptyRegex,
                 otpStrongTriggers = emptySet(),
                 otpLooseTriggerPattern = emptyRegex,
                 moneyContextPattern = emptyRegex,
+                textProgressPercentPattern = emptyRegex,
+                textProgressIncludeContextPattern = emptyRegex,
+                textProgressExcludeContextPattern = emptyRegex,
+                textProgressContextWindow = 80,
+                weatherPackageHints = emptySet(),
+                weatherContextPattern = emptyRegex,
+                weatherTemperaturePattern = emptyRegex,
+                weatherDayPattern = emptyRegex,
+                weatherConditionPattern = emptyRegex,
+                weatherConditionThunderPattern = emptyRegex,
+                weatherConditionRainPattern = emptyRegex,
+                weatherConditionSnowPattern = emptyRegex,
+                weatherConditionFogPattern = emptyRegex,
+                weatherConditionWindPattern = emptyRegex,
+                weatherConditionSunPattern = emptyRegex,
+                weatherConditionCloudPattern = emptyRegex,
+                vpnSpeedPattern = emptyRegex,
+                vpnContextPattern = emptyRegex,
+                vpnPackageMarkers = emptySet(),
+                vpnDownloadMarkers = emptySet(),
+                vpnUploadMarkers = emptySet(),
+                externalDeviceNamePatterns = emptyList(),
+                externalDeviceGenericNames = emptySet(),
+                navigationInstructionPattern = emptyRegex,
                 otpCodePatterns = emptyList(),
                 orderContextHints = emptySet(),
                 entityTokenPatterns = emptyList(),
@@ -44,6 +100,22 @@ internal data class LiveParserDictionary(
             }
 
             val smartRules = parseSmartRules(root.optJSONArray("smart_rules")) ?: defaults.smartRules
+            val blockedSourcePackages =
+                parseStringSet(root.optJSONArray("blocked_source_packages")).ifEmpty {
+                    defaults.blockedSourcePackages
+                }
+            val knownNavigationPackages =
+                parseStringSet(root.optJSONArray("known_navigation_packages")).ifEmpty {
+                    defaults.knownNavigationPackages
+                }
+            val navigationPackageMarkers =
+                parseStringSet(root.optJSONArray("navigation_package_markers")).ifEmpty {
+                    defaults.navigationPackageMarkers
+                }
+            val navigationDistancePattern = parseRegex(
+                root.optString("navigation_distance_pattern"),
+                ignoreCase = true
+            ) ?: defaults.navigationDistancePattern
             val otpStrongTriggers =
                 parseStringSet(root.optJSONArray("otp_strong_triggers")).ifEmpty { defaults.otpStrongTriggers }
             val otpLooseTriggerPattern = parseRegex(
@@ -54,6 +126,104 @@ internal data class LiveParserDictionary(
                 root.optString("money_context_pattern"),
                 ignoreCase = true
             ) ?: defaults.moneyContextPattern
+            val textProgressPercentPattern = parseRegex(
+                root.optString("text_progress_percent_pattern"),
+                ignoreCase = true
+            ) ?: defaults.textProgressPercentPattern
+            val textProgressIncludeContextPattern = parseRegex(
+                root.optString("text_progress_include_context_pattern"),
+                ignoreCase = true
+            ) ?: defaults.textProgressIncludeContextPattern
+            val textProgressExcludeContextPattern = parseRegex(
+                root.optString("text_progress_exclude_context_pattern"),
+                ignoreCase = true
+            ) ?: defaults.textProgressExcludeContextPattern
+            val textProgressContextWindow =
+                root.optInt("text_progress_context_window", defaults.textProgressContextWindow)
+                    .coerceIn(24, 240)
+            val weatherPackageHints =
+                parseStringSet(root.optJSONArray("weather_package_hints")).ifEmpty {
+                    defaults.weatherPackageHints
+                }
+            val weatherContextPattern = parseRegex(
+                root.optString("weather_context_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherContextPattern
+            val parsedWeatherTemperaturePattern = parseRegex(
+                root.optString("weather_temperature_pattern"),
+                ignoreCase = true
+            )
+            val weatherTemperaturePattern = parsedWeatherTemperaturePattern
+                ?.takeIf { it.containsMatchIn("1°") && it.containsMatchIn("-5°") }
+                ?: defaults.weatherTemperaturePattern
+            val weatherDayPattern = parseRegex(
+                root.optString("weather_day_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherDayPattern
+            val weatherConditionPattern = parseRegex(
+                root.optString("weather_condition_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherConditionPattern
+            val weatherConditionThunderPattern = parseRegex(
+                root.optString("weather_condition_thunder_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherConditionThunderPattern
+            val weatherConditionRainPattern = parseRegex(
+                root.optString("weather_condition_rain_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherConditionRainPattern
+            val weatherConditionSnowPattern = parseRegex(
+                root.optString("weather_condition_snow_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherConditionSnowPattern
+            val weatherConditionFogPattern = parseRegex(
+                root.optString("weather_condition_fog_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherConditionFogPattern
+            val weatherConditionWindPattern = parseRegex(
+                root.optString("weather_condition_wind_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherConditionWindPattern
+            val weatherConditionSunPattern = parseRegex(
+                root.optString("weather_condition_sun_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherConditionSunPattern
+            val weatherConditionCloudPattern = parseRegex(
+                root.optString("weather_condition_cloud_pattern"),
+                ignoreCase = true
+            ) ?: defaults.weatherConditionCloudPattern
+            val vpnSpeedPattern = parseRegex(
+                root.optString("vpn_speed_pattern"),
+                ignoreCase = true
+            ) ?: defaults.vpnSpeedPattern
+            val vpnContextPattern = parseRegex(
+                root.optString("vpn_context_pattern"),
+                ignoreCase = true
+            ) ?: defaults.vpnContextPattern
+            val vpnPackageMarkers =
+                parseStringSet(root.optJSONArray("vpn_package_markers")).ifEmpty {
+                    defaults.vpnPackageMarkers
+                }
+            val vpnDownloadMarkers =
+                parseStringSet(root.optJSONArray("vpn_download_markers")).ifEmpty {
+                    defaults.vpnDownloadMarkers
+                }
+            val vpnUploadMarkers =
+                parseStringSet(root.optJSONArray("vpn_upload_markers")).ifEmpty {
+                    defaults.vpnUploadMarkers
+                }
+            val externalDeviceNamePatterns =
+                parseRegexList(root.optJSONArray("external_device_name_patterns"), ignoreCase = true).ifEmpty {
+                    defaults.externalDeviceNamePatterns
+                }
+            val externalDeviceGenericNames =
+                parseStringSet(root.optJSONArray("external_device_generic_names")).ifEmpty {
+                    defaults.externalDeviceGenericNames
+                }
+            val navigationInstructionPattern = parseRegex(
+                root.optString("navigation_instruction_pattern"),
+                ignoreCase = true
+            ) ?: defaults.navigationInstructionPattern
 
             val otpCodePatterns =
                 parseRegexList(root.optJSONArray("otp_code_patterns"), ignoreCase = false).ifEmpty {
@@ -72,9 +242,37 @@ internal data class LiveParserDictionary(
 
             return LiveParserDictionary(
                 smartRules = smartRules,
+                blockedSourcePackages = blockedSourcePackages,
+                knownNavigationPackages = knownNavigationPackages,
+                navigationPackageMarkers = navigationPackageMarkers,
+                navigationDistancePattern = navigationDistancePattern,
                 otpStrongTriggers = otpStrongTriggers,
                 otpLooseTriggerPattern = otpLooseTriggerPattern,
                 moneyContextPattern = moneyContextPattern,
+                textProgressPercentPattern = textProgressPercentPattern,
+                textProgressIncludeContextPattern = textProgressIncludeContextPattern,
+                textProgressExcludeContextPattern = textProgressExcludeContextPattern,
+                textProgressContextWindow = textProgressContextWindow,
+                weatherPackageHints = weatherPackageHints,
+                weatherContextPattern = weatherContextPattern,
+                weatherTemperaturePattern = weatherTemperaturePattern,
+                weatherDayPattern = weatherDayPattern,
+                weatherConditionPattern = weatherConditionPattern,
+                weatherConditionThunderPattern = weatherConditionThunderPattern,
+                weatherConditionRainPattern = weatherConditionRainPattern,
+                weatherConditionSnowPattern = weatherConditionSnowPattern,
+                weatherConditionFogPattern = weatherConditionFogPattern,
+                weatherConditionWindPattern = weatherConditionWindPattern,
+                weatherConditionSunPattern = weatherConditionSunPattern,
+                weatherConditionCloudPattern = weatherConditionCloudPattern,
+                vpnSpeedPattern = vpnSpeedPattern,
+                vpnContextPattern = vpnContextPattern,
+                vpnPackageMarkers = vpnPackageMarkers,
+                vpnDownloadMarkers = vpnDownloadMarkers,
+                vpnUploadMarkers = vpnUploadMarkers,
+                externalDeviceNamePatterns = externalDeviceNamePatterns,
+                externalDeviceGenericNames = externalDeviceGenericNames,
+                navigationInstructionPattern = navigationInstructionPattern,
                 otpCodePatterns = otpCodePatterns,
                 orderContextHints = orderContextHints,
                 entityTokenPatterns = entityTokenPatterns,

@@ -13,6 +13,8 @@ import '../platform/livebridge_platform.dart';
 import '../widgets/shared_widgets.dart';
 import 'app_presentation_settings_page.dart';
 
+enum _PackagePickerTarget { conversion, otp, bypass }
+
 class LiveBridgeHomePage extends StatefulWidget {
   const LiveBridgeHomePage({super.key});
 
@@ -26,14 +28,18 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       'https://github.com/appsfolder/livebridge';
   static const String _projectGithubReleasesUrl =
       'https://github.com/appsfolder/livebridge/releases';
+  static const String _projectGithubBugReportUrl =
+      'https://github.com/appsfolder/livebridge/issues/new/choose?template=bug_report.yml';
   static const String _latestReleaseApiUrl =
       'https://api.github.com/repos/appsfolder/livebridge/releases/latest';
   static const String _dictionaryRawUrl =
       'https://raw.githubusercontent.com/appsfolder/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
+  static const bool _dictionaryAutoSyncEnabled = false;
   static const Duration _updateCheckInterval = Duration(hours: 6);
 
   final TextEditingController _rulesController = TextEditingController();
   final TextEditingController _otpRulesController = TextEditingController();
+  final TextEditingController _bypassRulesController = TextEditingController();
 
   Timer? _statusRefreshTimer;
   Timer? _updateRefreshTimer;
@@ -46,11 +52,17 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _canPostPromoted = false;
   bool _converterEnabled = true;
   bool _keepAliveForegroundEnabled = false;
+  bool _syncDndEnabled = false;
   bool _aospCuttingEnabled = false;
+  bool _animatedIslandEnabled = false;
+  bool _hyperBridgeEnabled = false;
   bool _onlyWithProgress = true;
   bool _textProgressEnabled = true;
   bool _smartDetectionEnabled = true;
   bool _smartNavigationEnabled = true;
+  bool _smartWeatherEnabled = true;
+  bool _smartExternalDevicesEnabled = true;
+  bool _smartVpnEnabled = true;
   bool _otpDetectionEnabled = true;
   bool _otpAutoCopyEnabled = false;
   bool _hasCustomParserDictionary = false;
@@ -67,9 +79,14 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   String _currentAppVersion = '';
   String _deviceLabelForWarning = '';
   final Set<String> _expandedSections = <String>{};
+  final Set<String> _expandedSelectedAppNotes = <String>{};
+  final Map<String, InstalledApp> _previewAppsByPackage =
+      <String, InstalledApp>{};
   bool _expandedSectionsLoaded = false;
   bool _hasPersistedExpandedSections = false;
   bool _didInitSectionDefaults = false;
+  bool _previewAppsLoaded = false;
+  bool _previewAppsLoading = false;
   PackageMode _packageMode = PackageMode.all;
   PackageMode _otpPackageMode = PackageMode.all;
   late final AnimationController _masterBlockedShakeController;
@@ -77,7 +94,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _masterBlockedHapticInProgress = false;
 
   bool get _canToggleMaster => _listenerEnabled && _notificationsGranted;
-  bool get _effectiveConverterEnabled => _canToggleMaster && _converterEnabled;
+  bool get _masterSwitchValue => _canToggleMaster && _converterEnabled;
   bool get _hasAllAccessPermissions =>
       _listenerEnabled &&
       _notificationsGranted &&
@@ -142,12 +159,14 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     _masterBlockedShakeController.dispose();
     _rulesController.dispose();
     _otpRulesController.dispose();
+    _bypassRulesController.dispose();
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshState(showLoading: false));
       unawaited(_checkForUpdatesIfNeeded());
     }
   }
@@ -180,8 +199,13 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getConverterEnabled();
       final bool keepAliveForegroundEnabled =
           await LiveBridgePlatform.getKeepAliveForegroundEnabled();
+      final bool syncDndEnabled = await LiveBridgePlatform.getSyncDndEnabled();
       final bool aospCuttingEnabled =
           await LiveBridgePlatform.getAospCuttingEnabled();
+      final bool animatedIslandEnabled =
+          await LiveBridgePlatform.getAnimatedIslandEnabled();
+      final bool hyperBridgeEnabled =
+          await LiveBridgePlatform.getHyperBridgeEnabled();
       final bool onlyWithProgress =
           await LiveBridgePlatform.getOnlyWithProgress();
       final bool textProgressEnabled =
@@ -190,6 +214,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getSmartStatusDetectionEnabled();
       final bool smartNavigationEnabled =
           await LiveBridgePlatform.getSmartNavigationEnabled();
+      final bool smartWeatherEnabled =
+          await LiveBridgePlatform.getSmartWeatherEnabled();
+      final bool smartExternalDevicesEnabled =
+          await LiveBridgePlatform.getSmartExternalDevicesEnabled();
+      final bool smartVpnEnabled =
+          await LiveBridgePlatform.getSmartVpnEnabled();
       final bool otpDetectionEnabled =
           await LiveBridgePlatform.getOtpDetectionEnabled();
       final bool otpAutoCopyEnabled =
@@ -229,6 +259,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       final PackageMode packageMode = PackageModeId.from(
         await LiveBridgePlatform.getPackageMode(),
       );
+      final String bypassPackageRules =
+          await LiveBridgePlatform.getBypassPackageRules();
       final String otpPackageRules =
           await LiveBridgePlatform.getOtpPackageRules();
       final PackageMode otpPackageMode = PackageModeId.from(
@@ -266,11 +298,17 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _canPostPromoted = canPostPromoted;
         _converterEnabled = converterEnabled;
         _keepAliveForegroundEnabled = keepAliveForegroundEnabled;
+        _syncDndEnabled = syncDndEnabled;
         _aospCuttingEnabled = aospCuttingEnabled;
+        _animatedIslandEnabled = animatedIslandEnabled;
+        _hyperBridgeEnabled = hyperBridgeEnabled;
         _onlyWithProgress = onlyWithProgress;
         _textProgressEnabled = textProgressEnabled;
         _smartDetectionEnabled = smartDetectionEnabled;
         _smartNavigationEnabled = smartNavigationEnabled;
+        _smartWeatherEnabled = smartWeatherEnabled;
+        _smartExternalDevicesEnabled = smartExternalDevicesEnabled;
+        _smartVpnEnabled = smartVpnEnabled;
         _otpDetectionEnabled = otpDetectionEnabled;
         _otpAutoCopyEnabled = otpAutoCopyEnabled;
         _updateChecksEnabled = updateChecksEnabled;
@@ -292,6 +330,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _packageMode = packageMode;
         _otpPackageMode = otpPackageMode;
         _rulesController.text = packageRules;
+        _bypassRulesController.text = bypassPackageRules;
         _otpRulesController.text = otpPackageRules;
         _isLoading = false;
       });
@@ -316,14 +355,22 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     }
   }
 
-  Future<void> _persistRules({required bool otpMode}) async {
+  Future<void> _persistRules({required _PackagePickerTarget target}) async {
     try {
-      if (otpMode) {
-        await LiveBridgePlatform.setOtpPackageRules(_otpRulesController.text);
-        await LiveBridgePlatform.setOtpPackageMode(_otpPackageMode.id);
-      } else {
-        await LiveBridgePlatform.setPackageRules(_rulesController.text);
-        await LiveBridgePlatform.setPackageMode(_packageMode.id);
+      switch (target) {
+        case _PackagePickerTarget.conversion:
+          await LiveBridgePlatform.setPackageRules(_rulesController.text);
+          await LiveBridgePlatform.setPackageMode(_packageMode.id);
+          break;
+        case _PackagePickerTarget.otp:
+          await LiveBridgePlatform.setOtpPackageRules(_otpRulesController.text);
+          await LiveBridgePlatform.setOtpPackageMode(_otpPackageMode.id);
+          break;
+        case _PackagePickerTarget.bypass:
+          await LiveBridgePlatform.setBypassPackageRules(
+            _bypassRulesController.text,
+          );
+          break;
       }
     } catch (_) {
       if (mounted) {
@@ -357,6 +404,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setKeepAliveForegroundEnabled(value);
   }
 
+  Future<void> _setSyncDnd(bool value) async {
+    HapticFeedback.selectionClick();
+    setState(() => _syncDndEnabled = value);
+    await LiveBridgePlatform.setSyncDndEnabled(value);
+  }
+
   Future<void> _setAospCutting(bool value) async {
     HapticFeedback.selectionClick();
     setState(() => _aospCuttingEnabled = value);
@@ -367,6 +420,18 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     HapticFeedback.selectionClick();
     setState(() => _samsungRemoteReparserEnabled = value);
     await LiveBridgePlatform.setSamsungRemoteReparserEnabled(value);
+  }
+
+  Future<void> _setAnimatedIsland(bool value) async {
+    HapticFeedback.selectionClick();
+    setState(() => _animatedIslandEnabled = value);
+    await LiveBridgePlatform.setAnimatedIslandEnabled(value);
+  }
+
+  Future<void> _setHyperBridge(bool value) async {
+    HapticFeedback.selectionClick();
+    setState(() => _hyperBridgeEnabled = value);
+    await LiveBridgePlatform.setHyperBridgeEnabled(value);
   }
 
   Future<void> _setUpdateChecksEnabled(bool value) async {
@@ -401,54 +466,168 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       }
 
       await LiveBridgePlatform.setUpdateLastCheckAtMs(nowMs);
-
-      final _GithubReleaseInfo? latest = await _fetchLatestRelease();
-      if (latest == null) {
-        return;
-      }
-
-      final String currentVersion = _currentAppVersion.isNotEmpty
-          ? _currentAppVersion
-          : await LiveBridgePlatform.getAppVersionName();
-      final bool hasUpdate = _isReleaseNewer(
-        currentVersion: currentVersion,
-        latestVersion: latest.version,
-      );
-
-      await LiveBridgePlatform.setUpdateCachedLatestVersion(latest.version);
-      await LiveBridgePlatform.setUpdateCachedAvailable(hasUpdate);
-
-      if (!mounted) {
-        return;
-      }
-      setState(() {
-        _currentAppVersion = currentVersion;
-        _latestReleaseVersion = latest.version;
-        _updateAvailable = hasUpdate;
-      });
-
-      if (!hasUpdate) {
-        return;
-      }
-
-      final String lastNotifiedVersion =
-          await LiveBridgePlatform.getUpdateLastNotifiedVersion();
-      if (lastNotifiedVersion == latest.version) {
-        return;
-      }
-
-      final bool notified =
-          await LiveBridgePlatform.showUpdateAvailableNotification(
-            version: latest.version,
-            releaseUrl: latest.htmlUrl,
-          );
-      if (notified) {
-        await LiveBridgePlatform.setUpdateLastNotifiedVersion(latest.version);
+      await _checkReleaseUpdateAvailability();
+      if (_dictionaryAutoSyncEnabled) {
+        await _syncParserDictionaryWithGithubIfNeeded();
       }
     } catch (_) {
     } finally {
       _isCheckingUpdates = false;
     }
+  }
+
+  Future<void> _checkReleaseUpdateAvailability() async {
+    final _GithubReleaseInfo? latest = await _fetchLatestRelease();
+    if (latest == null) {
+      return;
+    }
+
+    final String currentVersion = _currentAppVersion.isNotEmpty
+        ? _currentAppVersion
+        : await LiveBridgePlatform.getAppVersionName();
+    final bool hasUpdate = _isReleaseNewer(
+      currentVersion: currentVersion,
+      latestVersion: latest.version,
+    );
+
+    await LiveBridgePlatform.setUpdateCachedLatestVersion(latest.version);
+    await LiveBridgePlatform.setUpdateCachedAvailable(hasUpdate);
+
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _currentAppVersion = currentVersion;
+      _latestReleaseVersion = latest.version;
+      _updateAvailable = hasUpdate;
+    });
+
+    if (!hasUpdate) {
+      return;
+    }
+
+    final String lastNotifiedVersion =
+        await LiveBridgePlatform.getUpdateLastNotifiedVersion();
+    if (lastNotifiedVersion == latest.version) {
+      return;
+    }
+
+    final bool notified =
+        await LiveBridgePlatform.showUpdateAvailableNotification(
+          version: latest.version,
+          releaseUrl: latest.htmlUrl,
+        );
+    if (notified) {
+      await LiveBridgePlatform.setUpdateLastNotifiedVersion(latest.version);
+    }
+  }
+
+  Future<void> _syncParserDictionaryWithGithubIfNeeded() async {
+    if (_dictionaryActionInProgress) {
+      return;
+    }
+
+    final _GithubDictionaryInfo? githubDictionary =
+        await _fetchGithubDictionary();
+    if (githubDictionary == null) {
+      return;
+    }
+
+    final String localRaw = (await LiveBridgePlatform.getParserDictionaryJson())
+        .trim();
+    final String? localNormalized = _normalizeDictionaryJson(localRaw);
+    if (localNormalized == githubDictionary.normalized) {
+      return;
+    }
+
+    final bool saved = await LiveBridgePlatform.setCustomParserDictionary(
+      githubDictionary.raw,
+    );
+    if (saved && mounted) {
+      setState(() => _hasCustomParserDictionary = true);
+    }
+  }
+
+  Future<_GithubDictionaryInfo?> _fetchGithubDictionary() async {
+    final HttpClient client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 8);
+    try {
+      final HttpClientRequest request = await client.getUrl(
+        Uri.parse(_dictionaryRawUrl),
+      );
+      request.headers.set(HttpHeaders.acceptHeader, 'application/json');
+      request.headers.set(
+        HttpHeaders.userAgentHeader,
+        _currentAppVersion.isNotEmpty
+            ? 'LiveBridge/${_currentAppVersion.trim()}'
+            : 'LiveBridge/dictionary-auto-sync',
+      );
+
+      final HttpClientResponse response = await request.close();
+      if (response.statusCode != HttpStatus.ok) {
+        return null;
+      }
+
+      final String raw = (await utf8.decoder.bind(response).join()).trim();
+      if (raw.isEmpty) {
+        return null;
+      }
+
+      final String? normalized = _normalizeDictionaryJson(raw);
+      if (normalized == null) {
+        return null;
+      }
+
+      return _GithubDictionaryInfo(raw: raw, normalized: normalized);
+    } catch (_) {
+      return null;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
+  String? _normalizeDictionaryJson(String raw) {
+    final String payload = raw.trim();
+    if (payload.isEmpty) {
+      return null;
+    }
+    try {
+      final dynamic decoded = jsonDecode(payload);
+      if (decoded is! Map) {
+        return null;
+      }
+      return jsonEncode(_normalizeJsonNode(decoded));
+    } catch (_) {
+      return null;
+    }
+  }
+
+  dynamic _normalizeJsonNode(dynamic value) {
+    if (value is Map) {
+      final List<MapEntry<String, dynamic>> entries =
+          value.entries
+              .map(
+                (MapEntry<dynamic, dynamic> entry) => MapEntry<String, dynamic>(
+                  entry.key.toString(),
+                  _normalizeJsonNode(entry.value),
+                ),
+              )
+              .toList()
+            ..sort(
+              (
+                MapEntry<String, dynamic> left,
+                MapEntry<String, dynamic> right,
+              ) => left.key.compareTo(right.key),
+            );
+      return <String, dynamic>{
+        for (final MapEntry<String, dynamic> entry in entries)
+          entry.key: entry.value,
+      };
+    }
+    if (value is List) {
+      return value.map<dynamic>(_normalizeJsonNode).toList(growable: false);
+    }
+    return value;
   }
 
   Future<_GithubReleaseInfo?> _fetchLatestRelease() async {
@@ -592,6 +771,24 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setSmartNavigationEnabled(value);
   }
 
+  Future<void> _setSmartWeather(bool value) async {
+    HapticFeedback.selectionClick();
+    setState(() => _smartWeatherEnabled = value);
+    await LiveBridgePlatform.setSmartWeatherEnabled(value);
+  }
+
+  Future<void> _setSmartExternalDevices(bool value) async {
+    HapticFeedback.selectionClick();
+    setState(() => _smartExternalDevicesEnabled = value);
+    await LiveBridgePlatform.setSmartExternalDevicesEnabled(value);
+  }
+
+  Future<void> _setSmartVpn(bool value) async {
+    HapticFeedback.selectionClick();
+    setState(() => _smartVpnEnabled = value);
+    await LiveBridgePlatform.setSmartVpnEnabled(value);
+  }
+
   Future<void> _setOtpDetection(bool value) async {
     HapticFeedback.selectionClick();
     setState(() => _otpDetectionEnabled = value);
@@ -612,20 +809,64 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         .toSet();
   }
 
-  Future<void> _openPackagePicker({required bool otpMode}) async {
+  void _cachePreviewApps(List<InstalledApp> apps) {
+    for (final InstalledApp app in apps) {
+      _previewAppsByPackage[app.packageName.toLowerCase()] = app;
+    }
+    _previewAppsLoaded = true;
+  }
+
+  Future<void> _ensurePreviewAppsLoaded() async {
+    if (_previewAppsLoaded || _previewAppsLoading) {
+      return;
+    }
+    _previewAppsLoading = true;
+    try {
+      final List<InstalledApp> apps =
+          await LiveBridgePlatform.getInstalledApps();
+      _cachePreviewApps(apps);
+    } catch (_) {
+    } finally {
+      _previewAppsLoading = false;
+      if (mounted) {
+        setState(() {});
+      }
+    }
+  }
+
+  Future<void> _openPackagePicker({
+    required _PackagePickerTarget target,
+  }) async {
     if (!await _ensureAppListAccess()) return;
     HapticFeedback.lightImpact();
 
-    final List<InstalledApp> apps = await LiveBridgePlatform.getInstalledApps();
+    final List<InstalledApp> apps = await LiveBridgePlatform.getInstalledApps(
+      forceRefresh: true,
+    );
     if (!mounted || apps.isEmpty) {
       if (mounted) _snack(AppStrings.of(context).appsLoadFailed);
       return;
     }
 
-    final TextEditingController target = otpMode
-        ? _otpRulesController
-        : _rulesController;
-    final Set<String> initial = _parsePackagesFromInput(target.text);
+    final AppStrings s = AppStrings.of(context);
+    _cachePreviewApps(apps);
+    late final TextEditingController targetController;
+    late final String pickerTitle;
+    switch (target) {
+      case _PackagePickerTarget.conversion:
+        targetController = _rulesController;
+        pickerTitle = s.pickerTitle;
+        break;
+      case _PackagePickerTarget.otp:
+        targetController = _otpRulesController;
+        pickerTitle = s.otpPickerTitle;
+        break;
+      case _PackagePickerTarget.bypass:
+        targetController = _bypassRulesController;
+        pickerTitle = s.bypassPickerTitle;
+        break;
+    }
+    final Set<String> initial = _parsePackagesFromInput(targetController.text);
 
     final Set<String>? selected = await showModalBottomSheet<Set<String>>(
       context: context,
@@ -637,13 +878,13 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       ),
       builder: (BuildContext context) {
         return PackagePickerSheet(
-          title: otpMode
-              ? AppStrings.of(context).otpPickerTitle
-              : AppStrings.of(context).pickerTitle,
+          title: pickerTitle,
           apps: apps,
           initialSelected: initial,
-          applyLabel: AppStrings.of(context).applySelection,
-          searchHint: AppStrings.of(context).searchAppHint,
+          applyLabel: s.applySelection,
+          searchHint: s.searchAppHint,
+          showSystemAppsLabel: s.showSystemApps,
+          hideSystemAppsLabel: s.hideSystemApps,
         );
       },
     );
@@ -652,9 +893,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
 
     final List<String> values = selected.toList()..sort();
     setState(() {
-      target.text = values.join('\n');
+      targetController.text = values.join('\n');
     });
-    await _persistRules(otpMode: otpMode);
+    await _persistRules(target: target);
   }
 
   Future<void> _openAppPresentationSettings() async {
@@ -899,14 +1140,148 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     }
   }
 
+  Future<bool> _launchGithubUrl(Uri uri) async {
+    final bool openedInBrowserView = await launchUrl(
+      uri,
+      mode: LaunchMode.inAppBrowserView,
+    );
+    if (openedInBrowserView) {
+      return true;
+    }
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
   Future<void> _openGithub() async {
     final Uri uri = Uri.parse(
       _hasUpdateAlert ? _projectGithubReleasesUrl : _projectGithubUrl,
     );
-    final bool opened = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
+    final bool opened = await _launchGithubUrl(uri);
+    if (!opened && mounted) {
+      _snack(AppStrings.of(context).githubOpenFailed);
+    }
+  }
+
+  List<String> _parseRulesText(String raw) {
+    return raw
+        .split(RegExp(r'[\s,\n\r\t;]+'))
+        .map((String item) => item.trim())
+        .where((String item) => item.isNotEmpty)
+        .toList();
+  }
+
+  Future<String> _buildBugReportDiagnosticsJson({
+    required String localeTag,
+  }) async {
+    final DateTime now = DateTime.now();
+    final DeviceInfo deviceInfo = await LiveBridgePlatform.getDeviceInfo();
+    final String appPresentationOverridesRaw =
+        await LiveBridgePlatform.getAppPresentationOverrides();
+
+    final List<String> packageRules = _parseRulesText(_rulesController.text);
+    final List<String> bypassPackageRules = _parseRulesText(
+      _bypassRulesController.text,
     );
+    final List<String> otpPackageRules = _parseRulesText(
+      _otpRulesController.text,
+    );
+    final List<String> expandedSections = _expandedSections.toList()..sort();
+
+    final Map<String, dynamic> payload = <String, dynamic>{
+      'schema': 'livebridge_bug_report_v1',
+      'generated_at_utc': now.toUtc().toIso8601String(),
+      'generated_at_local': now.toIso8601String(),
+      'timezone_name': now.timeZoneName,
+      'timezone_offset_minutes': now.timeZoneOffset.inMinutes,
+      'locale': localeTag,
+      'platform': <String, dynamic>{
+        'os': Platform.operatingSystem,
+        'os_version': Platform.operatingSystemVersion,
+      },
+      'app': <String, dynamic>{
+        'version': _currentAppVersion,
+        'latest_release_version': _latestReleaseVersion,
+        'update_available': _updateAvailable,
+      },
+      'device': <String, dynamic>{
+        'label': deviceInfo.label,
+        'manufacturer': deviceInfo.manufacturer,
+        'brand': deviceInfo.brand,
+        'market_name': deviceInfo.marketName,
+        'model': deviceInfo.model,
+        'raw_model': deviceInfo.rawModel,
+        'product': deviceInfo.product,
+        'display': deviceInfo.display,
+        'fingerprint': deviceInfo.fingerprint,
+        'is_pixel': deviceInfo.isPixel,
+        'is_samsung': deviceInfo.isSamsung,
+        'is_aosp_device': deviceInfo.isAospDevice,
+        'hide_live_updates_promotion':
+            deviceInfo.shouldHideLiveUpdatesPromotion,
+      },
+      'permissions': <String, dynamic>{
+        'listener_enabled': _listenerEnabled,
+        'notifications_granted': _notificationsGranted,
+        'can_post_promoted': _canPostPromoted,
+      },
+      'settings': <String, dynamic>{
+        'converter_enabled': _converterEnabled,
+        'keep_alive_foreground_enabled': _keepAliveForegroundEnabled,
+        'sync_dnd_enabled': _syncDndEnabled,
+        'update_checks_enabled': _updateChecksEnabled,
+        'only_with_progress': _onlyWithProgress,
+        'text_progress_enabled': _textProgressEnabled,
+        'smart_detection_enabled': _smartDetectionEnabled,
+        'smart_navigation_enabled': _smartNavigationEnabled,
+        'smart_weather_enabled': _smartWeatherEnabled,
+        'smart_external_devices_enabled': _smartExternalDevicesEnabled,
+        'smart_vpn_enabled': _smartVpnEnabled,
+        'otp_detection_enabled': _otpDetectionEnabled,
+        'otp_auto_copy_enabled': _otpAutoCopyEnabled,
+        'aosp_cutting_enabled': _aospCuttingEnabled,
+        'animated_island_enabled': _animatedIslandEnabled,
+        'hyper_bridge_enabled': _hyperBridgeEnabled,
+      },
+      'rules': <String, dynamic>{
+        'package_mode': _packageMode.id,
+        'package_rules': packageRules,
+        'package_rules_count': packageRules.length,
+        'bypass_package_rules': bypassPackageRules,
+        'bypass_package_rules_count': bypassPackageRules.length,
+        'otp_package_mode': _otpPackageMode.id,
+        'otp_package_rules': otpPackageRules,
+        'otp_package_rules_count': otpPackageRules.length,
+      },
+      'additional_state': <String, dynamic>{
+        'has_custom_parser_dictionary': _hasCustomParserDictionary,
+        'app_presentation_overrides_length': appPresentationOverridesRaw.length,
+        'expanded_sections': expandedSections,
+      },
+    };
+
+    return const JsonEncoder.withIndent('  ').convert(payload);
+  }
+
+  Future<bool> _copyBugReportDiagnosticsToClipboard() async {
+    try {
+      final String localeTag = Localizations.localeOf(context).toLanguageTag();
+      final String payload = await _buildBugReportDiagnosticsJson(
+        localeTag: localeTag,
+      );
+      await Clipboard.setData(ClipboardData(text: payload));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _openBugReport() async {
+    final AppStrings s = AppStrings.of(context);
+    final bool copied = await _copyBugReportDiagnosticsToClipboard();
+    if (mounted) {
+      _snack(copied ? s.bugReportCopied : s.bugReportCopyFailed);
+    }
+    final Uri uri = Uri.parse(_projectGithubBugReportUrl);
+    final bool opened = await _launchGithubUrl(uri);
     if (!opened && mounted) {
       _snack(AppStrings.of(context).githubOpenFailed);
     }
@@ -937,6 +1312,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       'rules',
       'smart',
       'otp',
+      'experimental',
       'settings',
     };
     return raw
@@ -1025,6 +1401,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                     _buildSmartCard(s),
                     const SizedBox(height: 24),
                     _buildOtpCard(s),
+                    const SizedBox(height: 24),
+                    _buildExperimentalCard(s),
                     const SizedBox(height: 24),
                     _buildSettingsCard(s),
                   ],
@@ -1143,7 +1521,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Switch.adaptive(
-                        value: _effectiveConverterEnabled,
+                        value: _masterSwitchValue,
                         onChanged: _canToggleMaster
                             ? _setConverterEnabled
                             : null,
@@ -1199,9 +1577,27 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
             subtitle: Text(
-              _effectiveConverterEnabled
+              _converterEnabled
                   ? s.keepAliveForegroundSubtitle
                   : s.keepAliveForegroundInactiveSubtitle,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: colorScheme.primary,
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            value: _syncDndEnabled,
+            onChanged: _setSyncDnd,
+            title: Text(
+              s.syncDndTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              s.syncDndSubtitle,
               style: TextStyle(
                 color: colorScheme.onSurfaceVariant,
                 fontSize: 13,
@@ -1228,26 +1624,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             contentPadding: EdgeInsets.zero,
             activeThumbColor: colorScheme.primary,
           ),
-          if (_isSamsungDevice) ...<Widget>[
-            const SizedBox(height: 8),
-            SwitchListTile.adaptive(
-              value: _samsungRemoteReparserEnabled,
-              onChanged: _setSamsungRemoteReparserEnabled,
-              title: Text(
-                s.samsungRemoteParserTitle,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(
-                s.samsungRemoteParserSubtitle,
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 13,
-                ),
-              ),
-              contentPadding: EdgeInsets.zero,
-              activeThumbColor: colorScheme.primary,
-            ),
-          ],
           if (_isAospDevice) ...<Widget>[
             const SizedBox(height: 8),
             SwitchListTile.adaptive(
@@ -1401,6 +1777,84 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _openBugReport,
+              icon: const Icon(Icons.bug_report_rounded, size: 18),
+              label: Text(s.reportBug),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExperimentalCard(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return _sectionPanel(
+      sectionId: 'experimental',
+      title: s.experimentalTitle,
+      icon: Icons.science_rounded,
+      child: Column(
+        children: <Widget>[
+          SwitchListTile.adaptive(
+            value: _animatedIslandEnabled,
+            onChanged: _setAnimatedIsland,
+            title: Text(
+              s.animatedIslandTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              s.animatedIslandSubtitle,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: colorScheme.primary,
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            value: _hyperBridgeEnabled,
+            onChanged: _setHyperBridge,
+            title: Text(
+              s.hyperBridgeTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              s.hyperBridgeSubtitle,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: colorScheme.primary,
+          ),
+          if (_isSamsungDevice) ...<Widget>[
+            const SizedBox(height: 8),
+            SwitchListTile.adaptive(
+              value: _samsungRemoteReparserEnabled,
+              onChanged: _setSamsungRemoteReparserEnabled,
+              title: Text(
+                s.samsungRemoteParserTitle,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(
+                s.samsungRemoteParserSubtitle,
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 13,
+                ),
+              ),
+              contentPadding: EdgeInsets.zero,
+              activeThumbColor: colorScheme.primary,
+            ),
+          ],
         ],
       ),
     );
@@ -1564,6 +2018,16 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     required AppStrings s,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
+    final bool isLight = colorScheme.brightness == Brightness.light;
+    final Color fieldColor = isLight
+        ? Colors.white
+        : colorScheme.surfaceContainerLow;
+    final Color menuColor = isLight
+        ? Colors.white
+        : colorScheme.surfaceContainer;
+    final Color borderColor = colorScheme.primary.withValues(
+      alpha: isLight ? 0.5 : 0.65,
+    );
 
     return DropdownButtonFormField<PackageMode>(
       initialValue: currentValue,
@@ -1574,7 +2038,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         Icons.keyboard_arrow_down_rounded,
         color: colorScheme.onSurfaceVariant,
       ),
-      dropdownColor: colorScheme.surfaceContainer,
+      dropdownColor: menuColor,
       borderRadius: BorderRadius.circular(24),
       decoration: InputDecoration(
         labelText: label,
@@ -1584,10 +2048,18 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           color: colorScheme.onSurfaceVariant,
         ),
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        fillColor: fieldColor,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: borderColor, width: 1.2),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: borderColor, width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.8),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
@@ -1621,7 +2093,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               if (val != null) {
                 HapticFeedback.selectionClick();
                 setState(() => _packageMode = val);
-                unawaited(_persistRules(otpMode: false));
+                unawaited(
+                  _persistRules(target: _PackagePickerTarget.conversion),
+                );
               }
             },
             onTap: () => HapticFeedback.lightImpact(),
@@ -1629,9 +2103,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           ),
           const SizedBox(height: 16),
           _selectedAppsNote(
-            selectedCount: _parsePackagesFromInput(
-              _rulesController.text,
-            ).length,
+            noteId: 'conversion',
+            selectedPackages: _parsePackagesFromInput(_rulesController.text),
             s: s,
           ),
           const SizedBox(height: 8),
@@ -1643,7 +2116,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           ),
           const SizedBox(height: 16),
           _ruleButtonsRow(
-            onPick: () => _openPackagePicker(otpMode: false),
+            onPick: () =>
+                _openPackagePicker(target: _PackagePickerTarget.conversion),
             s: s,
           ),
           const Padding(
@@ -1685,6 +2159,35 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             contentPadding: EdgeInsets.zero,
             activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Divider(height: 1),
+          ),
+          Text(
+            s.bypassRulesTitle,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            s.bypassRulesSubtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _selectedAppsNote(
+            noteId: 'bypass',
+            selectedPackages: _parsePackagesFromInput(
+              _bypassRulesController.text,
+            ),
+            s: s,
+          ),
+          const SizedBox(height: 8),
+          _ruleButtonsRow(
+            onPick: () =>
+                _openPackagePicker(target: _PackagePickerTarget.bypass),
+            s: s,
+          ),
         ],
       ),
     );
@@ -1725,6 +2228,66 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             subtitle: Text(
               _smartDetectionEnabled
                   ? s.smartNavigationSubtitle
+                  : s.smartNavigationDisabledSubtitle,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            value: _smartWeatherEnabled,
+            onChanged: _smartDetectionEnabled ? _setSmartWeather : null,
+            title: Text(
+              s.smartWeatherTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              _smartDetectionEnabled
+                  ? s.smartWeatherSubtitle
+                  : s.smartNavigationDisabledSubtitle,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            value: _smartExternalDevicesEnabled,
+            onChanged: _smartDetectionEnabled ? _setSmartExternalDevices : null,
+            title: Text(
+              s.smartExternalDevicesTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              _smartDetectionEnabled
+                  ? s.smartExternalDevicesSubtitle
+                  : s.smartNavigationDisabledSubtitle,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            value: _smartVpnEnabled,
+            onChanged: _smartDetectionEnabled ? _setSmartVpn : null,
+            title: Text(
+              s.smartVpnTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              _smartDetectionEnabled
+                  ? s.smartVpnSubtitle
                   : s.smartNavigationDisabledSubtitle,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1802,7 +2365,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                       if (val != null) {
                         HapticFeedback.selectionClick();
                         setState(() => _otpPackageMode = val);
-                        unawaited(_persistRules(otpMode: true));
+                        unawaited(
+                          _persistRules(target: _PackagePickerTarget.otp),
+                        );
                       }
                     },
                     onTap: () => HapticFeedback.lightImpact(),
@@ -1810,9 +2375,10 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                   ),
                   const SizedBox(height: 16),
                   _selectedAppsNote(
-                    selectedCount: _parsePackagesFromInput(
+                    noteId: 'otp',
+                    selectedPackages: _parsePackagesFromInput(
                       _otpRulesController.text,
-                    ).length,
+                    ),
                     s: s,
                   ),
                   const SizedBox(height: 8),
@@ -1824,7 +2390,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                   ),
                   const SizedBox(height: 16),
                   _ruleButtonsRow(
-                    onPick: () => _openPackagePicker(otpMode: true),
+                    onPick: () =>
+                        _openPackagePicker(target: _PackagePickerTarget.otp),
                     s: s,
                   ),
                 ],
@@ -1908,10 +2475,39 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   }
 
   Widget _selectedAppsNote({
-    required int selectedCount,
+    required String noteId,
+    required Set<String> selectedPackages,
     required AppStrings s,
   }) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final int selectedCount = selectedPackages.length;
+    final bool expanded = _expandedSelectedAppNotes.contains(noteId);
+
+    final List<InstalledApp> selectedApps =
+        selectedPackages.map((String packageName) {
+          return _previewAppsByPackage[packageName] ??
+              InstalledApp(packageName: packageName, label: packageName);
+        }).toList()..sort(
+          (a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()),
+        );
+
+    Future<void> toggleExpanded() async {
+      if (selectedCount == 0) {
+        return;
+      }
+      HapticFeedback.selectionClick();
+      final bool opening = !expanded;
+      setState(() {
+        if (opening) {
+          _expandedSelectedAppNotes.add(noteId);
+        } else {
+          _expandedSelectedAppNotes.remove(noteId);
+        }
+      });
+      if (opening) {
+        await _ensurePreviewAppsLoaded();
+      }
+    }
 
     return Container(
       width: double.infinity,
@@ -1920,19 +2516,100 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         color: colorScheme.primaryContainer.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
+      child: Column(
         children: <Widget>[
-          Icon(Icons.checklist_rounded, size: 20, color: colorScheme.primary),
-          const SizedBox(width: 12),
-          Text(
-            selectedCount == 0
-                ? s.noAppsSelected
-                : s.selectedAppsCount(selectedCount),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.primary.withValues(alpha: 0.8),
+          GestureDetector(
+            onTap: selectedCount == 0 ? null : toggleExpanded,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.checklist_rounded,
+                    size: 20,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      selectedCount == 0
+                          ? s.noAppsSelected
+                          : s.selectedAppsCount(selectedCount),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.primary.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    expanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    color: selectedCount == 0
+                        ? colorScheme.onSurfaceVariant
+                        : colorScheme.primary,
+                  ),
+                ],
+              ),
             ),
           ),
+          if (expanded && selectedApps.isNotEmpty) ...<Widget>[
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            ...selectedApps.map((InstalledApp app) {
+              final Widget compactIcon = app.icon != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(7),
+                      child: Image.memory(
+                        app.icon!,
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.cover,
+                      ),
+                    )
+                  : Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(7),
+                      ),
+                      child: Center(
+                        child: Text(
+                          app.label.isNotEmpty
+                              ? app.label[0].toUpperCase()
+                              : '?',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    );
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: <Widget>[
+                    compactIcon,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        app.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );
@@ -2076,4 +2753,11 @@ class _GithubReleaseInfo {
 
   final String version;
   final String htmlUrl;
+}
+
+class _GithubDictionaryInfo {
+  const _GithubDictionaryInfo({required this.raw, required this.normalized});
+
+  final String raw;
+  final String normalized;
 }

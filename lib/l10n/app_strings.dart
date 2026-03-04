@@ -73,6 +73,13 @@ class AppStrings {
       : 'Grant notification listener access and notifications permission first.';
   String get githubUrl => 'github.com/appsfolder/livebridge';
   String get githubReleasesUrl => 'github.com/appsfolder/livebridge/releases';
+  String get reportBug => isRu ? 'Сообщить о баге' : 'Report a bug';
+  String get bugReportCopied => isRu
+      ? 'Диагностика скопирована в буфер. Вставьте в issue.'
+      : 'Diagnostics copied to clipboard. Paste it into the issue.';
+  String get bugReportCopyFailed => isRu
+      ? 'Не удалось скопировать диагностику.'
+      : 'Failed to copy diagnostics.';
   String get hideWarningBanner => isRu ? 'Скрыть' : 'Hide';
   String get backgroundWarningTitle =>
       isRu ? 'Важно для фоновой работы' : 'Background mode warning';
@@ -108,6 +115,10 @@ class AppStrings {
   String get keepAliveForegroundInactiveSubtitle => isRu
       ? 'Включите LiveBridge, чтобы режим начал работать.'
       : 'Enable the LiveBridge for this mode to take effect.';
+  String get syncDndTitle => isRu ? 'Синхронизировать DnD' : 'Sync DnD';
+  String get syncDndSubtitle => isRu
+      ? 'Если на смартфоне включен режим Не беспокоить, уведомления LiveBridge не показываются.'
+      : 'When Do Not Disturb is enabled on the phone, LiveBridge notifications are hidden.';
   String get updateChecksTitle =>
       isRu ? 'Проверка обновлений' : 'Update checking';
   String get updateChecksSubtitle => isRu
@@ -121,6 +132,16 @@ class AppStrings {
   String updateAvailableBanner(String version) => isRu
       ? 'Доступно обновление${version.isNotEmpty ? ': $version' : ''}'
       : 'Update available${version.isNotEmpty ? ': $version' : ''}';
+  String get experimentalTitle => isRu ? 'Экспериментальное' : 'Experimental';
+  String get animatedIslandTitle =>
+      isRu ? 'Анимированный остров' : 'Animated island';
+  String get animatedIslandSubtitle => isRu
+      ? 'Меняет короткий текст острова каждые 2-3 секунды для smart-уведомлений (может работать нестабильно).'
+      : 'Rotates compact island text every 2-3 seconds for smart notifications (may be unstable).';
+  String get hyperBridgeTitle => 'Xiaomi Hyper Island';
+  String get hyperBridgeSubtitle => isRu
+      ? 'Для Xiaomi Hyper OS 3.1 Глобальной: добавляет HyperOS Focus-параметры для нативного острова.'
+      : 'For Xiaomi Hyper OS 3.1 Global: injects HyperOS Focus parameters for native island behavior.';
   String get aospCuttingTitle => isRu ? 'Обрезка AOSP' : 'AOSP cutting';
   String get aospCuttingSubtitle => isRu
       ? 'Обрезать информацию в острове до 7 символов для красивого отображения в AOSP-прошивках.'
@@ -181,9 +202,15 @@ class AppStrings {
       isRu ? 'Приложения для конвертации' : 'Choose apps for conversion';
   String get otpPickerTitle =>
       isRu ? 'Приложения для кодов' : 'Choose apps for code detection';
+  String get bypassPickerTitle =>
+      isRu ? 'Приложения bypass' : 'Choose apps for bypass';
   String get applySelection => isRu ? 'Применить выбор' : 'Apply selection';
   String get searchAppHint =>
       isRu ? 'Поиск по названию или пакету' : 'Search by app or package';
+  String get showSystemApps =>
+      isRu ? 'Показать системные приложения' : 'Show system applications';
+  String get hideSystemApps =>
+      isRu ? 'Скрыть системные приложения' : 'Hide system applications';
   String get appsLoadFailed => isRu
       ? 'Не удалось загрузить список приложений.'
       : 'Unable to load installed apps list.';
@@ -215,6 +242,10 @@ class AppStrings {
   String get pickAppsHint => isRu
       ? 'Список используется только в режимах "Только указанные" или "Исключить".'
       : 'Selected app list is used only for include/exclude modes.';
+  String get bypassRulesTitle => isRu ? 'Bypass-приложения' : 'Bypass apps';
+  String get bypassRulesSubtitle => isRu
+      ? 'Приложения из списка всегда конвертируются в Live вне зависимости от настроек.'
+      : 'Listed apps are always converted to Live independently of settings.';
   String get saveRules => isRu ? 'Сохранить' : 'Save';
 
   String get smartDetectionTitle =>
@@ -232,6 +263,19 @@ class AppStrings {
   String get smartNavigationSubtitle => isRu
       ? 'Распознавание уведомлений навигации.'
       : 'Navigation notification detection.';
+  String get smartWeatherTitle => isRu ? 'Погода' : 'Weather';
+  String get smartWeatherSubtitle => isRu
+      ? 'Распознавание погодных уведомлений (температура в острове).'
+      : 'Weather notification detection (temperature in island).';
+  String get smartExternalDevicesTitle =>
+      isRu ? 'Внешние устройства' : 'External devices';
+  String get smartExternalDevicesSubtitle => isRu
+      ? 'Показывает статус connected/connecting и имя устройства в острове.'
+      : 'Shows connected/connecting status and device name in island.';
+  String get smartVpnTitle => isRu ? 'VPN-сервисы' : 'VPN services';
+  String get smartVpnSubtitle => isRu
+      ? 'Показывает входящий/исходящий трафик в формате *b/s.'
+      : 'Shows incoming/outgoing traffic speed in *b/s format.';
   String get smartNavigationDisabledSubtitle => isRu
       ? 'Сначала включите умное распознавание.'
       : 'Enable smart status detection first.';

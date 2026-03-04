@@ -15,38 +15,40 @@
       "text_triggers": [
         "заказ",
         "order",
-        "доставка",
-        "delivery",
         "курьер",
         "courier",
         "еда",
-        "food"
+        "food",
+        "ресторан",
+        "restaurant"
       ],
       "exclude_patterns": [
         "(с дн[её]м рождения|happy birthday|birthday)",
         "(дарим\\s+скидк|скидк[\\p{L}]*\\s*\\d+%|\\d+%\\s*(скидк|off)|акци[яи]|промокод|promo\\s*code|coupon|cash\\s*back|кэшб[еэ]к)",
-        "(при\\s+заказе\\s+от\\s*\\d|order\\s+from\\s*\\d)"
+        "(payment\\s*(?:failure|failed|declined|unsuccessful)|оплат[аы][^\\n]*(?:не\\s*прошл|ошибк|отклон|не\\s*успеш)|неудачн[а-я\\s]*оплат)",
+        "(при\\s+заказе\\s+от\\s*\\d|order\\s+from\\s*\\d)",
+        "(почт[аы]\\s+росси|посыл(?:к|ок)|маркетплейс|отделени[ея]|трек-?номер|tracking|shipment|parcel|пункт\\s*выдачи)"
       ],
       "signals": [
         {
           "stage": 4,
-          "pattern": "(доставлен|получен|delivered|completed|приятного аппетита|enjoy)"
+          "pattern": "(доставлен(?:а|о|ы)?|получен(?:а|о|ы)?|вручен(?:а|о|ы)?|delivery completed|order delivered|delivered|completed|приятного аппетита|enjoy(?: your meal)?)"
         },
         {
           "stage": 3,
-          "pattern": "(курьер[^\\n]*в пути|out for delivery|on the way|едет к вам)"
+          "pattern": "(курьер[^\\n]*(в пути|едет|уже рядом|подъезжа(?:ет|л)|забрал(?: заказ)?)|out for delivery|on the way|heading to you|едет к вам|доставля(?:ется|ем|ют)|передан[^\\n]*курьеру|courier[^\\n]*(picked up|heading|on the way|nearby))"
         },
         {
           "stage": 2,
-          "pattern": "(собираем|упаковываем|почти готов|packed|almost ready|ready for pickup)"
+          "pattern": "((?:заказ|order)[^\\n]{0,40}(готов(?:\\b|\\s)|собран|упакован|готов к выдаче|готов для выдачи|готов к самовывозу|ready(?:\\s+for\\s+(?:pickup|delivery))?)|собран(?:о|ы)?\\b|упакован(?:о|ы)?\\b|готов к выдаче|готов для выдачи|готов к самовывозу|ready for pickup|ready for delivery|packed|almost ready)"
         },
         {
           "stage": 1,
-          "pattern": "(готовится|готовим|preparing|in kitchen|is being prepared|is being cooked|being cooked|cooking|cooked for you)"
+          "pattern": "((?:заказ|order)[^\\n]{0,40}(собира(?:ем|ют|ется)|готов(?:ится|им)|начали готовить|в работе|в процессе)|собира(?:ем|ют|ется)[^\\n]{0,30}(?:заказ|order)|preparing|in kitchen|is being prepared|is being cooked|being cooked|cooking|assembling)"
         },
         {
           "stage": 0,
-          "pattern": "(заказ[^\\n]*(принят|создан)|order[^\\n]*(received|accepted|confirmed))"
+          "pattern": "(заказ[^\\n]*(принят|создан|оформлен|подтвержд[её]н|оплачен)|order[^\\n]*(received|accepted|confirmed|created|placed|paid)|оплат[аы][^\\n]*(прошла|подтверждена|успешна|принята)|payment[^\\n]*(successful|confirmed|received|accepted))"
         }
       ]
     },
@@ -105,29 +107,24 @@
         "навигац",
         "поверните",
         "сверните",
-        "держитесь",
         "развернитесь",
-        "пройдите",
-        "съезд",
-        "круговом",
-        "через",
         "пункт назначения",
-        "продолжайте движение",
-        "turn",
-        "keep",
-        "continue",
-        "head ",
-        "take the",
-        "exit",
-        "merge",
+        "съезд",
+        "кругов",
+        "route",
+        "turn left",
+        "turn right",
+        "keep left",
+        "keep right",
+        "take exit",
         "u-turn",
         "roundabout",
-        "destination",
-        "arrive"
+        "destination"
       ],
       "exclude_patterns": [
         "(с дн[её]м рождения|happy birthday|birthday)",
-        "(дарим\\s+скидк|скидк[\\p{L}]*\\s*\\d+%|\\d+%\\s*(скидк|off)|акци[яи]|промокод|promo\\s*code|coupon|cash\\s*back|кэшб[еэ]к)"
+        "(дарим\\s+скидк|скидк[\\p{L}]*\\s*\\d+%|\\d+%\\s*(скидк|off)|акци[яи]|промокод|promo\\s*code|coupon|cash\\s*back|кэшб[еэ]к)",
+        "(вы получили это письмо|отписаться от рассыл|unsubscribe|newsletter|follow us|скачать приложение|download app)"
       ],
       "signals": [
         {
@@ -147,16 +144,110 @@
           "pattern": "(маршрут построен|маршрут начат|navigation started|starting route|follow the route|route started)"
         }
       ]
+    },
+    {
+      "id": "external_device",
+      "max_stage": 2,
+      "package_hints": [
+        "camera",
+        "bluetooth",
+        "accessory",
+        "usb",
+        "gopro",
+        "dji"
+      ],
+      "text_triggers": [
+        "camera",
+        "bluetooth",
+        "accessory",
+        "usb",
+        "gopro",
+        "dji",
+        "pair",
+        "connected",
+        "connecting",
+        "is connected",
+        "подключ",
+        "соедин"
+      ],
+      "exclude_patterns": [
+        "(с дн[её]м рождения|happy birthday|birthday)",
+        "(дарим\\s+скидк|скидк[\\p{L}]*\\s*\\d+%|\\d+%\\s*(скидк|off)|акци[яи]|промокод|promo\\s*code|coupon|cash\\s*back|кэшб[еэ]к)",
+        "(hotspot|personal\\s+hotspot|tether(?:ing)?|wifi\\s+hotspot|точк[аеи]\\s+доступа|раздач[аи]\\s+интернета|клиент(?:ов|ы)?\\s+подключ(?:ен|ено|ены)?|\\b\\d+\\s+devices?\\b)"
+      ],
+      "signals": [
+        {
+          "stage": 2,
+          "pattern": "(connected\\b|pair(?:ed)?\\b|подключ(?:ен(?:а|о|ы)?|ено)\\b|соедин(?:ен(?:а|о|ы)?|ено)\\b)"
+        },
+        {
+          "stage": 1,
+          "pattern": "(connecting\\b|pair(?:ing)?\\b|подключ(?:ается|ение)\\b|соедин(?:яется|ение)\\b)"
+        }
+      ]
+    },
+    {
+      "id": "vpn",
+      "max_stage": 1,
+      "package_hints": [
+        "vpn",
+        "wireguard",
+        "openvpn",
+        "nordvpn",
+        "protonvpn",
+        "surfshark",
+        "expressvpn",
+        "outline",
+        "amnezia",
+        "clash",
+        "v2ray",
+        "hiddify",
+        "tailscale",
+        "zerotier"
+      ],
+      "text_triggers": [
+        "vpn",
+        "wireguard",
+        "openvpn",
+        "tunnel",
+        "туннел",
+        "secure connection",
+        "защищенн",
+        "виртуальн"
+      ],
+      "signals": [
+        {
+          "stage": 1,
+          "pattern": "(?<!\\d)\\d{1,4}(?:[.,]\\d{1,2})?\\s*(?:[kmgт]?i?[bб])\\s*(?:(?:/\\s*[sс])|(?:/\\s*sec)|ps)\\b"
+        }
+      ]
     }
   ],
+  "blocked_source_packages": ["ru.dublgis.dgismobile"],
+  "known_navigation_packages": [
+    "ru.yandex.yandexmaps",
+    "com.google.android.apps.maps",
+    "com.waze"
+  ],
+  "navigation_package_markers": ["navigation", "navigator", ".maps"],
+  "navigation_distance_pattern": "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
+  "navigation_instruction_pattern": "(поверните[^\\n,.;:!]*|сверните[^\\n,.;:!]*|держитесь[^\\n,.;:!]*|развернитесь|turn\\s+(?:left|right)|keep\\s+(?:left|right)|take\\s+exit|u-?turn|roundabout)",
   "otp_strong_triggers": [
     "otp",
     "one-time password",
     "one time password",
+    "verification",
     "verification code",
+    "verify code",
+    "code verification",
     "confirmation code",
     "confirm code",
+    "authentication code",
+    "authorization code",
     "security code",
+    "sign in code",
+    "signin code",
+    "login verification code",
     "login code",
     "account code",
     "payment code",
@@ -165,11 +256,20 @@
     "auth code",
     "sms code",
     "код подтверждения",
+    "код подтверждения входа",
     "код для подтверждения",
+    "код проверки",
+    "проверочный код",
+    "код верификации",
+    "код авторизации",
+    "код безопасности",
     "код входа",
+    "код для входа в аккаунт",
+    "код для подтверждения входа",
     "код для входа",
     "код для добавления",
     "код для добавления устройства",
+    "код подтверждения операции",
     "код оплаты",
     "код аккаунта",
     "одноразовый",
@@ -177,9 +277,113 @@
   ],
   "otp_loose_trigger_pattern": "(?:(?:\\bcode\\b|\\bкод\\b)\\s*[:#-]?\\s*\\d{4,8})",
   "money_context_pattern": "(₽|руб\\.?|rub|usd|eur|kzt|тенге|р\\.|\\$|€|price|total|amount|sum|сумм|цена|стоимост|итого)",
+  "text_progress_percent_pattern": "(?<!\\d)(\\d{1,3})\\s*%",
+  "text_progress_context_window": 80,
+  "text_progress_include_context_pattern": "(прогресс|выполн(?:ен|ено|яется|ение)|загруз(?:к|жается|жено)|скач(?:ив|ивает|ивание)|обновл(?:ен|ение|яется)|синхрон(?:изац|изируется)|обработ(?:к|ан|ает)|установ(?:к|лен)|remaining|progress|completed|completing|downloading|uploading|updating|installing|sync(?:ing)?|processing|processed|render(?:ing)?|encoding|decoding)",
+  "text_progress_exclude_context_pattern": "(скид|акци|промокод|промо|купон|распрод|кэшб[еэ]к|кешб[еэ]к|discount|promo|coupon|sale|cashback|off\\b|выгод|bonus|бонус|save|deal|special\\s+offer|limited\\s+time|дарим|подар|при\\s+заказ|при\\s+покуп|minimum\\s+order|order\\s+from|в\\s+приложени\\S*\\s+акци|\\d{2,7}\\s*(?:₽|руб\\.?|рубл(?:ей|я|ь)?|rur|usd|eur|\\$|€|kzt|тенге)|влажност|humidity|погод|weather|температур|temperature|давлен|pressure|осадк|precip|комисси|commission|fee\\b|налог|tax\\b|apr\\b|\\bставк(?:а|и|у|е|ой|ах|ам|ами)?\\b|годов(?:ых|ая)?\\s*процент|процентн(?:ая|ые|ых)\\s+ставк|ипотек|кредит|депозит|вклад|сбор\\b|маркетплейс|посыл(?:к|ок)|почт[аы])",
+  "weather_package_hints": [
+    "weather",
+    "meteo",
+    "accuweather",
+    "weatherchannel",
+    "gismeteo",
+    "yandex.weather",
+    "pogoda",
+    "clime",
+    "1weather",
+    "todayweather"
+  ],
+  "weather_context_pattern": "(погод|weather|температур|temperature|ощущаетс|feels like|влажност|humidity|ветер|wind|осадк|precip|давлен|pressure|прогноз|forecast|uv|aqi)",
+  "weather_temperature_pattern": "(?<!\\d)([+\\-−]?\\d{1,3})\\s*(?:°\\s*(?:c|f|с|ф)?|℃|℉)",
+  "weather_day_pattern": "(сегодня|завтра|утром|днем|вечером|ночью|today|tomorrow|morning|afternoon|evening|night)",
+  "weather_condition_pattern": "(ясно|пасмурно|облачно|дожд|снег|туман|ветрено|солнечно|sunny|cloudy|overcast|rain|snow|fog|windy|clear)",
+  "weather_condition_thunder_pattern": "(гроз|thunder|storm)",
+  "weather_condition_rain_pattern": "(дожд|rain|shower)",
+  "weather_condition_snow_pattern": "(снег|snow|sleet|blizzard)",
+  "weather_condition_fog_pattern": "(туман|mist|fog|haze)",
+  "weather_condition_wind_pattern": "(ветер|ветрено|wind|windy|gust)",
+  "weather_condition_sun_pattern": "(солнечно|ясно|sunny|clear)",
+  "weather_condition_cloud_pattern": "(пасмурно|облачно|cloud|overcast)",
+  "external_device_name_patterns": [
+    "(?:connected|connecting|pair(?:ed|ing)|подключ(?:ен(?:а|о|ы)?|ается|ение)|соедин(?:ен(?:а|о|ы)?|яется))\\s*(?:to|к)?\\s*[\"«]?([\\p{L}\\p{N}][\\p{L}\\p{N} ._#\\-]{1,40})[\"»]?(?=\\s|$|[,.!])",
+    "[\"«]?([\\p{L}\\p{N}][\\p{L}\\p{N} ._#\\-]{1,40})[\"»]?\\s*(?:is\\s+)?(?:connected|connecting|pair(?:ed|ing)|подключ(?:ен(?:а|о|ы)?|ается|ение)|соедин(?:ен(?:а|о|ы)?|яется))\\b"
+  ],
+  "external_device_generic_names": [
+    "device",
+    "devices",
+    "1 device",
+    "2 devices",
+    "3 devices",
+    "4 devices",
+    "5 devices",
+    "camera",
+    "accessory",
+    "bluetooth",
+    "usb",
+    "wifi",
+    "hotspot",
+    "your hotspot",
+    "wifi hotspot",
+    "personal hotspot",
+    "устройство",
+    "устройства",
+    "точка доступа",
+    "камера",
+    "аксессуар"
+  ],
+  "vpn_speed_pattern": "(?<!\\d)\\d{1,4}(?:[.,]\\d{1,2})?\\s*(?:[kmgт]?i?[bб])\\s*(?:(?:/\\s*[sс])|(?:/\\s*sec)|ps)\\b",
+  "vpn_context_pattern": "(\\bvpn\\b|wireguard|openvpn|hiddify|clash|v2ray|singbox|outline|amnezia|tailscale|zerotier|туннел|прокси|proxy)",
+  "vpn_package_markers": [
+    "hiddify",
+    "wireguard",
+    "openvpn",
+    "nordvpn",
+    "protonvpn",
+    "surfshark",
+    "expressvpn",
+    "outline",
+    "amnezia",
+    "clash",
+    "v2ray",
+    "hysteria",
+    "singbox",
+    "tailscale",
+    "zerotier",
+    "vpn"
+  ],
+  "vpn_download_markers": [
+    "↓",
+    "dl",
+    "downlink",
+    "download",
+    "down",
+    "rx",
+    "recv",
+    "receive",
+    "incoming",
+    "inbound",
+    "ingress",
+    "вход",
+    "прием",
+    "приём"
+  ],
+  "vpn_upload_markers": [
+    "↑",
+    "ul",
+    "uplink",
+    "upload",
+    "up",
+    "tx",
+    "send",
+    "outgoing",
+    "outbound",
+    "egress",
+    "исход",
+    "отправ"
+  ],
   "otp_code_patterns": [
-    "(?<!\\d)(\\d{4,8})(?!\\d)",
-    "(?<!\\d)(\\d(?:[\\s-]?\\d){3,7})(?!\\d)"
+    "(?<!\\S)(\\d{4,8})(?!\\S)",
+    "(?<!\\S)(\\d(?:[\\s-]?\\d){3,7})(?!\\S)"
   ],
   "order_context_hints": ["заказ", "order", "delivery", "достав"],
   "entity_token_patterns": [
@@ -190,17 +394,17 @@
   "status_labels": {
     "food": {
       "ru": {
-        "0": "Принят",
+        "0": "Оплачен",
         "1": "Готовится",
-        "2": "Собран",
+        "2": "Готов",
         "3": "В пути",
         "4": "Доставлен"
       },
       "en": {
-        "0": "Accepted",
+        "0": "Paid",
         "1": "Cooking",
-        "2": "Packed",
-        "3": "Out for delivery",
+        "2": "Ready",
+        "3": "On the way",
         "4": "Delivered"
       }
     },
@@ -232,6 +436,24 @@
         "2": "Navigation",
         "3": "Almost there",
         "4": "Arrived"
+      }
+    },
+    "external_device": {
+      "ru": {
+        "1": "Подключение",
+        "2": "Подключено"
+      },
+      "en": {
+        "1": "Connecting",
+        "2": "Connected"
+      }
+    },
+    "vpn": {
+      "ru": {
+        "1": "VPN"
+      },
+      "en": {
+        "1": "VPN"
       }
     }
   }

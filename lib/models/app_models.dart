@@ -5,11 +5,13 @@ class InstalledApp {
     required this.packageName,
     required this.label,
     this.icon,
+    this.isSystem = false,
   });
 
   final String packageName;
   final String label;
   final Uint8List? icon;
+  final bool isSystem;
 }
 
 class DeviceInfo {

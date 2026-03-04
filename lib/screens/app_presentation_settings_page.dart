@@ -13,6 +13,13 @@ import '../widgets/shared_widgets.dart';
 
 const String _defaultAppPresentationKey = '__default__';
 
+enum _PerAppMenuAction {
+  defaultBehavior,
+  toggleSystemApps,
+  downloadSettings,
+  uploadSettings,
+}
+
 class _ParsedAppPresentationOverrides {
   const _ParsedAppPresentationOverrides({
     required this.defaultOverride,
@@ -39,6 +46,7 @@ class _AppPresentationSettingsPageState
   AppPresentationOverride _defaultOverride = const AppPresentationOverride();
   Map<String, AppPresentationOverride> _overrides = {};
   String _q = '';
+  bool _showSystemApps = false;
 
   @override
   void initState() {
@@ -114,7 +122,9 @@ class _AppPresentationSettingsPageState
   Future<void> _load() async {
     setState(() => _isLoading = true);
     try {
-      final apps = await LiveBridgePlatform.getInstalledApps();
+      final apps = await LiveBridgePlatform.getInstalledApps(
+        forceRefresh: true,
+      );
       final raw = await LiveBridgePlatform.getAppPresentationOverrides();
       final parsed = _parseOverrides(raw);
       if (mounted) {
@@ -318,11 +328,17 @@ class _AppPresentationSettingsPageState
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
     final colorScheme = Theme.of(context).colorScheme;
+    final Color popupMenuColor = colorScheme.brightness == Brightness.light
+        ? Colors.white
+        : colorScheme.surfaceContainer;
 
     final paddingTop = MediaQuery.paddingOf(context).top;
     final paddingBottom = MediaQuery.paddingOf(context).bottom;
 
     final filtered = _apps.where((app) {
+      if (!_showSystemApps && app.isSystem) {
+        return false;
+      }
       if (_q.isEmpty) return true;
       final q = _q.toLowerCase();
       return app.label.toLowerCase().contains(q) ||
@@ -501,39 +517,106 @@ class _AppPresentationSettingsPageState
                             style: const TextStyle(fontSize: 16),
                           ),
                         ),
-                        if (_busy)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16.0),
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                        PopupMenuButton<_PerAppMenuAction>(
+                          icon: const Icon(Icons.more_vert_rounded),
+                          tooltip: s.appPresentationSettings,
+                          enabled: !_busy,
+                          color: popupMenuColor,
+                          elevation: 10,
+                          position: PopupMenuPosition.under,
+                          menuPadding: const EdgeInsets.all(6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                            side: BorderSide(
+                              color: colorScheme.outlineVariant.withValues(
+                                alpha: 0.45,
+                              ),
                             ),
-                          )
-                        else
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.tune_rounded),
-                                color: colorScheme.primary,
-                                tooltip: '${s.modeAll} • ${s.defaultLabel}',
-                                onPressed: _openDefaultEditor,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.download_rounded),
-                                color: colorScheme.primary,
-                                tooltip: s.downloadSettings,
-                                onPressed: _downloadOverrides,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.upload_file_rounded),
-                                color: colorScheme.primary,
-                                tooltip: s.uploadSettings,
-                                onPressed: _uploadOverrides,
-                              ),
-                            ],
                           ),
+                          onSelected: (_PerAppMenuAction action) {
+                            switch (action) {
+                              case _PerAppMenuAction.defaultBehavior:
+                                unawaited(_openDefaultEditor());
+                                break;
+                              case _PerAppMenuAction.toggleSystemApps:
+                                HapticFeedback.selectionClick();
+                                setState(
+                                  () => _showSystemApps = !_showSystemApps,
+                                );
+                                break;
+                              case _PerAppMenuAction.downloadSettings:
+                                unawaited(_downloadOverrides());
+                                break;
+                              case _PerAppMenuAction.uploadSettings:
+                                unawaited(_uploadOverrides());
+                                break;
+                            }
+                          },
+                          itemBuilder: (BuildContext context) =>
+                              <PopupMenuEntry<_PerAppMenuAction>>[
+                                PopupMenuItem<_PerAppMenuAction>(
+                                  value: _PerAppMenuAction.defaultBehavior,
+                                  child: Row(
+                                    children: <Widget>[
+                                      const Icon(Icons.tune_rounded, size: 18),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          s.appPresentationDefaultSummary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem<_PerAppMenuAction>(
+                                  value: _PerAppMenuAction.toggleSystemApps,
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(
+                                        _showSystemApps
+                                            ? Icons.visibility_off_rounded
+                                            : Icons.visibility_rounded,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          _showSystemApps
+                                              ? s.hideSystemApps
+                                              : s.showSystemApps,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem<_PerAppMenuAction>(
+                                  value: _PerAppMenuAction.downloadSettings,
+                                  child: Row(
+                                    children: <Widget>[
+                                      const Icon(
+                                        Icons.download_rounded,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: Text(s.downloadSettings)),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem<_PerAppMenuAction>(
+                                  value: _PerAppMenuAction.uploadSettings,
+                                  child: Row(
+                                    children: <Widget>[
+                                      const Icon(
+                                        Icons.upload_file_rounded,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: Text(s.uploadSettings)),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                        ),
                         const SizedBox(width: 4),
                       ],
                     ),

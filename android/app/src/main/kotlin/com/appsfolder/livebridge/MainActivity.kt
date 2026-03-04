@@ -9,6 +9,8 @@ import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageInfo
 import android.content.pm.PackageManager.MATCH_ALL
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -16,6 +18,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
@@ -25,12 +28,14 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.pm.ShortcutManagerCompat
 import ai.perplexity.app.android.liveupdate.AppPresentationOverridesCodec
 import ai.perplexity.app.android.liveupdate.AppPresentationOverridesLoader
 import ai.perplexity.app.android.liveupdate.ConverterPrefs
 import ai.perplexity.app.android.liveupdate.DeviceBlocker
 import ai.perplexity.app.android.liveupdate.DeviceProps
 import ai.perplexity.app.android.liveupdate.KeepAliveForegroundService
+import ai.perplexity.app.android.liveupdate.LiveBridgeTileService
 import ai.perplexity.app.android.liveupdate.LiveParserDictionary
 import ai.perplexity.app.android.liveupdate.LiveParserDictionaryLoader
 import ai.perplexity.app.android.liveupdate.LiveUpdateNotifier
@@ -47,6 +52,10 @@ import java.util.concurrent.Executors
 class MainActivity : FlutterActivity() {
     private var notificationPermissionResult: MethodChannel.Result? = null
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
@@ -60,6 +69,8 @@ class MainActivity : FlutterActivity() {
         val prefs = ConverterPrefs(applicationContext)
         initializeKeepAliveDefaultIfNeeded(prefs)
         syncKeepAliveForegroundService(prefs)
+        clearDynamicLauncherShortcuts()
+        LiveBridgeTileService.requestStateSync(applicationContext)
     }
 
     override fun onRequestPermissionsResult(
@@ -219,6 +230,12 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getBypassPackageRules" -> res.success(prefs.getBypassPackageRulesRaw())
+            "setBypassPackageRules" -> {
+                prefs.setBypassPackageRulesRaw(call.argument<String>("value"))
+                res.success(true)
+            }
+
             "getOnlyWithProgress" -> res.success(prefs.getOnlyWithProgress())
             "setOnlyWithProgress" -> {
                 prefs.setOnlyWithProgress(call.argument<Boolean>("value") ?: true)
@@ -234,14 +251,7 @@ class MainActivity : FlutterActivity() {
             "getConverterEnabled" -> res.success(prefs.getConverterEnabled())
             "setConverterEnabled" -> {
                 val value = call.argument<Boolean>("value") ?: true
-                prefs.setConverterEnabled(value)
-                if (!value) {
-                    LiveUpdateNotifier.clearRuntimeState()
-                    NotificationManagerCompat.from(applicationContext).cancelAll()
-                } else {
-                    requestNotificationListenerRebind()
-                }
-                syncKeepAliveForegroundService(prefs)
+                applyConverterEnabled(prefs, value)
                 res.success(true)
             }
 
@@ -254,6 +264,12 @@ class MainActivity : FlutterActivity() {
                 val value = call.argument<Boolean>("value") ?: false
                 prefs.setKeepAliveForegroundEnabled(value)
                 syncKeepAliveForegroundService(prefs)
+                res.success(true)
+            }
+
+            "getSyncDndEnabled" -> res.success(prefs.getSyncDndEnabled())
+            "setSyncDndEnabled" -> {
+                prefs.setSyncDndEnabled(call.argument<Boolean>("value") ?: false)
                 res.success(true)
             }
 
@@ -304,6 +320,18 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getAnimatedIslandEnabled" -> res.success(prefs.getAnimatedIslandEnabled())
+            "setAnimatedIslandEnabled" -> {
+                prefs.setAnimatedIslandEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+
+            "getHyperBridgeEnabled" -> res.success(prefs.getHyperBridgeEnabled())
+            "setHyperBridgeEnabled" -> {
+                prefs.setHyperBridgeEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+
             "getSmartStatusDetectionEnabled" -> res.success(prefs.getSmartStatusDetectionEnabled())
             "setSmartStatusDetectionEnabled" -> {
                 prefs.setSmartStatusDetectionEnabled(call.argument<Boolean>("value") ?: true)
@@ -313,6 +341,24 @@ class MainActivity : FlutterActivity() {
             "getSmartNavigationEnabled" -> res.success(prefs.getSmartNavigationEnabled())
             "setSmartNavigationEnabled" -> {
                 prefs.setSmartNavigationEnabled(call.argument<Boolean>("value") ?: true)
+                res.success(true)
+            }
+
+            "getSmartWeatherEnabled" -> res.success(prefs.getSmartWeatherEnabled())
+            "setSmartWeatherEnabled" -> {
+                prefs.setSmartWeatherEnabled(call.argument<Boolean>("value") ?: true)
+                res.success(true)
+            }
+
+            "getSmartExternalDevicesEnabled" -> res.success(prefs.getSmartExternalDevicesEnabled())
+            "setSmartExternalDevicesEnabled" -> {
+                prefs.setSmartExternalDevicesEnabled(call.argument<Boolean>("value") ?: true)
+                res.success(true)
+            }
+
+            "getSmartVpnEnabled" -> res.success(prefs.getSmartVpnEnabled())
+            "setSmartVpnEnabled" -> {
+                prefs.setSmartVpnEnabled(call.argument<Boolean>("value") ?: true)
                 res.success(true)
             }
 
@@ -412,6 +458,22 @@ class MainActivity : FlutterActivity() {
         if (isLikelyChineseDevice()) {
             prefs.setKeepAliveForegroundEnabled(true)
         }
+    }
+
+    private fun applyConverterEnabled(prefs: ConverterPrefs, value: Boolean) {
+        prefs.setConverterEnabled(value)
+        if (!value) {
+            LiveUpdateNotifier.clearRuntimeState()
+            NotificationManagerCompat.from(applicationContext).cancelAll()
+        } else {
+            requestNotificationListenerRebind()
+        }
+        syncKeepAliveForegroundService(prefs)
+        LiveBridgeTileService.requestStateSync(applicationContext)
+    }
+
+    private fun clearDynamicLauncherShortcuts() {
+        runCatching { ShortcutManagerCompat.removeAllDynamicShortcuts(applicationContext) }
     }
 
     private fun getAppVersionName(): String {
@@ -689,28 +751,54 @@ class MainActivity : FlutterActivity() {
             pm.queryIntentActivities(launcherIntent, MATCH_ALL)
         }
 
-        val entries = resolved
-            .asSequence()
-            .mapNotNull { resolveInfo ->
-                val activityInfo = resolveInfo.activityInfo ?: return@mapNotNull null
-                val appPackage = activityInfo.packageName
-                if (appPackage == packageName) {
-                    return@mapNotNull null
-                }
-                val resolvedLabel = resolveInfo.loadLabel(pm)?.toString()?.trim().orEmpty()
-                val label = if (resolvedLabel.isNotEmpty()) resolvedLabel else appPackage
-                val iconBytes = resolveCachedIconBytes(appPackage) ?: drawableToPngBytes(resolveInfo.loadIcon(pm))
-                val entry = mutableMapOf<String, Any>(
-                    "packageName" to appPackage,
-                    "label" to label
-                )
-                if (iconBytes != null) {
-                    entry["icon"] = iconBytes
-                    cacheIconBytes(appPackage, iconBytes)
-                }
-                entry
+        val entriesByPackage = linkedMapOf<String, MutableMap<String, Any>>()
+
+        resolved.forEach { resolveInfo ->
+            val activityInfo = resolveInfo.activityInfo ?: return@forEach
+            val appPackage = activityInfo.packageName
+            if (appPackage == packageName) {
+                return@forEach
             }
-            .distinctBy { it["packageName"] ?: "" }
+            val resolvedLabel = resolveInfo.loadLabel(pm)?.toString()?.trim().orEmpty()
+            val label = if (resolvedLabel.isNotEmpty()) resolvedLabel else appPackage
+            val iconBytes = resolveCachedIconBytes(appPackage) ?: drawableToPngBytes(resolveInfo.loadIcon(pm))
+            val isSystemApp = isSystemApp(activityInfo.applicationInfo)
+            val entry = mutableMapOf<String, Any>(
+                "packageName" to appPackage,
+                "label" to label,
+                "isSystem" to isSystemApp
+            )
+            if (iconBytes != null) {
+                entry["icon"] = iconBytes
+                cacheIconBytes(appPackage, iconBytes)
+            }
+            entriesByPackage[appPackage] = entry
+        }
+
+        getInstalledPackagesCompat(pm).forEach { packageInfo ->
+            val appInfo = packageInfo.applicationInfo ?: return@forEach
+            val appPackage = packageInfo.packageName.orEmpty()
+            if (appPackage.isEmpty() || appPackage == packageName) {
+                return@forEach
+            }
+            if (!isSystemApp(appInfo) || entriesByPackage.containsKey(appPackage)) {
+                return@forEach
+            }
+            val label = appInfo.loadLabel(pm)?.toString()?.trim().orEmpty().ifEmpty { appPackage }
+            val iconBytes = resolveCachedIconBytes(appPackage) ?: drawableToPngBytes(appInfo.loadIcon(pm))
+            val entry = mutableMapOf<String, Any>(
+                "packageName" to appPackage,
+                "label" to label,
+                "isSystem" to true
+            )
+            if (iconBytes != null) {
+                entry["icon"] = iconBytes
+                cacheIconBytes(appPackage, iconBytes)
+            }
+            entriesByPackage[appPackage] = entry
+        }
+
+        val entries = entriesByPackage.values
             .sortedBy { (it["label"] as? String)?.lowercase(Locale.getDefault()) ?: "" }
             .toList()
 
@@ -719,6 +807,24 @@ class MainActivity : FlutterActivity() {
             installedAppsCacheAtMs = now
         }
         return entries
+    }
+
+    private fun isSystemApp(applicationInfo: ApplicationInfo?): Boolean {
+        if (applicationInfo == null) {
+            return false
+        }
+        val flags = applicationInfo.flags
+        return (flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
+                (flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
+    }
+
+    private fun getInstalledPackagesCompat(pm: PackageManager): List<PackageInfo> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getInstalledPackages(PackageManager.PackageInfoFlags.of(0L))
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getInstalledPackages(0)
+        }
     }
 
     private fun resolveCachedIconBytes(packageName: String): ByteArray? {

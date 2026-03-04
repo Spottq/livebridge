@@ -52,6 +52,9 @@ class PackagePickerSheet extends StatefulWidget {
     required this.initialSelected,
     required this.applyLabel,
     required this.searchHint,
+    required this.showSystemAppsLabel,
+    required this.hideSystemAppsLabel,
+    this.showSystemAppsInitially = false,
   });
 
   final String title;
@@ -59,6 +62,9 @@ class PackagePickerSheet extends StatefulWidget {
   final Set<String> initialSelected;
   final String applyLabel;
   final String searchHint;
+  final String showSystemAppsLabel;
+  final String hideSystemAppsLabel;
+  final bool showSystemAppsInitially;
 
   @override
   State<PackagePickerSheet> createState() => _PackagePickerSheetState();
@@ -66,17 +72,38 @@ class PackagePickerSheet extends StatefulWidget {
 
 class _PackagePickerSheetState extends State<PackagePickerSheet> {
   late final Set<String> _selected = Set<String>.from(widget.initialSelected);
+  late bool _showSystemApps = widget.showSystemAppsInitially;
   String _query = '';
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final List<InstalledApp> filtered = widget.apps.where((app) {
-      if (_query.isEmpty) return true;
-      final String q = _query.toLowerCase();
-      return app.label.toLowerCase().contains(q) ||
-          app.packageName.toLowerCase().contains(q);
-    }).toList();
+    final Color popupMenuColor = colorScheme.brightness == Brightness.light
+        ? Colors.white
+        : colorScheme.surfaceContainer;
+    final String q = _query.toLowerCase();
+    final List<InstalledApp> selectedApps = <InstalledApp>[];
+    final List<InstalledApp> regularApps = <InstalledApp>[];
+    for (final app in widget.apps) {
+      final bool selected = _selected.contains(app.packageName);
+      if (!_showSystemApps && app.isSystem && !selected) {
+        continue;
+      }
+      if (_query.isNotEmpty &&
+          !app.label.toLowerCase().contains(q) &&
+          !app.packageName.toLowerCase().contains(q)) {
+        continue;
+      }
+      if (selected) {
+        selectedApps.add(app);
+      } else {
+        regularApps.add(app);
+      }
+    }
+    final List<InstalledApp> filtered = <InstalledApp>[
+      ...selectedApps,
+      ...regularApps,
+    ];
 
     return SafeArea(
       top: false,
@@ -94,11 +121,63 @@ class _PackagePickerSheetState extends State<PackagePickerSheet> {
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  widget.title,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        widget.title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    PopupMenuButton<bool>(
+                      icon: const Icon(Icons.more_vert_rounded),
+                      color: popupMenuColor,
+                      elevation: 10,
+                      position: PopupMenuPosition.under,
+                      menuPadding: const EdgeInsets.all(6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                        side: BorderSide(
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.45,
+                          ),
+                        ),
+                      ),
+                      tooltip: _showSystemApps
+                          ? widget.hideSystemAppsLabel
+                          : widget.showSystemAppsLabel,
+                      onSelected: (bool next) {
+                        HapticFeedback.selectionClick();
+                        setState(() => _showSystemApps = next);
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<bool>>[
+                            PopupMenuItem<bool>(
+                              value: !_showSystemApps,
+                              child: Row(
+                                children: <Widget>[
+                                  Icon(
+                                    _showSystemApps
+                                        ? Icons.visibility_off_rounded
+                                        : Icons.visibility_rounded,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      _showSystemApps
+                                          ? widget.hideSystemAppsLabel
+                                          : widget.showSystemAppsLabel,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),

@@ -1,0 +1,106 @@
+name: Bug report
+description: Report crashes, false positives, wrong parsing, or UI regressions
+title: "[Bug] "
+labels:
+  - bug
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug.
+        Please fill the fields below.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Quick summary
+      description: Describe the issue in 1-2 sentences.
+      placeholder: Short summary of the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics_json
+    attributes:
+      label: Diagnostics JSON
+      description: In LiveBridge app, open Settings -> tap Report a bug. The app copies diagnostics to clipboard automatically. Paste it here.
+      render: json
+      placeholder: |
+        {
+          "schema": "livebridge_bug_report_v1"
+        }
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bug_type
+    attributes:
+      label: Type of bug
+      options:
+        - Crash
+        - False positive conversion (should NOT become Live Update)
+        - False negative conversion (should become Live Update, but does not)
+        - Wrong stage/progress/status
+        - OTP/code detection issue
+        - UI/UX issue
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected behavior
+      placeholder: What should happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual behavior
+      placeholder: What actually happens?
+    validations:
+      required: true
+
+  - type: textarea
+    id: notification_sample
+    attributes:
+      label: Notification sample
+      description: Paste anonymized notification content if possible.
+      render: text
+      placeholder: |
+        App package: com.example.app
+        Notification title:
+        Notification text:
+    validations:
+      required: false
+
+  - type: textarea
+    id: media
+    attributes:
+      label: Media / screenshots (optional)
+      description: Add screenshots or a short screen recording link.
+      placeholder: Drag and drop files or paste links.
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context (optional)
+      placeholder: Any extra details that may help reproduce the issue.
+    validations:
+      required: false

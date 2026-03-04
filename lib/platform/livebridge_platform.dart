@@ -47,6 +47,10 @@ class LiveBridgePlatform {
   static Future<String> getPackageMode() => _askStr('getPackageMode');
   static Future<bool> setPackageMode(String value) =>
       _askBool('setPackageMode', {'value': value});
+  static Future<String> getBypassPackageRules() =>
+      _askStr('getBypassPackageRules');
+  static Future<bool> setBypassPackageRules(String value) =>
+      _askBool('setBypassPackageRules', {'value': value});
 
   static Future<bool> getOnlyWithProgress() => _askBool('getOnlyWithProgress');
   static Future<bool> setOnlyWithProgress(bool value) =>
@@ -62,6 +66,9 @@ class LiveBridgePlatform {
       _askBool('getKeepAliveForegroundEnabled');
   static Future<bool> setKeepAliveForegroundEnabled(bool value) =>
       _askBool('setKeepAliveForegroundEnabled', {'value': value});
+  static Future<bool> getSyncDndEnabled() => _askBool('getSyncDndEnabled');
+  static Future<bool> setSyncDndEnabled(bool value) =>
+      _askBool('setSyncDndEnabled', {'value': value});
   static Future<bool> getUpdateChecksEnabled() =>
       _askBool('getUpdateChecksEnabled');
   static Future<bool> setUpdateChecksEnabled(bool value) =>
@@ -99,6 +106,14 @@ class LiveBridgePlatform {
       _askBool('getAospCuttingEnabled');
   static Future<bool> setAospCuttingEnabled(bool value) =>
       _askBool('setAospCuttingEnabled', {'value': value});
+  static Future<bool> getAnimatedIslandEnabled() =>
+      _askBool('getAnimatedIslandEnabled');
+  static Future<bool> setAnimatedIslandEnabled(bool value) =>
+      _askBool('setAnimatedIslandEnabled', {'value': value});
+  static Future<bool> getHyperBridgeEnabled() =>
+      _askBool('getHyperBridgeEnabled');
+  static Future<bool> setHyperBridgeEnabled(bool value) =>
+      _askBool('setHyperBridgeEnabled', {'value': value});
   static Future<bool> getSmartStatusDetectionEnabled() =>
       _askBool('getSmartStatusDetectionEnabled');
   static Future<bool> setSmartStatusDetectionEnabled(bool value) =>
@@ -107,6 +122,17 @@ class LiveBridgePlatform {
       _askBool('getSmartNavigationEnabled');
   static Future<bool> setSmartNavigationEnabled(bool value) =>
       _askBool('setSmartNavigationEnabled', {'value': value});
+  static Future<bool> getSmartWeatherEnabled() =>
+      _askBool('getSmartWeatherEnabled');
+  static Future<bool> setSmartWeatherEnabled(bool value) =>
+      _askBool('setSmartWeatherEnabled', {'value': value});
+  static Future<bool> getSmartExternalDevicesEnabled() =>
+      _askBool('getSmartExternalDevicesEnabled');
+  static Future<bool> setSmartExternalDevicesEnabled(bool value) =>
+      _askBool('setSmartExternalDevicesEnabled', {'value': value});
+  static Future<bool> getSmartVpnEnabled() => _askBool('getSmartVpnEnabled');
+  static Future<bool> setSmartVpnEnabled(bool value) =>
+      _askBool('setSmartVpnEnabled', {'value': value});
   static Future<bool> getOtpDetectionEnabled() =>
       _askBool('getOtpDetectionEnabled');
   static Future<bool> setOtpDetectionEnabled(bool value) =>
@@ -147,6 +173,7 @@ class LiveBridgePlatform {
             packageName: pkg,
             label: (m['label'] as String?) ?? pkg,
             icon: m['icon'] is Uint8List ? m['icon'] as Uint8List : null,
+            isSystem: m['isSystem'] == true,
           );
         })
         .where((app) => app.packageName.isNotEmpty)

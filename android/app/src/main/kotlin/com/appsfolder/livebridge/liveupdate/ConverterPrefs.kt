@@ -33,6 +33,17 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putString(KEY_PACKAGE_MODE, mode.id).apply()
     }
 
+    fun getBypassPackageRulesRaw(): String {
+        return prefs.getString(KEY_BYPASS_PACKAGE_RULES, "") ?: ""
+    }
+
+    fun setBypassPackageRulesRaw(value: String?) {
+        val normalized = value?.trim().orEmpty()
+        prefs.edit()
+            .putString(KEY_BYPASS_PACKAGE_RULES, normalized)
+            .apply()
+    }
+
     fun getOnlyWithProgress(): Boolean {
         return prefs.getBoolean(KEY_ONLY_WITH_PROGRESS, true)
     }
@@ -67,6 +78,14 @@ class ConverterPrefs(context: Context) {
 
     fun setKeepAliveForegroundEnabled(value: Boolean) {
         prefs.edit().putBoolean(KEY_KEEP_ALIVE_FOREGROUND_ENABLED, value).apply()
+    }
+
+    fun getSyncDndEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SYNC_DND_ENABLED, true)
+    }
+
+    fun setSyncDndEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SYNC_DND_ENABLED, value).apply()
     }
 
     fun getUpdateChecksEnabled(): Boolean {
@@ -119,6 +138,22 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_AOSP_CUTTING_ENABLED, value).apply()
     }
 
+    fun getAnimatedIslandEnabled(): Boolean {
+        return prefs.getBoolean(KEY_ANIMATED_ISLAND_ENABLED, false)
+    }
+
+    fun setAnimatedIslandEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_ANIMATED_ISLAND_ENABLED, value).apply()
+    }
+
+    fun getHyperBridgeEnabled(): Boolean {
+        return prefs.getBoolean(KEY_HYPERBRIDGE_ENABLED, false)
+    }
+
+    fun setHyperBridgeEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_HYPERBRIDGE_ENABLED, value).apply()
+    }
+
     fun getSmartStatusDetectionEnabled(): Boolean {
         return prefs.getBoolean(KEY_SMART_STATUS_ENABLED, true)
     }
@@ -133,6 +168,30 @@ class ConverterPrefs(context: Context) {
 
     fun setSmartNavigationEnabled(value: Boolean) {
         prefs.edit().putBoolean(KEY_SMART_NAVIGATION_ENABLED, value).apply()
+    }
+
+    fun getSmartWeatherEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SMART_WEATHER_ENABLED, true)
+    }
+
+    fun setSmartWeatherEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_WEATHER_ENABLED, value).apply()
+    }
+
+    fun getSmartExternalDevicesEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SMART_EXTERNAL_DEVICES_ENABLED, true)
+    }
+
+    fun setSmartExternalDevicesEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_EXTERNAL_DEVICES_ENABLED, value).apply()
+    }
+
+    fun getSmartVpnEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SMART_VPN_ENABLED, true)
+    }
+
+    fun setSmartVpnEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_VPN_ENABLED, value).apply()
     }
 
     fun getOtpDetectionEnabled(): Boolean {
@@ -286,6 +345,11 @@ class ConverterPrefs(context: Context) {
         }
     }
 
+    fun shouldBypassAllRulesForPackage(packageName: String): Boolean {
+        val packages = parsePackageRules(getBypassPackageRulesRaw())
+        return packageName.lowercase(Locale.ROOT) in packages
+    }
+
     private fun parsePackageRules(raw: String): Set<String> {
         return raw
             .split(',', ';', '\n', '\r', '\t', ' ')
@@ -310,18 +374,25 @@ class ConverterPrefs(context: Context) {
         private const val PREFS_NAME = "live_bridge_prefs"
         private const val KEY_PACKAGE_RULES = "package_rules"
         private const val KEY_PACKAGE_MODE = "package_mode"
+        private const val KEY_BYPASS_PACKAGE_RULES = "bypass_package_rules"
         private const val KEY_ONLY_WITH_PROGRESS = "only_with_progress"
         private const val KEY_TEXT_PROGRESS_ENABLED = "text_progress_enabled"
         private const val KEY_CONVERTER_ENABLED = "converter_enabled"
         private const val KEY_KEEP_ALIVE_FOREGROUND_ENABLED = "keep_alive_foreground_enabled"
+        private const val KEY_SYNC_DND_ENABLED = "sync_dnd_enabled"
         private const val KEY_UPDATE_CHECKS_ENABLED = "update_checks_enabled"
         private const val KEY_UPDATE_LAST_CHECK_AT_MS = "update_last_check_at_ms"
         private const val KEY_UPDATE_CACHED_LATEST_VERSION = "update_cached_latest_version"
         private const val KEY_UPDATE_CACHED_AVAILABLE = "update_cached_available"
         private const val KEY_UPDATE_LAST_NOTIFIED_VERSION = "update_last_notified_version"
         private const val KEY_AOSP_CUTTING_ENABLED = "aosp_cutting_enabled"
+        private const val KEY_ANIMATED_ISLAND_ENABLED = "animated_island_enabled"
+        private const val KEY_HYPERBRIDGE_ENABLED = "hyperbridge_enabled"
         private const val KEY_SMART_STATUS_ENABLED = "smart_status_enabled"
         private const val KEY_SMART_NAVIGATION_ENABLED = "smart_navigation_enabled"
+        private const val KEY_SMART_WEATHER_ENABLED = "smart_weather_enabled"
+        private const val KEY_SMART_EXTERNAL_DEVICES_ENABLED = "smart_external_devices_enabled"
+        private const val KEY_SMART_VPN_ENABLED = "smart_vpn_enabled"
         private const val KEY_OTP_DETECTION_ENABLED = "otp_detection_enabled"
         private const val KEY_OTP_AUTO_COPY_ENABLED = "otp_auto_copy_enabled"
         private const val KEY_OTP_PACKAGE_RULES = "otp_package_rules"

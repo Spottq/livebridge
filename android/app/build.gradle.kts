@@ -44,6 +44,7 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.17.0")
+    implementation("io.github.d4viddf:hyperisland_kit:0.4.3")
 }
 
 flutter {
