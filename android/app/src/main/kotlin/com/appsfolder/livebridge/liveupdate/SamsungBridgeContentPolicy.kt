@@ -10,39 +10,39 @@ internal data class SamsungBridgeTexts(
 
 internal object SamsungBridgeContentPolicy {
     fun resolve(
+        @Suppress("UNUSED_PARAMETER")
+        sourcePackageName: String,
         hasCustomRemoteCard: Boolean,
         hasProgress: Boolean,
+        smartRuleId: String?,
         smartShortTextOverride: String?,
         displayText: String,
         compactPrimaryText: String,
-        compactSecondaryText: String?,
-        compactChipText: String?,
         resolvedProgressChipText: String?,
         otpShortTextOverride: String?,
         otpCode: String?,
         compactCodeOverride: String?,
         samsungReparseChipText: String?
     ): SamsungBridgeTexts {
-        val includeNowBarRemoteView = !hasCustomRemoteCard
-        val secondaryText = compactSecondaryText
-            ?: if (smartShortTextOverride != null && !hasProgress) {
-                smartShortTextOverride
-            } else {
-                displayText
-            }
+        val shouldClearContentText = hasCustomRemoteCard || smartRuleId == "navigation"
+        val includeNowBarRemoteView = !shouldClearContentText
+        val secondaryText = if (smartShortTextOverride != null && !hasProgress) {
+            smartShortTextOverride
+        } else {
+            displayText
+        }
         val chipText = sequenceOf(
             resolvedProgressChipText?.trim(),
             otpShortTextOverride?.trim(),
             otpCode?.trim(),
             compactCodeOverride?.trim(),
-            compactChipText?.trim(),
             samsungReparseChipText?.trim(),
             smartShortTextOverride?.trim(),
             compactPrimaryText.trim()
         ).firstOrNull { !it.isNullOrEmpty() }
 
         return SamsungBridgeTexts(
-            shouldClearContentText = false,
+            shouldClearContentText = shouldClearContentText,
             secondaryText = secondaryText,
             chipText = chipText,
             showSecondaryInNowBar = secondaryText.isNotBlank(),
