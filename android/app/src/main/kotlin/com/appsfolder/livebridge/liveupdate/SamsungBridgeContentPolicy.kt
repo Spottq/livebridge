@@ -42,7 +42,7 @@ internal object SamsungBridgeContentPolicy {
         ).firstOrNull { !it.isNullOrEmpty() }
 
         return SamsungBridgeTexts(
-            shouldClearContentText = includeNowBarRemoteView,
+            shouldClearContentText = false,
             secondaryText = secondaryText,
             chipText = chipText,
             showSecondaryInNowBar = secondaryText.isNotBlank(),

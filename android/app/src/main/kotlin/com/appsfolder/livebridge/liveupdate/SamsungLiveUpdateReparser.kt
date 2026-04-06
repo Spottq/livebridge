@@ -32,10 +32,9 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         val normalizedSecondary = secondaryText.trim()
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
 
-        val nowBarRemoteView = if (includeNowBarRemoteView) resolveRemoteView(source) else null
+        val liveNotificationRemoteView = resolveRemoteView(source)
+        val nowBarRemoteView = if (includeNowBarRemoteView) liveNotificationRemoteView else null
         val hasNowBarRemoteView = nowBarRemoteView != null
-        val hasCustomExpandedRemoteView =
-            source.contentView != null || source.bigContentView != null || source.headsUpContentView != null
         applyRemoteViewsIfPresent(builder, source)
 
         val extras = Bundle().apply {
@@ -62,16 +61,14 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
 
         // Do not expose progress style in collapsed Samsung chip/Now Bar.
-        if (hasProgress && progressMax > 0 && !hasNowBarRemoteView && !hasCustomExpandedRemoteView) {
+        if (hasProgress && progressMax > 0 && !hasNowBarRemoteView) {
             extras.putInt(KEY_PROGRESS, progressValue.coerceIn(0, progressMax))
             extras.putInt(KEY_PROGRESS_MAX, progressMax.coerceAtLeast(1))
         }
 
-        nowBarRemoteView?.let { view ->
+        liveNotificationRemoteView?.let { view ->
             val sourceExtras = source.extras
             val remoteViewPosition = parseInt(sourceExtras.get(KEY_REMOTE_VIEW_POSITION)) ?: 1
-            val nowBarChronometerPosition =
-                parseInt(sourceExtras.get(KEY_NOWBAR_CHRONOMETER_POSITION)) ?: remoteViewPosition
             val remoteTag = sourceExtras.getString(KEY_REMOTE_VIEW_TAG)
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
@@ -80,7 +77,11 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
             extras.putParcelable(KEY_REMOTE_VIEW, view)
             extras.putInt(KEY_REMOTE_VIEW_POSITION, remoteViewPosition)
             extras.putString(KEY_REMOTE_VIEW_TAG, remoteTag)
-            extras.putInt(KEY_NOWBAR_CHRONOMETER_POSITION, nowBarChronometerPosition)
+            if (includeNowBarRemoteView) {
+                val nowBarChronometerPosition =
+                    parseInt(sourceExtras.get(KEY_NOWBAR_CHRONOMETER_POSITION)) ?: remoteViewPosition
+                extras.putInt(KEY_NOWBAR_CHRONOMETER_POSITION, nowBarChronometerPosition)
+            }
         }
 
         builder.addExtras(extras)
