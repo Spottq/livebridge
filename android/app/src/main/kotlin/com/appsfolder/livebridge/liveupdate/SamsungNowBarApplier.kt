@@ -34,7 +34,7 @@ internal object SamsungNowBarApplier {
             progressValue = progressValue,
             progressMax = progressMax,
             showSecondaryInNowBar = texts.showSecondaryInNowBar,
-            preferCompactNowBarRemoteView = texts.preferCompactNowBarRemoteView
+            includeNowBarRemoteView = texts.includeNowBarRemoteView
         )
     }
 }

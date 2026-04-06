@@ -23,7 +23,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         progressValue: Int,
         progressMax: Int,
         showSecondaryInNowBar: Boolean = true,
-        preferCompactNowBarRemoteView: Boolean = false
+        includeNowBarRemoteView: Boolean = true
     ) {
         val normalizedPrimary = primaryText.trim()
         if (normalizedPrimary.isEmpty()) {
@@ -32,8 +32,10 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         val normalizedSecondary = secondaryText.trim()
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
 
-        val nowBarRemoteView = resolveRemoteView(source, preferCompactNowBarRemoteView)
+        val nowBarRemoteView = if (includeNowBarRemoteView) resolveRemoteView(source) else null
         val hasNowBarRemoteView = nowBarRemoteView != null
+        val hasCustomExpandedRemoteView =
+            source.contentView != null || source.bigContentView != null || source.headsUpContentView != null
         applyRemoteViewsIfPresent(builder, source)
 
         val extras = Bundle().apply {
@@ -60,7 +62,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
 
         // Do not expose progress style in collapsed Samsung chip/Now Bar.
-        if (hasProgress && progressMax > 0 && !hasNowBarRemoteView) {
+        if (hasProgress && progressMax > 0 && !hasNowBarRemoteView && !hasCustomExpandedRemoteView) {
             extras.putInt(KEY_PROGRESS, progressValue.coerceIn(0, progressMax))
             extras.putInt(KEY_PROGRESS_MAX, progressMax.coerceAtLeast(1))
         }
@@ -119,20 +121,6 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         return (extras.get(KEY_REMOTE_VIEW) as? RemoteViews)
             ?: source.bigContentView
             ?: source.contentView
-            ?: source.headsUpContentView
-    }
-
-    private fun resolveRemoteView(
-        source: Notification,
-        preferCompactNowBarRemoteView: Boolean
-    ): RemoteViews? {
-        if (!preferCompactNowBarRemoteView) {
-            return resolveRemoteView(source)
-        }
-        val extras = source.extras
-        return source.contentView
-            ?: (extras.get(KEY_REMOTE_VIEW) as? RemoteViews)
-            ?: source.bigContentView
             ?: source.headsUpContentView
     }
 

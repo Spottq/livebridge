@@ -5,48 +5,48 @@ internal data class SamsungBridgeTexts(
     val secondaryText: String,
     val chipText: String?,
     val showSecondaryInNowBar: Boolean,
-    val preferCompactNowBarRemoteView: Boolean
+    val includeNowBarRemoteView: Boolean
 )
 
 internal object SamsungBridgeContentPolicy {
-    private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
-
     fun resolve(
-        sourcePackageName: String,
         hasCustomRemoteCard: Boolean,
         hasProgress: Boolean,
-        smartRuleId: String?,
         smartShortTextOverride: String?,
         displayText: String,
         compactPrimaryText: String,
+        compactSecondaryText: String?,
+        compactChipText: String?,
         resolvedProgressChipText: String?,
         otpShortTextOverride: String?,
         otpCode: String?,
         compactCodeOverride: String?,
         samsungReparseChipText: String?
     ): SamsungBridgeTexts {
-        val shouldClearContentText = hasCustomRemoteCard || smartRuleId == "navigation"
-        val secondaryText = if (smartShortTextOverride != null && !hasProgress) {
-            smartShortTextOverride
-        } else {
-            displayText
-        }
+        val includeNowBarRemoteView = !hasCustomRemoteCard
+        val secondaryText = compactSecondaryText
+            ?: if (smartShortTextOverride != null && !hasProgress) {
+                smartShortTextOverride
+            } else {
+                displayText
+            }
         val chipText = sequenceOf(
             resolvedProgressChipText?.trim(),
             otpShortTextOverride?.trim(),
             otpCode?.trim(),
             compactCodeOverride?.trim(),
+            compactChipText?.trim(),
             samsungReparseChipText?.trim(),
             smartShortTextOverride?.trim(),
             compactPrimaryText.trim()
         ).firstOrNull { !it.isNullOrEmpty() }
 
         return SamsungBridgeTexts(
-            shouldClearContentText = shouldClearContentText,
+            shouldClearContentText = includeNowBarRemoteView,
             secondaryText = secondaryText,
             chipText = chipText,
-            showSecondaryInNowBar = smartRuleId != "navigation" && !hasCustomRemoteCard,
-            preferCompactNowBarRemoteView = sourcePackageName == YANDEX_MAPS_PACKAGE && !hasProgress
+            showSecondaryInNowBar = secondaryText.isNotBlank(),
+            includeNowBarRemoteView = includeNowBarRemoteView
         )
     }
 }

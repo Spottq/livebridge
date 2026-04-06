@@ -89,6 +89,12 @@ object LiveUpdateNotifier {
     private val smartAnimationGenerations = mutableMapOf<String, Long>()
     private val smartAnimationStates = mutableMapOf<String, SmartAnimationState>()
 
+    private data class CompactRemoteViewSummary(
+        val primaryText: String,
+        val secondaryText: String?,
+        val chipText: String?
+    )
+
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return
@@ -723,15 +729,34 @@ object LiveUpdateNotifier {
 
         val appName = resolveAppName(context, sbn.packageName)
         val allowRemoteViewTextFallback = shouldTryNavigationArrowIcon
-        val title = samsungReparse?.title?.takeIf { it.isNotBlank() }
-            ?: extractTitle(source, appName, allowRemoteViewTextFallback)
-        val text = samsungReparse?.text?.takeIf { it.isNotBlank() }
-            ?: extractText(source, allowRemoteViewTextFallback)
-        val displayTitle = when (appPresentationOverride.compactTextSource) {
-            CompactTextSource.TEXT -> text.ifBlank { title }
-            CompactTextSource.TITLE -> title
+        val compactRemoteViewSummary = if (samsungBridge.hasCustomRemoteCard) {
+            resolveCompactRemoteViewSummary(
+                notification = source,
+                fallbackTitle = appName,
+                parserDictionary = parserDictionary,
+                samsungReparse = samsungReparse,
+                isNavigation = smartRuleId == "navigation" || shouldTryNavigationArrowIcon
+            )
+        } else {
+            null
         }
-        val displayText = if (
+        val title = compactRemoteViewSummary?.primaryText
+            ?: samsungReparse?.title?.takeIf { it.isNotBlank() }
+            ?: extractTitle(source, appName, allowRemoteViewTextFallback)
+        val text = compactRemoteViewSummary?.secondaryText
+            ?: samsungReparse?.text?.takeIf { it.isNotBlank() }
+            ?: extractText(source, allowRemoteViewTextFallback)
+        val displayTitle = if (compactRemoteViewSummary != null) {
+            compactRemoteViewSummary.primaryText
+        } else {
+            when (appPresentationOverride.compactTextSource) {
+                CompactTextSource.TEXT -> text.ifBlank { title }
+                CompactTextSource.TITLE -> title
+            }
+        }
+        val displayText = if (compactRemoteViewSummary != null) {
+            compactRemoteViewSummary.secondaryText ?: text
+        } else if (
             appPresentationOverride.compactTextSource == CompactTextSource.TEXT &&
             title.isNotBlank() &&
             title != displayTitle
@@ -746,6 +771,10 @@ object LiveUpdateNotifier {
             compactCodeOverride?.trim(),
             displayTitle.trim()
         ).firstOrNull { !it.isNullOrEmpty() } ?: displayTitle
+        val compactSecondaryText = compactRemoteViewSummary?.secondaryText?.trim()?.takeIf {
+            it.isNotEmpty()
+        }
+        val compactChipText = compactRemoteViewSummary?.chipText?.trim()?.takeIf { it.isNotEmpty() }
         val aospCuttingEnabled = runtimePrefs.getAospCuttingEnabled()
         val hyperBridgeEnabled = runtimePrefs.getHyperBridgeEnabled()
 
@@ -852,19 +881,21 @@ object LiveUpdateNotifier {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
         if (smartShortTextOverride != null && !hasProgress) {
-            builder.setContentText(smartShortTextOverride)
+            if (compactSecondaryText == null) {
+                builder.setContentText(smartShortTextOverride)
+            }
             builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
         }
 
         if (samsungBridge.enabled) {
             val samsungTexts = SamsungBridgeContentPolicy.resolve(
-                sourcePackageName = sbn.packageName,
                 hasCustomRemoteCard = samsungBridge.hasCustomRemoteCard,
                 hasProgress = hasProgress,
-                smartRuleId = smartRuleId,
                 smartShortTextOverride = smartShortTextOverride,
                 displayText = displayText,
                 compactPrimaryText = compactPrimaryText,
+                compactSecondaryText = compactSecondaryText,
+                compactChipText = compactChipText,
                 resolvedProgressChipText = resolvedProgressChipText,
                 otpShortTextOverride = otpShortTextOverride,
                 otpCode = otpOverride?.code,
@@ -2590,6 +2621,95 @@ object LiveUpdateNotifier {
         val max = extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0)
         val indeterminate = extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false)
         return max > 0 || indeterminate
+    }
+
+    private fun resolveCompactRemoteViewSummary(
+        notification: Notification,
+        fallbackTitle: String,
+        parserDictionary: LiveParserDictionary,
+        samsungReparse: SamsungReparsePayload?,
+        isNavigation: Boolean
+    ): CompactRemoteViewSummary? {
+        val extras = notification.extras
+        val remoteTexts = extractRemoteViewTexts(notification)
+            .mapNotNull(::normalizeCompactText)
+            .distinctBy { it.lowercase(Locale.ROOT) }
+
+        val extraTitle = normalizeCompactText(
+            samsungReparse?.title
+                ?: extras.getCharSequence(Notification.EXTRA_TITLE)
+                ?: extras.getCharSequence(Notification.EXTRA_TITLE_BIG)
+        )
+        val extraText = normalizeCompactText(
+            samsungReparse?.text
+                ?: extras.getCharSequence(Notification.EXTRA_TEXT)
+                ?: extras.getCharSequence(Notification.EXTRA_BIG_TEXT)
+                ?: extras.getCharSequence(Notification.EXTRA_SUB_TEXT)
+        )
+
+        if (isNavigation) {
+            val combinedText = collectNotificationText(
+                notification = notification,
+                fallbackTitle = fallbackTitle,
+                includeRemoteViewTexts = true
+            )
+            val primaryText = normalizeCompactText(
+                extractNavigationDistanceText(
+                    notification = notification,
+                    fallbackTitle = fallbackTitle,
+                    parserDictionary = parserDictionary
+                )
+            ) ?: firstDistinctCompactText(listOf(extraTitle, extraText) + remoteTexts)
+            val secondaryText = normalizeCompactText(
+                extractNavigationInstructionToken(combinedText, parserDictionary)
+            ) ?: firstDistinctCompactText(listOf(extraText) + remoteTexts, primaryText)
+
+            return primaryText?.let { primary ->
+                CompactRemoteViewSummary(
+                    primaryText = primary,
+                    secondaryText = secondaryText,
+                    chipText = primary
+                )
+            }
+        }
+
+        val primaryText = firstDistinctCompactText(listOf(extraTitle, extraText) + remoteTexts)
+            ?: return null
+        val secondaryText = firstDistinctCompactText(listOf(extraText) + remoteTexts, primaryText)
+        val chipText = normalizeCompactText(samsungReparse?.chipText) ?: primaryText
+
+        return CompactRemoteViewSummary(
+            primaryText = primaryText,
+            secondaryText = secondaryText,
+            chipText = chipText
+        )
+    }
+
+    private fun firstDistinctCompactText(
+        candidates: Iterable<String?>,
+        vararg excluded: String?
+    ): String? {
+        val excludedTexts = excluded.mapNotNull(::normalizeCompactText)
+        return candidates.firstNotNullOfOrNull { candidate ->
+            val normalized = normalizeCompactText(candidate) ?: return@firstNotNullOfOrNull null
+            if (excludedTexts.any { excludedText -> isSameCompactText(normalized, excludedText) }) {
+                null
+            } else {
+                normalized
+            }
+        }
+    }
+
+    private fun normalizeCompactText(value: CharSequence?): String? {
+        val normalized = value?.toString()
+            ?.replace(Regex("\\s+"), " ")
+            ?.trim()
+            .orEmpty()
+        return normalized.ifBlank { null }
+    }
+
+    private fun isSameCompactText(left: String, right: String): Boolean {
+        return left.equals(right, ignoreCase = true)
     }
 
     private fun extractTitle(
