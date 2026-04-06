@@ -5,12 +5,13 @@ internal data class SamsungBridgeTexts(
     val secondaryText: String,
     val chipText: String?,
     val showSecondaryInNowBar: Boolean,
-    val includeNowBarRemoteView: Boolean
+    val preferCompactNowBarRemoteView: Boolean
 )
 
 internal object SamsungBridgeContentPolicy {
+    private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
+
     fun resolve(
-        @Suppress("UNUSED_PARAMETER")
         sourcePackageName: String,
         hasCustomRemoteCard: Boolean,
         hasProgress: Boolean,
@@ -25,7 +26,6 @@ internal object SamsungBridgeContentPolicy {
         samsungReparseChipText: String?
     ): SamsungBridgeTexts {
         val shouldClearContentText = hasCustomRemoteCard || smartRuleId == "navigation"
-        val includeNowBarRemoteView = !shouldClearContentText
         val secondaryText = if (smartShortTextOverride != null && !hasProgress) {
             smartShortTextOverride
         } else {
@@ -45,8 +45,8 @@ internal object SamsungBridgeContentPolicy {
             shouldClearContentText = shouldClearContentText,
             secondaryText = secondaryText,
             chipText = chipText,
-            showSecondaryInNowBar = secondaryText.isNotBlank(),
-            includeNowBarRemoteView = includeNowBarRemoteView
+            showSecondaryInNowBar = smartRuleId != "navigation" && !hasCustomRemoteCard,
+            preferCompactNowBarRemoteView = sourcePackageName == YANDEX_MAPS_PACKAGE && !hasProgress
         )
     }
 }
