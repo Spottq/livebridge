@@ -801,6 +801,10 @@ object LiveUpdateNotifier {
         }
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
+        val preferredNowBarChipIcon = InstalledAppsRepository.resolveNowBarAppIcon(
+            context = context,
+            packageName = sbn.packageName
+        ) ?: preferredSmallIcon
 
         if (requestPromoted) {
             builder.setRequestPromotedOngoing(true)
@@ -878,7 +882,7 @@ object LiveUpdateNotifier {
                 sourcePackageName = sbn.packageName,
                 primaryText = compactPrimaryText,
                 texts = samsungTexts,
-                chipIcon = preferredSmallIcon,
+                chipIcon = preferredNowBarChipIcon,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
                 progressMax = progressMax

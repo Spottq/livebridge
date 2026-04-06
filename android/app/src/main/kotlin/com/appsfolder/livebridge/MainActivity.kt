@@ -9,13 +9,7 @@ import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager.MATCH_ALL
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -34,6 +28,7 @@ import ai.perplexity.app.android.liveupdate.AppPresentationOverridesLoader
 import ai.perplexity.app.android.liveupdate.ConverterPrefs
 import ai.perplexity.app.android.liveupdate.DeviceBlocker
 import ai.perplexity.app.android.liveupdate.DeviceProps
+import ai.perplexity.app.android.liveupdate.InstalledAppsRepository
 import ai.perplexity.app.android.liveupdate.KeepAliveForegroundService
 import ai.perplexity.app.android.liveupdate.LiveBridgeTileService
 import ai.perplexity.app.android.liveupdate.LiveParserDictionary
@@ -45,7 +40,6 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.util.concurrent.Executors
 
@@ -108,7 +102,10 @@ class MainActivity : FlutterActivity() {
             "canPostPromotedNotifications" -> res.success(canPostPromotedNotifications())
             "openPromotedNotificationSettings" -> res.success(openPromotedNotificationSettings())
             "openAppNotificationSettings" -> res.success(openAppNotificationSettings())
-            "getInstalledApps" -> loadInstalledAppsAsync(res)
+            "getInstalledApps" -> loadInstalledAppsAsync(
+                forceRefresh = call.argument<Boolean>("forceRefresh") ?: false,
+                res = res
+            )
             "getDeviceInfo" -> res.success(getDeviceInfo())
             "getAppListAccessGranted" -> res.success(prefs.getAppListAccessGranted())
             "setAppListAccessGranted" -> {
@@ -708,10 +705,17 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun loadInstalledAppsAsync(res: MethodChannel.Result) {
+    private fun loadInstalledAppsAsync(
+        forceRefresh: Boolean,
+        res: MethodChannel.Result
+    ) {
         appsLoaderExecutor.execute {
             try {
-                val apps = getInstalledApps()
+                val apps = InstalledAppsRepository.loadInstalledApps(
+                    context = applicationContext,
+                    selfPackageName = packageName,
+                    forceRefresh = forceRefresh
+                )
                 runOnUiThread {
                     res.success(apps)
                 }
@@ -725,138 +729,6 @@ class MainActivity : FlutterActivity() {
                     )
                 }
             }
-        }
-    }
-
-    private fun getInstalledApps(): List<Map<String, Any>> {
-        val now = System.currentTimeMillis()
-        synchronized(installedAppsCacheLock) {
-            val cached = installedAppsCache
-            if (cached != null && now - installedAppsCacheAtMs <= INSTALLED_APPS_CACHE_TTL_MS) {
-                return cached
-            }
-        }
-
-        val pm = packageManager
-        val launcherIntent = Intent(Intent.ACTION_MAIN).apply {
-            addCategory(Intent.CATEGORY_LAUNCHER)
-        }
-        val resolved = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            pm.queryIntentActivities(
-                launcherIntent,
-                PackageManager.ResolveInfoFlags.of(MATCH_ALL.toLong())
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            pm.queryIntentActivities(launcherIntent, MATCH_ALL)
-        }
-
-        val entriesByPackage = linkedMapOf<String, MutableMap<String, Any>>()
-
-        resolved.forEach { resolveInfo ->
-            val activityInfo = resolveInfo.activityInfo ?: return@forEach
-            val appPackage = activityInfo.packageName
-            if (appPackage == packageName) {
-                return@forEach
-            }
-            val resolvedLabel = resolveInfo.loadLabel(pm)?.toString()?.trim().orEmpty()
-            val label = if (resolvedLabel.isNotEmpty()) resolvedLabel else appPackage
-            val iconBytes = resolveCachedIconBytes(appPackage) ?: drawableToPngBytes(resolveInfo.loadIcon(pm))
-            val isSystemApp = isSystemApp(activityInfo.applicationInfo)
-            val entry = mutableMapOf<String, Any>(
-                "packageName" to appPackage,
-                "label" to label,
-                "isSystem" to isSystemApp
-            )
-            if (iconBytes != null) {
-                entry["icon"] = iconBytes
-                cacheIconBytes(appPackage, iconBytes)
-            }
-            entriesByPackage[appPackage] = entry
-        }
-
-        getInstalledPackagesCompat(pm).forEach { packageInfo ->
-            val appInfo = packageInfo.applicationInfo ?: return@forEach
-            val appPackage = packageInfo.packageName.orEmpty()
-            if (appPackage.isEmpty() || appPackage == packageName) {
-                return@forEach
-            }
-            if (!isSystemApp(appInfo) || entriesByPackage.containsKey(appPackage)) {
-                return@forEach
-            }
-            val label = appInfo.loadLabel(pm)?.toString()?.trim().orEmpty().ifEmpty { appPackage }
-            val iconBytes = resolveCachedIconBytes(appPackage) ?: drawableToPngBytes(appInfo.loadIcon(pm))
-            val entry = mutableMapOf<String, Any>(
-                "packageName" to appPackage,
-                "label" to label,
-                "isSystem" to true
-            )
-            if (iconBytes != null) {
-                entry["icon"] = iconBytes
-                cacheIconBytes(appPackage, iconBytes)
-            }
-            entriesByPackage[appPackage] = entry
-        }
-
-        val entries = entriesByPackage.values
-            .sortedBy { (it["label"] as? String)?.lowercase(Locale.getDefault()) ?: "" }
-            .toList()
-
-        synchronized(installedAppsCacheLock) {
-            installedAppsCache = entries
-            installedAppsCacheAtMs = now
-        }
-        return entries
-    }
-
-    private fun isSystemApp(applicationInfo: ApplicationInfo?): Boolean {
-        if (applicationInfo == null) {
-            return false
-        }
-        val flags = applicationInfo.flags
-        return (flags and ApplicationInfo.FLAG_SYSTEM) != 0 ||
-                (flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0
-    }
-
-    private fun getInstalledPackagesCompat(pm: PackageManager): List<PackageInfo> {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            pm.getInstalledPackages(PackageManager.PackageInfoFlags.of(0L))
-        } else {
-            @Suppress("DEPRECATION")
-            pm.getInstalledPackages(0)
-        }
-    }
-
-    private fun resolveCachedIconBytes(packageName: String): ByteArray? {
-        synchronized(installedAppsCacheLock) {
-            return appIconBytesCache[packageName]
-        }
-    }
-
-    private fun cacheIconBytes(packageName: String, bytes: ByteArray) {
-        synchronized(installedAppsCacheLock) {
-            if (appIconBytesCache.size >= MAX_ICON_CACHE_SIZE && !appIconBytesCache.containsKey(packageName)) {
-                appIconBytesCache.clear()
-            }
-            appIconBytesCache[packageName] = bytes
-        }
-    }
-
-    private fun drawableToPngBytes(drawable: Drawable?): ByteArray? {
-        drawable ?: return null
-        return try {
-            val sizePx = 96
-            val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            drawable.setBounds(0, 0, sizePx, sizePx)
-            drawable.draw(canvas)
-
-            val outputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
-            outputStream.toByteArray()
-        } catch (error: Throwable) {
-            Log.w(TAG, "Failed to extract app icon for package picker", error)
-            null
         }
     }
 
@@ -894,17 +766,11 @@ class MainActivity : FlutterActivity() {
         private const val METHOD_CHANNEL = "livebridge/platform"
         private const val REQUEST_POST_NOTIFICATIONS = 2406
         private const val TAG = "MainActivity"
-        private const val INSTALLED_APPS_CACHE_TTL_MS = 10 * 60 * 1000L
-        private const val MAX_ICON_CACHE_SIZE = 512
         private const val UPDATE_CHANNEL_ID = "livebridge_update_checks"
         private const val UPDATE_CHANNEL_NAME = "LiveBridge Updates"
         private const val UPDATE_NOTIFICATION_ID = 32001
         private const val DEFAULT_RELEASES_URL = "https://github.com/appsfolder/livebridge/releases"
 
-        private val installedAppsCacheLock = Any()
-        private var installedAppsCache: List<Map<String, Any>>? = null
-        private var installedAppsCacheAtMs: Long = 0L
-        private val appIconBytesCache: MutableMap<String, ByteArray> = mutableMapOf()
         private val appsLoaderExecutor = Executors.newSingleThreadExecutor()
         private val CHINESE_DEVICE_MARKERS = setOf(
             "xiaomi",

@@ -122,9 +122,7 @@ class _AppPresentationSettingsPageState
   Future<void> _load() async {
     setState(() => _isLoading = true);
     try {
-      final apps = await LiveBridgePlatform.getInstalledApps(
-        forceRefresh: true,
-      );
+      final apps = await LiveBridgePlatform.getInstalledApps();
       final raw = await LiveBridgePlatform.getAppPresentationOverrides();
       final parsed = _parseOverrides(raw);
       if (mounted) {

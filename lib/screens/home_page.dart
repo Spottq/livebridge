@@ -87,6 +87,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _didInitSectionDefaults = false;
   bool _previewAppsLoaded = false;
   bool _previewAppsLoading = false;
+  Future<void>? _previewAppsWarmupTask;
   PackageMode _packageMode = PackageMode.all;
   PackageMode _otpPackageMode = PackageMode.all;
   late final AnimationController _masterBlockedShakeController;
@@ -143,6 +144,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           ),
         );
     _refreshState();
+    unawaited(_ensurePreviewAppsLoaded(forceRefresh: true));
     _statusRefreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       _refreshState(showLoading: false);
     });
@@ -168,6 +170,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     if (state == AppLifecycleState.resumed) {
       unawaited(_refreshState(showLoading: false));
       unawaited(_checkForUpdatesIfNeeded());
+      unawaited(_ensurePreviewAppsLoaded(forceRefresh: true));
     }
   }
 
@@ -810,28 +813,45 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   }
 
   void _cachePreviewApps(List<InstalledApp> apps) {
+    _previewAppsByPackage.clear();
     for (final InstalledApp app in apps) {
       _previewAppsByPackage[app.packageName.toLowerCase()] = app;
     }
     _previewAppsLoaded = true;
   }
 
-  Future<void> _ensurePreviewAppsLoaded() async {
-    if (_previewAppsLoaded || _previewAppsLoading) {
-      return;
+  Future<void> _ensurePreviewAppsLoaded({bool forceRefresh = false}) {
+    if (!forceRefresh && _previewAppsLoaded) {
+      return Future<void>.value();
     }
+    final Future<void>? inFlight = _previewAppsWarmupTask;
+    if (_previewAppsLoading && inFlight != null) {
+      return inFlight;
+    }
+
     _previewAppsLoading = true;
-    try {
-      final List<InstalledApp> apps =
-          await LiveBridgePlatform.getInstalledApps();
-      _cachePreviewApps(apps);
-    } catch (_) {
-    } finally {
-      _previewAppsLoading = false;
-      if (mounted) {
-        setState(() {});
+    final Future<void> task = () async {
+      try {
+        final List<InstalledApp> apps =
+            await LiveBridgePlatform.getInstalledApps(
+              forceRefresh: forceRefresh,
+            );
+        if (mounted) {
+          setState(() => _cachePreviewApps(apps));
+        } else {
+          _cachePreviewApps(apps);
+        }
+      } catch (_) {
+      } finally {
+        _previewAppsLoading = false;
+        _previewAppsWarmupTask = null;
+        if (mounted) {
+          setState(() {});
+        }
       }
-    }
+    }();
+    _previewAppsWarmupTask = task;
+    return task;
   }
 
   Future<void> _openPackagePicker({
@@ -840,9 +860,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     if (!await _ensureAppListAccess()) return;
     HapticFeedback.lightImpact();
 
-    final List<InstalledApp> apps = await LiveBridgePlatform.getInstalledApps(
-      forceRefresh: true,
-    );
+    await _ensurePreviewAppsLoaded();
+    final List<InstalledApp> apps = _previewAppsByPackage.values.toList();
     if (!mounted || apps.isEmpty) {
       if (mounted) _snack(AppStrings.of(context).appsLoadFailed);
       return;

@@ -3,7 +3,7 @@ import '../models/app_models.dart';
 
 class LiveBridgePlatform {
   static const MethodChannel _channel = MethodChannel('livebridge/platform');
-  static const Duration _appsTtl = Duration(minutes: 10);
+  static const Duration _appsTtl = Duration(hours: 24);
   static List<InstalledApp>? _appsBox;
   static DateTime? _appsTs;
 
@@ -161,6 +161,7 @@ class LiveBridgePlatform {
     }
     final List<dynamic>? res = await _channel.invokeMethod<List<dynamic>>(
       'getInstalledApps',
+      <String, dynamic>{'forceRefresh': forceRefresh},
     );
     if (res == null) return <InstalledApp>[];
 
