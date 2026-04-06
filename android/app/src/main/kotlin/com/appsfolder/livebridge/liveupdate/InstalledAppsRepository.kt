@@ -6,12 +6,10 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
-import androidx.core.graphics.drawable.IconCompat
 import java.io.ByteArrayOutputStream
 import java.util.Locale
 
@@ -116,25 +114,6 @@ internal object InstalledAppsRepository {
             appIconBytesCache.putAll(iconsByPackage)
         }
         return entries
-    }
-
-    fun resolveNowBarAppIcon(context: Context, packageName: String): IconCompat? {
-        val bitmap = resolvePackageIconBitmap(context, packageName) ?: return null
-        return runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
-    }
-
-    fun resolvePackageIconBitmap(context: Context, packageName: String): Bitmap? {
-        val normalized = packageName.trim()
-        if (normalized.isEmpty()) {
-            return null
-        }
-
-        val iconBytes = resolveCachedIconBytes(normalized) ?: loadPackageIconPngBytes(context, normalized)
-        if (iconBytes == null || iconBytes.isEmpty()) {
-            return null
-        }
-
-        return BitmapFactory.decodeByteArray(iconBytes, 0, iconBytes.size)
     }
 
     private fun loadPackageIconPngBytes(context: Context, packageName: String): ByteArray? {

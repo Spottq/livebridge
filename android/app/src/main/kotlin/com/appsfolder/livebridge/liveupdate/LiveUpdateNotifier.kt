@@ -715,16 +715,11 @@ object LiveUpdateNotifier {
                 null
             }
         val sourceLargeIcon = resolveSourceLargeIconBitmap(context, source)
-        val sourceAppLargeIcon = InstalledAppsRepository.resolvePackageIconBitmap(
-            context = context,
-            packageName = sbn.packageName
-        )
-        val fallbackLargeIcon = when {
+        val preferredLargeIcon = when {
             appPresentationOverride.iconSource == NotificationIconSource.APP -> sourceLargeIcon
             shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
             else -> samsungLargeIcon ?: sourceLargeIcon
         }
-        val preferredLargeIcon = sourceAppLargeIcon ?: fallbackLargeIcon
 
         val appName = resolveAppName(context, sbn.packageName)
         val allowRemoteViewTextFallback = shouldTryNavigationArrowIcon
@@ -806,10 +801,6 @@ object LiveUpdateNotifier {
         }
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
-        val preferredNowBarChipIcon = InstalledAppsRepository.resolveNowBarAppIcon(
-            context = context,
-            packageName = sbn.packageName
-        ) ?: preferredSmallIcon
 
         if (requestPromoted) {
             builder.setRequestPromotedOngoing(true)
@@ -887,7 +878,7 @@ object LiveUpdateNotifier {
                 sourcePackageName = sbn.packageName,
                 primaryText = compactPrimaryText,
                 texts = samsungTexts,
-                chipIcon = preferredNowBarChipIcon,
+                chipIcon = preferredSmallIcon,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
                 progressMax = progressMax
