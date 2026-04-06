@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -81,6 +82,16 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
             extras.putInt(KEY_NOWBAR_CHRONOMETER_POSITION, nowBarChronometerPosition)
         }
 
+        Log.d(
+            TAG,
+            "Apply Samsung bridge " +
+                "pkg=$sourcePackageName primary=${normalizedPrimary.take(80)} " +
+                "secondary=${normalizedSecondary.take(80)} chipText=${normalizedChipText.take(80)} " +
+                "chipIcon=${describeIconCompat(chipIcon)} frameworkIcon=${frameworkIcon != null} " +
+                "progress=$hasProgress:${progressValue.coerceAtLeast(0)}/${progressMax.coerceAtLeast(0)} " +
+                "showSecondary=$showSecondaryInNowBar preferCompact=$preferCompactNowBarRemoteView " +
+                "nowBarRemoteView=${nowBarRemoteView != null}"
+        )
         builder.addExtras(extras)
     }
 
@@ -104,6 +115,13 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
             }
         }
         headsUp?.let(builder::setCustomHeadsUpContentView)
+        Log.d(
+            TAG,
+            "Copied RemoteViews " +
+                "content=${source.contentView != null} big=${source.bigContentView != null} " +
+                "headsUp=${source.headsUpContentView != null} expandedApplied=${expanded != null} " +
+                "headsUpApplied=${headsUp != null}"
+        )
     }
 
     private fun resolveChipBackgroundColor(source: Notification): Int {
@@ -148,7 +166,23 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
     }
 
+    private fun describeIconCompat(icon: IconCompat?): String {
+        icon ?: return "none"
+        val type = runCatching { icon.type }.getOrDefault(-1)
+        val resInfo = if (type == IconCompat.TYPE_RESOURCE) {
+            runCatching { "${icon.resPackage}:${icon.resId}" }.getOrNull()
+        } else {
+            null
+        }
+        return if (resInfo != null) {
+            "type=$type,res=$resInfo"
+        } else {
+            "type=$type"
+        }
+    }
+
     companion object {
+        private const val TAG = "SamsungLiveBridge"
         private const val ONGOING_PREFIX = "android.ongoingActivityNoti."
         private const val KEY_STYLE = "${ONGOING_PREFIX}style"
         private const val KEY_PRIMARY_INFO = "${ONGOING_PREFIX}primaryInfo"
