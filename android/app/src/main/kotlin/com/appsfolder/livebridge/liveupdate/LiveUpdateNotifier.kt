@@ -701,6 +701,7 @@ object LiveUpdateNotifier {
         val samsungReparse = samsungBridge.reparsePayload
         val sourceSmallIcon = resolveSourceSmallIcon(context, sbn)
         val appSmallIcon = resolveAppSmallIcon(context, sbn.packageName)
+        val appLargeIcon = resolveAppLargeIconBitmap(context, sbn.packageName)
         val samsungSmallIcon = samsungReparse?.icon
         val samsungLargeIcon = samsungReparse?.largeIconBitmap
         val shouldTryNavigationArrowIcon =
@@ -716,7 +717,14 @@ object LiveUpdateNotifier {
             }
         val sourceLargeIcon = resolveSourceLargeIconBitmap(context, source)
         val preferredLargeIcon = when {
-            appPresentationOverride.iconSource == NotificationIconSource.APP -> sourceLargeIcon
+            appPresentationOverride.iconSource == NotificationIconSource.APP ->
+                appLargeIcon ?: sourceLargeIcon
+            !samsungBridge.hasCustomRemoteCard ->
+                appLargeIcon ?: when {
+                    shouldTryNavigationArrowIcon ->
+                        navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
+                    else -> samsungLargeIcon ?: sourceLargeIcon
+                }
             shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
             else -> samsungLargeIcon ?: sourceLargeIcon
         }
@@ -2229,6 +2237,20 @@ object LiveUpdateNotifier {
                     packageName,
                     appInfo.icon
                 )
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    private fun resolveAppLargeIconBitmap(context: Context, packageName: String): Bitmap? {
+        return try {
+            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
+            if (appInfo.icon == 0) {
+                null
+            } else {
+                val packageContext = context.createPackageContext(packageName, 0)
+                packageContext.getDrawable(appInfo.icon)?.let(::drawableToBitmap)
             }
         } catch (_: Exception) {
             null
