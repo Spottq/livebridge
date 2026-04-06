@@ -720,19 +720,6 @@ object LiveUpdateNotifier {
             shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
             else -> samsungLargeIcon ?: sourceLargeIcon
         }
-        val preferredLargeIconSource = when {
-            appPresentationOverride.iconSource == NotificationIconSource.APP ->
-                if (sourceLargeIcon != null) "sourceLargeIcon" else "none"
-            shouldTryNavigationArrowIcon -> when {
-                navigationDrawable?.bitmap != null -> "navigationDrawable"
-                samsungLargeIcon != null -> "samsungLargeIcon"
-                sourceLargeIcon != null -> "sourceLargeIcon"
-                else -> "none"
-            }
-            samsungLargeIcon != null -> "samsungLargeIcon"
-            sourceLargeIcon != null -> "sourceLargeIcon"
-            else -> "none"
-        }
 
         val appName = resolveAppName(context, sbn.packageName)
         val allowRemoteViewTextFallback = shouldTryNavigationArrowIcon
@@ -808,45 +795,18 @@ object LiveUpdateNotifier {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
         val preferredSmallIcon = when (appPresentationOverride.iconSource) {
-            NotificationIconSource.NOTIFICATION ->
-                samsungSmallIcon ?: navigationDrawable?.icon ?: sourceSmallIcon ?: appSmallIcon
-            NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
-        }
-        val preferredSmallIconSource = when (appPresentationOverride.iconSource) {
             NotificationIconSource.NOTIFICATION -> when {
-                samsungSmallIcon != null -> "samsungSmallIcon"
-                navigationDrawable?.icon != null -> "navigationDrawable"
-                sourceSmallIcon != null -> "sourceSmallIcon"
-                appSmallIcon != null -> "appSmallIcon"
-                else -> "none"
+                shouldTryNavigationArrowIcon ->
+                    navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+                samsungBridge.hasCustomRemoteCard ->
+                    samsungSmallIcon ?: sourceSmallIcon ?: appSmallIcon
+                else ->
+                    sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
             }
-            NotificationIconSource.APP -> when {
-                appSmallIcon != null -> "appSmallIcon"
-                sourceSmallIcon != null -> "sourceSmallIcon"
-                else -> "none"
-            }
+            NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
         }
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
-        logMirrorIconDecision(
-            sbn = sbn,
-            source = source,
-            appPresentationOverride = appPresentationOverride,
-            smartRuleId = smartRuleId,
-            samsungBridge = samsungBridge,
-            samsungReparse = samsungReparse,
-            shouldTryNavigationArrowIcon = shouldTryNavigationArrowIcon,
-            sourceSmallIcon = sourceSmallIcon,
-            appSmallIcon = appSmallIcon,
-            samsungSmallIcon = samsungSmallIcon,
-            navigationDrawable = navigationDrawable,
-            sourceLargeIcon = sourceLargeIcon,
-            samsungLargeIcon = samsungLargeIcon,
-            preferredSmallIcon = preferredSmallIcon,
-            preferredSmallIconSource = preferredSmallIconSource,
-            preferredLargeIcon = preferredLargeIcon,
-            preferredLargeIconSource = preferredLargeIconSource
-        )
 
         if (requestPromoted) {
             builder.setRequestPromotedOngoing(true)
@@ -2977,61 +2937,6 @@ object LiveUpdateNotifier {
             idsToCancel.addAll(clearOtpTrackingForSbnKeyLocked(sbnKey))
         }
         return idsToCancel
-    }
-
-    private fun logMirrorIconDecision(
-        sbn: StatusBarNotification,
-        source: Notification,
-        appPresentationOverride: AppPresentationOverride,
-        smartRuleId: String?,
-        samsungBridge: SamsungBridgeContext,
-        samsungReparse: SamsungReparsePayload?,
-        shouldTryNavigationArrowIcon: Boolean,
-        sourceSmallIcon: IconCompat?,
-        appSmallIcon: IconCompat?,
-        samsungSmallIcon: IconCompat?,
-        navigationDrawable: RemoteDrawableAssets?,
-        sourceLargeIcon: Bitmap?,
-        samsungLargeIcon: Bitmap?,
-        preferredSmallIcon: IconCompat?,
-        preferredSmallIconSource: String,
-        preferredLargeIcon: Bitmap?,
-        preferredLargeIconSource: String
-    ) {
-        Log.d(
-            TAG,
-            "Mirror icon trace " +
-                "pkg=${sbn.packageName} id=${sbn.id} tag=${sbn.tag ?: "-"} " +
-                "key=${sbn.key} iconMode=${appPresentationOverride.iconSource} " +
-                "smartRule=${smartRuleId ?: "-"} samsungBridge=${samsungBridge.enabled} " +
-                "samsungPayload=${samsungReparse != null} customRemoteCard=${samsungBridge.hasCustomRemoteCard} " +
-                "navHeuristic=$shouldTryNavigationArrowIcon " +
-                "remoteViews=[content=${source.contentView != null},big=${source.bigContentView != null},headsUp=${source.headsUpContentView != null}] " +
-                "smallCandidates=[samsung=${describeIconCompat(samsungSmallIcon)},nav=${describeIconCompat(navigationDrawable?.icon)},source=${describeIconCompat(sourceSmallIcon)},app=${describeIconCompat(appSmallIcon)}] " +
-                "smallChoice=$preferredSmallIconSource:${describeIconCompat(preferredSmallIcon)} " +
-                "largeCandidates=[nav=${describeBitmap(navigationDrawable?.bitmap)},samsung=${describeBitmap(samsungLargeIcon)},source=${describeBitmap(sourceLargeIcon)}] " +
-                "largeChoice=$preferredLargeIconSource:${describeBitmap(preferredLargeIcon)}"
-        )
-    }
-
-    private fun describeIconCompat(icon: IconCompat?): String {
-        icon ?: return "none"
-        val type = runCatching { icon.type }.getOrDefault(-1)
-        val resInfo = if (type == IconCompat.TYPE_RESOURCE) {
-            runCatching { "${icon.resPackage}:${icon.resId}" }.getOrNull()
-        } else {
-            null
-        }
-        return if (resInfo != null) {
-            "type=$type,res=$resInfo"
-        } else {
-            "type=$type"
-        }
-    }
-
-    private fun describeBitmap(bitmap: Bitmap?): String {
-        bitmap ?: return "none"
-        return "${bitmap.width}x${bitmap.height}"
     }
 
     private data class ProgressOverride(

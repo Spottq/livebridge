@@ -7,7 +7,6 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.service.notification.StatusBarNotification
-import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.graphics.drawable.IconCompat
 import java.util.Locale
@@ -26,7 +25,6 @@ internal data class SamsungReparsePayload(
 }
 
 internal object SamsungNotificationReparser {
-    private const val TAG = "SamsungNotifReparser"
     private const val ONGOING_KEY_PREFIX = "android.ongoingActivityNoti."
 
     private const val KEY_STYLE = "${ONGOING_KEY_PREFIX}style"
@@ -127,18 +125,6 @@ internal object SamsungNotificationReparser {
         if (!hasUsefulData) {
             return null
         }
-
-        Log.d(
-            TAG,
-            "Parsed Samsung payload " +
-                "pkg=${sbn.packageName} id=${sbn.id} tag=${sbn.tag ?: "-"} key=${sbn.key} " +
-                "style=${style ?: -1} remoteViews=[chrono=${extras.get(KEY_CHRONOMETER_REMOTE_VIEW) != null},content=${notification.contentView != null},big=${notification.bigContentView != null},headsUp=${notification.headsUpContentView != null}] " +
-                "chipIconRaw=${extras.get(KEY_CHIP_ICON) != null} chipIcon=${describeIconCompat(chipIcon)} " +
-                "remoteDrawableIcon=${describeIconCompat(remoteDrawable?.icon)} remoteDrawableBitmap=${describeBitmap(remoteDrawable?.bitmap)} " +
-                "chosenIcon=${if (chipIcon != null) "chipIcon" else if (remoteDrawable?.icon != null) "remoteDrawable" else "none"} " +
-                "largeIcon=${describeBitmap(largeIconBitmap)} progress=${progressValue ?: -1}/${progressMax ?: -1} " +
-                "title=${title ?: "-"} text=${text ?: "-"} chipText=${chipExpandedText ?: "-"}"
-        )
 
         return SamsungReparsePayload(
             title = title,
@@ -457,26 +443,6 @@ internal object SamsungNotificationReparser {
             is Number -> value.toInt()
             else -> null
         }
-    }
-
-    private fun describeIconCompat(icon: IconCompat?): String {
-        icon ?: return "none"
-        val type = runCatching { icon.type }.getOrDefault(-1)
-        val resInfo = if (type == IconCompat.TYPE_RESOURCE) {
-            runCatching { "${icon.resPackage}:${icon.resId}" }.getOrNull()
-        } else {
-            null
-        }
-        return if (resInfo != null) {
-            "type=$type,res=$resInfo"
-        } else {
-            "type=$type"
-        }
-    }
-
-    private fun describeBitmap(bitmap: Bitmap?): String {
-        bitmap ?: return "none"
-        return "${bitmap.width}x${bitmap.height}"
     }
 
     private data class RemoteDrawableAssets(
