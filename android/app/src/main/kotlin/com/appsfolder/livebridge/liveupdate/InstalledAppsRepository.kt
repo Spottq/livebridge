@@ -119,6 +119,11 @@ internal object InstalledAppsRepository {
     }
 
     fun resolveNowBarAppIcon(context: Context, packageName: String): IconCompat? {
+        val bitmap = resolvePackageIconBitmap(context, packageName) ?: return null
+        return runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
+    }
+
+    fun resolvePackageIconBitmap(context: Context, packageName: String): Bitmap? {
         val normalized = packageName.trim()
         if (normalized.isEmpty()) {
             return null
@@ -129,8 +134,7 @@ internal object InstalledAppsRepository {
             return null
         }
 
-        val bitmap = BitmapFactory.decodeByteArray(iconBytes, 0, iconBytes.size) ?: return null
-        return runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
+        return BitmapFactory.decodeByteArray(iconBytes, 0, iconBytes.size)
     }
 
     private fun loadPackageIconPngBytes(context: Context, packageName: String): ByteArray? {

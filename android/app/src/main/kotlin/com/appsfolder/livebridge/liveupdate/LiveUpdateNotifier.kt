@@ -715,11 +715,16 @@ object LiveUpdateNotifier {
                 null
             }
         val sourceLargeIcon = resolveSourceLargeIconBitmap(context, source)
-        val preferredLargeIcon = when {
+        val sourceAppLargeIcon = InstalledAppsRepository.resolvePackageIconBitmap(
+            context = context,
+            packageName = sbn.packageName
+        )
+        val fallbackLargeIcon = when {
             appPresentationOverride.iconSource == NotificationIconSource.APP -> sourceLargeIcon
             shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
             else -> samsungLargeIcon ?: sourceLargeIcon
         }
+        val preferredLargeIcon = sourceAppLargeIcon ?: fallbackLargeIcon
 
         val appName = resolveAppName(context, sbn.packageName)
         val allowRemoteViewTextFallback = shouldTryNavigationArrowIcon
