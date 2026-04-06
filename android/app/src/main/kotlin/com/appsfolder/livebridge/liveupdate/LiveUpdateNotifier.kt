@@ -2171,10 +2171,16 @@ object LiveUpdateNotifier {
 
     private fun resolveSourceSmallIcon(context: Context, sbn: StatusBarNotification): IconCompat? {
         val source = sbn.notification
+        val packageContext = runCatching {
+            context.createPackageContext(sbn.packageName, 0)
+        }.getOrNull()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val frameworkSmallIcon = source.smallIcon
             if (frameworkSmallIcon != null) {
+                iconToBitmap(packageContext ?: context, frameworkSmallIcon)?.let { bitmap ->
+                    runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()?.let { return it }
+                }
                 try {
                     return IconCompat.createFromIcon(context, frameworkSmallIcon)
                 } catch (_: Exception) {
@@ -2187,10 +2193,17 @@ object LiveUpdateNotifier {
             return null
         }
 
+        packageContext?.let { packageCtx ->
+            runCatching {
+                packageCtx.getDrawable(legacyIconRes)?.let(::drawableToBitmap)
+            }.getOrNull()?.let { bitmap ->
+                runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()?.let { return it }
+            }
+        }
+
         return try {
-            val packageContext = context.createPackageContext(sbn.packageName, 0)
             IconCompat.createWithResource(
-                packageContext.resources,
+                (packageContext ?: context).resources,
                 sbn.packageName,
                 legacyIconRes
             )
@@ -2206,6 +2219,11 @@ object LiveUpdateNotifier {
                 null
             } else {
                 val packageContext = context.createPackageContext(packageName, 0)
+                runCatching {
+                    packageContext.getDrawable(appInfo.icon)?.let(::drawableToBitmap)
+                }.getOrNull()?.let { bitmap ->
+                    runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()?.let { return it }
+                }
                 IconCompat.createWithResource(
                     packageContext.resources,
                     packageName,
