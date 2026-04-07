@@ -37,8 +37,10 @@ internal object SamsungBridgeContentPolicy {
         samsungReparseChipText: String?,
         remoteViewMiniTextPair: SamsungMiniTextPair?
     ): SamsungBridgeTexts {
-        val shouldClearContentText = hasCustomRemoteCard || smartRuleId == "navigation"
-        val secondaryText = if (smartShortTextOverride != null && !hasProgress) {
+        val useTextOnlyMiniNowBar = hasCustomRemoteCard && remoteViewMiniTextPair != null
+        val shouldClearContentText =
+            !useTextOnlyMiniNowBar && (hasCustomRemoteCard || smartRuleId == "navigation")
+        val secondaryText = if (!useTextOnlyMiniNowBar && smartShortTextOverride != null && !hasProgress) {
             smartShortTextOverride
         } else {
             displayText
@@ -52,7 +54,6 @@ internal object SamsungBridgeContentPolicy {
             smartShortTextOverride?.trim(),
             compactPrimaryText.trim()
         ).firstOrNull { !it.isNullOrEmpty() }
-        val useTextOnlyMiniNowBar = hasCustomRemoteCard && remoteViewMiniTextPair != null
         val nowBarPrimaryText = remoteViewMiniTextPair?.primaryText
             ?.trim()
             ?.takeIf { it.isNotEmpty() }

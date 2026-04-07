@@ -792,6 +792,17 @@ object LiveUpdateNotifier {
         } else {
             null
         }
+        val useTextOnlyMiniNowBar = samsungBridge.hasCustomRemoteCard && remoteViewMiniTextPair != null
+        val notificationPrimaryText = if (useTextOnlyMiniNowBar) {
+            title
+        } else {
+            compactPrimaryText
+        }
+        val notificationSecondaryText = if (useTextOnlyMiniNowBar) {
+            text
+        } else {
+            displayText
+        }
         var resolvedProgressChipText: String? = null
         val determinateProgressPercent = if (hasProgress && !indeterminate && progressMax > 0) {
             val safeMax = progressMax.coerceAtLeast(1)
@@ -804,8 +815,8 @@ object LiveUpdateNotifier {
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(compactPrimaryText)
-            .setContentText(displayText)
+            .setContentTitle(notificationPrimaryText)
+            .setContentText(notificationSecondaryText)
             .setSubText(appName)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
@@ -881,7 +892,9 @@ object LiveUpdateNotifier {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
         if (smartShortTextOverride != null && !hasProgress) {
-            builder.setContentText(smartShortTextOverride)
+            if (!useTextOnlyMiniNowBar) {
+                builder.setContentText(smartShortTextOverride)
+            }
             builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
         }
 
@@ -892,7 +905,7 @@ object LiveUpdateNotifier {
                 hasProgress = hasProgress,
                 smartRuleId = smartRuleId,
                 smartShortTextOverride = smartShortTextOverride,
-                displayText = displayText,
+                displayText = notificationSecondaryText,
                 compactPrimaryText = compactPrimaryText,
                 resolvedProgressChipText = resolvedProgressChipText,
                 otpShortTextOverride = otpShortTextOverride,
@@ -906,7 +919,7 @@ object LiveUpdateNotifier {
                 builder = builder,
                 source = source,
                 sourcePackageName = sbn.packageName,
-                primaryText = compactPrimaryText,
+                primaryText = notificationPrimaryText,
                 texts = samsungTexts,
                 chipIcon = preferredSmallIcon,
                 hasProgress = hasProgress,
@@ -2192,6 +2205,7 @@ object LiveUpdateNotifier {
             val secondary = sequenceOf(
                 extractNavigationInstructionToken(combinedText, parserDictionary),
                 displayTitle.trim(),
+                displayText.trim(),
                 compactPrimaryText.trim(),
                 remoteTexts.firstOrNull { candidate ->
                     !isEquivalentText(candidate, primary) &&
