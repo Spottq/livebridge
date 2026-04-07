@@ -1,4 +1,4 @@
-package ai.perplexity.app.android.liveupdate
+package com.kakao.taxi.liveupdate
 
 import android.content.Context
 import android.util.Log
@@ -154,7 +154,7 @@ internal data class LiveParserDictionary(
                 ignoreCase = true
             )
             val weatherTemperaturePattern = parsedWeatherTemperaturePattern
-                ?.takeIf { it.containsMatchIn("1°") && it.containsMatchIn("-5°") }
+                ?.takeIf { it.containsMatchIn("1В°") && it.containsMatchIn("-5В°") }
                 ?: defaults.weatherTemperaturePattern
             val weatherDayPattern = parseRegex(
                 root.optString("weather_day_pattern"),

@@ -1,4 +1,4 @@
-package ai.perplexity.app.android.liveupdate
+package com.kakao.taxi.liveupdate
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -12,8 +12,8 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import ai.perplexity.app.android.MainActivity
-import ai.perplexity.app.android.R
+import com.kakao.taxi.MainActivity
+import com.kakao.taxi.R
 
 class KeepAliveForegroundService : Service() {
     override fun onCreate() {

@@ -1,4 +1,4 @@
-package ai.perplexity.app.android.liveupdate
+package com.kakao.taxi.liveupdate
 
 import android.content.ComponentName
 import android.content.Context

@@ -1,4 +1,4 @@
-﻿package ai.perplexity.app.android.liveupdate
+package com.kakao.taxi.liveupdate
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -29,7 +29,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.IconCompat
-import ai.perplexity.app.android.R
+import com.kakao.taxi.R
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt

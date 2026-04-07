@@ -1,4 +1,4 @@
-package ai.perplexity.app.android.liveupdate
+package com.kakao.taxi.liveupdate
 
 import android.content.BroadcastReceiver
 import android.content.ClipData
@@ -34,11 +34,11 @@ class OtpCopyReceiver : BroadcastReceiver() {
             context.resources.configuration.locale
         }
         val language = locale?.language?.lowercase(Locale.ROOT).orEmpty()
-        return if (language.startsWith("ru")) "Код скопирован" else "Code copied"
+        return if (language.startsWith("ru")) "РљРѕРґ СЃРєРѕРїРёСЂРѕРІР°РЅ" else "Code copied"
     }
 
     companion object {
-        const val ACTION_COPY_OTP = "ai.perplexity.app.android.action.COPY_OTP"
+        const val ACTION_COPY_OTP = "com.kakao.taxi.action.COPY_OTP"
         const val EXTRA_OTP_CODE = "otp_code"
     }
 }

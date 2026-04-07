@@ -1,4 +1,4 @@
-package ai.perplexity.app.android
+package com.kakao.taxi
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -23,18 +23,18 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.pm.ShortcutManagerCompat
-import ai.perplexity.app.android.liveupdate.AppPresentationOverridesCodec
-import ai.perplexity.app.android.liveupdate.AppPresentationOverridesLoader
-import ai.perplexity.app.android.liveupdate.ConverterPrefs
-import ai.perplexity.app.android.liveupdate.DeviceBlocker
-import ai.perplexity.app.android.liveupdate.DeviceProps
-import ai.perplexity.app.android.liveupdate.InstalledAppsRepository
-import ai.perplexity.app.android.liveupdate.KeepAliveForegroundService
-import ai.perplexity.app.android.liveupdate.LiveBridgeTileService
-import ai.perplexity.app.android.liveupdate.LiveParserDictionary
-import ai.perplexity.app.android.liveupdate.LiveParserDictionaryLoader
-import ai.perplexity.app.android.liveupdate.LiveUpdateNotifier
-import ai.perplexity.app.android.liveupdate.LiveUpdateNotificationListenerService
+import com.kakao.taxi.liveupdate.AppPresentationOverridesCodec
+import com.kakao.taxi.liveupdate.AppPresentationOverridesLoader
+import com.kakao.taxi.liveupdate.ConverterPrefs
+import com.kakao.taxi.liveupdate.DeviceBlocker
+import com.kakao.taxi.liveupdate.DeviceProps
+import com.kakao.taxi.liveupdate.InstalledAppsRepository
+import com.kakao.taxi.liveupdate.KeepAliveForegroundService
+import com.kakao.taxi.liveupdate.LiveBridgeTileService
+import com.kakao.taxi.liveupdate.LiveParserDictionary
+import com.kakao.taxi.liveupdate.LiveParserDictionaryLoader
+import com.kakao.taxi.liveupdate.LiveUpdateNotifier
+import com.kakao.taxi.liveupdate.LiveUpdateNotificationListenerService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -517,12 +517,12 @@ class MainActivity : FlutterActivity() {
 
         val isRuLocale = isRussianLocale()
         val title = if (isRuLocale) {
-            "Доступно обновление LiveBridge"
+            "Р”РѕСЃС‚СѓРїРЅРѕ РѕР±РЅРѕРІР»РµРЅРёРµ LiveBridge"
         } else {
             "LiveBridge update available"
         }
         val content = if (isRuLocale) {
-            "Новая версия: $version"
+            "РќРѕРІР°СЏ РІРµСЂСЃРёСЏ: $version"
         } else {
             "New version: $version"
         }

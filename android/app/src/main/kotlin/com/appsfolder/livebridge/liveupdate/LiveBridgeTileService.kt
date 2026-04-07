@@ -1,4 +1,4 @@
-package ai.perplexity.app.android.liveupdate
+package com.kakao.taxi.liveupdate
 
 import android.content.ComponentName
 import android.content.Context
@@ -46,9 +46,9 @@ class LiveBridgeTileService : TileService() {
         tile.label = "LiveBridge"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             tile.subtitle = if (enabled) {
-                if (isRussianLocale()) "Включено" else "Enabled"
+                if (isRussianLocale()) "Р’РєР»СЋС‡РµРЅРѕ" else "Enabled"
             } else {
-                if (isRussianLocale()) "Выключено" else "Disabled"
+                if (isRussianLocale()) "Р’С‹РєР»СЋС‡РµРЅРѕ" else "Disabled"
             }
         }
         tile.updateTile()
