@@ -739,6 +739,7 @@ object LiveUpdateNotifier {
             else ->
                 samsungLargeIcon ?: sourceLargeIcon
         }
+        val nowBarAppIcon = appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
         val nowBarRightIcon = samsungReparse?.rightIcon
             ?: remoteDrawableAssets?.icon
             ?: preferredLargeIcon?.let { bitmap ->
@@ -918,6 +919,7 @@ object LiveUpdateNotifier {
                 primaryText = compactPrimaryText,
                 texts = samsungTexts,
                 chipIcon = preferredChipIcon,
+                nowBarIcon = nowBarAppIcon,
                 rightIcon = nowBarRightIcon,
                 hasProgress = hasProgress,
                 progressValue = progressValue,

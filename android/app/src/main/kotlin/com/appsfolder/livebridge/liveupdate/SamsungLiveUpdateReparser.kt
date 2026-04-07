@@ -21,6 +21,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         nowBarSecondaryText: String?,
         chipText: String?,
         chipIcon: IconCompat?,
+        nowBarIcon: IconCompat?,
         rightIcon: IconCompat?,
         hasProgress: Boolean,
         progressValue: Int,
@@ -75,6 +76,14 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
 
         val frameworkIcon = runCatching { chipIcon?.toIcon(context) }.getOrNull()
         frameworkIcon?.let { extras.putParcelable(KEY_CHIP_ICON, it) }
+        val frameworkNowBarIcon = if (disableMiniRemoteView) {
+            null
+        } else {
+            runCatching { nowBarIcon?.toIcon(context) }.getOrNull()
+        }
+        frameworkNowBarIcon?.let { icon ->
+            extras.putParcelable(KEY_NOWBAR_ICON, icon)
+        }
         val frameworkRightIcon = if (disableMiniRemoteView) {
             null
         } else {
@@ -82,7 +91,6 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
         frameworkRightIcon?.let { icon ->
             extras.putParcelable(KEY_SECOND_ICON, icon)
-            extras.putParcelable(KEY_NOWBAR_ICON, icon)
         }
 
         if (source.actions?.isNotEmpty() == true) {
