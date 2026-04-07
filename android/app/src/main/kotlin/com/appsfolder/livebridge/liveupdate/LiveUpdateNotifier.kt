@@ -719,12 +719,6 @@ object LiveUpdateNotifier {
         val preferredLargeIcon = when {
             appPresentationOverride.iconSource == NotificationIconSource.APP ->
                 appLargeIcon ?: sourceLargeIcon
-            !samsungBridge.hasCustomRemoteCard ->
-                appLargeIcon ?: when {
-                    shouldTryNavigationArrowIcon ->
-                        navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
-                    else -> samsungLargeIcon ?: sourceLargeIcon
-                }
             shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
             else -> samsungLargeIcon ?: sourceLargeIcon
         }
