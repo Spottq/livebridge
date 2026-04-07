@@ -777,32 +777,6 @@ object LiveUpdateNotifier {
             else -> false
         }
         val hasProgress = sourceHasProgress || progressOverride != null || samsungProgressMax > 0
-        val remoteViewMiniTextPair = if (samsungBridge.hasCustomRemoteCard) {
-            resolveRemoteViewMiniTextPair(
-                notification = source,
-                fallbackTitle = appName,
-                parserDictionary = parserDictionary,
-                smartRuleId = smartRuleId,
-                compactPrimaryText = compactPrimaryText,
-                displayTitle = displayTitle,
-                displayText = displayText,
-                smartShortTextOverride = smartShortTextOverride,
-                hasProgress = hasProgress
-            )
-        } else {
-            null
-        }
-        val useTextOnlyMiniNowBar = samsungBridge.hasCustomRemoteCard && remoteViewMiniTextPair != null
-        val notificationPrimaryText = if (useTextOnlyMiniNowBar) {
-            title
-        } else {
-            compactPrimaryText
-        }
-        val notificationSecondaryText = if (useTextOnlyMiniNowBar) {
-            text
-        } else {
-            displayText
-        }
         var resolvedProgressChipText: String? = null
         val determinateProgressPercent = if (hasProgress && !indeterminate && progressMax > 0) {
             val safeMax = progressMax.coerceAtLeast(1)
@@ -815,8 +789,8 @@ object LiveUpdateNotifier {
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(notificationPrimaryText)
-            .setContentText(notificationSecondaryText)
+            .setContentTitle(compactPrimaryText)
+            .setContentText(displayText)
             .setSubText(appName)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
@@ -892,9 +866,7 @@ object LiveUpdateNotifier {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
         if (smartShortTextOverride != null && !hasProgress) {
-            if (!useTextOnlyMiniNowBar) {
-                builder.setContentText(smartShortTextOverride)
-            }
+            builder.setContentText(smartShortTextOverride)
             builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
         }
 
@@ -905,21 +877,21 @@ object LiveUpdateNotifier {
                 hasProgress = hasProgress,
                 smartRuleId = smartRuleId,
                 smartShortTextOverride = smartShortTextOverride,
-                displayText = notificationSecondaryText,
+                displayText = displayText,
                 compactPrimaryText = compactPrimaryText,
                 resolvedProgressChipText = resolvedProgressChipText,
                 otpShortTextOverride = otpShortTextOverride,
                 otpCode = otpOverride?.code,
                 compactCodeOverride = compactCodeOverride,
                 samsungReparseChipText = samsungReparse?.chipText,
-                remoteViewMiniTextPair = remoteViewMiniTextPair
+                remoteViewMiniTextPair = null
             )
             SamsungNowBarApplier.apply(
                 context = context,
                 builder = builder,
                 source = source,
                 sourcePackageName = sbn.packageName,
-                primaryText = notificationPrimaryText,
+                primaryText = compactPrimaryText,
                 texts = samsungTexts,
                 chipIcon = preferredSmallIcon,
                 hasProgress = hasProgress,
