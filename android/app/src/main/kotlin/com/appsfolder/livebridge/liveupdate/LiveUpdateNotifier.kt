@@ -2386,20 +2386,20 @@ object LiveUpdateNotifier {
                 null
             } else {
                 val packageContext = context.createPackageContext(normalizedPackage, 0)
+                val resourceIcon = runCatching {
+                    IconCompat.createWithResource(
+                        packageContext.resources,
+                        normalizedPackage,
+                        appInfo.icon
+                    )
+                }.getOrNull()
                 val bitmap = runCatching {
                     packageContext.getDrawable(appInfo.icon)?.let { drawable ->
                         drawableToBitmap(drawable, clipAdaptiveIcon = true)
                     }
                 }.getOrNull()
-                val smallIcon = bitmap
-                    ?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
-                    ?: runCatching {
-                        IconCompat.createWithResource(
-                            packageContext.resources,
-                            normalizedPackage,
-                            appInfo.icon
-                        )
-                    }.getOrNull()
+                val smallIcon = resourceIcon
+                    ?: bitmap?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
 
                 if (smallIcon == null && bitmap == null) {
                     null
