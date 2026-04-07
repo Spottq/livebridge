@@ -83,9 +83,6 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         frameworkRightIcon?.let { icon ->
             extras.putParcelable(KEY_SECOND_ICON, icon)
             extras.putParcelable(KEY_NOWBAR_ICON, icon)
-            if (normalizedNowBarSecondary != null) {
-                extras.putParcelable(KEY_SECONDARY_INFO_ICON, icon)
-            }
         }
 
         if (source.actions?.isNotEmpty() == true) {
@@ -198,7 +195,6 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         private const val KEY_NOWBAR_SECONDARY_INFO = "${ONGOING_PREFIX}nowbarSecondaryInfo"
         private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
         private const val KEY_SECOND_ICON = "${ONGOING_PREFIX}secondIcon"
-        private const val KEY_SECONDARY_INFO_ICON = "${ONGOING_PREFIX}secondaryInfoIcon"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
         private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"
