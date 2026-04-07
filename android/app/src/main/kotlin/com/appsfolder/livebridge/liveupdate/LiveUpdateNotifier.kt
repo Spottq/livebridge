@@ -740,11 +740,15 @@ object LiveUpdateNotifier {
                 samsungLargeIcon ?: sourceLargeIcon
         }
         val nowBarAppIcon = appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
-        val nowBarRightIcon = samsungReparse?.rightIcon
-            ?: remoteDrawableAssets?.icon
-            ?: preferredLargeIcon?.let { bitmap ->
-                runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
-            }
+        val nowBarRightIcon = if (samsungBridge.hasCustomRemoteCard) {
+            null
+        } else {
+            samsungReparse?.rightIcon
+                ?: remoteDrawableAssets?.icon
+                ?: preferredLargeIcon?.let { bitmap ->
+                    runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
+                }
+        }
 
         val appName = resolveAppName(context, sbn.packageName)
         val allowRemoteViewTextFallback = shouldTryNavigationArrowIcon
