@@ -2,6 +2,7 @@ package ai.perplexity.app.android.liveupdate
 
 internal data class SamsungBridgeTexts(
     val shouldClearContentText: Boolean,
+    val style: Int,
     val secondaryText: String,
     val chipText: String?,
     val nowBarPrimaryText: String,
@@ -21,6 +22,7 @@ internal data class SamsungMiniTextPair(
 
 internal object SamsungBridgeContentPolicy {
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
+    private const val YANGO_MAPS_PACKAGE = "com.yango.maps.android"
 
     fun resolve(
         sourcePackageName: String,
@@ -70,6 +72,7 @@ internal object SamsungBridgeContentPolicy {
 
         return SamsungBridgeTexts(
             shouldClearContentText = shouldClearContentText,
+            style = if (useTextOnlyMiniNowBar) 2 else 1,
             secondaryText = secondaryText,
             chipText = chipText,
             nowBarPrimaryText = nowBarPrimaryText,
@@ -79,7 +82,8 @@ internal object SamsungBridgeContentPolicy {
                         (smartRuleId != "navigation" && !hasCustomRemoteCard),
             preferCompactNowBarRemoteView =
                 !useTextOnlyMiniNowBar &&
-                        sourcePackageName == YANDEX_MAPS_PACKAGE &&
+                        (sourcePackageName == YANDEX_MAPS_PACKAGE ||
+                                sourcePackageName == YANGO_MAPS_PACKAGE) &&
                         !hasProgress,
             disableMiniRemoteView = useTextOnlyMiniNowBar,
             showMiniIcon = !useTextOnlyMiniNowBar,

@@ -92,6 +92,7 @@
       "max_stage": 4,
       "package_hints": [
         "ru.yandex.yandexmaps",
+        "com.yango.maps.android",
         "google.android.apps.maps",
         "waze",
         "here",
@@ -226,6 +227,7 @@
   "blocked_source_packages": ["ru.dublgis.dgismobile"],
   "known_navigation_packages": [
     "ru.yandex.yandexmaps",
+    "com.yango.maps.android",
     "com.google.android.apps.maps",
     "com.waze"
   ],

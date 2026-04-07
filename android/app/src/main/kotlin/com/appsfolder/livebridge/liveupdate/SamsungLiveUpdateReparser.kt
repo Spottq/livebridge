@@ -11,10 +11,19 @@ import androidx.core.graphics.drawable.IconCompat
 import java.util.Locale
 
 internal class SamsungLiveUpdateReparser(private val context: Context) {
+    fun applySourceRemoteViews(
+        builder: NotificationCompat.Builder,
+        source: Notification,
+        keepCollapsedRemoteView: Boolean = true
+    ) {
+        applyRemoteViewsIfPresent(builder, source, keepCollapsedRemoteView)
+    }
+
     fun applyNowBarBridge(
         builder: NotificationCompat.Builder,
         source: Notification,
         sourcePackageName: String,
+        style: Int,
         primaryText: String,
         secondaryText: String,
         nowBarPrimaryText: String,
@@ -41,6 +50,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
+        val useNowBarTextOnlyPayload = disableMiniRemoteView && style == 2
 
         val nowBarRemoteView =
             if (disableMiniRemoteView) {
@@ -52,14 +62,16 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         applyRemoteViewsIfPresent(builder, source, keepCollapsedRemoteView)
 
         val extras = Bundle().apply {
-            putInt(KEY_STYLE, 1)
-            putCharSequence(KEY_PRIMARY_INFO, normalizedPrimary)
-            // Avoid duplicated bottom subtitle when custom RemoteViews is used.
-            if (showSecondaryInNowBar &&
-                normalizedSecondary.isNotEmpty() &&
-                !hasNowBarRemoteView
-            ) {
-                putCharSequence(KEY_SECONDARY_INFO, normalizedSecondary)
+            putInt(KEY_STYLE, style)
+            if (!useNowBarTextOnlyPayload) {
+                putCharSequence(KEY_PRIMARY_INFO, normalizedPrimary)
+                // Avoid duplicated bottom subtitle when custom RemoteViews is used.
+                if (showSecondaryInNowBar &&
+                    normalizedSecondary.isNotEmpty() &&
+                    !hasNowBarRemoteView
+                ) {
+                    putCharSequence(KEY_SECONDARY_INFO, normalizedSecondary)
+                }
             }
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, normalizedChipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, normalizedNowBarPrimary)
@@ -69,7 +81,9 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
                 }
             }
             putInt(KEY_CHIP_BG_COLOR, resolveChipBackgroundColor(source))
-            putBoolean(KEY_SHOW_SMALL_ICON, showSmallIcon)
+            if (!useNowBarTextOnlyPayload) {
+                putBoolean(KEY_SHOW_SMALL_ICON, showSmallIcon)
+            }
         }
 
         val frameworkIcon = runCatching { chipIcon?.toIcon(context) }.getOrNull()

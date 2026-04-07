@@ -26,6 +26,7 @@ internal object SamsungNowBarApplier {
             builder = builder,
             source = source,
             sourcePackageName = sourcePackageName,
+            style = texts.style,
             primaryText = primaryText,
             secondaryText = texts.secondaryText,
             nowBarPrimaryText = texts.nowBarPrimaryText,
