@@ -12,9 +12,13 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.graphics.RectF
+import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.icu.text.BreakIterator
 import android.os.Build
@@ -822,6 +826,14 @@ object LiveUpdateNotifier {
             }
             NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
         }
+        val preferredChipIcon = when {
+            shouldTryNavigationArrowIcon ->
+                navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+            samsungBridge.hasCustomRemoteCard ->
+                samsungSmallIcon ?: sourceSmallIcon ?: appSmallIcon
+            else ->
+                sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+        }
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
 
@@ -902,7 +914,7 @@ object LiveUpdateNotifier {
                 sourcePackageName = sbn.packageName,
                 primaryText = compactPrimaryText,
                 texts = samsungTexts,
-                chipIcon = preferredSmallIcon,
+                chipIcon = preferredChipIcon,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
                 progressMax = progressMax
@@ -2378,7 +2390,9 @@ object LiveUpdateNotifier {
             } else {
                 val packageContext = context.createPackageContext(normalizedPackage, 0)
                 val bitmap = runCatching {
-                    packageContext.getDrawable(appInfo.icon)?.let(::drawableToBitmap)
+                    packageContext.getDrawable(appInfo.icon)?.let { drawable ->
+                        drawableToBitmap(drawable, clipAdaptiveIcon = true)
+                    }
                 }.getOrNull()
                 val smallIcon = bitmap
                     ?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
@@ -2493,9 +2507,18 @@ object LiveUpdateNotifier {
         }
     }
 
-    private fun drawableToBitmap(drawable: Drawable): Bitmap {
+    private fun drawableToBitmap(
+        drawable: Drawable,
+        clipAdaptiveIcon: Boolean = false
+    ): Bitmap {
         if (drawable is android.graphics.drawable.BitmapDrawable && drawable.bitmap != null) {
             return drawable.bitmap
+        }
+        if (clipAdaptiveIcon &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            drawable is AdaptiveIconDrawable
+        ) {
+            return adaptiveIconToBitmap(drawable)
         }
         val width = drawable.intrinsicWidth.coerceAtLeast(1).coerceAtMost(512)
         val height = drawable.intrinsicHeight.coerceAtLeast(1).coerceAtMost(512)
@@ -2503,6 +2526,45 @@ object LiveUpdateNotifier {
         val canvas = Canvas(bitmap)
         drawable.setBounds(0, 0, canvas.width, canvas.height)
         drawable.draw(canvas)
+        return bitmap
+    }
+
+    private fun adaptiveIconToBitmap(drawable: AdaptiveIconDrawable): Bitmap {
+        val size = maxOf(
+            drawable.intrinsicWidth.coerceAtLeast(1),
+            drawable.intrinsicHeight.coerceAtLeast(1)
+        ).coerceAtMost(512)
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, size, size)
+
+        val originalMask = Path(drawable.iconMask)
+        val maskBounds = RectF()
+        originalMask.computeBounds(maskBounds, true)
+        if (maskBounds.width() <= 0f || maskBounds.height() <= 0f) {
+            drawable.draw(canvas)
+            return bitmap
+        }
+
+        val normalizedBounds = RectF(0f, 0f, maskBounds.width(), maskBounds.height())
+        val scale = minOf(
+            size / normalizedBounds.width(),
+            size / normalizedBounds.height()
+        )
+        val dx = (size - normalizedBounds.width() * scale) / 2f
+        val dy = (size - normalizedBounds.height() * scale) / 2f
+        val maskMatrix = Matrix().apply {
+            postTranslate(-maskBounds.left, -maskBounds.top)
+            postScale(scale, scale)
+            postTranslate(dx, dy)
+        }
+        val scaledMask = Path()
+        originalMask.transform(maskMatrix, scaledMask)
+
+        canvas.save()
+        canvas.clipPath(scaledMask)
+        drawable.draw(canvas)
+        canvas.restore()
         return bitmap
     }
 
