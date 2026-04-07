@@ -27,6 +27,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         showSecondaryInNowBar: Boolean = true,
         preferCompactNowBarRemoteView: Boolean = false,
         disableMiniRemoteView: Boolean = false,
+        keepCollapsedRemoteView: Boolean = false,
         showSmallIcon: Boolean = true,
         allowNowBarProgress: Boolean = true
     ) {
@@ -48,7 +49,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
                 resolveRemoteView(source, preferCompactNowBarRemoteView)
             }
         val hasNowBarRemoteView = nowBarRemoteView != null
-        applyRemoteViewsIfPresent(builder, source)
+        applyRemoteViewsIfPresent(builder, source, keepCollapsedRemoteView)
 
         val extras = Bundle().apply {
             putInt(KEY_STYLE, 1)
@@ -106,10 +107,10 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
 
     private fun applyRemoteViewsIfPresent(
         builder: NotificationCompat.Builder,
-        source: Notification
+        source: Notification,
+        keepCollapsedRemoteView: Boolean
     ) {
-        // Keep collapsed layout system-driven to prevent progress bar in mini chip mode.
-        val collapsed: RemoteViews? = null
+        val collapsed = if (keepCollapsedRemoteView) source.contentView else null
         val expanded = source.bigContentView ?: source.contentView
         val headsUp = source.headsUpContentView
 

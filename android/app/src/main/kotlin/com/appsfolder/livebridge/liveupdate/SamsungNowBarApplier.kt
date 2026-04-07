@@ -38,6 +38,7 @@ internal object SamsungNowBarApplier {
             showSecondaryInNowBar = texts.showSecondaryInNowBar,
             preferCompactNowBarRemoteView = texts.preferCompactNowBarRemoteView,
             disableMiniRemoteView = texts.disableMiniRemoteView,
+            keepCollapsedRemoteView = texts.disableMiniRemoteView,
             showSmallIcon = texts.showSmallIcon,
             allowNowBarProgress = texts.allowNowBarProgress
         )
