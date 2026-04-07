@@ -720,6 +720,7 @@ object LiveUpdateNotifier {
         val appSmallIcon = appIconAssets?.smallIcon
         val samsungSmallIcon = samsungReparse?.icon
         val samsungLargeIcon = samsungReparse?.largeIconBitmap
+        val remoteDrawableAssets = resolveRemoteDrawableAssets(context, sbn)
         val shouldTryNavigationArrowIcon =
             appPresentationOverride.iconSource == NotificationIconSource.NOTIFICATION &&
                     (smartRuleId == "navigation" ||
@@ -727,10 +728,10 @@ object LiveUpdateNotifier {
                                     isLikelyNavigationPackage(sbn.packageName, parserDictionary)))
         val navigationDrawable =
             if (shouldTryNavigationArrowIcon) {
-                resolveRemoteDrawableAssets(context, sbn)
+                remoteDrawableAssets
             } else {
                 null
-        }
+            }
         val sourceLargeIcon = resolveSourceLargeIconBitmap(context, source)
         val preferredLargeIcon = when {
             shouldTryNavigationArrowIcon ->
@@ -738,6 +739,11 @@ object LiveUpdateNotifier {
             else ->
                 samsungLargeIcon ?: sourceLargeIcon
         }
+        val nowBarRightIcon = samsungReparse?.rightIcon
+            ?: remoteDrawableAssets?.icon
+            ?: preferredLargeIcon?.let { bitmap ->
+                runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
+            }
 
         val appName = resolveAppName(context, sbn.packageName)
         val allowRemoteViewTextFallback = shouldTryNavigationArrowIcon
@@ -912,6 +918,7 @@ object LiveUpdateNotifier {
                 primaryText = compactPrimaryText,
                 texts = samsungTexts,
                 chipIcon = preferredChipIcon,
+                rightIcon = nowBarRightIcon,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
                 progressMax = progressMax

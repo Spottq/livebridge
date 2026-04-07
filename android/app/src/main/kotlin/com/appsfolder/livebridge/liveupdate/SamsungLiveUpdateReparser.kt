@@ -21,6 +21,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         nowBarSecondaryText: String?,
         chipText: String?,
         chipIcon: IconCompat?,
+        rightIcon: IconCompat?,
         hasProgress: Boolean,
         progressValue: Int,
         progressMax: Int,
@@ -74,6 +75,18 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
 
         val frameworkIcon = runCatching { chipIcon?.toIcon(context) }.getOrNull()
         frameworkIcon?.let { extras.putParcelable(KEY_CHIP_ICON, it) }
+        val frameworkRightIcon = if (disableMiniRemoteView) {
+            null
+        } else {
+            runCatching { rightIcon?.toIcon(context) }.getOrNull()
+        }
+        frameworkRightIcon?.let { icon ->
+            extras.putParcelable(KEY_SECOND_ICON, icon)
+            extras.putParcelable(KEY_NOWBAR_ICON, icon)
+            if (normalizedNowBarSecondary != null) {
+                extras.putParcelable(KEY_SECONDARY_INFO_ICON, icon)
+            }
+        }
 
         if (source.actions?.isNotEmpty() == true) {
             extras.putInt(KEY_ACTION_TYPE, 1)
@@ -183,6 +196,9 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         private const val KEY_PROGRESS_MAX = "${ONGOING_PREFIX}progressMax"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
         private const val KEY_NOWBAR_SECONDARY_INFO = "${ONGOING_PREFIX}nowbarSecondaryInfo"
+        private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
+        private const val KEY_SECOND_ICON = "${ONGOING_PREFIX}secondIcon"
+        private const val KEY_SECONDARY_INFO_ICON = "${ONGOING_PREFIX}secondaryInfoIcon"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
         private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"

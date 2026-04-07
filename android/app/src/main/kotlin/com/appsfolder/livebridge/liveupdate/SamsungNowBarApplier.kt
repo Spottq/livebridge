@@ -14,6 +14,7 @@ internal object SamsungNowBarApplier {
         primaryText: String,
         texts: SamsungBridgeTexts,
         chipIcon: IconCompat?,
+        rightIcon: IconCompat?,
         hasProgress: Boolean,
         progressValue: Int,
         progressMax: Int
@@ -32,6 +33,7 @@ internal object SamsungNowBarApplier {
             nowBarSecondaryText = texts.nowBarSecondaryText,
             chipText = texts.chipText,
             chipIcon = chipIcon?.takeIf { texts.showMiniIcon },
+            rightIcon = rightIcon?.takeIf { texts.showMiniIcon },
             hasProgress = hasProgress,
             progressValue = progressValue,
             progressMax = progressMax,

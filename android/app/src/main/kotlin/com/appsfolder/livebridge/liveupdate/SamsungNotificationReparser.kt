@@ -18,6 +18,7 @@ internal data class SamsungReparsePayload(
     val progressValue: Int?,
     val progressMax: Int?,
     val icon: IconCompat?,
+    val rightIcon: IconCompat?,
     val largeIconBitmap: Bitmap?
 ) {
     val hasProgress: Boolean
@@ -36,6 +37,9 @@ internal object SamsungNotificationReparser {
     private const val KEY_PROGRESS = "${ONGOING_KEY_PREFIX}progress"
     private const val KEY_PROGRESS_MAX = "${ONGOING_KEY_PREFIX}progressMax"
     private const val KEY_CHIP_ICON = "${ONGOING_KEY_PREFIX}chipIcon"
+    private const val KEY_NOWBAR_ICON = "${ONGOING_KEY_PREFIX}nowbarIcon"
+    private const val KEY_SECOND_ICON = "${ONGOING_KEY_PREFIX}secondIcon"
+    private const val KEY_SECONDARY_INFO_ICON = "${ONGOING_KEY_PREFIX}secondaryInfoIcon"
     private const val KEY_CHRONOMETER_REMOTE_VIEW = "${ONGOING_KEY_PREFIX}chronometerRemoteView"
 
     fun parse(context: Context, sbn: StatusBarNotification): SamsungReparsePayload? {
@@ -105,6 +109,19 @@ internal object SamsungNotificationReparser {
             resources = packageResources,
             rawValue = extras.get(KEY_CHIP_ICON)
         )
+        val rightIcon = listOf(
+            KEY_SECOND_ICON,
+            KEY_SECONDARY_INFO_ICON,
+            KEY_NOWBAR_ICON
+        ).firstNotNullOfOrNull { key ->
+            resolveChipIcon(
+                context = context,
+                packageContext = packageContext,
+                packageName = sbn.packageName,
+                resources = packageResources,
+                rawValue = extras.get(key)
+            )
+        }
         val remoteDrawable = resolveRemoteDrawable(
             packageContext = packageContext,
             packageName = sbn.packageName,
@@ -120,6 +137,7 @@ internal object SamsungNotificationReparser {
                     chipExpandedText != null ||
                     (progressMax ?: 0) > 0 ||
                     icon != null ||
+                    rightIcon != null ||
                     largeIconBitmap != null ||
                     style == 1
         if (!hasUsefulData) {
@@ -133,6 +151,7 @@ internal object SamsungNotificationReparser {
             progressValue = progressValue,
             progressMax = progressMax,
             icon = icon,
+            rightIcon = rightIcon,
             largeIconBitmap = largeIconBitmap
         )
     }
