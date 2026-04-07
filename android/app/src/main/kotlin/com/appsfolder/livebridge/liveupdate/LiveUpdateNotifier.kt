@@ -777,6 +777,21 @@ object LiveUpdateNotifier {
             else -> false
         }
         val hasProgress = sourceHasProgress || progressOverride != null || samsungProgressMax > 0
+        val remoteViewMiniTextPair = if (samsungBridge.hasCustomRemoteCard) {
+            resolveRemoteViewMiniTextPair(
+                notification = source,
+                fallbackTitle = appName,
+                parserDictionary = parserDictionary,
+                smartRuleId = smartRuleId,
+                compactPrimaryText = compactPrimaryText,
+                displayTitle = displayTitle,
+                displayText = displayText,
+                smartShortTextOverride = smartShortTextOverride,
+                hasProgress = hasProgress
+            )
+        } else {
+            null
+        }
         var resolvedProgressChipText: String? = null
         val determinateProgressPercent = if (hasProgress && !indeterminate && progressMax > 0) {
             val safeMax = progressMax.coerceAtLeast(1)
@@ -883,7 +898,8 @@ object LiveUpdateNotifier {
                 otpShortTextOverride = otpShortTextOverride,
                 otpCode = otpOverride?.code,
                 compactCodeOverride = compactCodeOverride,
-                samsungReparseChipText = samsungReparse?.chipText
+                samsungReparseChipText = samsungReparse?.chipText,
+                remoteViewMiniTextPair = remoteViewMiniTextPair
             )
             SamsungNowBarApplier.apply(
                 context = context,
@@ -2133,6 +2149,125 @@ object LiveUpdateNotifier {
             .replace(Regex("\\s+"), " ")
             .trim()
             .ifBlank { null }
+    }
+
+    private fun resolveRemoteViewMiniTextPair(
+        notification: Notification,
+        fallbackTitle: String,
+        parserDictionary: LiveParserDictionary,
+        smartRuleId: String?,
+        compactPrimaryText: String,
+        displayTitle: String,
+        displayText: String,
+        smartShortTextOverride: String?,
+        hasProgress: Boolean
+    ): SamsungMiniTextPair? {
+        val remoteTexts = extractRemoteViewTexts(notification)
+        if (remoteTexts.isEmpty()) {
+            return null
+        }
+
+        if (smartRuleId == "navigation") {
+            val combinedText = collectNotificationText(
+                notification = notification,
+                fallbackTitle = fallbackTitle,
+                includeRemoteViewTexts = true
+            )
+            val primary = sequenceOf(
+                smartShortTextOverride?.trim()?.takeIf {
+                    isNavigationDistanceText(it, parserDictionary)
+                },
+                extractNavigationDistanceText(
+                    notification = notification,
+                    fallbackTitle = fallbackTitle,
+                    parserDictionary = parserDictionary
+                ),
+                displayText.trim().takeIf { isNavigationDistanceText(it, parserDictionary) },
+                compactPrimaryText.trim().takeIf { isNavigationDistanceText(it, parserDictionary) },
+                remoteTexts.firstOrNull { candidate ->
+                    isNavigationDistanceText(candidate, parserDictionary)
+                }?.trim()
+            ).firstOrNull { !it.isNullOrEmpty() }
+
+            val secondary = sequenceOf(
+                extractNavigationInstructionToken(combinedText, parserDictionary),
+                displayTitle.trim(),
+                compactPrimaryText.trim(),
+                remoteTexts.firstOrNull { candidate ->
+                    !isEquivalentText(candidate, primary) &&
+                            !isNavigationDistanceText(candidate, parserDictionary)
+                }?.trim()
+            ).firstOrNull { candidate ->
+                !candidate.isNullOrEmpty() &&
+                        !isEquivalentText(candidate, primary) &&
+                        !isNavigationDistanceText(candidate, parserDictionary)
+            }
+
+            return if (!primary.isNullOrBlank() && !secondary.isNullOrBlank()) {
+                SamsungMiniTextPair(primaryText = primary, secondaryText = secondary)
+            } else {
+                null
+            }
+        }
+
+        val primary = sequenceOf(
+            compactPrimaryText.trim().takeIf { candidate ->
+                candidate.isNotEmpty() && !isEquivalentText(candidate, fallbackTitle)
+            },
+            displayTitle.trim().takeIf { candidate ->
+                candidate.isNotEmpty() && !isEquivalentText(candidate, fallbackTitle)
+            },
+            remoteTexts.firstOrNull()?.trim()
+        ).firstOrNull { !it.isNullOrEmpty() } ?: return null
+
+        val secondary = sequenceOf(
+            smartShortTextOverride?.trim()?.takeIf { !hasProgress },
+            remoteTexts.firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary)
+            }?.trim(),
+            displayText.trim().takeIf {
+                it.isNotEmpty() && !isGenericLiveUpdatePlaceholder(it)
+            }
+        ).firstOrNull { candidate ->
+            !candidate.isNullOrEmpty() && !isEquivalentText(candidate, primary)
+        }
+
+        return if (!secondary.isNullOrBlank()) {
+            SamsungMiniTextPair(primaryText = primary, secondaryText = secondary)
+        } else {
+            null
+        }
+    }
+
+    private fun isNavigationDistanceText(
+        value: String?,
+        parserDictionary: LiveParserDictionary
+    ): Boolean {
+        val normalized = value?.trim().orEmpty()
+        if (normalized.isEmpty()) {
+            return false
+        }
+        return parserDictionary.navigationDistancePattern.containsMatchIn(normalized) ||
+                NAVIGATION_DISTANCE_PATTERN.containsMatchIn(normalized)
+    }
+
+    private fun isEquivalentText(left: String?, right: String?): Boolean {
+        val normalizedLeft = normalizeComparableText(left)
+        val normalizedRight = normalizeComparableText(right)
+        return normalizedLeft.isNotEmpty() &&
+                normalizedRight.isNotEmpty() &&
+                normalizedLeft == normalizedRight
+    }
+
+    private fun normalizeComparableText(value: String?): String {
+        return value.orEmpty()
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .lowercase(Locale.ROOT)
+    }
+
+    private fun isGenericLiveUpdatePlaceholder(value: String?): Boolean {
+        return isEquivalentText(value, "Live update in progress")
     }
 
     private fun extractWeatherDayToken(
