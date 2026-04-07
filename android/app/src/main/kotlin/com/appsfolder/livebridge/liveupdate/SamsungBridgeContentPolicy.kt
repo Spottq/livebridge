@@ -2,27 +2,14 @@ package ai.perplexity.app.android.liveupdate
 
 internal data class SamsungBridgeTexts(
     val shouldClearContentText: Boolean,
-    val style: Int,
     val secondaryText: String,
     val chipText: String?,
-    val nowBarPrimaryText: String,
-    val nowBarSecondaryText: String?,
     val showSecondaryInNowBar: Boolean,
-    val preferCompactNowBarRemoteView: Boolean,
-    val disableMiniRemoteView: Boolean,
-    val showMiniIcon: Boolean,
-    val showSmallIcon: Boolean,
-    val allowNowBarProgress: Boolean
-)
-
-internal data class SamsungMiniTextPair(
-    val primaryText: String,
-    val secondaryText: String
+    val preferCompactNowBarRemoteView: Boolean
 )
 
 internal object SamsungBridgeContentPolicy {
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
-    private const val YANGO_MAPS_PACKAGE = "com.yango.maps.android"
 
     fun resolve(
         sourcePackageName: String,
@@ -36,13 +23,10 @@ internal object SamsungBridgeContentPolicy {
         otpShortTextOverride: String?,
         otpCode: String?,
         compactCodeOverride: String?,
-        samsungReparseChipText: String?,
-        remoteViewMiniTextPair: SamsungMiniTextPair?
+        samsungReparseChipText: String?
     ): SamsungBridgeTexts {
-        val useTextOnlyMiniNowBar = hasCustomRemoteCard && remoteViewMiniTextPair != null
-        val shouldClearContentText =
-            !useTextOnlyMiniNowBar && (hasCustomRemoteCard || smartRuleId == "navigation")
-        val secondaryText = if (!useTextOnlyMiniNowBar && smartShortTextOverride != null && !hasProgress) {
+        val shouldClearContentText = hasCustomRemoteCard || smartRuleId == "navigation"
+        val secondaryText = if (smartShortTextOverride != null && !hasProgress) {
             smartShortTextOverride
         } else {
             displayText
@@ -56,39 +40,13 @@ internal object SamsungBridgeContentPolicy {
             smartShortTextOverride?.trim(),
             compactPrimaryText.trim()
         ).firstOrNull { !it.isNullOrEmpty() }
-        val nowBarPrimaryText = remoteViewMiniTextPair?.primaryText
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?: compactPrimaryText.trim()
-        val nowBarSecondaryText = when {
-            remoteViewMiniTextPair != null -> remoteViewMiniTextPair.secondaryText
-                ?.trim()
-                ?.takeIf { it.isNotEmpty() }
-            smartRuleId != "navigation" && !hasCustomRemoteCard -> secondaryText
-                .trim()
-                .takeIf { it.isNotEmpty() }
-            else -> null
-        }
 
         return SamsungBridgeTexts(
             shouldClearContentText = shouldClearContentText,
-            style = if (useTextOnlyMiniNowBar) 2 else 1,
             secondaryText = secondaryText,
             chipText = chipText,
-            nowBarPrimaryText = nowBarPrimaryText,
-            nowBarSecondaryText = nowBarSecondaryText,
-            showSecondaryInNowBar =
-                remoteViewMiniTextPair != null ||
-                        (smartRuleId != "navigation" && !hasCustomRemoteCard),
-            preferCompactNowBarRemoteView =
-                !useTextOnlyMiniNowBar &&
-                        (sourcePackageName == YANDEX_MAPS_PACKAGE ||
-                                sourcePackageName == YANGO_MAPS_PACKAGE) &&
-                        !hasProgress,
-            disableMiniRemoteView = useTextOnlyMiniNowBar,
-            showMiniIcon = !useTextOnlyMiniNowBar,
-            showSmallIcon = !useTextOnlyMiniNowBar,
-            allowNowBarProgress = !useTextOnlyMiniNowBar
+            showSecondaryInNowBar = smartRuleId != "navigation" && !hasCustomRemoteCard,
+            preferCompactNowBarRemoteView = sourcePackageName == YANDEX_MAPS_PACKAGE && !hasProgress
         )
     }
 }

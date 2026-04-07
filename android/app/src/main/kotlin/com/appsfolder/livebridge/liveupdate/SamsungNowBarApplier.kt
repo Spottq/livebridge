@@ -26,22 +26,15 @@ internal object SamsungNowBarApplier {
             builder = builder,
             source = source,
             sourcePackageName = sourcePackageName,
-            style = texts.style,
             primaryText = primaryText,
             secondaryText = texts.secondaryText,
-            nowBarPrimaryText = texts.nowBarPrimaryText,
-            nowBarSecondaryText = texts.nowBarSecondaryText,
             chipText = texts.chipText,
-            chipIcon = chipIcon?.takeIf { texts.showMiniIcon },
+            chipIcon = chipIcon,
             hasProgress = hasProgress,
             progressValue = progressValue,
             progressMax = progressMax,
             showSecondaryInNowBar = texts.showSecondaryInNowBar,
-            preferCompactNowBarRemoteView = texts.preferCompactNowBarRemoteView,
-            disableMiniRemoteView = texts.disableMiniRemoteView,
-            keepCollapsedRemoteView = texts.disableMiniRemoteView,
-            showSmallIcon = texts.showSmallIcon,
-            allowNowBarProgress = texts.allowNowBarProgress
+            preferCompactNowBarRemoteView = texts.preferCompactNowBarRemoteView
         )
     }
 }

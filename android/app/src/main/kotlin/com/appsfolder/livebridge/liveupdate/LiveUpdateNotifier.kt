@@ -34,14 +34,9 @@ import kotlin.random.Random
 object LiveUpdateNotifier {
     const val CHANNEL_ID = "livebridge_promoted_updates"
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
-    private const val YANGO_MAPS_PACKAGE = "com.yango.maps.android"
 
     private const val CHANNEL_NAME = "LiveBridge Updates"
     private const val TAG = "LiveUpdateNotifier"
-    private const val NOW_BAR_SHADOW_SUFFIX = ":nowbar_shadow"
-    private const val SAMSUNG_ONGOING_STYLE_KEY = "android.ongoingActivityNoti.style"
-    private const val SAMSUNG_NOWBAR_PRIMARY_INFO_KEY = "android.ongoingActivityNoti.nowbarPrimaryInfo"
-    private const val SAMSUNG_STYLE_NOW_BAR_ONLY = 2
     private const val MAX_MIRRORED_ACTIONS = 3
     private const val OTP_REPEAT_SUPPRESS_MS = 60_000L
     private const val OTP_AUTOCOPY_COPIED_SHOW_DELAY_MS = 1_000L
@@ -52,7 +47,6 @@ object LiveUpdateNotifier {
     )
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
         YANDEX_MAPS_PACKAGE,
-        YANGO_MAPS_PACKAGE,
         "com.google.android.apps.maps",
         "com.waze"
     )
@@ -148,7 +142,7 @@ object LiveUpdateNotifier {
                 clearAggregateTrackingForSbnKeyLocked(sbn.key)
             }
             staleAggregateIds.forEach(manager::cancel)
-            cancelMirrorNotifications(manager, sbn.key)
+            manager.cancel(mirrorIdForKey(sbn.key))
             return false
         }
         if (prefs.getSyncDndEnabled() && isDoNotDisturbActive(context)) {
@@ -156,7 +150,7 @@ object LiveUpdateNotifier {
                 clearAggregateTrackingForSbnKeyLocked(sbn.key)
             }
             staleAggregateIds.forEach(manager::cancel)
-            cancelMirrorNotifications(manager, sbn.key)
+            manager.cancel(mirrorIdForKey(sbn.key))
             return false
         }
 
@@ -166,7 +160,7 @@ object LiveUpdateNotifier {
                     clearAggregateTrackingForSbnKeyLocked(sbn.key)
                 }
                 staleAggregateIds.forEach(manager::cancel)
-                cancelMirrorNotifications(manager, sbn.key)
+                manager.cancel(mirrorIdForKey(sbn.key))
                 return false
             }
             val appPresentationOverride = AppPresentationOverridesLoader
@@ -195,10 +189,10 @@ object LiveUpdateNotifier {
                     samsungBridge = bypassSamsungBridge,
                     allowNavigationIconHeuristics = false
                 )
-                notifyMirrorWithSamsungShadowIfNeeded(
+                notifyWithPromotionFallback(
                     context = context,
                     manager = manager,
-                    notificationKey = sbn.key,
+                    notificationId = mirrorIdForKey(sbn.key),
                     promotedNotification = notification,
                     sbn = sbn,
                     appPresentationOverride = appPresentationOverride,
@@ -216,7 +210,7 @@ object LiveUpdateNotifier {
                     clearAggregateTrackingForSbnKeyLocked(sbn.key)
                 }
                 staleAggregateIds.forEach(manager::cancel)
-                cancelMirrorNotifications(manager, sbn.key)
+                manager.cancel(mirrorIdForKey(sbn.key))
                 return false
             }
             val source = sbn.notification
@@ -280,7 +274,7 @@ object LiveUpdateNotifier {
                     clearAggregateTrackingForSbnKeyLocked(sbn.key)
                 }
                 staleAggregateIds.forEach(manager::cancel)
-                cancelMirrorNotifications(manager, sbn.key)
+                manager.cancel(mirrorIdForKey(sbn.key))
                 return false
             }
 
@@ -294,7 +288,7 @@ object LiveUpdateNotifier {
                     clearAggregateTrackingForSbnKeyLocked(sbn.key)
                 }
                 staleAggregateIds.forEach(manager::cancel)
-                cancelMirrorNotifications(manager, sbn.key)
+                manager.cancel(mirrorIdForKey(sbn.key))
                 return false
             }
 
@@ -366,10 +360,10 @@ object LiveUpdateNotifier {
                             requestPromoted = true,
                             samsungBridge = samsungBridge
                         )
-                        notifyMirrorWithSamsungShadowIfNeeded(
+                        notifyWithPromotionFallback(
                             context = context,
                             manager = manager,
-                            notificationKey = otpMatch.aggregateKey,
+                            notificationId = mirrorIdForKey(otpMatch.aggregateKey),
                             promotedNotification = notification,
                             sbn = sbn,
                             appPresentationOverride = appPresentationOverride,
@@ -414,10 +408,10 @@ object LiveUpdateNotifier {
                         requestPromoted = true,
                         samsungBridge = samsungBridge
                     )
-                    notifyMirrorWithSamsungShadowIfNeeded(
+                    notifyWithPromotionFallback(
                         context = context,
                         manager = manager,
-                        notificationKey = sbn.key,
+                        notificationId = mirrorIdForKey(sbn.key),
                         promotedNotification = notification,
                         sbn = sbn,
                         appPresentationOverride = appPresentationOverride,
@@ -539,10 +533,10 @@ object LiveUpdateNotifier {
                         requestPromoted = true,
                         samsungBridge = samsungBridge
                     )
-                    notifyMirrorWithSamsungShadowIfNeeded(
+                    notifyWithPromotionFallback(
                         context = context,
                         manager = manager,
-                        notificationKey = smartMatch.aggregateKey,
+                        notificationId = mirrorIdForKey(smartMatch.aggregateKey),
                         promotedNotification = notification,
                         sbn = sourceSbn,
                         appPresentationOverride = appPresentationOverride,
@@ -594,10 +588,10 @@ object LiveUpdateNotifier {
                         requestPromoted = true,
                         samsungBridge = samsungBridge
                     )
-                    notifyMirrorWithSamsungShadowIfNeeded(
+                    notifyWithPromotionFallback(
                         context = context,
                         manager = manager,
-                        notificationKey = sbn.key,
+                        notificationId = mirrorIdForKey(sbn.key),
                         promotedNotification = notification,
                         sbn = sbn,
                         appPresentationOverride = appPresentationOverride,
@@ -641,7 +635,7 @@ object LiveUpdateNotifier {
                 clearAggregateTrackingForSbnKeyLocked(sbn.key)
             }
             staleAggregateIds.forEach(manager::cancel)
-            cancelMirrorNotifications(manager, sbn.key)
+            manager.cancel(mirrorIdForKey(sbn.key))
         } catch (error: Throwable) {
             Log.e(TAG, "Failed to cancel mirrored notification: ${sbn.key}", error)
         }
@@ -699,8 +693,7 @@ object LiveUpdateNotifier {
         samsungBridge: SamsungBridgeContext = SamsungBridgeContext.disabled(
             sourceHasNativeProgress = false
         ),
-        allowNavigationIconHeuristics: Boolean = true,
-        forceMirrorSourceRemoteViews: Boolean = false
+        allowNavigationIconHeuristics: Boolean = true
     ): Notification {
         val runtimePrefs = ConverterPrefs(context)
         val parserDictionary = LiveParserDictionaryLoader.get(context, runtimePrefs)
@@ -784,32 +777,6 @@ object LiveUpdateNotifier {
             else -> false
         }
         val hasProgress = sourceHasProgress || progressOverride != null || samsungProgressMax > 0
-        val remoteViewMiniTextPair = if (samsungBridge.hasCustomRemoteCard) {
-            resolveRemoteViewMiniTextPair(
-                notification = source,
-                fallbackTitle = appName,
-                parserDictionary = parserDictionary,
-                smartRuleId = smartRuleId,
-                compactPrimaryText = compactPrimaryText,
-                displayTitle = displayTitle,
-                displayText = displayText,
-                smartShortTextOverride = smartShortTextOverride,
-                hasProgress = hasProgress
-            )
-        } else {
-            null
-        }
-        val useTextOnlyMiniNowBar = samsungBridge.hasCustomRemoteCard && remoteViewMiniTextPair != null
-        val notificationPrimaryText = if (useTextOnlyMiniNowBar) {
-            title
-        } else {
-            compactPrimaryText
-        }
-        val notificationSecondaryText = if (useTextOnlyMiniNowBar) {
-            text
-        } else {
-            displayText
-        }
         var resolvedProgressChipText: String? = null
         val determinateProgressPercent = if (hasProgress && !indeterminate && progressMax > 0) {
             val safeMax = progressMax.coerceAtLeast(1)
@@ -822,8 +789,8 @@ object LiveUpdateNotifier {
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setContentTitle(notificationPrimaryText)
-            .setContentText(notificationSecondaryText)
+            .setContentTitle(compactPrimaryText)
+            .setContentText(displayText)
             .setSubText(appName)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
@@ -899,18 +866,8 @@ object LiveUpdateNotifier {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
         if (smartShortTextOverride != null && !hasProgress) {
-            if (!useTextOnlyMiniNowBar) {
-                builder.setContentText(smartShortTextOverride)
-            }
+            builder.setContentText(smartShortTextOverride)
             builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
-        }
-
-        if (forceMirrorSourceRemoteViews) {
-            SamsungLiveUpdateReparser(context).applySourceRemoteViews(
-                builder = builder,
-                source = source,
-                keepCollapsedRemoteView = true
-            )
         }
 
         if (samsungBridge.enabled) {
@@ -920,21 +877,20 @@ object LiveUpdateNotifier {
                 hasProgress = hasProgress,
                 smartRuleId = smartRuleId,
                 smartShortTextOverride = smartShortTextOverride,
-                displayText = notificationSecondaryText,
+                displayText = displayText,
                 compactPrimaryText = compactPrimaryText,
                 resolvedProgressChipText = resolvedProgressChipText,
                 otpShortTextOverride = otpShortTextOverride,
                 otpCode = otpOverride?.code,
                 compactCodeOverride = compactCodeOverride,
-                samsungReparseChipText = samsungReparse?.chipText,
-                remoteViewMiniTextPair = remoteViewMiniTextPair
+                samsungReparseChipText = samsungReparse?.chipText
             )
             SamsungNowBarApplier.apply(
                 context = context,
                 builder = builder,
                 source = source,
                 sourcePackageName = sbn.packageName,
-                primaryText = notificationPrimaryText,
+                primaryText = compactPrimaryText,
                 texts = samsungTexts,
                 chipIcon = preferredSmallIcon,
                 hasProgress = hasProgress,
@@ -965,100 +921,6 @@ object LiveUpdateNotifier {
         }
 
         return builder.build()
-    }
-
-    private fun notifyMirrorWithSamsungShadowIfNeeded(
-        context: Context,
-        manager: NotificationManagerCompat,
-        notificationKey: String,
-        promotedNotification: Notification,
-        sbn: StatusBarNotification,
-        appPresentationOverride: AppPresentationOverride,
-        progressOverride: ProgressOverride?,
-        otpOverride: OtpMatch?,
-        smartShortTextOverride: String?,
-        compactCodeOverride: String? = null,
-        smartRuleId: String? = null,
-        otpShortTextOverride: String? = null,
-        samsungBridge: SamsungBridgeContext = SamsungBridgeContext.disabled(
-            sourceHasNativeProgress = false
-        ),
-        allowNavigationIconHeuristics: Boolean = true
-    ) {
-        if (!shouldPostSeparateSamsungNowBarShadow(promotedNotification)) {
-            manager.cancel(mirrorNowBarIdForKey(notificationKey))
-            notifyWithPromotionFallback(
-                context = context,
-                manager = manager,
-                notificationId = mirrorIdForKey(notificationKey),
-                promotedNotification = promotedNotification,
-                sbn = sbn,
-                appPresentationOverride = appPresentationOverride,
-                progressOverride = progressOverride,
-                otpOverride = otpOverride,
-                smartShortTextOverride = smartShortTextOverride,
-                compactCodeOverride = compactCodeOverride,
-                smartRuleId = smartRuleId,
-                otpShortTextOverride = otpShortTextOverride,
-                samsungBridge = samsungBridge,
-                allowNavigationIconHeuristics = allowNavigationIconHeuristics
-            )
-            return
-        }
-
-        val plainMirror = buildMirroredNotification(
-            context = context,
-            sbn = sbn,
-            appPresentationOverride = appPresentationOverride,
-            progressOverride = progressOverride,
-            otpOverride = otpOverride,
-            smartShortTextOverride = smartShortTextOverride,
-            compactCodeOverride = compactCodeOverride,
-            smartRuleId = smartRuleId,
-            requestPromoted = false,
-            otpShortTextOverride = otpShortTextOverride,
-            samsungBridge = SamsungBridgeContext.disabled(
-                sourceHasNativeProgress = hasProgress(sbn.notification)
-            ),
-            allowNavigationIconHeuristics = allowNavigationIconHeuristics,
-            forceMirrorSourceRemoteViews = samsungBridge.hasCustomRemoteCard
-        )
-
-        notifyWithPromotionFallback(
-            context = context,
-            manager = manager,
-            notificationId = mirrorIdForKey(notificationKey),
-            promotedNotification = plainMirror,
-            sbn = sbn,
-            appPresentationOverride = appPresentationOverride,
-            progressOverride = progressOverride,
-            otpOverride = otpOverride,
-            smartShortTextOverride = smartShortTextOverride,
-            compactCodeOverride = compactCodeOverride,
-            smartRuleId = smartRuleId,
-            otpShortTextOverride = otpShortTextOverride,
-            samsungBridge = SamsungBridgeContext.disabled(
-                sourceHasNativeProgress = hasProgress(sbn.notification)
-            ),
-            allowNavigationIconHeuristics = allowNavigationIconHeuristics
-        )
-
-        notifyWithPromotionFallback(
-            context = context,
-            manager = manager,
-            notificationId = mirrorNowBarIdForKey(notificationKey),
-            promotedNotification = promotedNotification,
-            sbn = sbn,
-            appPresentationOverride = appPresentationOverride,
-            progressOverride = progressOverride,
-            otpOverride = otpOverride,
-            smartShortTextOverride = smartShortTextOverride,
-            compactCodeOverride = compactCodeOverride,
-            smartRuleId = smartRuleId,
-            otpShortTextOverride = otpShortTextOverride,
-            samsungBridge = samsungBridge,
-            allowNavigationIconHeuristics = allowNavigationIconHeuristics
-        )
     }
 
     private fun notifyWithPromotionFallback(
@@ -1987,10 +1849,10 @@ object LiveUpdateNotifier {
                     otpShortTextOverride = otpShortTextOverride,
                     samsungBridge = samsungBridge
                 )
-                notifyMirrorWithSamsungShadowIfNeeded(
+                notifyWithPromotionFallback(
                     context = context,
                     manager = manager,
-                    notificationKey = otpMatch.aggregateKey,
+                    notificationId = mirrorIdForKey(otpMatch.aggregateKey),
                     promotedNotification = notification,
                     sbn = sbn,
                     appPresentationOverride = appPresentationOverride,
@@ -2173,10 +2035,10 @@ object LiveUpdateNotifier {
                     requestPromoted = true,
                     samsungBridge = frame.samsungBridge
                 )
-                notifyMirrorWithSamsungShadowIfNeeded(
+                notifyWithPromotionFallback(
                     context = context,
                     manager = manager,
-                    notificationKey = aggregateKey,
+                    notificationId = mirrorIdForKey(aggregateKey),
                     promotedNotification = notification,
                     sbn = frame.sbn,
                     appPresentationOverride = frame.appPresentationOverride,
@@ -2271,126 +2133,6 @@ object LiveUpdateNotifier {
             .replace(Regex("\\s+"), " ")
             .trim()
             .ifBlank { null }
-    }
-
-    private fun resolveRemoteViewMiniTextPair(
-        notification: Notification,
-        fallbackTitle: String,
-        parserDictionary: LiveParserDictionary,
-        smartRuleId: String?,
-        compactPrimaryText: String,
-        displayTitle: String,
-        displayText: String,
-        smartShortTextOverride: String?,
-        hasProgress: Boolean
-    ): SamsungMiniTextPair? {
-        val remoteTexts = extractRemoteViewTexts(notification)
-        if (remoteTexts.isEmpty()) {
-            return null
-        }
-
-        if (smartRuleId == "navigation") {
-            val combinedText = collectNotificationText(
-                notification = notification,
-                fallbackTitle = fallbackTitle,
-                includeRemoteViewTexts = true
-            )
-            val primary = sequenceOf(
-                smartShortTextOverride?.trim()?.takeIf {
-                    isNavigationDistanceText(it, parserDictionary)
-                },
-                extractNavigationDistanceText(
-                    notification = notification,
-                    fallbackTitle = fallbackTitle,
-                    parserDictionary = parserDictionary
-                ),
-                displayText.trim().takeIf { isNavigationDistanceText(it, parserDictionary) },
-                compactPrimaryText.trim().takeIf { isNavigationDistanceText(it, parserDictionary) },
-                remoteTexts.firstOrNull { candidate ->
-                    isNavigationDistanceText(candidate, parserDictionary)
-                }?.trim()
-            ).firstOrNull { !it.isNullOrEmpty() }
-
-            val secondary = sequenceOf(
-                extractNavigationInstructionToken(combinedText, parserDictionary),
-                displayTitle.trim(),
-                displayText.trim(),
-                compactPrimaryText.trim(),
-                remoteTexts.firstOrNull { candidate ->
-                    !isEquivalentText(candidate, primary) &&
-                            !isNavigationDistanceText(candidate, parserDictionary)
-                }?.trim()
-            ).firstOrNull { candidate ->
-                !candidate.isNullOrEmpty() &&
-                        !isEquivalentText(candidate, primary) &&
-                        !isNavigationDistanceText(candidate, parserDictionary)
-            }
-
-            return if (!primary.isNullOrBlank() && !secondary.isNullOrBlank()) {
-                SamsungMiniTextPair(primaryText = primary, secondaryText = secondary)
-            } else {
-                null
-            }
-        }
-
-        val primary = sequenceOf(
-            compactPrimaryText.trim().takeIf { candidate ->
-                candidate.isNotEmpty() && !isEquivalentText(candidate, fallbackTitle)
-            },
-            displayTitle.trim().takeIf { candidate ->
-                candidate.isNotEmpty() && !isEquivalentText(candidate, fallbackTitle)
-            },
-            remoteTexts.firstOrNull()?.trim()
-        ).firstOrNull { !it.isNullOrEmpty() } ?: return null
-
-        val secondary = sequenceOf(
-            smartShortTextOverride?.trim()?.takeIf { !hasProgress },
-            remoteTexts.firstOrNull { candidate ->
-                !isEquivalentText(candidate, primary)
-            }?.trim(),
-            displayText.trim().takeIf {
-                it.isNotEmpty() && !isGenericLiveUpdatePlaceholder(it)
-            }
-        ).firstOrNull { candidate ->
-            !candidate.isNullOrEmpty() && !isEquivalentText(candidate, primary)
-        }
-
-        return if (!secondary.isNullOrBlank()) {
-            SamsungMiniTextPair(primaryText = primary, secondaryText = secondary)
-        } else {
-            null
-        }
-    }
-
-    private fun isNavigationDistanceText(
-        value: String?,
-        parserDictionary: LiveParserDictionary
-    ): Boolean {
-        val normalized = value?.trim().orEmpty()
-        if (normalized.isEmpty()) {
-            return false
-        }
-        return parserDictionary.navigationDistancePattern.containsMatchIn(normalized) ||
-                NAVIGATION_DISTANCE_PATTERN.containsMatchIn(normalized)
-    }
-
-    private fun isEquivalentText(left: String?, right: String?): Boolean {
-        val normalizedLeft = normalizeComparableText(left)
-        val normalizedRight = normalizeComparableText(right)
-        return normalizedLeft.isNotEmpty() &&
-                normalizedRight.isNotEmpty() &&
-                normalizedLeft == normalizedRight
-    }
-
-    private fun normalizeComparableText(value: String?): String {
-        return value.orEmpty()
-            .replace(Regex("\\s+"), " ")
-            .trim()
-            .lowercase(Locale.ROOT)
-    }
-
-    private fun isGenericLiveUpdatePlaceholder(value: String?): Boolean {
-        return isEquivalentText(value, "Live update in progress")
     }
 
     private fun extractWeatherDayToken(
@@ -3105,30 +2847,6 @@ object LiveUpdateNotifier {
     private fun mirrorIdForKey(key: String): Int {
         val value = key.hashCode()
         return if (value == Int.MIN_VALUE) 0 else abs(value)
-    }
-
-    private fun mirrorNowBarIdForKey(key: String): Int {
-        return mirrorIdForKey("$key$NOW_BAR_SHADOW_SUFFIX")
-    }
-
-    private fun cancelMirrorNotifications(
-        manager: NotificationManagerCompat,
-        key: String
-    ) {
-        manager.cancel(mirrorIdForKey(key))
-        manager.cancel(mirrorNowBarIdForKey(key))
-    }
-
-    private fun shouldPostSeparateSamsungNowBarShadow(notification: Notification): Boolean {
-        if (!SamsungLiveUpdateReparser.isSamsungDevice()) {
-            return false
-        }
-        val extras = notification.extras
-        val style = extras.getInt(SAMSUNG_ONGOING_STYLE_KEY, -1)
-        val nowBarPrimary = extras.getCharSequence(SAMSUNG_NOWBAR_PRIMARY_INFO_KEY)
-            ?.toString()
-            ?.trim()
-        return style == SAMSUNG_STYLE_NOW_BAR_ONLY && !nowBarPrimary.isNullOrEmpty()
     }
 
     private fun limitIslandText(value: String?, enabled: Boolean): String {
