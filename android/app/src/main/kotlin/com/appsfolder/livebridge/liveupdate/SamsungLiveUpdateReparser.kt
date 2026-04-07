@@ -17,38 +17,59 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         sourcePackageName: String,
         primaryText: String,
         secondaryText: String,
+        nowBarPrimaryText: String,
+        nowBarSecondaryText: String?,
         chipText: String?,
         chipIcon: IconCompat?,
         hasProgress: Boolean,
         progressValue: Int,
         progressMax: Int,
         showSecondaryInNowBar: Boolean = true,
-        preferCompactNowBarRemoteView: Boolean = false
+        preferCompactNowBarRemoteView: Boolean = false,
+        disableMiniRemoteView: Boolean = false,
+        keepCollapsedRemoteView: Boolean = false,
+        showSmallIcon: Boolean = true,
+        allowNowBarProgress: Boolean = true
     ) {
         val normalizedPrimary = primaryText.trim()
         if (normalizedPrimary.isEmpty()) {
             return
         }
         val normalizedSecondary = secondaryText.trim()
+        val normalizedNowBarPrimary = nowBarPrimaryText.trim().ifEmpty { normalizedPrimary }
+        val normalizedNowBarSecondary = nowBarSecondaryText
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
 
-        val nowBarRemoteView = resolveRemoteView(source, preferCompactNowBarRemoteView)
+        val nowBarRemoteView =
+            if (disableMiniRemoteView) {
+                null
+            } else {
+                resolveRemoteView(source, preferCompactNowBarRemoteView)
+            }
         val hasNowBarRemoteView = nowBarRemoteView != null
-        applyRemoteViewsIfPresent(builder, source)
+        applyRemoteViewsIfPresent(builder, source, keepCollapsedRemoteView)
 
         val extras = Bundle().apply {
             putInt(KEY_STYLE, 1)
             putCharSequence(KEY_PRIMARY_INFO, normalizedPrimary)
             // Avoid duplicated bottom subtitle when custom RemoteViews is used.
-            if (showSecondaryInNowBar && normalizedSecondary.isNotEmpty() && !hasNowBarRemoteView) {
+            if (showSecondaryInNowBar &&
+                normalizedSecondary.isNotEmpty() &&
+                !hasNowBarRemoteView
+            ) {
                 putCharSequence(KEY_SECONDARY_INFO, normalizedSecondary)
             }
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, normalizedChipText)
-            putCharSequence(KEY_NOWBAR_PRIMARY_INFO, normalizedPrimary)
-            if (showSecondaryInNowBar && normalizedSecondary.isNotEmpty()) {
-                putCharSequence(KEY_NOWBAR_SECONDARY_INFO, normalizedSecondary)
+            putCharSequence(KEY_NOWBAR_PRIMARY_INFO, normalizedNowBarPrimary)
+            if (showSecondaryInNowBar) {
+                normalizedNowBarSecondary?.let {
+                    putCharSequence(KEY_NOWBAR_SECONDARY_INFO, it)
+                }
             }
             putInt(KEY_CHIP_BG_COLOR, resolveChipBackgroundColor(source))
+            putBoolean(KEY_SHOW_SMALL_ICON, showSmallIcon)
         }
 
         val frameworkIcon = runCatching { chipIcon?.toIcon(context) }.getOrNull()
@@ -60,7 +81,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
 
         // Do not expose progress style in collapsed Samsung chip/Now Bar.
-        if (hasProgress && progressMax > 0 && !hasNowBarRemoteView) {
+        if (allowNowBarProgress && hasProgress && progressMax > 0 && !hasNowBarRemoteView) {
             extras.putInt(KEY_PROGRESS, progressValue.coerceIn(0, progressMax))
             extras.putInt(KEY_PROGRESS_MAX, progressMax.coerceAtLeast(1))
         }
@@ -86,10 +107,10 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
 
     private fun applyRemoteViewsIfPresent(
         builder: NotificationCompat.Builder,
-        source: Notification
+        source: Notification,
+        keepCollapsedRemoteView: Boolean
     ) {
-        // Keep collapsed layout system-driven to prevent progress bar in mini chip mode.
-        val collapsed: RemoteViews? = null
+        val collapsed = if (keepCollapsedRemoteView) source.contentView else null
         val expanded = source.bigContentView ?: source.contentView
         val headsUp = source.headsUpContentView
 
@@ -162,6 +183,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         private const val KEY_PROGRESS_MAX = "${ONGOING_PREFIX}progressMax"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
         private const val KEY_NOWBAR_SECONDARY_INFO = "${ONGOING_PREFIX}nowbarSecondaryInfo"
+        private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
         private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"
         private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"
