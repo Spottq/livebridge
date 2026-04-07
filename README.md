@@ -24,6 +24,7 @@ LiveBridge is a Flutter Android app with native Kotlin logic that converts regul
 ## Exclusive features
 
 - Xiaomi's native Hyper Island (shout out to [D4vidDf](https://github.com/D4vidDf/HyperIsland-ToolKit))
+- Samsung Now Bar API 
 
 ## Requirements
 
