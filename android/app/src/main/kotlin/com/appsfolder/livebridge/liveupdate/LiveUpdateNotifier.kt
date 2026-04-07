@@ -77,6 +77,9 @@ object LiveUpdateNotifier {
     }
     private val progressColor = Color.valueOf(15f / 255f, 118f / 255f, 110f / 255f, 1f).toArgb()
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val appIconCacheLock = Any()
+    private val appIconCache = mutableMapOf<String, AppIconAssets>()
+    private val missingAppIconPackages = mutableSetOf<String>()
 
     private val stateLock = Any()
     private val sbnToAggregateKey = mutableMapOf<String, String>()
@@ -88,6 +91,11 @@ object LiveUpdateNotifier {
     private val otpAnimationGenerations = mutableMapOf<String, Long>()
     private val smartAnimationGenerations = mutableMapOf<String, Long>()
     private val smartAnimationStates = mutableMapOf<String, SmartAnimationState>()
+
+    private data class AppIconAssets(
+        val smallIcon: IconCompat?,
+        val largeIconBitmap: Bitmap?
+    )
 
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
@@ -130,6 +138,10 @@ object LiveUpdateNotifier {
             otpAnimationGenerations.clear()
             smartAnimationGenerations.clear()
             smartAnimationStates.clear()
+        }
+        synchronized(appIconCacheLock) {
+            appIconCache.clear()
+            missingAppIconPackages.clear()
         }
     }
 
@@ -700,8 +712,9 @@ object LiveUpdateNotifier {
         val source = sbn.notification
         val samsungReparse = samsungBridge.reparsePayload
         val sourceSmallIcon = resolveSourceSmallIcon(context, sbn)
-        val appSmallIcon = resolveAppSmallIcon(context, sbn.packageName)
-        val appLargeIcon = resolveAppLargeIconBitmap(context, sbn.packageName)
+        val appIconAssets = resolveAppIconAssets(context, sbn.packageName)
+        val appSmallIcon = appIconAssets?.smallIcon
+        val appLargeIcon = appIconAssets?.largeIconBitmap
         val samsungSmallIcon = samsungReparse?.icon
         val samsungLargeIcon = samsungReparse?.largeIconBitmap
         val shouldTryNavigationArrowIcon =
@@ -719,14 +732,10 @@ object LiveUpdateNotifier {
         val preferredLargeIcon = when {
             appPresentationOverride.iconSource == NotificationIconSource.APP ->
                 appLargeIcon ?: sourceLargeIcon
-            !samsungBridge.hasCustomRemoteCard ->
-                appLargeIcon ?: when {
-                    shouldTryNavigationArrowIcon ->
-                        navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
-                    else -> samsungLargeIcon ?: sourceLargeIcon
-                }
-            shouldTryNavigationArrowIcon -> navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
-            else -> samsungLargeIcon ?: sourceLargeIcon
+            shouldTryNavigationArrowIcon ->
+                appLargeIcon ?: navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
+            else ->
+                appLargeIcon ?: samsungLargeIcon ?: sourceLargeIcon
         }
 
         val appName = resolveAppName(context, sbn.packageName)
@@ -805,11 +814,11 @@ object LiveUpdateNotifier {
         val preferredSmallIcon = when (appPresentationOverride.iconSource) {
             NotificationIconSource.NOTIFICATION -> when {
                 shouldTryNavigationArrowIcon ->
-                    navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+                    appSmallIcon ?: navigationDrawable?.icon ?: samsungSmallIcon ?: sourceSmallIcon
                 samsungBridge.hasCustomRemoteCard ->
-                    samsungSmallIcon ?: sourceSmallIcon ?: appSmallIcon
+                    appSmallIcon ?: samsungSmallIcon ?: sourceSmallIcon
                 else ->
-                    sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+                    appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
             }
             NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
         }
@@ -2342,40 +2351,67 @@ object LiveUpdateNotifier {
     }
 
     private fun resolveAppSmallIcon(context: Context, packageName: String): IconCompat? {
-        return try {
-            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
-            if (appInfo.icon == 0) {
-                null
-            } else {
-                val packageContext = context.createPackageContext(packageName, 0)
-                runCatching {
-                    packageContext.getDrawable(appInfo.icon)?.let(::drawableToBitmap)
-                }.getOrNull()?.let { bitmap ->
-                    runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()?.let { return it }
-                }
-                IconCompat.createWithResource(
-                    packageContext.resources,
-                    packageName,
-                    appInfo.icon
-                )
-            }
-        } catch (_: Exception) {
-            null
-        }
+        return resolveAppIconAssets(context, packageName)?.smallIcon
     }
 
     private fun resolveAppLargeIconBitmap(context: Context, packageName: String): Bitmap? {
-        return try {
-            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
+        return resolveAppIconAssets(context, packageName)?.largeIconBitmap
+    }
+
+    private fun resolveAppIconAssets(context: Context, packageName: String): AppIconAssets? {
+        val normalizedPackage = packageName.trim()
+        if (normalizedPackage.isEmpty()) {
+            return null
+        }
+
+        synchronized(appIconCacheLock) {
+            appIconCache[normalizedPackage]?.let { return it }
+            if (missingAppIconPackages.contains(normalizedPackage)) {
+                return null
+            }
+        }
+
+        val resolved = try {
+            val appInfo = context.packageManager.getApplicationInfo(normalizedPackage, 0)
             if (appInfo.icon == 0) {
                 null
             } else {
-                val packageContext = context.createPackageContext(packageName, 0)
-                packageContext.getDrawable(appInfo.icon)?.let(::drawableToBitmap)
+                val packageContext = context.createPackageContext(normalizedPackage, 0)
+                val bitmap = runCatching {
+                    packageContext.getDrawable(appInfo.icon)?.let(::drawableToBitmap)
+                }.getOrNull()
+                val smallIcon = bitmap
+                    ?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
+                    ?: runCatching {
+                        IconCompat.createWithResource(
+                            packageContext.resources,
+                            normalizedPackage,
+                            appInfo.icon
+                        )
+                    }.getOrNull()
+
+                if (smallIcon == null && bitmap == null) {
+                    null
+                } else {
+                    AppIconAssets(
+                        smallIcon = smallIcon,
+                        largeIconBitmap = bitmap
+                    )
+                }
             }
         } catch (_: Exception) {
             null
         }
+
+        synchronized(appIconCacheLock) {
+            if (resolved != null) {
+                appIconCache[normalizedPackage] = resolved
+            } else {
+                missingAppIconPackages.add(normalizedPackage)
+            }
+        }
+
+        return resolved
     }
 
     private fun resolveSourceLargeIconBitmap(context: Context, notification: Notification): Bitmap? {
