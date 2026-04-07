@@ -55,20 +55,20 @@ object LiveUpdateNotifier {
         "com.waze"
     )
     private val NAVIGATION_DISTANCE_PATTERN = Regex(
-        "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:РєРј|km|Рј|m|mi|ft|РјРёР»СЊ|С„СѓС‚)\\b",
+        "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val TEXT_PROGRESS_PERCENT_PATTERN = Regex("(?<!\\d)(\\d{1,3})\\s*%")
     private val TEXT_PROGRESS_DISCOUNT_CONTEXT_PATTERN = Regex(
-        "(СЃРєРёРґ|Р°РєС†Рё|РїСЂРѕРјРѕРєРѕРґ|РїСЂРѕРјРѕ|РєСѓРїРѕРЅ|СЂР°СЃРїСЂРѕРґ|РєСЌС€Р±[РµСЌ]Рє|РєРµС€Р±[РµСЌ]Рє|discount|promo|coupon|sale|cashback|off\\b|РІС‹РіРѕРґ|bonus|Р±РѕРЅСѓСЃ|save|deal|special\\s+offer|limited\\s+time|РґР°СЂРёРј|РїРѕРґР°СЂ)",
+        "(скид|акци|промокод|промо|купон|распрод|кэшб[еэ]к|кешб[еэ]к|discount|promo|coupon|sale|cashback|off\\b|выгод|bonus|бонус|save|deal|special\\s+offer|limited\\s+time|дарим|подар)",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val TEXT_PROGRESS_OFFER_CONTEXT_PATTERN = Regex(
-        "(РїСЂРё\\s+Р·Р°РєР°Р·|РїСЂРё\\s+РїРѕРєСѓРї|minimum\\s+order|order\\s+from|РІ\\s+РїСЂРёР»РѕР¶РµРЅРё\\S*\\s+Р°РєС†Рё)",
+        "(при\\s+заказ|при\\s+покуп|minimum\\s+order|order\\s+from|в\\s+приложени\\S*\\s+акци)",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val TEXT_PROGRESS_MONEY_CONTEXT_PATTERN = Regex(
-        "(\\d{2,7}\\s*(?:в‚Ѕ|СЂСѓР±\\.?|СЂСѓР±Р»(?:РµР№|СЏ|СЊ)?|rur|usd|eur|\\$|в‚¬|kzt|С‚РµРЅРіРµ))",
+        "(\\d{2,7}\\s*(?:₽|руб\\.?|рубл(?:ей|я|ь)?|rur|usd|eur|\\$|€|kzt|тенге))",
         setOf(RegexOption.IGNORE_CASE)
     )
     private const val SMART_ISLAND_ANIMATION_MIN_DELAY_MS = 2_000L
@@ -1398,7 +1398,7 @@ object LiveUpdateNotifier {
         )
 
         return when {
-            !deviceName.isNullOrBlank() && !statusText.isNullOrBlank() -> "$deviceName В· $statusText"
+            !deviceName.isNullOrBlank() && !statusText.isNullOrBlank() -> "$deviceName · $statusText"
             !deviceName.isNullOrBlank() -> deviceName
             else -> statusText
         }
@@ -1597,14 +1597,14 @@ object LiveUpdateNotifier {
         if (speed.isNullOrBlank()) {
             return null
         }
-        return "в†‘$speed"
+        return "↑$speed"
     }
 
     private fun formatVpnIncomingToken(speed: String?): String? {
         if (speed.isNullOrBlank()) {
             return null
         }
-        return "в†“$speed"
+        return "↓$speed"
     }
 
     private fun extractDirectionalVpnSpeed(
@@ -1695,9 +1695,9 @@ object LiveUpdateNotifier {
     private fun normalizeVpnSpeedToken(raw: String): String {
         return raw
             .replace(Regex("\\s+"), "")
-            .replace("/СЃ", "/s")
-            .replace("/РЎ", "/s")
-            .replace("СЃРµРє", "s", ignoreCase = true)
+            .replace("/с", "/s")
+            .replace("/С", "/s")
+            .replace("сек", "s", ignoreCase = true)
     }
 
     private fun extractNavigationDistanceText(
@@ -1827,7 +1827,7 @@ object LiveUpdateNotifier {
             nextGeneration
         }
 
-        val copiedLabel = if (isRussianLocale(context)) "РЎРєРѕРїРёСЂРѕРІР°РЅРѕ" else "Copied"
+        val copiedLabel = if (isRussianLocale(context)) "Скопировано" else "Copied"
 
         scheduleOtpAnimationStep(
             context = context,
@@ -2817,7 +2817,7 @@ object LiveUpdateNotifier {
         }
 
         val language = locale?.language?.lowercase(Locale.ROOT).orEmpty()
-        return if (language.startsWith("ru")) "РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РєРѕРґ" else "Copy code"
+        return if (language.startsWith("ru")) "Скопировать код" else "Copy code"
     }
 
     private fun copySourceActions(

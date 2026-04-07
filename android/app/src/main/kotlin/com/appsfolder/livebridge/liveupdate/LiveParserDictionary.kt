@@ -154,7 +154,7 @@ internal data class LiveParserDictionary(
                 ignoreCase = true
             )
             val weatherTemperaturePattern = parsedWeatherTemperaturePattern
-                ?.takeIf { it.containsMatchIn("1В°") && it.containsMatchIn("-5В°") }
+                ?.takeIf { it.containsMatchIn("1°") && it.containsMatchIn("-5°") }
                 ?: defaults.weatherTemperaturePattern
             val weatherDayPattern = parseRegex(
                 root.optString("weather_day_pattern"),

@@ -46,9 +46,9 @@ class LiveBridgeTileService : TileService() {
         tile.label = "LiveBridge"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             tile.subtitle = if (enabled) {
-                if (isRussianLocale()) "Р’РєР»СЋС‡РµРЅРѕ" else "Enabled"
+                if (isRussianLocale()) "Включено" else "Enabled"
             } else {
-                if (isRussianLocale()) "Р’С‹РєР»СЋС‡РµРЅРѕ" else "Disabled"
+                if (isRussianLocale()) "Выключено" else "Disabled"
             }
         }
         tile.updateTile()

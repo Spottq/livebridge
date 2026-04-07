@@ -34,7 +34,7 @@ class OtpCopyReceiver : BroadcastReceiver() {
             context.resources.configuration.locale
         }
         val language = locale?.language?.lowercase(Locale.ROOT).orEmpty()
-        return if (language.startsWith("ru")) "РљРѕРґ СЃРєРѕРїРёСЂРѕРІР°РЅ" else "Code copied"
+        return if (language.startsWith("ru")) "Код скопирован" else "Code copied"
     }
 
     companion object {

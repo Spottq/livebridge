@@ -517,12 +517,12 @@ class MainActivity : FlutterActivity() {
 
         val isRuLocale = isRussianLocale()
         val title = if (isRuLocale) {
-            "Р”РѕСЃС‚СѓРїРЅРѕ РѕР±РЅРѕРІР»РµРЅРёРµ LiveBridge"
+            "Доступно обновление LiveBridge"
         } else {
             "LiveBridge update available"
         }
         val content = if (isRuLocale) {
-            "РќРѕРІР°СЏ РІРµСЂСЃРёСЏ: $version"
+            "Новая версия: $version"
         } else {
             "New version: $version"
         }
