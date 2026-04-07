@@ -24,11 +24,8 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         hasProgress: Boolean,
         progressValue: Int,
         progressMax: Int,
-        showSecondaryInNotificationCard: Boolean = true,
-        preferCompactNowBarRemoteView: Boolean = false,
-        disableMiniRemoteView: Boolean = false,
-        showSmallIcon: Boolean = true,
-        allowNowBarProgress: Boolean = true
+        showSecondaryInNowBar: Boolean = true,
+        preferCompactNowBarRemoteView: Boolean = false
     ) {
         val normalizedPrimary = primaryText.trim()
         if (normalizedPrimary.isEmpty()) {
@@ -41,12 +38,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
             ?.takeIf { it.isNotEmpty() }
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
 
-        val nowBarRemoteView =
-            if (disableMiniRemoteView) {
-                null
-            } else {
-                resolveRemoteView(source, preferCompactNowBarRemoteView)
-            }
+        val nowBarRemoteView = resolveRemoteView(source, preferCompactNowBarRemoteView)
         val hasNowBarRemoteView = nowBarRemoteView != null
         applyRemoteViewsIfPresent(builder, source)
 
@@ -54,7 +46,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
             putInt(KEY_STYLE, 1)
             putCharSequence(KEY_PRIMARY_INFO, normalizedPrimary)
             // Avoid duplicated bottom subtitle when custom RemoteViews is used.
-            if (showSecondaryInNotificationCard &&
+            if (showSecondaryInNowBar &&
                 normalizedSecondary.isNotEmpty() &&
                 !hasNowBarRemoteView
             ) {
@@ -62,11 +54,12 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
             }
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, normalizedChipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, normalizedNowBarPrimary)
-            normalizedNowBarSecondary?.let {
-                putCharSequence(KEY_NOWBAR_SECONDARY_INFO, it)
+            if (showSecondaryInNowBar) {
+                normalizedNowBarSecondary?.let {
+                    putCharSequence(KEY_NOWBAR_SECONDARY_INFO, it)
+                }
             }
             putInt(KEY_CHIP_BG_COLOR, resolveChipBackgroundColor(source))
-            putBoolean(KEY_SHOW_SMALL_ICON, showSmallIcon)
         }
 
         val frameworkIcon = runCatching { chipIcon?.toIcon(context) }.getOrNull()
@@ -78,7 +71,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
 
         // Do not expose progress style in collapsed Samsung chip/Now Bar.
-        if (allowNowBarProgress && hasProgress && progressMax > 0 && !hasNowBarRemoteView) {
+        if (hasProgress && progressMax > 0 && !hasNowBarRemoteView) {
             extras.putInt(KEY_PROGRESS, progressValue.coerceIn(0, progressMax))
             extras.putInt(KEY_PROGRESS_MAX, progressMax.coerceAtLeast(1))
         }
@@ -180,7 +173,6 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         private const val KEY_PROGRESS_MAX = "${ONGOING_PREFIX}progressMax"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
         private const val KEY_NOWBAR_SECONDARY_INFO = "${ONGOING_PREFIX}nowbarSecondaryInfo"
-        private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
         private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"
         private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"

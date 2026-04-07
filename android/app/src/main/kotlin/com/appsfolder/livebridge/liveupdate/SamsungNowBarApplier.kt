@@ -31,15 +31,12 @@ internal object SamsungNowBarApplier {
             nowBarPrimaryText = texts.nowBarPrimaryText,
             nowBarSecondaryText = texts.nowBarSecondaryText,
             chipText = texts.chipText,
-            chipIcon = chipIcon?.takeIf { texts.showMiniIcon },
+            chipIcon = chipIcon,
             hasProgress = hasProgress,
             progressValue = progressValue,
             progressMax = progressMax,
-            showSecondaryInNotificationCard = texts.showSecondaryInNotificationCard,
-            preferCompactNowBarRemoteView = texts.preferCompactNowBarRemoteView,
-            disableMiniRemoteView = texts.disableMiniRemoteView,
-            showSmallIcon = texts.showSmallIcon,
-            allowNowBarProgress = texts.allowNowBarProgress
+            showSecondaryInNowBar = texts.showSecondaryInNowBar,
+            preferCompactNowBarRemoteView = texts.preferCompactNowBarRemoteView
         )
     }
 }

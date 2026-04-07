@@ -6,12 +6,8 @@ internal data class SamsungBridgeTexts(
     val chipText: String?,
     val nowBarPrimaryText: String,
     val nowBarSecondaryText: String?,
-    val showSecondaryInNotificationCard: Boolean,
-    val preferCompactNowBarRemoteView: Boolean,
-    val disableMiniRemoteView: Boolean,
-    val showMiniIcon: Boolean,
-    val showSmallIcon: Boolean,
-    val allowNowBarProgress: Boolean
+    val showSecondaryInNowBar: Boolean,
+    val preferCompactNowBarRemoteView: Boolean
 )
 
 internal data class SamsungMiniTextPair(
@@ -52,13 +48,12 @@ internal object SamsungBridgeContentPolicy {
             smartShortTextOverride?.trim(),
             compactPrimaryText.trim()
         ).firstOrNull { !it.isNullOrEmpty() }
-        val useTextOnlyMiniNowBar = hasCustomRemoteCard && remoteViewMiniTextPair != null
         val nowBarPrimaryText = remoteViewMiniTextPair?.primaryText
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
             ?: compactPrimaryText.trim()
         val nowBarSecondaryText = when {
-            useTextOnlyMiniNowBar -> remoteViewMiniTextPair?.secondaryText
+            remoteViewMiniTextPair != null -> remoteViewMiniTextPair.secondaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
             smartRuleId != "navigation" && !hasCustomRemoteCard -> secondaryText
@@ -73,15 +68,11 @@ internal object SamsungBridgeContentPolicy {
             chipText = chipText,
             nowBarPrimaryText = nowBarPrimaryText,
             nowBarSecondaryText = nowBarSecondaryText,
-            showSecondaryInNotificationCard = smartRuleId != "navigation" && !hasCustomRemoteCard,
+            showSecondaryInNowBar =
+                remoteViewMiniTextPair != null ||
+                        (smartRuleId != "navigation" && !hasCustomRemoteCard),
             preferCompactNowBarRemoteView =
-                !useTextOnlyMiniNowBar &&
-                        sourcePackageName == YANDEX_MAPS_PACKAGE &&
-                        !hasProgress,
-            disableMiniRemoteView = useTextOnlyMiniNowBar,
-            showMiniIcon = !useTextOnlyMiniNowBar,
-            showSmallIcon = !useTextOnlyMiniNowBar,
-            allowNowBarProgress = !useTextOnlyMiniNowBar
+                sourcePackageName == YANDEX_MAPS_PACKAGE && !hasProgress
         )
     }
 }
