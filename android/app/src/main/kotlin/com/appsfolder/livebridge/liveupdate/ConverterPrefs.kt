@@ -110,14 +110,17 @@ class ConverterPrefs(context: Context) {
     }
 
     fun getNetworkSpeedUnit(): String {
-        val raw = prefs.getString(KEY_NETWORK_SPEED_UNIT, NetworkSpeedUnit.AUTO.id)
-            ?: NetworkSpeedUnit.AUTO.id
-        return NetworkSpeedUnit.from(raw).id
+        val raw = prefs.getString(KEY_NETWORK_SPEED_UNIT, null)
+        return if (raw == null) {
+            NetworkSpeedUnit.AUTO.id
+        } else {
+            NetworkSpeedUnit.normalizeSelection(raw)
+        }
     }
 
     fun setNetworkSpeedUnit(value: String?) {
-        val unit = NetworkSpeedUnit.from(value)
-        prefs.edit().putString(KEY_NETWORK_SPEED_UNIT, unit.id).apply()
+        val normalized = NetworkSpeedUnit.normalizeSelection(value)
+        prefs.edit().putString(KEY_NETWORK_SPEED_UNIT, normalized).apply()
     }
 
     fun getNetworkSpeedPrioritizeUpload(): Boolean {

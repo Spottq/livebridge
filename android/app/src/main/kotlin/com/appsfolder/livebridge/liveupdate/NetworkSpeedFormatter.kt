@@ -57,18 +57,38 @@ internal object NetworkSpeedFormatter {
         bytesPerSecond: Long,
         rawUnit: String?
     ): Pair<String, String> {
+        val selectedUnits = NetworkSpeedUnit.parseSelection(rawUnit)
+        val useAuto =
+            selectedUnits.isEmpty() || selectedUnits.contains(NetworkSpeedUnit.AUTO)
+
         val unitToUse =
-            when (NetworkSpeedUnit.from(rawUnit)) {
-                NetworkSpeedUnit.AUTO -> {
-                    when {
-                        bytesPerSecond >= GIGABYTE -> NetworkSpeedUnit.GIGABYTES
-                        bytesPerSecond >= MEGABYTE -> NetworkSpeedUnit.MEGABYTES
-                        bytesPerSecond >= KILOBYTE -> NetworkSpeedUnit.KILOBYTES
-                        else -> NetworkSpeedUnit.BYTES
+            if (useAuto) {
+                when {
+                    bytesPerSecond >= GIGABYTE -> NetworkSpeedUnit.GIGABYTES
+                    bytesPerSecond >= MEGABYTE -> NetworkSpeedUnit.MEGABYTES
+                    bytesPerSecond >= KILOBYTE -> NetworkSpeedUnit.KILOBYTES
+                    else -> NetworkSpeedUnit.BYTES
+                }
+            } else {
+                val sortedAvailable = selectedUnits
+                    .filter { it != NetworkSpeedUnit.AUTO }
+                    .sortedByDescending { it.ordinal }
+                var best = sortedAvailable.last()
+                for (unit in sortedAvailable) {
+                    val threshold =
+                        when (unit) {
+                            NetworkSpeedUnit.GIGABYTES -> 1000L * 1024L * 1024L
+                            NetworkSpeedUnit.MEGABYTES -> 1000L * 1024L
+                            NetworkSpeedUnit.KILOBYTES -> KILOBYTE
+                            NetworkSpeedUnit.BYTES,
+                            NetworkSpeedUnit.AUTO -> 0L
+                        }
+                    if (bytesPerSecond >= threshold) {
+                        best = unit
+                        break
                     }
                 }
-
-                else -> NetworkSpeedUnit.from(rawUnit)
+                best
             }
 
         return when (unitToUse) {
