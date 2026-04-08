@@ -314,6 +314,11 @@ class AppStrings {
   String get networkSpeedLockscreenOnlySubtitle => isRu
       ? 'При разблокированном экране индикатор скорости полностью скрывается и возвращается только на локскрине.'
       : 'When the device is unlocked, network speed is hidden completely and returns only on the lock screen.';
+  String get networkSpeedDisableChipBackgroundTitle =>
+      isRu ? 'Отключить фон chips' : 'Disable chip background';
+  String get networkSpeedDisableChipBackgroundSubtitle => isRu
+      ? 'Убирает плашку у чипов скорости в Now Bar, но оставляет статичный цвет у иконки в развернутом уведомлении.'
+      : 'Removes the pill background from the network speed chips in Now Bar while keeping a fixed accent behind the icon in the expanded notification.';
   String get smartNavigationDisabledSubtitle => isRu
       ? 'Сначала включите умное распознавание.'
       : 'Enable smart status detection first.';

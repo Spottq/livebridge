@@ -86,6 +86,10 @@ class LiveBridgePlatform {
       _askBool('getNetworkSpeedLockscreenOnly');
   static Future<bool> setNetworkSpeedLockscreenOnly(bool value) =>
       _askBool('setNetworkSpeedLockscreenOnly', {'value': value});
+  static Future<bool> getNetworkSpeedChipBackgroundDisabled() =>
+      _askBool('getNetworkSpeedChipBackgroundDisabled');
+  static Future<bool> setNetworkSpeedChipBackgroundDisabled(bool value) =>
+      _askBool('setNetworkSpeedChipBackgroundDisabled', {'value': value});
   static Future<bool> getConverterEnabled() => _askBool('getConverterEnabled');
   static Future<bool> setConverterEnabled(bool value) =>
       _askBool('setConverterEnabled', {'value': value});

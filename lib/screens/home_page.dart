@@ -63,6 +63,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _networkSpeedEnabled = false;
   bool _networkSpeedPrioritizeUpload = false;
   bool _networkSpeedLockscreenOnly = false;
+  bool _networkSpeedChipBackgroundDisabled = false;
   bool _smartDetectionEnabled = true;
   bool _smartNavigationEnabled = true;
   bool _smartWeatherEnabled = true;
@@ -239,6 +240,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getNetworkSpeedPrioritizeUpload();
       final bool networkSpeedLockscreenOnly =
           await LiveBridgePlatform.getNetworkSpeedLockscreenOnly();
+      final bool networkSpeedChipBackgroundDisabled =
+          await LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
       final bool smartDetectionEnabled =
           await LiveBridgePlatform.getSmartStatusDetectionEnabled();
       final bool smartNavigationEnabled =
@@ -342,6 +345,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _networkSpeedUnits = NetworkSpeedUnitSelection.parse(networkSpeedUnit);
         _networkSpeedPrioritizeUpload = networkSpeedPrioritizeUpload;
         _networkSpeedLockscreenOnly = networkSpeedLockscreenOnly;
+        _networkSpeedChipBackgroundDisabled =
+            networkSpeedChipBackgroundDisabled;
         _smartDetectionEnabled = smartDetectionEnabled;
         _smartNavigationEnabled = smartNavigationEnabled;
         _smartWeatherEnabled = smartWeatherEnabled;
@@ -473,6 +478,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     HapticFeedback.selectionClick();
     setState(() => _networkSpeedLockscreenOnly = value);
     await LiveBridgePlatform.setNetworkSpeedLockscreenOnly(value);
+  }
+
+  Future<void> _setNetworkSpeedChipBackgroundDisabled(bool value) async {
+    HapticFeedback.selectionClick();
+    setState(() => _networkSpeedChipBackgroundDisabled = value);
+    await LiveBridgePlatform.setNetworkSpeedChipBackgroundDisabled(value);
   }
 
   Future<void> _setConverterEnabled(bool value) async {
@@ -2706,6 +2717,24 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                     ),
                     subtitle: Text(
                       s.networkSpeedLockscreenOnlySubtitle,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                      ),
+                    ),
+                    contentPadding: EdgeInsets.zero,
+                    activeThumbColor: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile.adaptive(
+                    value: _networkSpeedChipBackgroundDisabled,
+                    onChanged: _setNetworkSpeedChipBackgroundDisabled,
+                    title: Text(
+                      s.networkSpeedDisableChipBackgroundTitle,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      s.networkSpeedDisableChipBackgroundSubtitle,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontSize: 13,

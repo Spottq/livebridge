@@ -139,6 +139,14 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_NETWORK_SPEED_LOCKSCREEN_ONLY, value).apply()
     }
 
+    fun getNetworkSpeedChipBackgroundDisabled(): Boolean {
+        return prefs.getBoolean(KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND, false)
+    }
+
+    fun setNetworkSpeedChipBackgroundDisabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND, value).apply()
+    }
+
     fun getConverterEnabled(): Boolean {
         return prefs.getBoolean(KEY_CONVERTER_ENABLED, true)
     }
@@ -464,6 +472,8 @@ class ConverterPrefs(context: Context) {
         private const val KEY_NETWORK_SPEED_PRIORITIZE_UPLOAD =
             "network_speed_prioritize_upload"
         private const val KEY_NETWORK_SPEED_LOCKSCREEN_ONLY = "network_speed_lockscreen_only"
+        private const val KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND =
+            "network_speed_disable_chip_background"
         private const val KEY_CONVERTER_ENABLED = "converter_enabled"
         private const val KEY_KEEP_ALIVE_FOREGROUND_ENABLED = "keep_alive_foreground_enabled"
         private const val KEY_SYNC_DND_ENABLED = "sync_dnd_enabled"

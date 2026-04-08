@@ -296,6 +296,14 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getNetworkSpeedChipBackgroundDisabled" ->
+                res.success(prefs.getNetworkSpeedChipBackgroundDisabled())
+            "setNetworkSpeedChipBackgroundDisabled" -> {
+                prefs.setNetworkSpeedChipBackgroundDisabled(call.argument<Boolean>("value") ?: false)
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
             "getConverterEnabled" -> res.success(prefs.getConverterEnabled())
             "setConverterEnabled" -> {
                 val value = call.argument<Boolean>("value") ?: true
