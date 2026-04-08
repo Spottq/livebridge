@@ -277,6 +277,38 @@ class AppStrings {
   String get smartVpnSubtitle => isRu
       ? 'Показывает входящий/исходящий трафик в формате *b/s.'
       : 'Shows incoming/outgoing traffic speed in *b/s format.';
+  String get networkSpeedCardTitle =>
+      isRu ? 'Скорость интернета' : 'Network speed';
+  String get networkSpeedEnabledTitle => isRu
+      ? 'Показывать скорость интернета в Now Bar'
+      : 'Show network speed in Now Bar';
+  String get networkSpeedEnabledSubtitle => isRu
+      ? 'Запускает отдельное уведомление с текущей скоростью сети и выводит его в Now Bar.'
+      : 'Runs a dedicated ongoing notification with current network speed and surfaces it in the Now Bar.';
+  String get networkSpeedDisplayContentTitle =>
+      isRu ? 'Отображаемый контент' : 'Display content';
+  String get networkSpeedDisplayModeTotal =>
+      isRu ? 'Общая скорость' : 'Total speed';
+  String get networkSpeedDisplayModeUpload =>
+      isRu ? 'Только upload' : 'Upload only';
+  String get networkSpeedDisplayModeDownload =>
+      isRu ? 'Только download' : 'Download only';
+  String get networkSpeedUploadPrefixTitle =>
+      isRu ? 'Префикс upload' : 'Upload prefix';
+  String get networkSpeedDownloadPrefixTitle =>
+      isRu ? 'Префикс download' : 'Download prefix';
+  String networkSpeedCurrentValue(String value) =>
+      isRu ? 'Сейчас: "$value"' : 'Current: "$value"';
+  String get networkSpeedPrioritizeUploadTitle =>
+      isRu ? 'Сначала показывать upload' : 'Prioritize upload speed';
+  String get networkSpeedPrioritizeUploadSubtitle => isRu
+      ? 'В режиме общей скорости upload будет стоять перед download.'
+      : 'In total mode, upload speed is shown before download.';
+  String get networkSpeedLockscreenOnlyTitle =>
+      isRu ? 'Отображать только на локскрине' : 'Display only on lock screen';
+  String get networkSpeedLockscreenOnlySubtitle => isRu
+      ? 'При разблокированном экране live-поверхность скрывается, но фоновое уведомление сети остается активным.'
+      : 'When the device is unlocked, the live surface is hidden while the background network notification stays active.';
   String get smartNavigationDisabledSubtitle => isRu
       ? 'Сначала включите умное распознавание.'
       : 'Enable smart status detection first.';

@@ -9,7 +9,6 @@ import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
-import androidx.core.app.NotificationManagerCompat
 import kotlin.math.min
 
 class LiveUpdateNotificationListenerService : NotificationListenerService() {
@@ -59,12 +58,11 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         super.onCreate()
 
         if (isBlockedByJoke()) {
-            NotificationManagerCompat.from(applicationContext).cancelAll()
+            LiveUpdateNotifier.cancelAllMirrored(applicationContext)
             return
         }
         if (!prefs.getConverterEnabled()) {
-            LiveUpdateNotifier.clearRuntimeState()
-            NotificationManagerCompat.from(applicationContext).cancelAll()
+            LiveUpdateNotifier.cancelAllMirrored(applicationContext)
         }
 
         LiveUpdateNotifier.ensureChannel(applicationContext)
@@ -80,8 +78,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
         if (!prefs.getConverterEnabled()) {
-            LiveUpdateNotifier.clearRuntimeState()
-            NotificationManagerCompat.from(applicationContext).cancelAll()
+            LiveUpdateNotifier.cancelAllMirrored(applicationContext)
             scheduleSnapshotSync()
             return
         }

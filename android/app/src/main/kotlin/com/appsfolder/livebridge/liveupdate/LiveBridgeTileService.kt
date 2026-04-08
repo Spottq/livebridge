@@ -7,7 +7,6 @@ import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import androidx.core.app.NotificationManagerCompat
 
 class LiveBridgeTileService : TileService() {
     private val prefs by lazy { ConverterPrefs(applicationContext) }
@@ -30,8 +29,7 @@ class LiveBridgeTileService : TileService() {
         val newValue = !prefs.getConverterEnabled()
         prefs.setConverterEnabled(newValue)
         if (!newValue) {
-            LiveUpdateNotifier.clearRuntimeState()
-            NotificationManagerCompat.from(applicationContext).cancelAll()
+            LiveUpdateNotifier.cancelAllMirrored(applicationContext)
         } else {
             requestNotificationListenerRebindIfPossible()
         }

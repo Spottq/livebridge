@@ -59,6 +59,30 @@ class LiveBridgePlatform {
       _askBool('getTextProgressEnabled');
   static Future<bool> setTextProgressEnabled(bool value) =>
       _askBool('setTextProgressEnabled', {'value': value});
+  static Future<bool> getNetworkSpeedEnabled() =>
+      _askBool('getNetworkSpeedEnabled');
+  static Future<bool> setNetworkSpeedEnabled(bool value) =>
+      _askBool('setNetworkSpeedEnabled', {'value': value});
+  static Future<String> getNetworkSpeedDisplayMode() =>
+      _askStr('getNetworkSpeedDisplayMode');
+  static Future<bool> setNetworkSpeedDisplayMode(String value) =>
+      _askBool('setNetworkSpeedDisplayMode', {'value': value});
+  static Future<String> getNetworkSpeedUploadPrefix() =>
+      _askStr('getNetworkSpeedUploadPrefix');
+  static Future<bool> setNetworkSpeedUploadPrefix(String value) =>
+      _askBool('setNetworkSpeedUploadPrefix', {'value': value});
+  static Future<String> getNetworkSpeedDownloadPrefix() =>
+      _askStr('getNetworkSpeedDownloadPrefix');
+  static Future<bool> setNetworkSpeedDownloadPrefix(String value) =>
+      _askBool('setNetworkSpeedDownloadPrefix', {'value': value});
+  static Future<bool> getNetworkSpeedPrioritizeUpload() =>
+      _askBool('getNetworkSpeedPrioritizeUpload');
+  static Future<bool> setNetworkSpeedPrioritizeUpload(bool value) =>
+      _askBool('setNetworkSpeedPrioritizeUpload', {'value': value});
+  static Future<bool> getNetworkSpeedLockscreenOnly() =>
+      _askBool('getNetworkSpeedLockscreenOnly');
+  static Future<bool> setNetworkSpeedLockscreenOnly(bool value) =>
+      _askBool('setNetworkSpeedLockscreenOnly', {'value': value});
   static Future<bool> getConverterEnabled() => _askBool('getConverterEnabled');
   static Future<bool> setConverterEnabled(bool value) =>
       _askBool('setConverterEnabled', {'value': value});

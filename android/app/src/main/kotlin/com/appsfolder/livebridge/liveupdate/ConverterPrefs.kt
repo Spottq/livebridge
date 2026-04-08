@@ -60,6 +60,71 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_TEXT_PROGRESS_ENABLED, value).apply()
     }
 
+    fun getNetworkSpeedEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NETWORK_SPEED_ENABLED, false)
+    }
+
+    fun setNetworkSpeedEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_NETWORK_SPEED_ENABLED, value).apply()
+    }
+
+    fun getNetworkSpeedDisplayMode(): String {
+        val raw = prefs.getString(KEY_NETWORK_SPEED_DISPLAY_MODE, NetworkSpeedDisplayMode.TOTAL.id)
+            ?: NetworkSpeedDisplayMode.TOTAL.id
+        return NetworkSpeedDisplayMode.from(raw).id
+    }
+
+    fun setNetworkSpeedDisplayMode(value: String?) {
+        val mode = NetworkSpeedDisplayMode.from(value)
+        prefs.edit().putString(KEY_NETWORK_SPEED_DISPLAY_MODE, mode.id).apply()
+    }
+
+    fun getNetworkSpeedUploadPrefix(): String {
+        return prefs.getString(KEY_NETWORK_SPEED_UPLOAD_PREFIX, DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX)
+            ?: DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX
+    }
+
+    fun setNetworkSpeedUploadPrefix(value: String?) {
+        prefs.edit()
+            .putString(
+                KEY_NETWORK_SPEED_UPLOAD_PREFIX,
+                value ?: DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX
+            )
+            .apply()
+    }
+
+    fun getNetworkSpeedDownloadPrefix(): String {
+        return prefs.getString(
+            KEY_NETWORK_SPEED_DOWNLOAD_PREFIX,
+            DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX
+        ) ?: DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX
+    }
+
+    fun setNetworkSpeedDownloadPrefix(value: String?) {
+        prefs.edit()
+            .putString(
+                KEY_NETWORK_SPEED_DOWNLOAD_PREFIX,
+                value ?: DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX
+            )
+            .apply()
+    }
+
+    fun getNetworkSpeedPrioritizeUpload(): Boolean {
+        return prefs.getBoolean(KEY_NETWORK_SPEED_PRIORITIZE_UPLOAD, false)
+    }
+
+    fun setNetworkSpeedPrioritizeUpload(value: Boolean) {
+        prefs.edit().putBoolean(KEY_NETWORK_SPEED_PRIORITIZE_UPLOAD, value).apply()
+    }
+
+    fun getNetworkSpeedLockscreenOnly(): Boolean {
+        return prefs.getBoolean(KEY_NETWORK_SPEED_LOCKSCREEN_ONLY, false)
+    }
+
+    fun setNetworkSpeedLockscreenOnly(value: Boolean) {
+        prefs.edit().putBoolean(KEY_NETWORK_SPEED_LOCKSCREEN_ONLY, value).apply()
+    }
+
     fun getConverterEnabled(): Boolean {
         return prefs.getBoolean(KEY_CONVERTER_ENABLED, true)
     }
@@ -377,6 +442,13 @@ class ConverterPrefs(context: Context) {
         private const val KEY_BYPASS_PACKAGE_RULES = "bypass_package_rules"
         private const val KEY_ONLY_WITH_PROGRESS = "only_with_progress"
         private const val KEY_TEXT_PROGRESS_ENABLED = "text_progress_enabled"
+        private const val KEY_NETWORK_SPEED_ENABLED = "network_speed_enabled"
+        private const val KEY_NETWORK_SPEED_DISPLAY_MODE = "network_speed_display_mode"
+        private const val KEY_NETWORK_SPEED_UPLOAD_PREFIX = "network_speed_upload_prefix"
+        private const val KEY_NETWORK_SPEED_DOWNLOAD_PREFIX = "network_speed_download_prefix"
+        private const val KEY_NETWORK_SPEED_PRIORITIZE_UPLOAD =
+            "network_speed_prioritize_upload"
+        private const val KEY_NETWORK_SPEED_LOCKSCREEN_ONLY = "network_speed_lockscreen_only"
         private const val KEY_CONVERTER_ENABLED = "converter_enabled"
         private const val KEY_KEEP_ALIVE_FOREGROUND_ENABLED = "keep_alive_foreground_enabled"
         private const val KEY_SYNC_DND_ENABLED = "sync_dnd_enabled"
@@ -409,5 +481,7 @@ class ConverterPrefs(context: Context) {
         private const val KEY_CUSTOM_PARSER_DICTIONARY_LEGACY = "custom_parser_dictionary"
 
         private const val KEY_PACKAGE_FILTER_LEGACY = "package_filter"
+        private const val DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX = "▲ "
+        private const val DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX = "▼ "
     }
 }

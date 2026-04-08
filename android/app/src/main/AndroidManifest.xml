@@ -56,6 +56,12 @@
         />
 
         <service
+            android:name=".liveupdate.NetworkSpeedForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync"
+        />
+
+        <service
             android:name=".liveupdate.LiveBridgeTileService"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
             android:exported="true"

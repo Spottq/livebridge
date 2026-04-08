@@ -149,6 +149,18 @@ object LiveUpdateNotifier {
         }
     }
 
+    fun cancelAllMirrored(context: Context) {
+        clearRuntimeState()
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return
+        val manager = NotificationManagerCompat.from(context)
+        notificationManager.activeNotifications
+            .filter { it.notification.channelId == CHANNEL_ID }
+            .forEach { statusBarNotification ->
+                manager.cancel(statusBarNotification.id)
+            }
+    }
+
     fun maybeMirror(context: Context, prefs: ConverterPrefs, sbn: StatusBarNotification): Boolean {
         ensureChannel(context)
 

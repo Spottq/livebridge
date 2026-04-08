@@ -93,6 +93,32 @@ extension PackageModeId on PackageMode {
   }
 }
 
+enum NetworkSpeedDisplayMode { total, upload, download }
+
+extension NetworkSpeedDisplayModeId on NetworkSpeedDisplayMode {
+  String get id {
+    switch (this) {
+      case NetworkSpeedDisplayMode.total:
+        return 'total';
+      case NetworkSpeedDisplayMode.upload:
+        return 'upload';
+      case NetworkSpeedDisplayMode.download:
+        return 'download';
+    }
+  }
+
+  static NetworkSpeedDisplayMode from(String? value) {
+    switch (value) {
+      case 'upload':
+        return NetworkSpeedDisplayMode.upload;
+      case 'download':
+        return NetworkSpeedDisplayMode.download;
+      default:
+        return NetworkSpeedDisplayMode.total;
+    }
+  }
+}
+
 enum AppCompactTextSource { title, text }
 
 extension AppCompactTextSourceId on AppCompactTextSource {

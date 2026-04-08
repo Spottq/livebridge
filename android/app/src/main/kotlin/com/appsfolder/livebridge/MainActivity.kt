@@ -35,6 +35,7 @@ import com.kakao.taxi.liveupdate.LiveParserDictionary
 import com.kakao.taxi.liveupdate.LiveParserDictionaryLoader
 import com.kakao.taxi.liveupdate.LiveUpdateNotifier
 import com.kakao.taxi.liveupdate.LiveUpdateNotificationListenerService
+import com.kakao.taxi.liveupdate.NetworkSpeedForegroundService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -63,6 +64,7 @@ class MainActivity : FlutterActivity() {
         val prefs = ConverterPrefs(applicationContext)
         initializeKeepAliveDefaultIfNeeded(prefs)
         syncKeepAliveForegroundService(prefs)
+        syncNetworkSpeedService(prefs)
         clearDynamicLauncherShortcuts()
         LiveBridgeTileService.requestStateSync(applicationContext)
     }
@@ -242,6 +244,48 @@ class MainActivity : FlutterActivity() {
             "getTextProgressEnabled" -> res.success(prefs.getTextProgressEnabled())
             "setTextProgressEnabled" -> {
                 prefs.setTextProgressEnabled(call.argument<Boolean>("value") ?: true)
+                res.success(true)
+            }
+
+            "getNetworkSpeedEnabled" -> res.success(prefs.getNetworkSpeedEnabled())
+            "setNetworkSpeedEnabled" -> {
+                prefs.setNetworkSpeedEnabled(call.argument<Boolean>("value") ?: false)
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
+            "getNetworkSpeedDisplayMode" -> res.success(prefs.getNetworkSpeedDisplayMode())
+            "setNetworkSpeedDisplayMode" -> {
+                prefs.setNetworkSpeedDisplayMode(call.argument<String>("value"))
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
+            "getNetworkSpeedUploadPrefix" -> res.success(prefs.getNetworkSpeedUploadPrefix())
+            "setNetworkSpeedUploadPrefix" -> {
+                prefs.setNetworkSpeedUploadPrefix(call.argument<String>("value"))
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
+            "getNetworkSpeedDownloadPrefix" -> res.success(prefs.getNetworkSpeedDownloadPrefix())
+            "setNetworkSpeedDownloadPrefix" -> {
+                prefs.setNetworkSpeedDownloadPrefix(call.argument<String>("value"))
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
+            "getNetworkSpeedPrioritizeUpload" -> res.success(prefs.getNetworkSpeedPrioritizeUpload())
+            "setNetworkSpeedPrioritizeUpload" -> {
+                prefs.setNetworkSpeedPrioritizeUpload(call.argument<Boolean>("value") ?: false)
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
+            "getNetworkSpeedLockscreenOnly" -> res.success(prefs.getNetworkSpeedLockscreenOnly())
+            "setNetworkSpeedLockscreenOnly" -> {
+                prefs.setNetworkSpeedLockscreenOnly(call.argument<Boolean>("value") ?: false)
+                syncNetworkSpeedService(prefs)
                 res.success(true)
             }
 
@@ -448,6 +492,14 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun syncNetworkSpeedService(prefs: ConverterPrefs) {
+        if (prefs.getNetworkSpeedEnabled()) {
+            NetworkSpeedForegroundService.sync(applicationContext)
+        } else {
+            NetworkSpeedForegroundService.stop(applicationContext)
+        }
+    }
+
     private fun initializeKeepAliveDefaultIfNeeded(prefs: ConverterPrefs) {
         if (prefs.hasKeepAliveForegroundPreference()) {
             return
@@ -460,12 +512,12 @@ class MainActivity : FlutterActivity() {
     private fun applyConverterEnabled(prefs: ConverterPrefs, value: Boolean) {
         prefs.setConverterEnabled(value)
         if (!value) {
-            LiveUpdateNotifier.clearRuntimeState()
-            NotificationManagerCompat.from(applicationContext).cancelAll()
+            LiveUpdateNotifier.cancelAllMirrored(applicationContext)
         } else {
             requestNotificationListenerRebind()
         }
         syncKeepAliveForegroundService(prefs)
+        syncNetworkSpeedService(prefs)
         LiveBridgeTileService.requestStateSync(applicationContext)
     }
 
