@@ -15,6 +15,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
 import android.os.SystemClock
+import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 
@@ -37,10 +38,12 @@ class NetworkSpeedForegroundService : Service() {
     private var lastSampleAtElapsedMs: Long = 0L
     private var latestSample = NetworkSpeedSample.ZERO
     private var receiverRegistered = false
+    private var initialized = false
+    private var isForegroundActive = false
 
     private val screenStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            refreshNotification()
+            refreshServiceState()
         }
     }
 
@@ -70,7 +73,7 @@ class NetworkSpeedForegroundService : Service() {
 
             lastSnapshot = snapshot
             lastSampleAtElapsedMs = nowElapsedMs
-            refreshNotification()
+            refreshServiceState()
 
             workerHandler?.postDelayed(this, SAMPLE_INTERVAL_MS)
         }
@@ -78,24 +81,45 @@ class NetworkSpeedForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        ensureChannel(applicationContext)
-        speedMonitor.start()
-        workerThread = HandlerThread("LiveBridgeNetworkSpeed").apply { start() }
-        workerHandler = Handler(workerThread!!.looper)
-        registerScreenReceiver()
+        val initResult = runCatching {
+            ensureChannel(applicationContext)
+            speedMonitor.start()
+            workerThread = HandlerThread("LiveBridgeNetworkSpeed").apply { start() }
+            workerHandler = Handler(workerThread!!.looper)
+            registerScreenReceiver()
+        }
+
+        initResult.onSuccess {
+            initialized = true
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to initialize network speed service", error)
+            stopSelf()
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (!initialized) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         if (!prefs.getNetworkSpeedEnabled()) {
             stopSelfSafely()
             return START_NOT_STICKY
         }
 
-        startForegroundCompat(buildNotification())
-        startSamplingIfNeeded()
+        val startResult = runCatching {
+            startSamplingIfNeeded()
+            refreshServiceState()
+        }
 
-        if (intent?.action == ACTION_REFRESH) {
-            refreshNotification()
+        if (startResult.isFailure) {
+            Log.e(
+                TAG,
+                "Failed to start network speed foreground service",
+                startResult.exceptionOrNull()
+            )
+            stopSelfSafely()
+            return START_NOT_STICKY
         }
 
         return START_STICKY
@@ -110,7 +134,7 @@ class NetworkSpeedForegroundService : Service() {
         workerThread = null
         workerHandler = null
         speedMonitor.stop()
-        notificationManager.cancel(NetworkSpeedNotificationBuilder.NOTIFICATION_ID)
+        hideNotification()
         super.onDestroy()
     }
 
@@ -122,15 +146,38 @@ class NetworkSpeedForegroundService : Service() {
         )
     }
 
-    private fun refreshNotification() {
+    private fun refreshServiceState() {
         if (!prefs.getNetworkSpeedEnabled()) {
             stopSelfSafely()
             return
         }
-        notificationManager.notify(
-            NetworkSpeedNotificationBuilder.NOTIFICATION_ID,
-            buildNotification()
-        )
+
+        if (!shouldDisplayNotification()) {
+            hideNotification()
+            return
+        }
+
+        val notification = runCatching { buildNotification() }
+            .onFailure { error ->
+                Log.e(TAG, "Failed to refresh network speed notification", error)
+                stopSelfSafely()
+            }
+            .getOrNull() ?: return
+
+        runCatching {
+            if (isForegroundActive) {
+                notificationManager.notify(
+                    NetworkSpeedNotificationBuilder.NOTIFICATION_ID,
+                    notification
+                )
+            } else {
+                startForegroundCompat(notification)
+                isForegroundActive = true
+            }
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to post network speed notification", error)
+            stopSelfSafely()
+        }
     }
 
     private fun startSamplingIfNeeded() {
@@ -140,15 +187,23 @@ class NetworkSpeedForegroundService : Service() {
     }
 
     private fun shouldShowLiveSurface(): Boolean {
-        if (!prefs.getNetworkSpeedLockscreenOnly()) {
-            return true
+        return !prefs.getNetworkSpeedLockscreenOnly() || keyguardManager.isDeviceLocked
+    }
+
+    private fun shouldDisplayNotification(): Boolean {
+        return !prefs.getNetworkSpeedLockscreenOnly() || keyguardManager.isDeviceLocked
+    }
+
+    private fun hideNotification() {
+        if (isForegroundActive) {
+            runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
+            isForegroundActive = false
         }
-        return keyguardManager.isDeviceLocked
+        notificationManager.cancel(NetworkSpeedNotificationBuilder.NOTIFICATION_ID)
     }
 
     private fun stopSelfSafely() {
-        notificationManager.cancel(NetworkSpeedNotificationBuilder.NOTIFICATION_ID)
-        runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
+        hideNotification()
         stopSelf()
     }
 
@@ -186,14 +241,16 @@ class NetworkSpeedForegroundService : Service() {
     }
 
     companion object {
+        private const val TAG = "NetworkSpeedService"
         private const val ACTION_REFRESH = "com.kakao.taxi.liveupdate.NETWORK_SPEED_REFRESH"
         private const val SAMPLE_INTERVAL_MS = 1500L
         private const val CHANNEL_NAME_EN = "Network Speed"
-        private const val CHANNEL_NAME_RU = "Скорость интернета"
+        private const val CHANNEL_NAME_RU =
+            "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430"
         private const val CHANNEL_DESCRIPTION_EN =
             "Shows current network speed in the notification and Now Bar"
         private const val CHANNEL_DESCRIPTION_RU =
-            "Показывает текущую скорость сети в уведомлении и Now Bar"
+            "\u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0442\u0435\u043a\u0443\u0449\u0443\u044e \u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0441\u0435\u0442\u0438 \u0432 Now Bar"
 
         fun sync(context: Context) {
             val prefs = ConverterPrefs(context)
@@ -202,12 +259,14 @@ class NetworkSpeedForegroundService : Service() {
                 return
             }
 
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, NetworkSpeedForegroundService::class.java).apply {
-                    action = ACTION_REFRESH
-                }
-            )
+            val intent = Intent(context, NetworkSpeedForegroundService::class.java).apply {
+                action = ACTION_REFRESH
+            }
+            if (shouldStartInForeground(context, prefs)) {
+                ContextCompat.startForegroundService(context, intent)
+            } else {
+                context.startService(intent)
+            }
         }
 
         fun stop(context: Context) {
@@ -253,6 +312,15 @@ class NetworkSpeedForegroundService : Service() {
         private fun isRussianLocale(context: Context): Boolean {
             val locale = context.resources.configuration.locales.get(0)
             return locale?.language?.startsWith("ru", ignoreCase = true) == true
+        }
+
+        private fun shouldStartInForeground(context: Context, prefs: ConverterPrefs): Boolean {
+            if (!prefs.getNetworkSpeedLockscreenOnly()) {
+                return true
+            }
+            val keyguardManager =
+                context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+            return keyguardManager.isDeviceLocked
         }
     }
 }

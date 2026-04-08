@@ -275,6 +275,13 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getNetworkSpeedUnit" -> res.success(prefs.getNetworkSpeedUnit())
+            "setNetworkSpeedUnit" -> {
+                prefs.setNetworkSpeedUnit(call.argument<String>("value"))
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
             "getNetworkSpeedPrioritizeUpload" -> res.success(prefs.getNetworkSpeedPrioritizeUpload())
             "setNetworkSpeedPrioritizeUpload" -> {
                 prefs.setNetworkSpeedPrioritizeUpload(call.argument<Boolean>("value") ?: false)

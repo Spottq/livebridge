@@ -97,6 +97,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   PackageMode _otpPackageMode = PackageMode.all;
   NetworkSpeedDisplayMode _networkSpeedDisplayMode =
       NetworkSpeedDisplayMode.total;
+  NetworkSpeedUnit _networkSpeedUnit = NetworkSpeedUnit.auto;
   String _networkSpeedUploadPrefix = '▲ ';
   String _networkSpeedDownloadPrefix = '▼ ';
   late final AnimationController _masterBlockedShakeController;
@@ -230,6 +231,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getNetworkSpeedUploadPrefix();
       final String networkSpeedDownloadPrefix =
           await LiveBridgePlatform.getNetworkSpeedDownloadPrefix();
+      final String networkSpeedUnit =
+          await LiveBridgePlatform.getNetworkSpeedUnit();
       final bool networkSpeedPrioritizeUpload =
           await LiveBridgePlatform.getNetworkSpeedPrioritizeUpload();
       final bool networkSpeedLockscreenOnly =
@@ -334,6 +337,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         );
         _networkSpeedUploadPrefix = networkSpeedUploadPrefix;
         _networkSpeedDownloadPrefix = networkSpeedDownloadPrefix;
+        _networkSpeedUnit = NetworkSpeedUnitId.from(networkSpeedUnit);
         _networkSpeedPrioritizeUpload = networkSpeedPrioritizeUpload;
         _networkSpeedLockscreenOnly = networkSpeedLockscreenOnly;
         _smartDetectionEnabled = smartDetectionEnabled;
@@ -447,6 +451,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     HapticFeedback.selectionClick();
     setState(() => _networkSpeedDownloadPrefix = value);
     await LiveBridgePlatform.setNetworkSpeedDownloadPrefix(value);
+  }
+
+  Future<void> _setNetworkSpeedUnit(NetworkSpeedUnit value) async {
+    HapticFeedback.selectionClick();
+    setState(() => _networkSpeedUnit = value);
+    await LiveBridgePlatform.setNetworkSpeedUnit(value.id);
   }
 
   Future<void> _setNetworkSpeedPrioritizeUpload(bool value) async {
@@ -873,6 +883,21 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     }
   }
 
+  String _networkSpeedUnitLabel(NetworkSpeedUnit unit, AppStrings s) {
+    switch (unit) {
+      case NetworkSpeedUnit.auto:
+        return s.networkSpeedUnitAuto;
+      case NetworkSpeedUnit.bytes:
+        return s.networkSpeedUnitBytes;
+      case NetworkSpeedUnit.kilobytes:
+        return s.networkSpeedUnitKilobytes;
+      case NetworkSpeedUnit.megabytes:
+        return s.networkSpeedUnitMegabytes;
+      case NetworkSpeedUnit.gigabytes:
+        return s.networkSpeedUnitGigabytes;
+    }
+  }
+
   Future<void> _openNetworkSpeedDisplayModeSheet(AppStrings s) async {
     final NetworkSpeedDisplayMode? selected =
         await showModalBottomSheet<NetworkSpeedDisplayMode>(
@@ -910,6 +935,50 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await _setNetworkSpeedDisplayMode(selected);
   }
 
+  Future<void> _openNetworkSpeedUnitSheet(AppStrings s) async {
+    final NetworkSpeedUnit? selected =
+        await showModalBottomSheet<NetworkSpeedUnit>(
+          context: context,
+          showDragHandle: true,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          ),
+          builder: (BuildContext context) => _NetworkSpeedUnitSheet(
+            title: s.networkSpeedUnitTitle,
+            initialValue: _networkSpeedUnit,
+            options: <SelectorOption<NetworkSpeedUnit>>[
+              SelectorOption<NetworkSpeedUnit>(
+                value: NetworkSpeedUnit.auto,
+                title: s.networkSpeedUnitAuto,
+              ),
+              SelectorOption<NetworkSpeedUnit>(
+                value: NetworkSpeedUnit.bytes,
+                title: s.networkSpeedUnitBytes,
+              ),
+              SelectorOption<NetworkSpeedUnit>(
+                value: NetworkSpeedUnit.kilobytes,
+                title: s.networkSpeedUnitKilobytes,
+              ),
+              SelectorOption<NetworkSpeedUnit>(
+                value: NetworkSpeedUnit.megabytes,
+                title: s.networkSpeedUnitMegabytes,
+              ),
+              SelectorOption<NetworkSpeedUnit>(
+                value: NetworkSpeedUnit.gigabytes,
+                title: s.networkSpeedUnitGigabytes,
+              ),
+            ],
+            saveLabel: s.save,
+          ),
+        );
+
+    if (selected == null || selected == _networkSpeedUnit) {
+      return;
+    }
+    await _setNetworkSpeedUnit(selected);
+  }
+
   Future<void> _openNetworkSpeedPrefixSheet({
     required AppStrings s,
     required bool forUpload,
@@ -930,6 +999,10 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             ? s.networkSpeedUploadPrefixTitle
             : s.networkSpeedDownloadPrefixTitle,
         initialValue: currentValue,
+        defaultValue: forUpload
+            ? kDefaultNetworkSpeedUploadPrefix
+            : kDefaultNetworkSpeedDownloadPrefix,
+        resetLabel: s.resetToDefault,
         saveLabel: s.save,
       ),
     );
@@ -2576,6 +2649,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                         _openNetworkSpeedPrefixSheet(s: s, forUpload: false),
                   ),
                   const SizedBox(height: 12),
+                  _buildActionSettingTile(
+                    title: s.networkSpeedUnitTitle,
+                    value: _networkSpeedUnitLabel(_networkSpeedUnit, s),
+                    onTap: () => _openNetworkSpeedUnitSheet(s),
+                  ),
+                  const SizedBox(height: 12),
                   SwitchListTile.adaptive(
                     value: _networkSpeedPrioritizeUpload,
                     onChanged: _setNetworkSpeedPrioritizeUpload,
@@ -3211,15 +3290,88 @@ class _NetworkSpeedDisplayModeSheetState
   }
 }
 
+class _NetworkSpeedUnitSheet extends StatefulWidget {
+  const _NetworkSpeedUnitSheet({
+    required this.title,
+    required this.initialValue,
+    required this.options,
+    required this.saveLabel,
+  });
+
+  final String title;
+  final NetworkSpeedUnit initialValue;
+  final List<SelectorOption<NetworkSpeedUnit>> options;
+  final String saveLabel;
+
+  @override
+  State<_NetworkSpeedUnitSheet> createState() => _NetworkSpeedUnitSheetState();
+}
+
+class _NetworkSpeedUnitSheetState extends State<_NetworkSpeedUnitSheet> {
+  late NetworkSpeedUnit _selected = widget.initialValue;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 8,
+          bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              widget.title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 20),
+            LiveBridgeChoiceSelector<NetworkSpeedUnit>(
+              value: _selected,
+              options: widget.options,
+              onChanged: (NetworkSpeedUnit next) {
+                if (_selected == next) return;
+                setState(() => _selected = next);
+              },
+            ),
+            const SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  Navigator.of(context).pop(_selected);
+                },
+                icon: const Icon(Icons.check_rounded),
+                label: Text(widget.saveLabel),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _NetworkSpeedPrefixSheet extends StatefulWidget {
   const _NetworkSpeedPrefixSheet({
     required this.title,
     required this.initialValue,
+    required this.defaultValue,
+    required this.resetLabel,
     required this.saveLabel,
   });
 
   final String title;
   final String initialValue;
+  final String defaultValue;
+  final String resetLabel;
   final String saveLabel;
 
   @override
@@ -3270,16 +3422,27 @@ class _NetworkSpeedPrefixSheetState extends State<_NetworkSpeedPrefixSheet> {
               ),
             ),
             const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  Navigator.of(context).pop(_controller.text);
-                },
-                icon: const Icon(Icons.check_rounded),
-                label: Text(widget.saveLabel),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                OutlinedButton.icon(
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    Navigator.of(context).pop(widget.defaultValue);
+                  },
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text(widget.resetLabel),
+                ),
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: () {
+                    HapticFeedback.selectionClick();
+                    Navigator.of(context).pop(_controller.text);
+                  },
+                  icon: const Icon(Icons.check_rounded),
+                  label: Text(widget.saveLabel),
+                ),
+              ],
             ),
           ],
         ),

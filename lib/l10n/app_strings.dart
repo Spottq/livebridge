@@ -297,6 +297,12 @@ class AppStrings {
       isRu ? 'Префикс upload' : 'Upload prefix';
   String get networkSpeedDownloadPrefixTitle =>
       isRu ? 'Префикс download' : 'Download prefix';
+  String get networkSpeedUnitTitle => isRu ? 'Единица скорости' : 'Speed unit';
+  String get networkSpeedUnitAuto => isRu ? 'Авто' : 'Auto';
+  String get networkSpeedUnitBytes => isRu ? 'B/s' : 'B/s';
+  String get networkSpeedUnitKilobytes => isRu ? 'KB/s' : 'KB/s';
+  String get networkSpeedUnitMegabytes => isRu ? 'MB/s' : 'MB/s';
+  String get networkSpeedUnitGigabytes => isRu ? 'GB/s' : 'GB/s';
   String networkSpeedCurrentValue(String value) =>
       isRu ? 'Сейчас: "$value"' : 'Current: "$value"';
   String get networkSpeedPrioritizeUploadTitle =>
@@ -307,8 +313,8 @@ class AppStrings {
   String get networkSpeedLockscreenOnlyTitle =>
       isRu ? 'Отображать только на локскрине' : 'Display only on lock screen';
   String get networkSpeedLockscreenOnlySubtitle => isRu
-      ? 'При разблокированном экране live-поверхность скрывается, но фоновое уведомление сети остается активным.'
-      : 'When the device is unlocked, the live surface is hidden while the background network notification stays active.';
+      ? 'При разблокированном экране индикатор скорости полностью скрывается и возвращается только на локскрине.'
+      : 'When the device is unlocked, network speed is hidden completely and returns only on the lock screen.';
   String get smartNavigationDisabledSubtitle => isRu
       ? 'Сначала включите умное распознавание.'
       : 'Enable smart status detection first.';

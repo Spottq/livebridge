@@ -95,6 +95,9 @@ extension PackageModeId on PackageMode {
 
 enum NetworkSpeedDisplayMode { total, upload, download }
 
+const String kDefaultNetworkSpeedUploadPrefix = '▲ ';
+const String kDefaultNetworkSpeedDownloadPrefix = '▼ ';
+
 extension NetworkSpeedDisplayModeId on NetworkSpeedDisplayMode {
   String get id {
     switch (this) {
@@ -115,6 +118,40 @@ extension NetworkSpeedDisplayModeId on NetworkSpeedDisplayMode {
         return NetworkSpeedDisplayMode.download;
       default:
         return NetworkSpeedDisplayMode.total;
+    }
+  }
+}
+
+enum NetworkSpeedUnit { auto, bytes, kilobytes, megabytes, gigabytes }
+
+extension NetworkSpeedUnitId on NetworkSpeedUnit {
+  String get id {
+    switch (this) {
+      case NetworkSpeedUnit.auto:
+        return 'auto';
+      case NetworkSpeedUnit.bytes:
+        return 'b';
+      case NetworkSpeedUnit.kilobytes:
+        return 'kb';
+      case NetworkSpeedUnit.megabytes:
+        return 'mb';
+      case NetworkSpeedUnit.gigabytes:
+        return 'gb';
+    }
+  }
+
+  static NetworkSpeedUnit from(String? value) {
+    switch (value) {
+      case 'b':
+        return NetworkSpeedUnit.bytes;
+      case 'kb':
+        return NetworkSpeedUnit.kilobytes;
+      case 'mb':
+        return NetworkSpeedUnit.megabytes;
+      case 'gb':
+        return NetworkSpeedUnit.gigabytes;
+      default:
+        return NetworkSpeedUnit.auto;
     }
   }
 }

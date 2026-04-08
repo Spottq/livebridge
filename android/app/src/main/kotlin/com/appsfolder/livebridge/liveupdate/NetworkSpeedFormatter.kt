@@ -16,18 +16,21 @@ internal data class NetworkSpeedSample(
 }
 
 internal object NetworkSpeedFormatter {
-    fun totalText(sample: NetworkSpeedSample): String {
-        return formatSpeedLine(sample.totalBytesPerSecond)
+    fun totalText(sample: NetworkSpeedSample, prefs: ConverterPrefs): String {
+        return formatSpeedLine(sample.totalBytesPerSecond, prefs.getNetworkSpeedUnit())
     }
 
     fun contentText(
         sample: NetworkSpeedSample,
         prefs: ConverterPrefs
     ): String {
+        val speedUnit = prefs.getNetworkSpeedUnit()
         val uploadText =
-            prefs.getNetworkSpeedUploadPrefix() + formatSpeedLine(sample.uploadBytesPerSecond)
+            prefs.getNetworkSpeedUploadPrefix() +
+                formatSpeedLine(sample.uploadBytesPerSecond, speedUnit)
         val downloadText =
-            prefs.getNetworkSpeedDownloadPrefix() + formatSpeedLine(sample.downloadBytesPerSecond)
+            prefs.getNetworkSpeedDownloadPrefix() +
+                formatSpeedLine(sample.downloadBytesPerSecond, speedUnit)
 
         return when (NetworkSpeedDisplayMode.from(prefs.getNetworkSpeedDisplayMode())) {
             NetworkSpeedDisplayMode.UPLOAD -> uploadText
@@ -42,37 +45,64 @@ internal object NetworkSpeedFormatter {
         }
     }
 
-    private fun formatFixedValue(value: Double): String {
-        val pattern = when {
-            value >= 100.0 -> "%.0f"
-            value >= 10.0 -> "%.1f"
-            else -> "%.2f"
-        }
-        return pattern.format(Locale.getDefault(), value)
+    fun formatSpeedLine(
+        bytesPerSecond: Long,
+        rawUnit: String?
+    ): String {
+        val (value, unit) = formatSpeedText(bytesPerSecond, rawUnit)
+        return "$value$unit"
     }
 
-    fun formatSpeedLine(bytesPerSecond: Long): String {
-        return when {
-            bytesPerSecond >= GIGABYTE -> {
-                formatFixedValue(bytesPerSecond / GIGABYTE.toDouble()) + "GB/s"
+    private fun formatSpeedText(
+        bytesPerSecond: Long,
+        rawUnit: String?
+    ): Pair<String, String> {
+        val unitToUse =
+            when (NetworkSpeedUnit.from(rawUnit)) {
+                NetworkSpeedUnit.AUTO -> {
+                    when {
+                        bytesPerSecond >= GIGABYTE -> NetworkSpeedUnit.GIGABYTES
+                        bytesPerSecond >= MEGABYTE -> NetworkSpeedUnit.MEGABYTES
+                        bytesPerSecond >= KILOBYTE -> NetworkSpeedUnit.KILOBYTES
+                        else -> NetworkSpeedUnit.BYTES
+                    }
+                }
+
+                else -> NetworkSpeedUnit.from(rawUnit)
             }
 
-            bytesPerSecond >= MEGABYTE -> {
+        return when (unitToUse) {
+            NetworkSpeedUnit.BYTES -> bytesPerSecond.toString() to "B/s"
+            NetworkSpeedUnit.KILOBYTES -> {
+                formatFixedValue(bytesPerSecond / KILOBYTE.toDouble()) to "KB/s"
+            }
+
+            NetworkSpeedUnit.MEGABYTES -> {
                 val value = bytesPerSecond / MEGABYTE.toDouble()
                 val text = if (value >= 10.0) {
                     value.roundToLong().toString()
                 } else {
                     "%.1f".format(Locale.getDefault(), value)
                 }
-                "${text}MB/s"
+                text to "MB/s"
             }
 
-            bytesPerSecond >= KILOBYTE -> {
-                formatFixedValue(bytesPerSecond / KILOBYTE.toDouble()) + "KB/s"
+            NetworkSpeedUnit.GIGABYTES -> {
+                formatFixedValue(bytesPerSecond / GIGABYTE.toDouble()) to "GB/s"
             }
 
-            else -> "${bytesPerSecond}B/s"
+            NetworkSpeedUnit.AUTO -> bytesPerSecond.toString() to "B/s"
         }
+    }
+
+    private fun formatFixedValue(value: Double): String {
+        val pattern =
+            when {
+                value >= 100.0 -> "%.0f"
+                value >= 10.0 -> "%.1f"
+                else -> "%.2f"
+            }
+        return pattern.format(Locale.getDefault(), value)
     }
 
     private const val KILOBYTE = 1024L

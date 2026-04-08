@@ -109,6 +109,17 @@ class ConverterPrefs(context: Context) {
             .apply()
     }
 
+    fun getNetworkSpeedUnit(): String {
+        val raw = prefs.getString(KEY_NETWORK_SPEED_UNIT, NetworkSpeedUnit.AUTO.id)
+            ?: NetworkSpeedUnit.AUTO.id
+        return NetworkSpeedUnit.from(raw).id
+    }
+
+    fun setNetworkSpeedUnit(value: String?) {
+        val unit = NetworkSpeedUnit.from(value)
+        prefs.edit().putString(KEY_NETWORK_SPEED_UNIT, unit.id).apply()
+    }
+
     fun getNetworkSpeedPrioritizeUpload(): Boolean {
         return prefs.getBoolean(KEY_NETWORK_SPEED_PRIORITIZE_UPLOAD, false)
     }
@@ -446,6 +457,7 @@ class ConverterPrefs(context: Context) {
         private const val KEY_NETWORK_SPEED_DISPLAY_MODE = "network_speed_display_mode"
         private const val KEY_NETWORK_SPEED_UPLOAD_PREFIX = "network_speed_upload_prefix"
         private const val KEY_NETWORK_SPEED_DOWNLOAD_PREFIX = "network_speed_download_prefix"
+        private const val KEY_NETWORK_SPEED_UNIT = "network_speed_unit"
         private const val KEY_NETWORK_SPEED_PRIORITIZE_UPLOAD =
             "network_speed_prioritize_upload"
         private const val KEY_NETWORK_SPEED_LOCKSCREEN_ONLY = "network_speed_lockscreen_only"

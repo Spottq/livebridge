@@ -75,6 +75,9 @@ class LiveBridgePlatform {
       _askStr('getNetworkSpeedDownloadPrefix');
   static Future<bool> setNetworkSpeedDownloadPrefix(String value) =>
       _askBool('setNetworkSpeedDownloadPrefix', {'value': value});
+  static Future<String> getNetworkSpeedUnit() => _askStr('getNetworkSpeedUnit');
+  static Future<bool> setNetworkSpeedUnit(String value) =>
+      _askBool('setNetworkSpeedUnit', {'value': value});
   static Future<bool> getNetworkSpeedPrioritizeUpload() =>
       _askBool('getNetworkSpeedPrioritizeUpload');
   static Future<bool> setNetworkSpeedPrioritizeUpload(bool value) =>

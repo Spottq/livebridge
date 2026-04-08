@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.kakao.taxi.MainActivity
@@ -18,9 +19,10 @@ internal class NetworkSpeedNotificationBuilder(
         sample: NetworkSpeedSample,
         showLiveSurface: Boolean
     ): Notification {
-        val totalText = NetworkSpeedFormatter.totalText(sample)
+        val title = notificationTitle()
+        val totalText = NetworkSpeedFormatter.totalText(sample, prefs)
         val contentText = NetworkSpeedFormatter.contentText(sample, prefs)
-        val chipIconCompat = IconCompat.createWithResource(context, R.drawable.ic_stat_liveupdate)
+        val chipIconCompat = IconCompat.createWithResource(context, R.drawable.ic_speed)
         val contentIntent = PendingIntent.getActivity(
             context,
             0,
@@ -29,10 +31,11 @@ internal class NetworkSpeedNotificationBuilder(
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val blankView = RemoteViews(context.packageName, R.layout.notification_blank)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_stat_liveupdate)
-            .setContentTitle(notificationTitle())
+            .setSmallIcon(R.drawable.ic_speed)
+            .setContentTitle(title)
             .setContentText(contentText)
             .setContentIntent(contentIntent)
             .setOngoing(true)
@@ -42,6 +45,10 @@ internal class NetworkSpeedNotificationBuilder(
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .setCustomContentView(blankView)
+            .setCustomBigContentView(blankView)
+            .setCustomHeadsUpContentView(blankView)
+            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
 
         if (showLiveSurface) {
             builder.setRequestPromotedOngoing(true)
@@ -49,7 +56,7 @@ internal class NetworkSpeedNotificationBuilder(
             if (SamsungLiveUpdateReparser.isSamsungDevice()) {
                 builder.addExtras(
                     buildSamsungExtras(
-                        totalText = totalText,
+                        title = title,
                         contentText = contentText,
                         chipIcon = chipIconCompat
                     )
@@ -61,17 +68,17 @@ internal class NetworkSpeedNotificationBuilder(
     }
 
     private fun buildSamsungExtras(
-        totalText: String,
+        title: String,
         contentText: String,
         chipIcon: IconCompat
     ): Bundle {
         val icon = runCatching { chipIcon.toIcon(context) }.getOrNull()
         return Bundle().apply {
             putInt(KEY_STYLE, 1)
-            putCharSequence(KEY_PRIMARY_INFO, totalText)
+            putCharSequence(KEY_PRIMARY_INFO, title)
             putCharSequence(KEY_SECONDARY_INFO, contentText)
-            putCharSequence(KEY_CHIP_EXPANDED_TEXT, totalText)
-            putCharSequence(KEY_NOWBAR_PRIMARY_INFO, totalText)
+            putCharSequence(KEY_CHIP_EXPANDED_TEXT, title)
+            putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
             putCharSequence(KEY_NOWBAR_SECONDARY_INFO, contentText)
             putInt(KEY_CHIP_BG_COLOR, DEFAULT_CHIP_BG_COLOR)
             putBoolean(KEY_SHOW_SMALL_ICON, true)
@@ -82,13 +89,7 @@ internal class NetworkSpeedNotificationBuilder(
         }
     }
 
-    private fun notificationTitle(): String {
-        return if (isRussianLocale()) {
-            "Скорость интернета"
-        } else {
-            "Network speed"
-        }
-    }
+    private fun notificationTitle(): String = if (isRussianLocale()) TITLE_RU else TITLE_EN
 
     private fun isRussianLocale(): Boolean {
         val locale = context.resources.configuration.locales.get(0)
@@ -98,6 +99,10 @@ internal class NetworkSpeedNotificationBuilder(
     companion object {
         const val CHANNEL_ID = "livebridge_network_speed"
         const val NOTIFICATION_ID = 41240
+
+        private const val TITLE_EN = "Network speed"
+        private const val TITLE_RU =
+            "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430"
 
         private const val ONGOING_PREFIX = "android.ongoingActivityNoti."
         private const val KEY_STYLE = "${ONGOING_PREFIX}style"
