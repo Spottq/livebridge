@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.kakao.taxi.MainActivity
@@ -16,8 +15,7 @@ internal class NetworkSpeedNotificationBuilder(
 ) {
     fun build(
         prefs: ConverterPrefs,
-        sample: NetworkSpeedSample,
-        showLiveSurface: Boolean
+        sample: NetworkSpeedSample
     ): Notification {
         val title = notificationTitle()
         val totalText = NetworkSpeedFormatter.totalText(sample, prefs)
@@ -31,7 +29,6 @@ internal class NetworkSpeedNotificationBuilder(
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val blankView = RemoteViews(context.packageName, R.layout.notification_blank)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_speed)
@@ -45,36 +42,31 @@ internal class NetworkSpeedNotificationBuilder(
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .setCustomContentView(blankView)
-            .setCustomBigContentView(blankView)
-            .setCustomHeadsUpContentView(blankView)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
-
-        if (showLiveSurface) {
-            builder.setRequestPromotedOngoing(true)
-            builder.setShortCriticalText(totalText)
-            if (SamsungLiveUpdateReparser.isSamsungDevice()) {
-                builder.addExtras(
-                    buildSamsungExtras(
-                        title = title,
-                        contentText = contentText,
-                        chipIcon = chipIconCompat
-                    )
+        builder.setRequestPromotedOngoing(true)
+        builder.setShortCriticalText(totalText)
+        if (SamsungLiveUpdateReparser.isSamsungDevice()) {
+            builder.addExtras(
+                buildSamsungExtras(
+                    lockscreenOnly = prefs.getNetworkSpeedLockscreenOnly(),
+                    title = title,
+                    contentText = contentText,
+                    chipIcon = chipIconCompat
                 )
-            }
+            )
         }
 
         return builder.build()
     }
 
     private fun buildSamsungExtras(
+        lockscreenOnly: Boolean,
         title: String,
         contentText: String,
         chipIcon: IconCompat
     ): Bundle {
         val icon = runCatching { chipIcon.toIcon(context) }.getOrNull()
         return Bundle().apply {
-            putInt(KEY_STYLE, STYLE_NOW_BAR_ONLY)
+            putInt(KEY_STYLE, if (lockscreenOnly) STYLE_NOW_BAR_ONLY else STYLE_DEFAULT)
             putCharSequence(KEY_PRIMARY_INFO, title)
             putCharSequence(KEY_SECONDARY_INFO, contentText)
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, title)
@@ -117,6 +109,7 @@ internal class NetworkSpeedNotificationBuilder(
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
 
         private const val DEFAULT_CHIP_BG_COLOR = 0xFF0F766E.toInt()
+        private const val STYLE_DEFAULT = 1
         private const val STYLE_NOW_BAR_ONLY = 2
     }
 }

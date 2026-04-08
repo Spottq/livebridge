@@ -1,16 +1,12 @@
 package com.kakao.taxi.liveupdate
 
-import android.app.KeyguardManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.ServiceInfo
-import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
@@ -21,9 +17,6 @@ import androidx.core.content.ContextCompat
 
 class NetworkSpeedForegroundService : Service() {
     private val prefs by lazy { ConverterPrefs(applicationContext) }
-    private val keyguardManager by lazy {
-        getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-    }
     private val notificationBuilder by lazy {
         NetworkSpeedNotificationBuilder(applicationContext)
     }
@@ -37,15 +30,8 @@ class NetworkSpeedForegroundService : Service() {
     private var lastSnapshot: NetworkTrafficSnapshot? = null
     private var lastSampleAtElapsedMs: Long = 0L
     private var latestSample = NetworkSpeedSample.ZERO
-    private var receiverRegistered = false
     private var initialized = false
     private var isForegroundActive = false
-
-    private val screenStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            refreshServiceState()
-        }
-    }
 
     private val sampler = object : Runnable {
         override fun run() {
@@ -86,7 +72,6 @@ class NetworkSpeedForegroundService : Service() {
             speedMonitor.start()
             workerThread = HandlerThread("LiveBridgeNetworkSpeed").apply { start() }
             workerHandler = Handler(workerThread!!.looper)
-            registerScreenReceiver()
         }
 
         initResult.onSuccess {
@@ -128,7 +113,6 @@ class NetworkSpeedForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        unregisterScreenReceiver()
         workerHandler?.removeCallbacksAndMessages(null)
         workerThread?.quitSafely()
         workerThread = null
@@ -141,8 +125,7 @@ class NetworkSpeedForegroundService : Service() {
     private fun buildNotification(): Notification {
         return notificationBuilder.build(
             prefs = prefs,
-            sample = latestSample,
-            showLiveSurface = shouldShowLiveSurface()
+            sample = latestSample
         )
     }
 
@@ -181,10 +164,6 @@ class NetworkSpeedForegroundService : Service() {
         handler.post(sampler)
     }
 
-    private fun shouldShowLiveSurface(): Boolean {
-        return !prefs.getNetworkSpeedLockscreenOnly() || keyguardManager.isDeviceLocked
-    }
-
     private fun hideNotification() {
         if (isForegroundActive) {
             runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
@@ -204,31 +183,6 @@ class NetworkSpeedForegroundService : Service() {
             notification,
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
         )
-    }
-
-    private fun registerScreenReceiver() {
-        if (receiverRegistered) {
-            return
-        }
-        val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_SCREEN_ON)
-            addAction(Intent.ACTION_SCREEN_OFF)
-            addAction(Intent.ACTION_USER_PRESENT)
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(screenStateReceiver, filter, RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(screenStateReceiver, filter)
-        }
-        receiverRegistered = true
-    }
-
-    private fun unregisterScreenReceiver() {
-        if (!receiverRegistered) {
-            return
-        }
-        runCatching { unregisterReceiver(screenStateReceiver) }
-        receiverRegistered = false
     }
 
     companion object {
