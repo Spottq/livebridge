@@ -1,5 +1,5 @@
 # LiveBridge
-> This app is a fork of the official [livebridge](https://github.com/appsfolder/livebridge), which uses the Samsung whitelisted and closed API for the Now Bar and uses a spoof for com.nhn.android.search to avoid whitelist
+> This app is a fork of the official [livebridge](https://github.com/appsfolder/livebridge), which uses the Samsung whitelisted and closed API for the Now Bar and uses a spoof for com.locnall.KimGiSa to avoid whitelist
 
 LiveBridge is a Flutter Android app with native Kotlin logic that converts regular notifications into Android Live Updates (Live Activity-like UX on Android 16+)
 
