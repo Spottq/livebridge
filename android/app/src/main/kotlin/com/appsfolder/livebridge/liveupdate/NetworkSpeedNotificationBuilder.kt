@@ -74,7 +74,7 @@ internal class NetworkSpeedNotificationBuilder(
     ): Bundle {
         val icon = runCatching { chipIcon.toIcon(context) }.getOrNull()
         return Bundle().apply {
-            putInt(KEY_STYLE, 1)
+            putInt(KEY_STYLE, STYLE_NOW_BAR_ONLY)
             putCharSequence(KEY_PRIMARY_INFO, title)
             putCharSequence(KEY_SECONDARY_INFO, contentText)
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, title)
@@ -117,5 +117,6 @@ internal class NetworkSpeedNotificationBuilder(
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
 
         private const val DEFAULT_CHIP_BG_COLOR = 0xFF0F766E.toInt()
+        private const val STYLE_NOW_BAR_ONLY = 2
     }
 }

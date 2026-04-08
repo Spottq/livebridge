@@ -152,11 +152,6 @@ class NetworkSpeedForegroundService : Service() {
             return
         }
 
-        if (!shouldDisplayNotification()) {
-            hideNotification()
-            return
-        }
-
         val notification = runCatching { buildNotification() }
             .onFailure { error ->
                 Log.e(TAG, "Failed to refresh network speed notification", error)
@@ -187,10 +182,6 @@ class NetworkSpeedForegroundService : Service() {
     }
 
     private fun shouldShowLiveSurface(): Boolean {
-        return !prefs.getNetworkSpeedLockscreenOnly() || keyguardManager.isDeviceLocked
-    }
-
-    private fun shouldDisplayNotification(): Boolean {
         return !prefs.getNetworkSpeedLockscreenOnly() || keyguardManager.isDeviceLocked
     }
 
@@ -259,14 +250,12 @@ class NetworkSpeedForegroundService : Service() {
                 return
             }
 
-            val intent = Intent(context, NetworkSpeedForegroundService::class.java).apply {
-                action = ACTION_REFRESH
-            }
-            if (shouldStartInForeground(context, prefs)) {
-                ContextCompat.startForegroundService(context, intent)
-            } else {
-                context.startService(intent)
-            }
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, NetworkSpeedForegroundService::class.java).apply {
+                    action = ACTION_REFRESH
+                }
+            )
         }
 
         fun stop(context: Context) {
@@ -312,15 +301,6 @@ class NetworkSpeedForegroundService : Service() {
         private fun isRussianLocale(context: Context): Boolean {
             val locale = context.resources.configuration.locales.get(0)
             return locale?.language?.startsWith("ru", ignoreCase = true) == true
-        }
-
-        private fun shouldStartInForeground(context: Context, prefs: ConverterPrefs): Boolean {
-            if (!prefs.getNetworkSpeedLockscreenOnly()) {
-                return true
-            }
-            val keyguardManager =
-                context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-            return keyguardManager.isDeviceLocked
         }
     }
 }
