@@ -921,105 +921,16 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     }
   }
 
-  String _networkSpeedUnitLabel(Set<NetworkSpeedUnit> units, AppStrings s) {
-    if (NetworkSpeedUnitSelection.usesAuto(units)) {
-      return s.networkSpeedUnitAuto;
+  NetworkSpeedUnit _networkSpeedDropdownUnit() {
+    if (NetworkSpeedUnitSelection.usesAuto(_networkSpeedUnits)) {
+      return NetworkSpeedUnit.auto;
     }
-    return kNetworkSpeedUnitValues
-        .where(
-          (NetworkSpeedUnit unit) =>
-              unit != NetworkSpeedUnit.auto && units.contains(unit),
-        )
-        .map((NetworkSpeedUnit unit) => _networkSpeedUnitOptionLabel(unit, s))
-        .join(', ');
-  }
-
-  Future<void> _openNetworkSpeedDisplayModeSheet(AppStrings s) async {
-    final NetworkSpeedDisplayMode? selected =
-        await showModalBottomSheet<NetworkSpeedDisplayMode>(
-          context: context,
-          isScrollControlled: true,
-          showDragHandle: true,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          builder: (BuildContext context) => _NetworkSpeedDisplayModeSheet(
-            title: s.networkSpeedDisplayContentTitle,
-            initialValue: _networkSpeedDisplayMode,
-            options: <SelectorOption<NetworkSpeedDisplayMode>>[
-              SelectorOption<NetworkSpeedDisplayMode>(
-                value: NetworkSpeedDisplayMode.total,
-                title: s.networkSpeedDisplayModeTotal,
-              ),
-              SelectorOption<NetworkSpeedDisplayMode>(
-                value: NetworkSpeedDisplayMode.upload,
-                title: s.networkSpeedDisplayModeUpload,
-              ),
-              SelectorOption<NetworkSpeedDisplayMode>(
-                value: NetworkSpeedDisplayMode.download,
-                title: s.networkSpeedDisplayModeDownload,
-              ),
-            ],
-            saveLabel: s.save,
-          ),
-        );
-
-    if (selected == null || selected == _networkSpeedDisplayMode) {
-      return;
+    for (final NetworkSpeedUnit unit in kNetworkSpeedUnitValues) {
+      if (unit != NetworkSpeedUnit.auto && _networkSpeedUnits.contains(unit)) {
+        return unit;
+      }
     }
-    await _setNetworkSpeedDisplayMode(selected);
-  }
-
-  Future<void> _openNetworkSpeedUnitSheet(AppStrings s) async {
-    final Set<NetworkSpeedUnit>? selected =
-        await showModalBottomSheet<Set<NetworkSpeedUnit>>(
-          context: context,
-          showDragHandle: true,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          builder: (BuildContext context) => _NetworkSpeedUnitSheet(
-            title: s.networkSpeedUnitTitle,
-            initialValue: _networkSpeedUnits,
-            options: <SelectorOption<NetworkSpeedUnit>>[
-              SelectorOption<NetworkSpeedUnit>(
-                value: NetworkSpeedUnit.auto,
-                title: s.networkSpeedUnitAuto,
-              ),
-              SelectorOption<NetworkSpeedUnit>(
-                value: NetworkSpeedUnit.bytes,
-                title: s.networkSpeedUnitBytes,
-              ),
-              SelectorOption<NetworkSpeedUnit>(
-                value: NetworkSpeedUnit.kilobytes,
-                title: s.networkSpeedUnitKilobytes,
-              ),
-              SelectorOption<NetworkSpeedUnit>(
-                value: NetworkSpeedUnit.megabytes,
-                title: s.networkSpeedUnitMegabytes,
-              ),
-              SelectorOption<NetworkSpeedUnit>(
-                value: NetworkSpeedUnit.gigabytes,
-                title: s.networkSpeedUnitGigabytes,
-              ),
-            ],
-            saveLabel: s.save,
-          ),
-        );
-
-    if (selected == null) {
-      return;
-    }
-    final String currentValue = NetworkSpeedUnitSelection.encode(
-      _networkSpeedUnits,
-    );
-    final String nextValue = NetworkSpeedUnitSelection.encode(selected);
-    if (nextValue == currentValue) {
-      return;
-    }
-    await _setNetworkSpeedUnits(selected);
+    return NetworkSpeedUnit.auto;
   }
 
   Future<void> _openNetworkSpeedPrefixSheet({
@@ -2431,12 +2342,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     );
   }
 
-  Widget _buildModernDropdown({
+  Widget _buildModernDropdown<T>({
     required String label,
-    required PackageMode currentValue,
-    required void Function(PackageMode?) onChanged,
+    required T currentValue,
+    required List<DropdownMenuItem<T>> items,
+    required void Function(T?) onChanged,
     VoidCallback? onTap,
-    required AppStrings s,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final bool isLight = colorScheme.brightness == Brightness.light;
@@ -2450,7 +2361,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       alpha: isLight ? 0.5 : 0.65,
     );
 
-    return DropdownButtonFormField<PackageMode>(
+    return DropdownButtonFormField<T>(
       initialValue: currentValue,
       onTap: onTap,
       onChanged: onChanged,
@@ -2487,15 +2398,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           vertical: 16,
         ),
       ),
-      items: PackageMode.values.map((mode) {
-        return DropdownMenuItem<PackageMode>(
-          value: mode,
-          child: Text(
-            _getModeLabel(mode, s),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-        );
-      }).toList(),
+      items: items,
     );
   }
 
@@ -2507,9 +2410,21 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _buildModernDropdown(
+          _buildModernDropdown<PackageMode>(
             label: s.modeLabel,
             currentValue: _packageMode,
+            items: PackageMode.values.map((PackageMode mode) {
+              return DropdownMenuItem<PackageMode>(
+                value: mode,
+                child: Text(
+                  _getModeLabel(mode, s),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }).toList(),
             onChanged: (val) {
               if (val != null) {
                 LiveBridgeHaptics.selection();
@@ -2520,7 +2435,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               }
             },
             onTap: LiveBridgeHaptics.openSurface,
-            s: s,
           ),
           const SizedBox(height: 16),
           _selectedAppsNote(
@@ -2777,13 +2691,30 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               ignoring: !_networkSpeedEnabled,
               child: Column(
                 children: <Widget>[
-                  _buildActionSettingTile(
-                    title: s.networkSpeedDisplayContentTitle,
-                    value: _networkSpeedDisplayModeLabel(
-                      _networkSpeedDisplayMode,
-                      s,
-                    ),
-                    onTap: () => _openNetworkSpeedDisplayModeSheet(s),
+                  _buildModernDropdown<NetworkSpeedDisplayMode>(
+                    label: s.networkSpeedDisplayContentTitle,
+                    currentValue: _networkSpeedDisplayMode,
+                    items: NetworkSpeedDisplayMode.values
+                        .map((NetworkSpeedDisplayMode mode) {
+                          return DropdownMenuItem<NetworkSpeedDisplayMode>(
+                            value: mode,
+                            child: Text(
+                              _networkSpeedDisplayModeLabel(mode, s),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          );
+                        })
+                        .toList(),
+                    onChanged: (NetworkSpeedDisplayMode? value) {
+                      if (value == null || value == _networkSpeedDisplayMode) {
+                        return;
+                      }
+                      unawaited(_setNetworkSpeedDisplayMode(value));
+                    },
+                    onTap: LiveBridgeHaptics.openSurface,
                   ),
                   const SizedBox(height: 12),
                   _buildActionSettingTile(
@@ -2791,6 +2722,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                     value: s.networkSpeedCurrentValue(
                       _networkSpeedUploadPrefix,
                     ),
+                    icon: Icons.north_rounded,
                     onTap: () =>
                         _openNetworkSpeedPrefixSheet(s: s, forUpload: true),
                   ),
@@ -2800,14 +2732,33 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                     value: s.networkSpeedCurrentValue(
                       _networkSpeedDownloadPrefix,
                     ),
+                    icon: Icons.south_rounded,
                     onTap: () =>
                         _openNetworkSpeedPrefixSheet(s: s, forUpload: false),
                   ),
                   const SizedBox(height: 12),
-                  _buildActionSettingTile(
-                    title: s.networkSpeedUnitTitle,
-                    value: _networkSpeedUnitLabel(_networkSpeedUnits, s),
-                    onTap: () => _openNetworkSpeedUnitSheet(s),
+                  _buildModernDropdown<NetworkSpeedUnit>(
+                    label: s.networkSpeedUnitTitle,
+                    currentValue: _networkSpeedDropdownUnit(),
+                    items: kNetworkSpeedUnitValues.map((NetworkSpeedUnit unit) {
+                      return DropdownMenuItem<NetworkSpeedUnit>(
+                        value: unit,
+                        child: Text(
+                          _networkSpeedUnitOptionLabel(unit, s),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (NetworkSpeedUnit? value) {
+                      if (value == null || value == _networkSpeedDropdownUnit()) {
+                        return;
+                      }
+                      unawaited(_setNetworkSpeedUnits(<NetworkSpeedUnit>{value}));
+                    },
+                    onTap: LiveBridgeHaptics.openSurface,
                   ),
                   const SizedBox(height: 12),
                   SwitchListTile.adaptive(
@@ -2875,29 +2826,38 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   Widget _buildActionSettingTile({
     required String title,
     required String value,
+    required IconData icon,
     required VoidCallback onTap,
   }) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         onTap: () {
-          HapticFeedback.selectionClick();
+          LiveBridgeHaptics.openSurface();
           onTap();
         },
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: colorScheme.outlineVariant.withValues(alpha: 0.45),
-            ),
+            color: colorScheme.primaryContainer.withValues(alpha: 0.38),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 18, color: colorScheme.primary),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2915,14 +2875,14 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                       style: TextStyle(
                         color: colorScheme.onSurfaceVariant,
                         fontSize: 13,
+                        height: 1.2,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
               Icon(
-                Icons.keyboard_arrow_right_rounded,
+                Icons.chevron_right_rounded,
                 color: colorScheme.onSurfaceVariant,
               ),
             ],
@@ -2988,9 +2948,21 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               ignoring: !_otpDetectionEnabled,
               child: Column(
                 children: <Widget>[
-                  _buildModernDropdown(
+                  _buildModernDropdown<PackageMode>(
                     label: s.otpModeLabel,
                     currentValue: _otpPackageMode,
+                    items: PackageMode.values.map((PackageMode mode) {
+                      return DropdownMenuItem<PackageMode>(
+                        value: mode,
+                        child: Text(
+                          _getModeLabel(mode, s),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                     onChanged: (val) {
                       if (val != null) {
                         LiveBridgeHaptics.selection();
@@ -3001,7 +2973,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                       }
                     },
                     onTap: LiveBridgeHaptics.openSurface,
-                    s: s,
                   ),
                   const SizedBox(height: 16),
                   _selectedAppsNote(
@@ -3390,164 +3361,6 @@ class _GithubDictionaryInfo {
 
   final String raw;
   final String normalized;
-}
-
-class _NetworkSpeedDisplayModeSheet extends StatefulWidget {
-  const _NetworkSpeedDisplayModeSheet({
-    required this.title,
-    required this.initialValue,
-    required this.options,
-    required this.saveLabel,
-  });
-
-  final String title;
-  final NetworkSpeedDisplayMode initialValue;
-  final List<SelectorOption<NetworkSpeedDisplayMode>> options;
-  final String saveLabel;
-
-  @override
-  State<_NetworkSpeedDisplayModeSheet> createState() =>
-      _NetworkSpeedDisplayModeSheetState();
-}
-
-class _NetworkSpeedDisplayModeSheetState
-    extends State<_NetworkSpeedDisplayModeSheet> {
-  late NetworkSpeedDisplayMode _selected = widget.initialValue;
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 8,
-          bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              widget.title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 20),
-            LiveBridgeChoiceSelector<NetworkSpeedDisplayMode>(
-              value: _selected,
-              options: widget.options,
-              onChanged: (NetworkSpeedDisplayMode next) {
-                if (_selected == next) return;
-                setState(() => _selected = next);
-              },
-            ),
-            const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  Navigator.of(context).pop(_selected);
-                },
-                icon: const Icon(Icons.check_rounded),
-                label: Text(widget.saveLabel),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _NetworkSpeedUnitSheet extends StatefulWidget {
-  const _NetworkSpeedUnitSheet({
-    required this.title,
-    required this.initialValue,
-    required this.options,
-    required this.saveLabel,
-  });
-
-  final String title;
-  final Set<NetworkSpeedUnit> initialValue;
-  final List<SelectorOption<NetworkSpeedUnit>> options;
-  final String saveLabel;
-
-  @override
-  State<_NetworkSpeedUnitSheet> createState() => _NetworkSpeedUnitSheetState();
-}
-
-class _NetworkSpeedUnitSheetState extends State<_NetworkSpeedUnitSheet> {
-  late Set<NetworkSpeedUnit> _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = Set<NetworkSpeedUnit>.from(widget.initialValue);
-  }
-
-  void _toggleUnit(NetworkSpeedUnit unit) {
-    final bool checked = _selected.contains(unit);
-    final Set<NetworkSpeedUnit> next;
-    if (checked) {
-      next = Set<NetworkSpeedUnit>.from(_selected)..remove(unit);
-    } else if (unit == NetworkSpeedUnit.auto) {
-      next = <NetworkSpeedUnit>{NetworkSpeedUnit.auto};
-    } else {
-      next = Set<NetworkSpeedUnit>.from(_selected)
-        ..remove(NetworkSpeedUnit.auto)
-        ..add(unit);
-    }
-    setState(() => _selected = next);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 8,
-          bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              widget.title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 20),
-            LiveBridgeMultiChoiceSelector<NetworkSpeedUnit>(
-              values: _selected,
-              options: widget.options,
-              onToggle: _toggleUnit,
-            ),
-            const SizedBox(height: 24),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.icon(
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  Navigator.of(context).pop(_selected);
-                },
-                icon: const Icon(Icons.check_rounded),
-                label: Text(widget.saveLabel),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _NetworkSpeedPrefixSheet extends StatefulWidget {
