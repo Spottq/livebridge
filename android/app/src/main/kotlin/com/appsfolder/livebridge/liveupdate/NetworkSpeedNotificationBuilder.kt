@@ -49,6 +49,7 @@ internal class NetworkSpeedNotificationBuilder(
                 buildSamsungExtras(
                     lockscreenOnly = prefs.getNetworkSpeedLockscreenOnly(),
                     title = title,
+                    chipText = totalText,
                     contentText = contentText,
                     chipIcon = chipIconCompat
                 )
@@ -61,6 +62,7 @@ internal class NetworkSpeedNotificationBuilder(
     private fun buildSamsungExtras(
         lockscreenOnly: Boolean,
         title: String,
+        chipText: String,
         contentText: String,
         chipIcon: IconCompat
     ): Bundle {
@@ -69,7 +71,7 @@ internal class NetworkSpeedNotificationBuilder(
             putInt(KEY_STYLE, if (lockscreenOnly) STYLE_NOW_BAR_ONLY else STYLE_DEFAULT)
             putCharSequence(KEY_PRIMARY_INFO, title)
             putCharSequence(KEY_SECONDARY_INFO, contentText)
-            putCharSequence(KEY_CHIP_EXPANDED_TEXT, title)
+            putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
             putCharSequence(KEY_NOWBAR_SECONDARY_INFO, contentText)
             putInt(KEY_CHIP_BG_COLOR, DEFAULT_CHIP_BG_COLOR)
