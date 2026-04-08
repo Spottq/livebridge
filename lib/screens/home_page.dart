@@ -1830,7 +1830,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           ),
           const SizedBox(height: 10),
           _buildGithubLinkCard(
-            caption: 'Original app: / оригинальное приложение',
+            caption: 'Original app:',
             url: 'github.com/appsfolder/livebridge',
             onTap: () {
               unawaited(_openOriginalGithub());
