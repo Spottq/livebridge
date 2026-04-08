@@ -921,18 +921,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     }
   }
 
-  NetworkSpeedUnit _networkSpeedDropdownUnit() {
-    if (NetworkSpeedUnitSelection.usesAuto(_networkSpeedUnits)) {
-      return NetworkSpeedUnit.auto;
-    }
-    for (final NetworkSpeedUnit unit in kNetworkSpeedUnitValues) {
-      if (unit != NetworkSpeedUnit.auto && _networkSpeedUnits.contains(unit)) {
-        return unit;
-      }
-    }
-    return NetworkSpeedUnit.auto;
-  }
-
   Future<void> _openNetworkSpeedPrefixSheet({
     required AppStrings s,
     required bool forUpload,
@@ -969,6 +957,18 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     } else {
       await _setNetworkSpeedDownloadPrefix(updated);
     }
+  }
+
+  Widget _buildNetworkSpeedUnitDropdown(AppStrings s) {
+    return _NetworkSpeedUnitDropdown(
+      label: s.networkSpeedUnitTitle,
+      values: _networkSpeedUnits,
+      optionLabelBuilder: (NetworkSpeedUnit unit) =>
+          _networkSpeedUnitOptionLabel(unit, s),
+      onChanged: (Set<NetworkSpeedUnit> values) {
+        unawaited(_setNetworkSpeedUnits(values));
+      },
+    );
   }
 
   Future<void> _setOtpDetection(bool value) async {
@@ -2737,29 +2737,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                         _openNetworkSpeedPrefixSheet(s: s, forUpload: false),
                   ),
                   const SizedBox(height: 12),
-                  _buildModernDropdown<NetworkSpeedUnit>(
-                    label: s.networkSpeedUnitTitle,
-                    currentValue: _networkSpeedDropdownUnit(),
-                    items: kNetworkSpeedUnitValues.map((NetworkSpeedUnit unit) {
-                      return DropdownMenuItem<NetworkSpeedUnit>(
-                        value: unit,
-                        child: Text(
-                          _networkSpeedUnitOptionLabel(unit, s),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (NetworkSpeedUnit? value) {
-                      if (value == null || value == _networkSpeedDropdownUnit()) {
-                        return;
-                      }
-                      unawaited(_setNetworkSpeedUnits(<NetworkSpeedUnit>{value}));
-                    },
-                    onTap: LiveBridgeHaptics.openSurface,
-                  ),
+                  _buildNetworkSpeedUnitDropdown(s),
                   const SizedBox(height: 12),
                   SwitchListTile.adaptive(
                     value: _networkSpeedPrioritizeUpload,
@@ -3361,6 +3339,277 @@ class _GithubDictionaryInfo {
 
   final String raw;
   final String normalized;
+}
+
+class _NetworkSpeedUnitDropdown extends StatefulWidget {
+  const _NetworkSpeedUnitDropdown({
+    required this.label,
+    required this.values,
+    required this.optionLabelBuilder,
+    required this.onChanged,
+  });
+
+  final String label;
+  final Set<NetworkSpeedUnit> values;
+  final String Function(NetworkSpeedUnit unit) optionLabelBuilder;
+  final ValueChanged<Set<NetworkSpeedUnit>> onChanged;
+
+  @override
+  State<_NetworkSpeedUnitDropdown> createState() =>
+      _NetworkSpeedUnitDropdownState();
+}
+
+class _NetworkSpeedUnitDropdownState extends State<_NetworkSpeedUnitDropdown> {
+  final MenuController _menuController = MenuController();
+  late Set<NetworkSpeedUnit> _draftValues = Set<NetworkSpeedUnit>.from(
+    widget.values,
+  );
+  Set<NetworkSpeedUnit> _committedValues = <NetworkSpeedUnit>{};
+  bool _menuOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _committedValues = Set<NetworkSpeedUnit>.from(widget.values);
+  }
+
+  @override
+  void didUpdateWidget(covariant _NetworkSpeedUnitDropdown oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_menuOpen && !_sameSelection(widget.values, _draftValues)) {
+      _draftValues = Set<NetworkSpeedUnit>.from(widget.values);
+      _committedValues = Set<NetworkSpeedUnit>.from(widget.values);
+    }
+  }
+
+  bool _sameSelection(
+    Set<NetworkSpeedUnit> a,
+    Set<NetworkSpeedUnit> b,
+  ) {
+    if (identical(a, b)) {
+      return true;
+    }
+    if (a.length != b.length) {
+      return false;
+    }
+    return a.containsAll(b);
+  }
+
+  void _toggleUnit(NetworkSpeedUnit unit) {
+    final bool checked = _draftValues.contains(unit);
+    final Set<NetworkSpeedUnit> next;
+    if (checked) {
+      next = Set<NetworkSpeedUnit>.from(_draftValues)..remove(unit);
+    } else if (unit == NetworkSpeedUnit.auto) {
+      next = <NetworkSpeedUnit>{NetworkSpeedUnit.auto};
+    } else {
+      next = Set<NetworkSpeedUnit>.from(_draftValues)
+        ..remove(NetworkSpeedUnit.auto)
+        ..add(unit);
+    }
+    setState(() => _draftValues = next);
+  }
+
+  void _commitSelection() {
+    final Set<NetworkSpeedUnit> next = Set<NetworkSpeedUnit>.from(_draftValues);
+    if (_sameSelection(next, _committedValues)) {
+      return;
+    }
+    _committedValues = next;
+    widget.onChanged(next);
+  }
+
+  void _toggleMenu() {
+    if (_menuController.isOpen) {
+      _menuController.close();
+      return;
+    }
+    LiveBridgeHaptics.openSurface();
+    _menuController.open();
+  }
+
+  String _summaryLabel() {
+    if (_draftValues.isEmpty || _draftValues.contains(NetworkSpeedUnit.auto)) {
+      return widget.optionLabelBuilder(NetworkSpeedUnit.auto);
+    }
+    return kNetworkSpeedUnitValues
+        .where(
+          (NetworkSpeedUnit unit) =>
+              unit != NetworkSpeedUnit.auto && _draftValues.contains(unit),
+        )
+        .map(widget.optionLabelBuilder)
+        .join(', ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool isLight = colorScheme.brightness == Brightness.light;
+    final Color fieldColor = isLight
+        ? Colors.white
+        : colorScheme.surfaceContainerLow;
+    final Color menuColor = isLight
+        ? Colors.white
+        : colorScheme.surfaceContainer;
+    final Color borderColor = colorScheme.primary.withValues(
+      alpha: isLight ? 0.5 : 0.65,
+    );
+
+    return MenuAnchor(
+      controller: _menuController,
+      consumeOutsideTap: true,
+      crossAxisUnconstrained: false,
+      style: MenuStyle(
+        backgroundColor: WidgetStatePropertyAll<Color>(menuColor),
+        shape: WidgetStatePropertyAll<OutlinedBorder>(
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        ),
+        side: WidgetStatePropertyAll<BorderSide>(
+          BorderSide(color: borderColor, width: 1.2),
+        ),
+        padding: const WidgetStatePropertyAll<EdgeInsets>(EdgeInsets.all(0)),
+      ),
+      onOpen: () => setState(() => _menuOpen = true),
+      onClose: () {
+        if (mounted) {
+          setState(() => _menuOpen = false);
+        }
+        _commitSelection();
+      },
+      menuChildren: <Widget>[
+        SizedBox(
+          width: 320,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                for (final NetworkSpeedUnit unit in kNetworkSpeedUnitValues)
+                  _NetworkSpeedUnitMenuRow(
+                    title: widget.optionLabelBuilder(unit),
+                    checked: _draftValues.contains(unit),
+                    onTap: () {
+                      LiveBridgeHaptics.selection();
+                      _toggleUnit(unit);
+                    },
+                  ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: FilledButton.tonalIcon(
+                    onPressed: _menuController.close,
+                    icon: const Icon(Icons.check_rounded, size: 18),
+                    label: Text(MaterialLocalizations.of(context).okButtonLabel),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+      builder: (BuildContext context, MenuController controller, Widget? child) {
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: _toggleMenu,
+            child: InputDecorator(
+              isEmpty: false,
+              decoration: InputDecoration(
+                labelText: widget.label,
+                labelStyle: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                filled: true,
+                fillColor: fieldColor,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: borderColor, width: 1.2),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(color: borderColor, width: 1.2),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide(
+                    color: colorScheme.primary,
+                    width: 1.8,
+                  ),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                suffixIcon: Icon(
+                  _menuOpen
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              child: Text(
+                _summaryLabel(),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _NetworkSpeedUnitMenuRow extends StatelessWidget {
+  const _NetworkSpeedUnitMenuRow({
+    required this.title,
+    required this.checked,
+    required this.onTap,
+  });
+
+  final String title;
+  final bool checked;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Row(
+            children: <Widget>[
+              Checkbox(
+                value: checked,
+                onChanged: (_) => onTap(),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: checked ? FontWeight.w700 : FontWeight.w500,
+                    color: checked
+                        ? colorScheme.onSurface
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _NetworkSpeedPrefixSheet extends StatefulWidget {
