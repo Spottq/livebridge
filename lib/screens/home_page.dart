@@ -25,17 +25,17 @@ class LiveBridgeHomePage extends StatefulWidget {
 class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static const String _projectGithubUrl =
-      'https://github.com/Spottq/livebridge-for-samsung';
+      'https://github.com/Spottq/livebridge';
   static const String _originalGithubUrl =
       'https://github.com/appsfolder/livebridge';
   static const String _projectGithubReleasesUrl =
-      'https://github.com/Spottq/livebridge-for-samsung/releases';
+      'https://github.com/Spottq/livebridge/releases';
   static const String _projectGithubBugReportUrl =
-      'https://github.com/Spottq/livebridge-for-samsung/issues';
+      'https://github.com/Spottq/livebridge/issues';
   static const String _latestReleaseApiUrl =
-      'https://api.github.com/repos/Spottq/livebridge-for-samsung/releases/latest';
+      'https://api.github.com/repos/Spottq/livebridge/releases/latest';
   static const String _dictionaryRawUrl =
-      'https://raw.githubusercontent.com/Spottq/livebridge-for-samsung/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
+      'https://raw.githubusercontent.com/Spottq/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
   static const bool _dictionaryAutoSyncEnabled = false;
   static const Duration _updateCheckInterval = Duration(hours: 6);
 
@@ -2070,8 +2070,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           _buildGithubLinkCard(
             caption: 'Forked by',
             url: _hasUpdateAlert
-                ? 'github.com/Spottq/livebridge-for-samsung/releases'
-                : 'github.com/Spottq/livebridge-for-samsung',
+                ? 'github.com/Spottq/livebridge/releases'
+                : 'github.com/Spottq/livebridge',
             onTap: () {
               unawaited(_openProjectGithub());
             },
