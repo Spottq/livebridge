@@ -769,7 +769,7 @@ class MainActivity : FlutterActivity() {
         private const val UPDATE_CHANNEL_ID = "livebridge_update_checks"
         private const val UPDATE_CHANNEL_NAME = "LiveBridge Updates"
         private const val UPDATE_NOTIFICATION_ID = 32001
-        private const val DEFAULT_RELEASES_URL = "https://github.com/appsfolder/livebridge/releases"
+        private const val DEFAULT_RELEASES_URL = "https://github.com/Spottq/livebridge-for-samsung/releases"
 
         private val appsLoaderExecutor = Executors.newSingleThreadExecutor()
         private val CHINESE_DEVICE_MARKERS = setOf(

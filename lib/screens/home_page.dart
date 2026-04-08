@@ -25,15 +25,17 @@ class LiveBridgeHomePage extends StatefulWidget {
 class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static const String _projectGithubUrl =
+      'https://github.com/Spottq/livebridge-for-samsung';
+  static const String _originalGithubUrl =
       'https://github.com/appsfolder/livebridge';
   static const String _projectGithubReleasesUrl =
-      'https://github.com/appsfolder/livebridge/releases';
+      'https://github.com/Spottq/livebridge-for-samsung/releases';
   static const String _projectGithubBugReportUrl =
-      'https://github.com/appsfolder/livebridge/issues/new/choose?template=bug_report.yml';
+      'https://github.com/Spottq/livebridge-for-samsung/issues';
   static const String _latestReleaseApiUrl =
-      'https://api.github.com/repos/appsfolder/livebridge/releases/latest';
+      'https://api.github.com/repos/Spottq/livebridge-for-samsung/releases/latest';
   static const String _dictionaryRawUrl =
-      'https://raw.githubusercontent.com/appsfolder/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
+      'https://raw.githubusercontent.com/Spottq/livebridge-for-samsung/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
   static const bool _dictionaryAutoSyncEnabled = false;
   static const Duration _updateCheckInterval = Duration(hours: 6);
 
@@ -1170,10 +1172,18 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  Future<void> _openGithub() async {
+  Future<void> _openProjectGithub() async {
     final Uri uri = Uri.parse(
       _hasUpdateAlert ? _projectGithubReleasesUrl : _projectGithubUrl,
     );
+    final bool opened = await _launchGithubUrl(uri);
+    if (!opened && mounted) {
+      _snack(AppStrings.of(context).githubOpenFailed);
+    }
+  }
+
+  Future<void> _openOriginalGithub() async {
+    final Uri uri = Uri.parse(_originalGithubUrl);
     final bool opened = await _launchGithubUrl(uri);
     if (!opened && mounted) {
       _snack(AppStrings.of(context).githubOpenFailed);
@@ -1318,6 +1328,68 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setSamsungWarningDismissed(true);
     if (!mounted) return;
     setState(() => _showSamsungDeveloperWarning = false);
+  }
+
+  Widget _buildGithubLinkCard({
+    required String caption,
+    required String url,
+    required VoidCallback onTap,
+    bool highlight = false,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final Color accentColor = highlight
+        ? colorScheme.error
+        : colorScheme.onSurfaceVariant;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          caption,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: highlight
+                  ? colorScheme.errorContainer.withValues(alpha: 0.55)
+                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(14),
+              border: highlight
+                  ? Border.all(
+                      color: colorScheme.error.withValues(alpha: 0.28),
+                      width: 1.1,
+                    )
+                  : null,
+            ),
+            child: Row(
+              children: <Widget>[
+                Icon(Icons.code_rounded, size: 20, color: accentColor),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    url,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: highlight ? colorScheme.error : null,
+                    ),
+                  ),
+                ),
+                Icon(Icons.open_in_new_rounded, size: 18, color: accentColor),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   void _snack(String value) {
@@ -1746,55 +1818,23 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             ),
             const SizedBox(height: 8),
           ],
-          InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: _openGithub,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: _hasUpdateAlert
-                    ? colorScheme.errorContainer.withValues(alpha: 0.55)
-                    : colorScheme.surfaceContainerHighest.withValues(
-                        alpha: 0.3,
-                      ),
-                borderRadius: BorderRadius.circular(14),
-                border: _hasUpdateAlert
-                    ? Border.all(
-                        color: colorScheme.error.withValues(alpha: 0.28),
-                        width: 1.1,
-                      )
-                    : null,
-              ),
-              child: Row(
-                children: <Widget>[
-                  Icon(
-                    Icons.code_rounded,
-                    size: 20,
-                    color: _hasUpdateAlert
-                        ? colorScheme.error
-                        : colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _hasUpdateAlert ? s.githubReleasesUrl : s.githubUrl,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: _hasUpdateAlert ? colorScheme.error : null,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    Icons.open_in_new_rounded,
-                    size: 18,
-                    color: _hasUpdateAlert
-                        ? colorScheme.error
-                        : colorScheme.onSurfaceVariant,
-                  ),
-                ],
-              ),
-            ),
+          _buildGithubLinkCard(
+            caption: 'Forked by',
+            url: _hasUpdateAlert
+                ? 'github.com/Spottq/livebridge-for-samsung/releases'
+                : 'github.com/Spottq/livebridge-for-samsung',
+            onTap: () {
+              unawaited(_openProjectGithub());
+            },
+            highlight: _hasUpdateAlert,
+          ),
+          const SizedBox(height: 10),
+          _buildGithubLinkCard(
+            caption: 'Original app: / оригинальное приложение',
+            url: 'github.com/appsfolder/livebridge',
+            onTap: () {
+              unawaited(_openOriginalGithub());
+            },
           ),
           const SizedBox(height: 10),
           SizedBox(
