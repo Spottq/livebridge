@@ -73,6 +73,7 @@ class AppStrings {
       : 'Grant notification listener access and notifications permission first.';
   String get githubUrl => 'github.com/Spottq/livebridge';
   String get githubReleasesUrl => 'github.com/Spottq/livebridge/releases';
+  String get downloadPageUrl => 'appsfolder.github.io/livebridge';
   String get reportBug => isRu ? 'Сообщить о баге' : 'Report a bug';
   String get bugReportCopied => isRu
       ? 'Диагностика скопирована в буфер. Вставьте в issue.'

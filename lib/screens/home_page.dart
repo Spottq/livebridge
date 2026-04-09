@@ -30,7 +30,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   static const String _originalGithubUrl =
       'https://github.com/appsfolder/livebridge';
   static const String _updateGithubReleasesUrl =
-      'https://github.com/appsfolder/livebridge/releases';
+      'https://appsfolder.github.io/livebridge/';
   static const String _projectGithubBugReportUrl =
       'https://github.com/Spottq/livebridge/issues';
   static const String _latestReleaseApiUrl =
@@ -762,7 +762,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       final Map<dynamic, dynamic> data = decoded;
       final String tag = (data['tag_name'] as String?)?.trim() ?? '';
       final String name = (data['name'] as String?)?.trim() ?? '';
-      final String htmlUrl = (data['html_url'] as String?)?.trim() ?? '';
       final String version = tag.isNotEmpty ? tag : name;
       if (version.isEmpty) {
         return null;
@@ -770,7 +769,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
 
       return _GithubReleaseInfo(
         version: version,
-        htmlUrl: htmlUrl.isNotEmpty ? htmlUrl : _updateGithubReleasesUrl,
+        htmlUrl: _updateGithubReleasesUrl,
       );
     } catch (_) {
       return null;
@@ -2026,7 +2025,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           _buildGithubLinkCard(
             caption: _hasUpdateAlert ? 'Update source' : 'Forked by',
             url: _hasUpdateAlert
-                ? 'github.com/appsfolder/livebridge/releases'
+                ? s.downloadPageUrl
                 : 'github.com/Spottq/livebridge',
             onTap: () {
               unawaited(
