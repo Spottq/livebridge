@@ -132,6 +132,9 @@ class AppStrings {
   String updateAvailableBanner(String version) => isRu
       ? 'Доступно обновление${version.isNotEmpty ? ': $version' : ''}'
       : 'Update available${version.isNotEmpty ? ': $version' : ''}';
+  String get samsungUpdateInstallToast => isRu
+      ? 'Пожалуйста, установите версию для Samsung, а не универсальную.'
+      : 'Please install the Samsung build instead of the universal one.';
   String get experimentalTitle => isRu ? 'Экспериментальное' : 'Experimental';
   String get animatedIslandTitle =>
       isRu ? 'Анимированный остров' : 'Animated island';

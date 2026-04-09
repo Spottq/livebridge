@@ -29,8 +29,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       'https://github.com/Spottq/livebridge';
   static const String _originalGithubUrl =
       'https://github.com/appsfolder/livebridge';
-  static const String _projectGithubReleasesUrl =
-      'https://github.com/Spottq/livebridge/releases';
   static const String _updateGithubReleasesUrl =
       'https://github.com/appsfolder/livebridge/releases';
   static const String _projectGithubBugReportUrl =
@@ -1377,6 +1375,11 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
 
   Future<void> _openUpdateGithub() async {
     LiveBridgeHaptics.openSurface();
+    if (_isSamsungDevice && _hasUpdateAlert) {
+      await LiveBridgePlatform.showToast(
+        AppStrings.of(context).samsungUpdateInstallToast,
+      );
+    }
     final Uri uri = Uri.parse(_updateGithubReleasesUrl);
     final bool opened = await _launchGithubUrl(uri);
     if (!opened && mounted) {
@@ -2705,20 +2708,20 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                   _buildModernDropdown<NetworkSpeedDisplayMode>(
                     label: s.networkSpeedDisplayContentTitle,
                     currentValue: _networkSpeedDisplayMode,
-                    items: NetworkSpeedDisplayMode.values
-                        .map((NetworkSpeedDisplayMode mode) {
-                          return DropdownMenuItem<NetworkSpeedDisplayMode>(
-                            value: mode,
-                            child: Text(
-                              _networkSpeedDisplayModeLabel(mode, s),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          );
-                        })
-                        .toList(),
+                    items: NetworkSpeedDisplayMode.values.map((
+                      NetworkSpeedDisplayMode mode,
+                    ) {
+                      return DropdownMenuItem<NetworkSpeedDisplayMode>(
+                        value: mode,
+                        child: Text(
+                          _networkSpeedDisplayModeLabel(mode, s),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                     onChanged: (NetworkSpeedDisplayMode? value) {
                       if (value == null || value == _networkSpeedDisplayMode) {
                         return;
@@ -3393,10 +3396,7 @@ class _NetworkSpeedUnitDropdownState extends State<_NetworkSpeedUnitDropdown> {
     }
   }
 
-  bool _sameSelection(
-    Set<NetworkSpeedUnit> a,
-    Set<NetworkSpeedUnit> b,
-  ) {
+  bool _sameSelection(Set<NetworkSpeedUnit> a, Set<NetworkSpeedUnit> b) {
     if (identical(a, b)) {
       return true;
     }
@@ -3510,7 +3510,9 @@ class _NetworkSpeedUnitDropdownState extends State<_NetworkSpeedUnitDropdown> {
                   child: FilledButton.tonalIcon(
                     onPressed: _menuController.close,
                     icon: const Icon(Icons.check_rounded, size: 18),
-                    label: Text(MaterialLocalizations.of(context).okButtonLabel),
+                    label: Text(
+                      MaterialLocalizations.of(context).okButtonLabel,
+                    ),
                   ),
                 ),
               ],
@@ -3518,57 +3520,61 @@ class _NetworkSpeedUnitDropdownState extends State<_NetworkSpeedUnitDropdown> {
           ),
         ),
       ],
-      builder: (BuildContext context, MenuController controller, Widget? child) {
-        return Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(20),
-            onTap: _toggleMenu,
-            child: InputDecorator(
-              isEmpty: false,
-              decoration: InputDecoration(
-                labelText: widget.label,
-                labelStyle: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                filled: true,
-                fillColor: fieldColor,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: borderColor, width: 1.2),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(color: borderColor, width: 1.2),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  borderSide: BorderSide(
-                    color: colorScheme.primary,
-                    width: 1.8,
+      builder:
+          (BuildContext context, MenuController controller, Widget? child) {
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: _toggleMenu,
+                child: InputDecorator(
+                  isEmpty: false,
+                  decoration: InputDecoration(
+                    labelText: widget.label,
+                    labelStyle: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    filled: true,
+                    fillColor: fieldColor,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: borderColor, width: 1.2),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(color: borderColor, width: 1.2),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide(
+                        color: colorScheme.primary,
+                        width: 1.8,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                    suffixIcon: Icon(
+                      _menuOpen
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  child: Text(
+                    _summaryLabel(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-                suffixIcon: Icon(
-                  _menuOpen
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: colorScheme.onSurfaceVariant,
-                ),
               ),
-              child: Text(
-                _summaryLabel(),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              ),
-            ),
-          ),
-        );
-      },
+            );
+          },
     );
   }
 }

@@ -18,6 +18,7 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.util.Log
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -367,6 +368,17 @@ class MainActivity : FlutterActivity() {
                     res.success(false)
                 } else {
                     res.success(showUpdateAvailableNotification(version, releaseUrl))
+                }
+            }
+            "showToast" -> {
+                val message = call.argument<String>("message")?.trim().orEmpty()
+                if (message.isEmpty()) {
+                    res.success(false)
+                } else {
+                    runOnUiThread {
+                        Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
+                    }
+                    res.success(true)
                 }
             }
 

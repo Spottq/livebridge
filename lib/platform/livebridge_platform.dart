@@ -133,6 +133,8 @@ class LiveBridgePlatform {
     'version': version,
     'releaseUrl': releaseUrl,
   });
+  static Future<bool> showToast(String message) =>
+      _askBool('showToast', {'message': message});
   static Future<bool> getAospCuttingEnabled() =>
       _askBool('getAospCuttingEnabled');
   static Future<bool> setAospCuttingEnabled(bool value) =>
