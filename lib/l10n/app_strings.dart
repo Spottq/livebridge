@@ -87,12 +87,6 @@ class AppStrings {
   String backgroundWarningBody(String deviceLabel) => isRu
       ? 'Для $deviceLabel нужно вручную разрешить автозапуск и работу без ограничений в фоне, иначе Live Updates могут не появляться или зависать.'
       : 'On $deviceLabel, allow autostart and unrestricted background activity, otherwise Live Updates may stop appearing or freeze.';
-  String get samsungWarningTitle =>
-      isRu ? 'Важно для Samsung' : 'Important for Samsung';
-  String get samsungWarningBody => isRu
-      ? 'Для Samsung не нужно включать Live Updates в приложении. Но в параметрах разработчика обязательно включите "Отображение живых уведомлений для всех приложений".'
-      : 'On Samsung, enabling in-app Live Updates is not required. But in Developer options, enable "Live notifications for all apps".';
-
   String get accessTitle => isRu ? 'Разрешения' : 'Permissions';
   String get accessSubtitle => isRu
       ? 'Без этих трёх разрешений конвертация будет работать нестабильно.'
@@ -351,9 +345,8 @@ class AppStrings {
       ? 'Если в тексте есть %, и это не скидка/акция, считать как прогресс и обновлять остров.'
       : 'If text contains % and it is not discount-related, treat it as progress and update island.';
 
-  String get blockedTitle => isRu
-      ? 'Пожалуйста, купите нормальный смартфон'
-      : 'Buy a proper phone first';
+  String get blockedTitle =>
+      isRu ? 'AOSP поддерживается частично' : 'AOSP is partially supported';
   String get blockedSubtitle => isRu
       ? 'LiveBridge плохо работает на устройствах с AOSP. Можете продолжить, но за последствия я не отвечаю.'
       : 'LiveBridge is not designed for AOSP. You can continue, but i am not responsible for any bugs.';

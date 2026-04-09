@@ -76,7 +76,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _hasCustomParserDictionary = false;
   bool _dictionaryActionInProgress = false;
   bool _showBackgroundWarning = false;
-  bool _showSamsungDeveloperWarning = false;
   bool _hidePromotedAccess = false;
   bool _isSamsungDevice = false;
   bool _isAospDevice = false;
@@ -278,8 +277,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.hasCustomParserDictionary();
       final bool backgroundWarningDismissed =
           await LiveBridgePlatform.getBackgroundWarningDismissed();
-      final bool samsungWarningDismissed =
-          await LiveBridgePlatform.getSamsungWarningDismissed();
       final bool samsungRemoteReparserEnabled =
           await LiveBridgePlatform.getSamsungRemoteReparserEnabled();
       final bool hasExpandedSectionsState =
@@ -372,8 +369,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             !deviceInfo.isPixel &&
             !deviceInfo.isSamsung &&
             !backgroundWarningDismissed;
-        _showSamsungDeveloperWarning =
-            deviceInfo.isSamsung && !samsungWarningDismissed;
         _deviceLabelForWarning = deviceInfo.label;
         _packageMode = packageMode;
         _otpPackageMode = otpPackageMode;
@@ -1530,13 +1525,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     setState(() => _showBackgroundWarning = false);
   }
 
-  Future<void> _hideSamsungWarning() async {
-    LiveBridgeHaptics.selection();
-    await LiveBridgePlatform.setSamsungWarningDismissed(true);
-    if (!mounted) return;
-    setState(() => _showSamsungDeveloperWarning = false);
-  }
-
   Widget _buildGithubLinkCard({
     required String caption,
     required String url,
@@ -1688,10 +1676,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                     if (_showBackgroundWarning) ...<Widget>[
                       const SizedBox(height: 16),
                       _buildBackgroundWarning(s),
-                    ],
-                    if (_showSamsungDeveloperWarning) ...<Widget>[
-                      const SizedBox(height: 16),
-                      _buildSamsungDeveloperWarning(s),
                     ],
                     const SizedBox(height: 24),
                     _buildAccessCard(s),
@@ -2247,64 +2231,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     onPressed: _hideBackgroundWarning,
-                    icon: const Icon(Icons.visibility_off_rounded, size: 18),
-                    label: Text(s.hideWarningBanner),
-                    style: TextButton.styleFrom(
-                      foregroundColor: colorScheme.error,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSamsungDeveloperWarning(AppStrings s) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.errorContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: colorScheme.error.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.warning_amber_rounded, color: colorScheme.error),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  s.samsungWarningTitle,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  s.samsungWarningBody,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(height: 1.4),
-                ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: _hideSamsungWarning,
                     icon: const Icon(Icons.visibility_off_rounded, size: 18),
                     label: Text(s.hideWarningBanner),
                     style: TextButton.styleFrom(
