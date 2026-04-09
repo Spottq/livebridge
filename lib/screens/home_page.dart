@@ -31,10 +31,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       'https://github.com/appsfolder/livebridge';
   static const String _projectGithubReleasesUrl =
       'https://github.com/Spottq/livebridge/releases';
+  static const String _updateGithubReleasesUrl =
+      'https://github.com/appsfolder/livebridge/releases';
   static const String _projectGithubBugReportUrl =
       'https://github.com/Spottq/livebridge/issues';
   static const String _latestReleaseApiUrl =
-      'https://api.github.com/repos/Spottq/livebridge/releases/latest';
+      'https://api.github.com/repos/appsfolder/livebridge/releases/latest';
   static const String _dictionaryRawUrl =
       'https://raw.githubusercontent.com/Spottq/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
   static const bool _dictionaryAutoSyncEnabled = false;
@@ -770,7 +772,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
 
       return _GithubReleaseInfo(
         version: version,
-        htmlUrl: htmlUrl.isNotEmpty ? htmlUrl : _projectGithubReleasesUrl,
+        htmlUrl: htmlUrl.isNotEmpty ? htmlUrl : _updateGithubReleasesUrl,
       );
     } catch (_) {
       return null;
@@ -1366,9 +1368,16 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
 
   Future<void> _openProjectGithub() async {
     LiveBridgeHaptics.openSurface();
-    final Uri uri = Uri.parse(
-      _hasUpdateAlert ? _projectGithubReleasesUrl : _projectGithubUrl,
-    );
+    final Uri uri = Uri.parse(_projectGithubUrl);
+    final bool opened = await _launchGithubUrl(uri);
+    if (!opened && mounted) {
+      _snack(AppStrings.of(context).githubOpenFailed);
+    }
+  }
+
+  Future<void> _openUpdateGithub() async {
+    LiveBridgeHaptics.openSurface();
+    final Uri uri = Uri.parse(_updateGithubReleasesUrl);
     final bool opened = await _launchGithubUrl(uri);
     if (!opened && mounted) {
       _snack(AppStrings.of(context).githubOpenFailed);
@@ -2012,12 +2021,14 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             const SizedBox(height: 8),
           ],
           _buildGithubLinkCard(
-            caption: 'Forked by',
+            caption: _hasUpdateAlert ? 'Update source' : 'Forked by',
             url: _hasUpdateAlert
-                ? 'github.com/Spottq/livebridge/releases'
+                ? 'github.com/appsfolder/livebridge/releases'
                 : 'github.com/Spottq/livebridge',
             onTap: () {
-              unawaited(_openProjectGithub());
+              unawaited(
+                _hasUpdateAlert ? _openUpdateGithub() : _openProjectGithub(),
+              );
             },
             highlight: _hasUpdateAlert,
           ),

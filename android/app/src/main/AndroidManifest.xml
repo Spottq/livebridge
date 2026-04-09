@@ -8,6 +8,9 @@
         android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"
     />
     <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
+    />
+    <uses-permission
         android:name="android.permission.POST_PROMOTED_NOTIFICATIONS"
     />
 
@@ -53,8 +56,13 @@
         <service
             android:name=".liveupdate.KeepAliveForegroundService"
             android:exported="false"
-            android:foregroundServiceType="dataSync"
-        />
+            android:foregroundServiceType="specialUse"
+        >
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Keeps LiveBridge alive for notification listener stability"
+            />
+        </service>
 
         <service
             android:name=".liveupdate.NetworkSpeedForegroundService"

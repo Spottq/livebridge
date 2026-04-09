@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LiveBridge | Live Updates for Android</title>
+    <meta
+      name="description"
+      content="LiveBridge turns regular notifications into Live Updates-style surfaces on Android 16+."
+    />
+    <link rel="icon" type="image/png" href="./icon-master.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=ProductSans:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #F4F7F6;
+        --surface: #FFFFFF;
+        --surface-container: #E8ECEB;
+        --surface-container-highest: #DFE4E0;
+        --text: #1A2120;
+        --text-muted: #53605E;
+        --primary: #0D9488;
+        --on-primary: #FFFFFF;
+        --primary-container: #99F6E4;
+        --on-primary-container: #00201D;
+        --outline: rgba(13, 148, 136, 0.3);
+        --border: rgba(26, 33, 32, 0.1);
+        --radius: 16px;
+        --max: 1100px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0A1010;
+          --surface: #0C1414;
+          --surface-container: #142121;
+          --surface-container-highest: #223636;
+          --text: #E1E3E2;
+          --text-muted: #8A9391;
+          --primary: #67E7D9;
+          --on-primary: #003731;
+          --primary-container: #0C5E55;
+          --on-primary-container: #A8FFF4;
+          --outline: rgba(103, 231, 217, 0.45);
+          --border: #223636;
+        }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        background-color: var(--bg);
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--text);
+        font-family: "Roboto", system-ui, sans-serif;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      h1, h2, h3 {
+        margin: 0;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.01em;
+      }
+
+      .container {
+        width: min(calc(100% - 32px), var(--max));
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 20px;
+        border-radius: var(--radius);
+        font-weight: 500;
+        font-size: 0.95rem;
+        transition: background-color 0.2s, opacity 0.2s;
+        cursor: pointer;
+        border: none;
+      }
+
+      .btn-filled {
+        background-color: var(--primary);
+        color: var(--on-primary);
+      }
+
+      .btn-filled:hover {
+        opacity: 0.9;
+      }
+
+      .btn-outlined {
+        background-color: transparent;
+        color: var(--primary);
+        border: 1.5px solid var(--outline);
+      }
+
+      .btn-outlined:hover {
+        background-color: rgba(13, 148, 136, 0.08);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .btn-outlined:hover {
+          background-color: rgba(103, 231, 217, 0.08);
+        }
+      }
+
+      .hero {
+        padding: 48px 0 64px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 460px);
+        gap: 48px;
+        align-items: center;
+      }
+
+      .hero-copy {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .hero h1 {
+        font-size: clamp(2.5rem, 5vw, 4rem);
+        line-height: 1.1;
+        max-width: 680px;
+      }
+
+      .hero p {
+        margin: 24px 0 32px;
+        max-width: 620px;
+        color: var(--text-muted);
+        font-size: 1.15rem;
+      }
+
+      .hero-cta {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        margin-bottom: 24px;
+      }
+
+      .hero-visual {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .hero-scroll-wrap {
+        display: flex;
+        justify-content: center;
+        margin: -52px 0 10px;
+      }
+
+      .hero-scroll {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-muted);
+        opacity: 0.78;
+        padding: 4px;
+        animation: hero-bounce 1.8s ease-in-out infinite;
+      }
+
+      .hero-scroll:hover {
+        opacity: 1;
+      }
+
+      .hero-scroll svg {
+        display: block;
+        width: 28px;
+        height: 28px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+        width: 100%;
+        max-width: 760px;
+        margin: 0;
+      }
+
+      .stat-card {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .stat-card { box-shadow: none; }
+      }
+
+      .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 8px;
+      }
+
+      .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .showcase {
+        padding: 28px 0 64px;
+      }
+
+      .showcase-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        align-items: center;
+        margin-bottom: 80px;
+      }
+
+      .showcase-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .showcase-row:nth-child(even) {
+        direction: rtl;
+      }
+
+      .showcase-row:nth-child(even) > * {
+        direction: ltr;
+      }
+
+      .showcase-text h2 {
+        font-size: 2rem;
+        margin-bottom: 16px;
+      }
+
+      .showcase-text p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        margin-bottom: 24px;
+      }
+
+      .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .feature-list li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      .feature-list li::before {
+        content: "✓";
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: var(--primary-container);
+        color: var(--on-primary-container);
+        border-radius: 50%;
+        font-size: 0.8rem;
+      }
+
+      .showcase-visual {
+        position: relative;
+        display: flex;
+        justify-content: center;
+      }
+
+      .showcase-picture,
+      .hero-picture {
+        display: block;
+        width: 100%;
+      }
+
+      .showcase-picture {
+        max-width: 380px;
+      }
+
+      .hero-picture {
+        max-width: 352px;
+      }
+
+      .showcase-img {
+        width: 100%;
+        max-width: 380px;
+        height: auto;
+        display: block;
+        border-radius: 24px;
+      }
+
+      .downloads {
+        padding: 64px 0;
+      }
+
+      .section-header {
+        text-align: center;
+        margin-bottom: 48px;
+      }
+
+      .section-header h2 {
+        font-size: 2.25rem;
+        margin-bottom: 16px;
+      }
+
+      .section-header p {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .download-banner {
+        background-color: var(--primary-container);
+        color: var(--on-primary-container);
+        border-radius: var(--radius);
+        padding: 20px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+      }
+
+      .banner-info strong {
+        display: block;
+        font-size: 1.1rem;
+        margin-bottom: 4px;
+      }
+
+      .banner-info span {
+        font-size: 0.95rem;
+        opacity: 0.8;
+      }
+
+      .download-banner .btn-outlined {
+        border-color: var(--on-primary-container);
+        color: var(--on-primary-container);
+      }
+
+      .download-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      .build-card {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .build-card { box-shadow: none; }
+      }
+
+      .build-card.recommended {
+        border: 2px solid var(--primary);
+      }
+
+      .build-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 16px;
+      }
+
+      .build-title-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .build-head h3 {
+        line-height: 1.12;
+      }
+
+      .samsung-logo-img {
+        display: block;
+        width: auto;
+        height: 16px;
+        opacity: 0.8;
+      }
+
+      .build-tag {
+        background-color: var(--surface-container-highest);
+        color: var(--text);
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .build-card.recommended .build-tag {
+        background-color: var(--primary);
+        color: var(--on-primary);
+      }
+
+      .build-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-grow: 1;
+      }
+
+      .meta-box {
+        background-color: var(--surface-container);
+        padding: 12px;
+        border-radius: 12px;
+      }
+
+      .meta-label {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        margin-bottom: 2px;
+      }
+
+      .meta-value {
+        font-weight: 500;
+        font-size: 0.95rem;
+      }
+
+      .build-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: auto;
+      }
+
+      .download-count {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+
+      .btn-disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .faq {
+        padding: 64px 0;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      details {
+        background-color: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        margin-bottom: 12px;
+      }
+
+      summary {
+        padding: 20px 24px;
+        font-weight: 500;
+        font-size: 1.05rem;
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      summary::after {
+        content: '+';
+        font-size: 1.25rem;
+        color: var(--primary);
+      }
+
+      details[open] summary::after {
+        content: '−';
+      }
+
+      details p {
+        padding: 0 24px 24px;
+        margin: 0;
+        color: var(--text-muted);
+      }
+
+      .footer {
+        border-top: 1px solid var(--border);
+        padding: 32px 0;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      .footer a {
+        color: var(--primary);
+      }
+
+      @keyframes hero-bounce {
+        0%, 100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(5px);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .hero {
+          grid-template-columns: 1fr;
+          gap: 24px;
+          padding: 24px 0 44px;
+        }
+
+        .hero-copy {
+          align-items: center;
+          text-align: center;
+        }
+
+        .hero p {
+          margin: 18px 0 28px;
+          font-size: 1.05rem;
+        }
+
+        .hero-cta {
+          justify-content: center;
+          width: 100%;
+        }
+
+        .hero-visual {
+          justify-content: center;
+        }
+
+        .hero-scroll-wrap {
+          margin: -12px 0 12px;
+        }
+
+        .stats {
+          max-width: 100%;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .stat-card {
+          padding: 14px 10px;
+          border-radius: 14px;
+        }
+
+        .stat-value {
+          font-size: 1.25rem;
+          margin-bottom: 4px;
+        }
+
+        .stat-label {
+          font-size: 0.78rem;
+        }
+
+        .showcase-row, .showcase-row:nth-child(even) {
+          grid-template-columns: 1fr;
+          direction: ltr;
+          gap: 18px;
+          margin-bottom: 18px;
+          padding: 22px 18px;
+          background-color: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 22px;
+        }
+
+        .showcase {
+          padding: 10px 0 52px;
+        }
+
+        .section-header {
+          margin-bottom: 24px;
+        }
+
+        .showcase-visual {
+          order: -1;
+        }
+
+        .showcase-text,
+        .showcase-visual,
+        .showcase-picture {
+          max-width: 100%;
+          margin: 0 auto;
+        }
+
+        .showcase-picture,
+        .showcase-img {
+          max-width: min(66vw, 252px);
+        }
+
+        .download-grid { grid-template-columns: 1fr; }
+
+        .downloads,
+        .faq {
+          padding: 56px 0;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .container {
+          width: min(calc(100% - 20px), var(--max));
+          padding: 0 10px;
+        }
+
+        .hero-visual {
+          display: none;
+        }
+
+        .hero {
+          min-height: calc(100svh - 40px);
+          align-content: center;
+          padding: 48px 0 28px;
+        }
+
+        .hero h1 {
+          font-size: clamp(2rem, 8vw, 2.55rem);
+          max-width: 10ch;
+        }
+
+        .hero-cta {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 10px;
+        }
+
+        .stats {
+          grid-template-columns: 1fr;
+          max-width: min(100%, 312px);
+          gap: 10px;
+          margin: 0 auto;
+        }
+
+        .stat-card {
+          padding: 14px 16px;
+        }
+
+        .stat-value {
+          font-size: 1.12rem;
+        }
+
+        .stat-label {
+          font-size: 0.82rem;
+        }
+
+        .hero-cta .btn,
+        .download-banner .btn,
+        .build-footer .btn {
+          width: 100%;
+          max-width: 100%;
+        }
+
+        .download-banner {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 16px;
+          padding: 16px 18px;
+          margin-bottom: 20px;
+        }
+
+        .build-card {
+          padding: 18px;
+        }
+
+        .build-footer {
+          flex-direction: column;
+          align-items: stretch;
+          text-align: center;
+          gap: 12px;
+        }
+
+        .download-count {
+          text-align: center;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .container {
+          width: min(calc(100% - 16px), var(--max));
+          padding: 0 8px;
+        }
+
+        .hero {
+          gap: 18px;
+          min-height: calc(100svh - 28px);
+          padding: 52px 0 28px;
+        }
+
+        .hero h1 {
+          font-size: clamp(1.82rem, 10vw, 2.2rem);
+          max-width: 11ch;
+        }
+
+        .hero p {
+          margin: 12px 0 18px;
+          font-size: 0.98rem;
+          line-height: 1.45;
+        }
+
+        .hero-scroll-wrap {
+          margin: -2px 0 12px;
+        }
+
+        .stat-card {
+          padding: 13px 15px;
+        }
+
+        .stat-value {
+          font-size: 1.1rem;
+        }
+
+        .section-header h2 {
+          font-size: 1.7rem;
+          margin-bottom: 12px;
+        }
+
+        .section-header p {
+          font-size: 1rem;
+        }
+
+        .showcase {
+          padding: 8px 0 44px;
+        }
+
+        .showcase-row,
+        .showcase-row:nth-child(even) {
+          gap: 16px;
+          margin-bottom: 16px;
+          padding: 18px 16px;
+          border-radius: 20px;
+        }
+
+        .showcase-text h2 {
+          font-size: 1.42rem;
+          margin-bottom: 10px;
+        }
+
+        .showcase-text p {
+          font-size: 0.96rem;
+          margin-bottom: 14px;
+        }
+
+        .feature-list li {
+          align-items: flex-start;
+          font-size: 0.93rem;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+
+        .feature-list li::before {
+          flex-shrink: 0;
+          width: 20px;
+          height: 20px;
+          font-size: 0.7rem;
+        }
+
+        .build-card {
+          padding: 16px;
+        }
+
+        .build-head {
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+
+        .build-title-row {
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .samsung-logo-img {
+          height: 14px;
+        }
+
+        .download-banner {
+          padding: 14px 16px;
+          text-align: left;
+        }
+
+        .banner-info strong {
+          font-size: 0.98rem;
+        }
+
+        .banner-info span {
+          font-size: 0.86rem;
+        }
+
+        .faq {
+          padding: 42px 0 34px;
+        }
+
+        summary {
+          padding: 18px 20px;
+          font-size: 1rem;
+        }
+
+        details p {
+          padding: 0 20px 20px;
+        }
+
+        .footer {
+          padding: 28px 0;
+          font-size: 0.85rem;
+        }
+      }
+
+      @media (max-width: 420px) {
+        .hero-scroll svg {
+          width: 22px;
+          height: 22px;
+        }
+
+        .build-meta {
+          grid-template-columns: 1fr;
+        }
+
+        .meta-box {
+          padding: 11px 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <h1>Bring Live Updates to your Android phone</h1>
+            <p>
+              LiveBridge turns your regular notifications into glanceable Live Updates surfaces for delivery progress, timers, media, network speed, and more. Built around native Android APIs and tuned for modern devices.
+            </p>
+            <div class="hero-cta">
+              <a class="btn btn-filled" href="#download">Get the Latest Version</a>
+              <a class="btn btn-outlined" href="https://github.com/appsfolder/livebridge/releases/latest" target="_blank">View on GitHub</a>
+            </div>
+            <section class="stats">
+              <div class="stat-card">
+                <div class="stat-value" id="stat-version">--</div>
+                <div class="stat-label">Latest Release</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="stat-total-downloads">--</div>
+                <div class="stat-label">Total Downloads</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">API 36</div>
+                <div class="stat-label">Min SDK</div>
+              </div>
+            </section>
+          </div>
+          <div class="hero-visual">
+            <picture class="hero-picture" data-shot="0">
+              <source media="(prefers-color-scheme: dark)" data-variant="dark" />
+              <img class="showcase-img" data-variant="light" alt="LiveBridge app preview" />
+            </picture>
+          </div>
+        </section>
+
+        <div class="hero-scroll-wrap">
+          <a class="hero-scroll" href="#why-livebridge" aria-label="Scroll down to Why LiveBridge">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+              <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </a>
+        </div>
+
+        <section class="showcase" id="why-livebridge">
+          <div class="section-header">
+            <h2>Why LiveBridge?</h2>
+            <p>Designed to make important status updates visible without opening apps.</p>
+          </div>
+
+          <div class="showcase-row">
+            <div class="showcase-text">
+              <h2>Compact status at a glance</h2>
+              <p>Convert messy progress notifications and text-only updates into one clean, unified surface that stays visible while the task is ongoing.</p>
+              <ul class="feature-list">
+                <li>Text progress conversion</li>
+                <li>Media integrations for AOSP</li>
+                <li>Real-time network speed tracking</li>
+              </ul>
+            </div>
+            <div class="showcase-visual">
+              <picture class="showcase-picture" data-shot="1">
+                <source media="(prefers-color-scheme: dark)" data-variant="dark" />
+                <img class="showcase-img" data-variant="light" alt="Notification preview" />
+              </picture>
+            </div>
+          </div>
+
+          <div class="showcase-row">
+            <div class="showcase-text">
+              <h2>Smart & practical daily extras</h2>
+              <p>LiveBridge was built with attention to details. VPNs/Networking, devices, OTP codes, taxi, delivery - everything you need just in one app.</p>
+              <ul class="feature-list">
+                <li>Smart OTP code extraction & copying</li>
+                <li>All things that you need</li>
+                <li>Always visible - It's native Live Activity!</li>
+              </ul>
+            </div>
+            <div class="showcase-visual">
+              <picture class="showcase-picture" data-shot="2">
+                <source media="(prefers-color-scheme: dark)" data-variant="dark" />
+                <img class="showcase-img" data-variant="light" alt="Smart features preview" />
+              </picture>
+            </div>
+          </div>
+
+          <div class="showcase-row">
+            <div class="showcase-text">
+              <h2>Vendor-aware & customizable</h2>
+              <p>Android UIs IS different. LiveBridge can be adapted to OEM differences, including exclusive ROM features for Xiaomi and Samsung (for now).</p>
+              <ul class="feature-list">
+                <li>Samsung Now Bar specific builds</li>
+                <li>Xiaomi Hyper Island compatibility</li>
+                <li>Per-app behavior customization</li>
+              </ul>
+            </div>
+            <div class="showcase-visual">
+              <picture class="showcase-picture" data-shot="3">
+                <source media="(prefers-color-scheme: dark)" data-variant="dark" />
+                <img class="showcase-img" data-variant="light" alt="Settings preview" />
+              </picture>
+            </div>
+          </div>
+        </section>
+
+        <section class="downloads" id="download">
+          <div class="section-header">
+            <h2>Choose your download</h2>
+            <p>Pick the build that matches your device architecture.</p>
+          </div>
+
+          <div class="download-banner">
+            <div class="banner-info">
+              <strong id="release-banner-title">Latest release: loading…</strong>
+              <span id="release-banner-copy">Fetching release files from GitHub.</span>
+            </div>
+            <a class="btn btn-outlined" href="https://github.com/appsfolder/livebridge/releases/latest" target="_blank">Browse all assets</a>
+          </div>
+
+          <div class="download-grid">
+            <div class="build-card recommended">
+              <div class="build-head">
+                <h3>Modern Android</h3>
+                <span class="build-tag">Recommended</span>
+              </div>
+              <div class="build-meta">
+                <div class="meta-box">
+                  <div class="meta-label">Architecture</div>
+                  <div class="meta-value">ARMv8-A</div>
+                </div>
+                <div class="meta-box">
+                  <div class="meta-label">Best for</div>
+                  <div class="meta-value">Modern devices</div>
+                </div>
+              </div>
+              <div class="build-footer">
+                <a class="btn btn-filled" id="button-armv8a" href="#">Download APK</a>
+                <span class="download-count" id="count-armv8a">Waiting...</span>
+              </div>
+            </div>
+
+            <div class="build-card">
+              <div class="build-head">
+                <div class="build-title-row">
+                  <h3>Samsung Now Bar</h3>
+                  <img class="samsung-logo-img" data-icon="samsung-logo" alt="Samsung logo" />
+                </div>
+                <span class="build-tag">Samsung-only</span>
+              </div>
+              <div class="build-meta">
+                <div class="meta-box">
+                  <div class="meta-label">Architecture</div>
+                  <div class="meta-value">ARMv8-A</div>
+                </div>
+                <div class="meta-box">
+                  <div class="meta-label">Best for</div>
+                  <div class="meta-value">Samsung One UI</div>
+                </div>
+              </div>
+              <div class="build-footer">
+                <a class="btn btn-outlined" id="button-samsung" href="#">Download APK</a>
+                <span class="download-count" id="count-samsung">Waiting...</span>
+              </div>
+            </div>
+
+            <div class="build-card">
+              <div class="build-head">
+                <h3>Not Sure?</h3>
+                <span class="build-tag">For everyone</span>
+              </div>
+              <div class="build-meta">
+                <div class="meta-box">
+                  <div class="meta-label">Architecture</div>
+                  <div class="meta-value">Universal</div>
+                </div>
+                <div class="meta-box">
+                  <div class="meta-label">Best for</div>
+                  <div class="meta-value">Maximum compatibility</div>
+                </div>
+              </div>
+              <div class="build-footer">
+                <a class="btn btn-outlined" id="button-universal" href="#">Download APK</a>
+                <span class="download-count" id="count-universal">Waiting...</span>
+              </div>
+            </div>
+
+            <div class="build-card">
+              <div class="build-head">
+                <h3>Older Phone</h3>
+                <span class="build-tag">Legacy CPU</span>
+              </div>
+              <div class="build-meta">
+                <div class="meta-box">
+                  <div class="meta-label">Architecture</div>
+                  <div class="meta-value">ARMv7-A</div>
+                </div>
+                <div class="meta-box">
+                  <div class="meta-label">Best for</div>
+                  <div class="meta-value">Older 32-bit devices</div>
+                </div>
+              </div>
+              <div class="build-footer">
+                <a class="btn btn-outlined" id="button-armv7a" href="#">Download APK</a>
+                <span class="download-count" id="count-armv7a">Waiting...</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="faq">
+          <div class="section-header">
+            <h2>FAQ</h2>
+          </div>
+
+          <details open>
+            <summary>Which APK should most people download?</summary>
+            <p>The ARMv8-A build is the default choice for nearly every recent Android phone. If your device is from the last several years, start there.</p>
+          </details>
+          <details>
+            <summary>Why is there a separate Samsung build?</summary>
+            <p>The Samsung build is meant for the Samsung-specific package-name replacement flow, which helps with the vendor-specific Now Bar setup.</p>
+          </details>
+          <details>
+            <summary>Will this work on older Android versions?</summary>
+            <p>No. LiveBridge targets Android 16 and newer because the app is built around native Android Live Updates support.</p>
+          </details>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>Built around the latest GitHub release data for <a href="https://github.com/appsfolder/livebridge" target="_blank">appsfolder/livebridge</a>.</p>
+      </footer>
+    </div>
+
+    <script>
+      const owner = "appsfolder";
+      const repo = "livebridge";
+      const releasesApi = `https://api.github.com/repos/${owner}/${repo}/releases?per_page=20`;
+      const latestReleasePage = `https://github.com/${owner}/${repo}/releases/latest`;
+      const rawAssetBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/assets`;
+      const numberFormat = new Intl.NumberFormat("en-US");
+
+      const builds = [
+        {
+          key: "armv8a",
+          matchers: ["-armv8a.apk", "arm64-v8a"],
+          fallbackText: "Best choice for most modern phones.",
+        },
+        {
+          key: "armv7a",
+          matchers: ["-armv7a.apk", "armeabi-v7a"],
+          fallbackText: "Use only if your device really needs 32-bit builds.",
+        },
+        {
+          key: "universal",
+          matchers: ["-universal.apk"],
+          fallbackText: "No universal APK yet.",
+        },
+        {
+          key: "samsung",
+          matchers: ["-samsung.apk"],
+          fallbackText: "No Samsung APK yet.",
+        },
+      ];
+
+      const sumDownloads = (assets) =>
+        assets.reduce((total, asset) => total + (asset.download_count || 0), 0);
+
+      function assetMatches(assetName, matchers) {
+        const name = assetName.toLowerCase();
+        return matchers.some((matcher) => name.endsWith(matcher) || name.includes(matcher));
+      }
+
+      function findBuildAsset(assets, matchers) {
+        return assets.find((asset) => assetMatches(asset.name, matchers));
+      }
+
+      function setBuildCardState(build, latestAsset, totalDownloadsForBuild) {
+        const button = document.getElementById(`button-${build.key}`);
+        const count = document.getElementById(`count-${build.key}`);
+
+        if (!button || !count) return;
+
+        if (latestAsset) {
+          button.href = latestAsset.browser_download_url;
+          button.textContent = "Download APK";
+          button.classList.remove("btn-disabled");
+          count.textContent = `${numberFormat.format(totalDownloadsForBuild)} total downloads`;
+        } else {
+          button.href = latestReleasePage;
+          button.textContent = "Not in release";
+          button.classList.add("btn-disabled");
+          count.textContent = build.fallbackText;
+        }
+      }
+
+      function getAssetBasePath(folder) {
+        const host = window.location.hostname;
+        if (!host || host === "localhost" || host === "127.0.0.1") {
+          return `../assets/${folder}`;
+        }
+        if (host.endsWith(".github.io")) {
+          return `${rawAssetBase}/${folder}`;
+        }
+        return `../assets/${folder}`;
+      }
+
+      function hydrateThemeAwareScreenshots() {
+        const basePath = getAssetBasePath("screenshots");
+        const pictures = document.querySelectorAll("picture[data-shot]");
+
+        pictures.forEach((picture) => {
+          const shot = picture.getAttribute("data-shot");
+          if (!shot) return;
+
+          const darkSource = picture.querySelector('source[data-variant="dark"]');
+          const lightImage = picture.querySelector('img[data-variant="light"]');
+
+          const darkUrl = `${basePath}/screenshot-dark-${shot}.png`;
+          const lightUrl = `${basePath}/screenshot-light-${shot}.png`;
+
+          if (darkSource) {
+            darkSource.srcset = darkUrl;
+          }
+          if (lightImage) {
+            lightImage.src = lightUrl;
+          }
+        });
+      }
+
+      function hydrateStaticIcons() {
+        const basePath = getAssetBasePath("icons");
+        const icons = document.querySelectorAll("img[data-icon]");
+
+        icons.forEach((icon) => {
+          const iconName = icon.getAttribute("data-icon");
+          if (!iconName) return;
+
+          icon.src = `${basePath}/${iconName}.png`;
+        });
+      }
+
+      async function loadReleaseData() {
+        const versionEl = document.getElementById("stat-version");
+        const totalDownloadsEl = document.getElementById("stat-total-downloads");
+        const statusEl = document.getElementById("stat-status");
+        const bannerTitleEl = document.getElementById("release-banner-title");
+        const bannerCopyEl = document.getElementById("release-banner-copy");
+
+        try {
+          const response = await fetch(releasesApi, {
+            headers: { Accept: "application/vnd.github+json" },
+          });
+
+          if (!response.ok) throw new Error(`API error ${response.status}`);
+
+          const releases = await response.json();
+          const publishedReleases = releases.filter((r) => !r.draft && !r.prerelease);
+
+          if (!publishedReleases.length) throw new Error("No releases");
+
+          const latest = publishedReleases[0];
+          const allAssets = publishedReleases.flatMap((r) => r.assets || []);
+          const allDownloads = sumDownloads(allAssets);
+          const latestDownloads = sumDownloads(latest.assets || []);
+          const publishedAt = latest.published_at
+            ? new Date(latest.published_at).toLocaleDateString("en-US", {
+                year: "numeric", month: "short", day: "numeric",
+              })
+            : "Unknown date";
+
+          if (versionEl) {
+            versionEl.textContent = latest.tag_name || latest.name || "Latest";
+          }
+          if (totalDownloadsEl) {
+            totalDownloadsEl.textContent = numberFormat.format(allDownloads);
+          }
+          if (statusEl) {
+            statusEl.textContent = "Live";
+          }
+          if (bannerTitleEl) {
+            bannerTitleEl.textContent = `Latest release: ${latest.name || latest.tag_name}`;
+          }
+          if (bannerCopyEl) {
+            bannerCopyEl.textContent = `${numberFormat.format(latestDownloads)} downloads in the latest release, published ${publishedAt}.`;
+          }
+
+          for (const build of builds) {
+            const latestAsset = findBuildAsset(latest.assets || [], build.matchers);
+            const totalDownloadsForBuild = publishedReleases.reduce((total, release) => {
+              const asset = findBuildAsset(release.assets || [], build.matchers);
+              return total + (asset?.download_count || 0);
+            }, 0);
+            setBuildCardState(build, latestAsset, totalDownloadsForBuild);
+          }
+        } catch (error) {
+          if (versionEl) {
+            versionEl.textContent = "Latest";
+          }
+          if (totalDownloadsEl) {
+            totalDownloadsEl.textContent = "N/A";
+          }
+          if (statusEl) {
+            statusEl.textContent = "API Error";
+          }
+          if (bannerTitleEl) {
+            bannerTitleEl.textContent = "Release data unavailable";
+          }
+          if (bannerCopyEl) {
+            bannerCopyEl.textContent = "You can download the APK manually from GitHub.";
+          }
+
+          for (const build of builds) {
+            const button = document.getElementById(`button-${build.key}`);
+            const count = document.getElementById(`count-${build.key}`);
+            if (button) {
+              button.href = latestReleasePage;
+              button.textContent = "Open GitHub";
+              button.classList.remove("btn-disabled");
+            }
+            if (count) count.textContent = "Could not load stats.";
+          }
+
+          console.error("Failed to load release data", error);
+        }
+      }
+
+      hydrateThemeAwareScreenshots();
+      hydrateStaticIcons();
+      loadReleaseData();
+    </script>
+  </body>
+</html>
