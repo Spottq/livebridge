@@ -91,6 +91,8 @@
       "id": "navigation",
       "max_stage": 4,
       "package_hints": [
+        "ru.dublgis.dgismobile",
+        "dublgis",
         "ru.yandex.yandexmaps",
         "google.android.apps.maps",
         "waze",
@@ -225,6 +227,7 @@
   ],
   "blocked_source_packages": [],
   "known_navigation_packages": [
+    "ru.dublgis.dgismobile",
     "ru.yandex.yandexmaps",
     "com.google.android.apps.maps",
     "com.waze"
