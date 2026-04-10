@@ -44,6 +44,7 @@ import kotlin.random.Random
 
 object LiveUpdateNotifier {
     const val CHANNEL_ID = "livebridge_promoted_updates"
+    private const val TWO_GIS_PACKAGE = "ru.dublgis.dgismobile"
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
 
     private const val CHANNEL_NAME = "LiveBridge Updates"
@@ -53,9 +54,6 @@ object LiveUpdateNotifier {
     private const val OTP_AUTOCOPY_COPIED_SHOW_DELAY_MS = 1_000L
     private const val OTP_AUTOCOPY_COPIED_SHOW_DURATION_MS = 1_500L
     private const val AOSP_ISLAND_TEXT_LIMIT = 7
-    private val BLOCKED_SOURCE_PACKAGES = setOf(
-        "ru.dublgis.dgismobile"
-    )
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
         YANDEX_MAPS_PACKAGE,
         "com.google.android.apps.maps",
@@ -753,7 +751,12 @@ object LiveUpdateNotifier {
             return false
         }
 
-        if (parserDictionary.blockedSourcePackages.contains(sbn.packageName.lowercase(Locale.ROOT))) {
+        val packageNameLower = sbn.packageName.lowercase(Locale.ROOT)
+        val allowSamsungTwoGisOverride =
+            packageNameLower == TWO_GIS_PACKAGE && SamsungLiveUpdateReparser.isSamsungDevice()
+        if (parserDictionary.blockedSourcePackages.contains(packageNameLower) &&
+            !allowSamsungTwoGisOverride
+        ) {
             return false
         }
 
@@ -764,6 +767,9 @@ object LiveUpdateNotifier {
         appPackageName: String,
         sbn: StatusBarNotification
     ): Boolean {
+        val packageNameLower = sbn.packageName.lowercase(Locale.ROOT)
+        val allowSamsungTwoGisGroupSummary =
+            packageNameLower == TWO_GIS_PACKAGE && SamsungLiveUpdateReparser.isSamsungDevice()
         if (appPackageName.isNotEmpty() && sbn.packageName == appPackageName) {
             return false
         }
@@ -774,7 +780,9 @@ object LiveUpdateNotifier {
         if (Build.VERSION.SDK_INT >= 36 && source.flags and 0x40000 != 0) {
             return false
         }
-        if (source.flags and Notification.FLAG_GROUP_SUMMARY != 0) {
+        if (source.flags and Notification.FLAG_GROUP_SUMMARY != 0 &&
+            !allowSamsungTwoGisGroupSummary
+        ) {
             return false
         }
         return true
@@ -870,6 +878,7 @@ object LiveUpdateNotifier {
         ).firstOrNull { !it.isNullOrEmpty() } ?: displayTitle
         val aospCuttingEnabled = runtimePrefs.getAospCuttingEnabled()
         val hyperBridgeEnabled = runtimePrefs.getHyperBridgeEnabled()
+        val sourcePackageNameLower = sbn.packageName.lowercase(Locale.ROOT)
 
         val sourceHasProgress = hasProgress(source)
         val samsungProgressMax = samsungReparse?.progressMax ?: 0
@@ -898,6 +907,19 @@ object LiveUpdateNotifier {
             ((safeProgress.toFloat() / safeMax.toFloat()) * 100f)
                 .roundToInt()
                 .coerceIn(0, 100)
+        } else {
+            null
+        }
+        val samsungRemoteViewMiniTextPair = if (
+            samsungBridge.enabled &&
+            samsungBridge.hasCustomRemoteCard &&
+            sourcePackageNameLower == TWO_GIS_PACKAGE
+        ) {
+            resolveTwoGisRemoteViewMiniTextPair(
+                notification = source,
+                displayText = displayText,
+                parserDictionary = parserDictionary
+            )
         } else {
             null
         }
@@ -976,7 +998,13 @@ object LiveUpdateNotifier {
                         .setProgress(percent)
                         .setStyledByProgress(true)
                 )
-                resolvedProgressChipText = smartShortTextOverride ?: "$percent%"
+                resolvedProgressChipText = if (sourcePackageNameLower == TWO_GIS_PACKAGE) {
+                    samsungRemoteViewMiniTextPair?.primaryText?.trim()?.takeIf { it.isNotEmpty() }
+                        ?: smartShortTextOverride
+                        ?: "$percent%"
+                } else {
+                    smartShortTextOverride ?: "$percent%"
+                }
                 builder.setShortCriticalText(
                     limitIslandText(resolvedProgressChipText, aospCuttingEnabled)
                 )
@@ -1008,14 +1036,14 @@ object LiveUpdateNotifier {
                 otpCode = otpOverride?.code,
                 compactCodeOverride = compactCodeOverride,
                 samsungReparseChipText = samsungReparse?.chipText,
-                remoteViewMiniTextPair = null
+                remoteViewMiniTextPair = samsungRemoteViewMiniTextPair
             )
             SamsungNowBarApplier.apply(
                 context = context,
                 builder = builder,
                 source = source,
                 sourcePackageName = sbn.packageName,
-                primaryText = compactPrimaryText,
+                primaryText = samsungTexts.nowBarPrimaryText,
                 texts = samsungTexts,
                 chipIcon = preferredChipIcon,
                 nowBarIcon = nowBarAppIcon,
@@ -2271,6 +2299,66 @@ object LiveUpdateNotifier {
             .replace(Regex("\\s+"), " ")
             .trim()
             .ifBlank { null }
+    }
+
+    private fun resolveTwoGisRemoteViewMiniTextPair(
+        notification: Notification,
+        displayText: String,
+        parserDictionary: LiveParserDictionary
+    ): SamsungMiniTextPair? {
+        val displayLines = splitNotificationTextLines(displayText)
+        val remoteLines = extractRemoteViewTexts(notification)
+            .flatMap(::splitNotificationTextLines)
+            .filterNot(::isTwoGisAuxiliaryLine)
+
+        val candidateLines = linkedSetOf<String>()
+        displayLines.forEach(candidateLines::add)
+        remoteLines.forEach(candidateLines::add)
+        if (candidateLines.isEmpty()) {
+            return null
+        }
+
+        val primary = sequenceOf(
+            displayLines.firstOrNull(),
+            candidateLines.firstOrNull { candidate ->
+                isNavigationDistanceText(candidate, parserDictionary)
+            },
+            candidateLines.firstOrNull()
+        ).firstOrNull { !it.isNullOrEmpty() } ?: return null
+
+        val secondary = sequenceOf(
+            displayLines.drop(1).firstOrNull(),
+            candidateLines.firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary) &&
+                        !isNavigationDistanceText(candidate, parserDictionary) &&
+                        !isTwoGisAuxiliaryLine(candidate)
+            }
+        ).firstOrNull { candidate ->
+            !candidate.isNullOrEmpty() && !isEquivalentText(candidate, primary)
+        } ?: return null
+
+        return SamsungMiniTextPair(primaryText = primary, secondaryText = secondary)
+    }
+
+    private fun splitNotificationTextLines(value: String): List<String> {
+        return value
+            .lineSequence()
+            .map { line -> line.replace(Regex("\\s+"), " ").trim() }
+            .filter { line -> line.isNotEmpty() }
+            .toList()
+    }
+
+    private fun isTwoGisAuxiliaryLine(value: String): Boolean {
+        val normalized = normalizeComparableText(value)
+        return normalized == "2gis" || isLikelyNotificationActionLabel(normalized)
+    }
+
+    private fun isLikelyNotificationActionLabel(normalizedValue: String): Boolean {
+        return normalizedValue == "finish route" ||
+                normalizedValue == "end route" ||
+                normalizedValue == "stop navigation" ||
+                normalizedValue.contains("route") ||
+                normalizedValue.contains("navigation")
     }
 
     private fun resolveRemoteViewMiniTextPair(

@@ -11,7 +11,8 @@ internal data class SamsungBridgeTexts(
     val disableMiniRemoteView: Boolean,
     val showMiniIcon: Boolean,
     val showSmallIcon: Boolean,
-    val allowNowBarProgress: Boolean
+    val allowNowBarProgress: Boolean,
+    val keepCollapsedRemoteView: Boolean
 )
 
 internal data class SamsungMiniTextPair(
@@ -20,6 +21,7 @@ internal data class SamsungMiniTextPair(
 )
 
 internal object SamsungBridgeContentPolicy {
+    private const val TWO_GIS_PACKAGE = "ru.dublgis.dgismobile"
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
 
     fun resolve(
@@ -37,7 +39,9 @@ internal object SamsungBridgeContentPolicy {
         samsungReparseChipText: String?,
         remoteViewMiniTextPair: SamsungMiniTextPair?
     ): SamsungBridgeTexts {
-        val useTextOnlyMiniNowBar = hasCustomRemoteCard && remoteViewMiniTextPair != null
+        val isTwoGisPackage = sourcePackageName == TWO_GIS_PACKAGE
+        val useTextOnlyMiniNowBar =
+            hasCustomRemoteCard && remoteViewMiniTextPair != null && !isTwoGisPackage
         val shouldClearContentText =
             !useTextOnlyMiniNowBar && (hasCustomRemoteCard || smartRuleId == "navigation")
         val shouldUseSmartShortTextAsSecondary =
@@ -51,7 +55,8 @@ internal object SamsungBridgeContentPolicy {
             displayText
         }
         val chipText = sequenceOf(
-            resolvedProgressChipText?.trim(),
+            remoteViewMiniTextPair?.primaryText?.trim()?.takeIf { isTwoGisPackage },
+            resolvedProgressChipText?.trim()?.takeIf { !isTwoGisPackage },
             otpShortTextOverride?.trim(),
             otpCode?.trim(),
             compactCodeOverride?.trim(),
@@ -83,13 +88,15 @@ internal object SamsungBridgeContentPolicy {
                 remoteViewMiniTextPair != null ||
                         (smartRuleId != "navigation" && !hasCustomRemoteCard),
             preferCompactNowBarRemoteView =
-                !useTextOnlyMiniNowBar &&
-                        sourcePackageName == YANDEX_MAPS_PACKAGE &&
-                        !hasProgress,
+                !useTextOnlyMiniNowBar && (
+                    isTwoGisPackage ||
+                        (sourcePackageName == YANDEX_MAPS_PACKAGE && !hasProgress)
+                ),
             disableMiniRemoteView = useTextOnlyMiniNowBar,
             showMiniIcon = !useTextOnlyMiniNowBar,
             showSmallIcon = !useTextOnlyMiniNowBar,
-            allowNowBarProgress = !useTextOnlyMiniNowBar
+            allowNowBarProgress = !useTextOnlyMiniNowBar,
+            keepCollapsedRemoteView = useTextOnlyMiniNowBar || isTwoGisPackage
         )
     }
 }

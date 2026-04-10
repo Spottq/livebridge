@@ -223,7 +223,7 @@
       ]
     }
   ],
-  "blocked_source_packages": ["ru.dublgis.dgismobile"],
+  "blocked_source_packages": [],
   "known_navigation_packages": [
     "ru.yandex.yandexmaps",
     "com.google.android.apps.maps",
