@@ -208,7 +208,10 @@ object LiveUpdateNotifier {
                     context = context,
                     prefs = prefs,
                     sbn = sbn,
-                    sourceHasNativeProgress = hasProgress(sbn.notification)
+                    sourceHasNativeProgress = hasEffectiveProgress(
+                        sbn.packageName,
+                        sbn.notification
+                    )
                 )
 
                 val notification = buildMirroredNotification(
@@ -252,7 +255,7 @@ object LiveUpdateNotifier {
                 context = context,
                 prefs = prefs,
                 sbn = sbn,
-                sourceHasNativeProgress = hasProgress(source)
+                sourceHasNativeProgress = hasEffectiveProgress(sbn.packageName, source)
             )
             val hasNativeProgress = samsungBridge.hasNativeOrSamsungProgress
             val animatedIslandEnabled = prefs.getAnimatedIslandEnabled()
@@ -849,14 +852,35 @@ object LiveUpdateNotifier {
                 }
         }
 
+        val sourcePackageNameLower = sbn.packageName.lowercase(Locale.ROOT)
         val appName = resolveAppName(context, sbn.packageName)
         val allowRemoteViewTextFallback = shouldTryNavigationArrowIcon
-        val title = titleOverride?.takeIf { it.isNotBlank() }
+        val baseTitle = titleOverride?.takeIf { it.isNotBlank() }
             ?: samsungReparse?.title?.takeIf { it.isNotBlank() }
             ?: extractTitle(source, appName, allowRemoteViewTextFallback)
-        val text = textOverride?.takeIf { it.isNotBlank() }
+        val baseText = textOverride?.takeIf { it.isNotBlank() }
             ?: samsungReparse?.text?.takeIf { it.isNotBlank() }
             ?: extractText(source, allowRemoteViewTextFallback)
+        val nonSamsungTwoGisTextPair = if (
+            !samsungBridge.enabled &&
+            sourcePackageNameLower == TWO_GIS_PACKAGE
+        ) {
+            resolveTwoGisRemoteViewMiniTextPair(
+                notification = source,
+                displayText = baseText,
+                parserDictionary = parserDictionary
+            )
+        } else {
+            null
+        }
+        val title = nonSamsungTwoGisTextPair?.primaryText
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: baseTitle
+        val text = nonSamsungTwoGisTextPair?.secondaryText
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: baseText
         val displayTitle = when (appPresentationOverride.compactTextSource) {
             CompactTextSource.TEXT -> text.ifBlank { title }
             CompactTextSource.TITLE -> title
@@ -878,9 +902,8 @@ object LiveUpdateNotifier {
         ).firstOrNull { !it.isNullOrEmpty() } ?: displayTitle
         val aospCuttingEnabled = runtimePrefs.getAospCuttingEnabled()
         val hyperBridgeEnabled = runtimePrefs.getHyperBridgeEnabled()
-        val sourcePackageNameLower = sbn.packageName.lowercase(Locale.ROOT)
 
-        val sourceHasProgress = hasProgress(source)
+        val sourceHasProgress = hasEffectiveProgress(sbn.packageName, source)
         val samsungProgressMax = samsungReparse?.progressMax ?: 0
         val samsungProgressValue = samsungReparse?.progressValue ?: 0
         val progressMax = when {
@@ -3154,11 +3177,35 @@ object LiveUpdateNotifier {
         }
     }
 
+    private fun hasEffectiveProgress(sourcePackageName: String, notification: Notification): Boolean {
+        if (!hasProgress(notification)) {
+            return false
+        }
+        return !shouldIgnoreNativeProgress(sourcePackageName, notification)
+    }
+
     private fun hasProgress(notification: Notification): Boolean {
         val extras = notification.extras
         val max = extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0)
         val indeterminate = extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false)
         return max > 0 || indeterminate
+    }
+
+    private fun shouldIgnoreNativeProgress(
+        sourcePackageName: String,
+        notification: Notification
+    ): Boolean {
+        if (SamsungLiveUpdateReparser.isSamsungDevice()) {
+            return false
+        }
+        if (sourcePackageName.lowercase(Locale.ROOT) != TWO_GIS_PACKAGE) {
+            return false
+        }
+        val extras = notification.extras
+        val progressMax = extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0)
+        val progressValue = extras.getInt(Notification.EXTRA_PROGRESS, 0)
+        val indeterminate = extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false)
+        return !indeterminate && progressMax == 100 && progressValue == 0
     }
 
     private fun extractTitle(
