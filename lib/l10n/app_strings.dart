@@ -290,6 +290,13 @@ class AppStrings {
   String get networkSpeedEnabledSubtitle => isRu
       ? 'Запускает отдельное уведомление с текущей скоростью сети и выводит его в Now Bar.'
       : 'Runs a dedicated ongoing notification with current network speed and surfaces it in the Now Bar.';
+  String get networkSpeedThresholdTitle =>
+      isRu ? 'Минимальная скорость для показа' : 'Minimum speed to show';
+  String get networkSpeedThresholdSubtitle => isRu
+      ? 'Live-индикатор появится, когда суммарная скорость download и upload достигнет этого порога.'
+      : 'The live element appears when combined download and upload reach this threshold.';
+  String get networkSpeedThresholdAlways =>
+      isRu ? 'Показывать всегда' : 'Always show';
   String get networkSpeedDisplayContentTitle =>
       isRu ? 'Отображаемый контент' : 'Display content';
   String get networkSpeedDisplayModeTotal =>

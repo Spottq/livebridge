@@ -68,6 +68,20 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_NETWORK_SPEED_ENABLED, value).apply()
     }
 
+    fun getNetworkSpeedMinThresholdBytesPerSecond(): Long {
+        return prefs.getLong(KEY_NETWORK_SPEED_MIN_THRESHOLD_BYTES_PER_SECOND, 0L)
+            .coerceAtLeast(0L)
+    }
+
+    fun setNetworkSpeedMinThresholdBytesPerSecond(value: Long) {
+        prefs.edit()
+            .putLong(
+                KEY_NETWORK_SPEED_MIN_THRESHOLD_BYTES_PER_SECOND,
+                value.coerceAtLeast(0L)
+            )
+            .apply()
+    }
+
     fun getNetworkSpeedDisplayMode(): String {
         val raw = prefs.getString(KEY_NETWORK_SPEED_DISPLAY_MODE, NetworkSpeedDisplayMode.TOTAL.id)
             ?: NetworkSpeedDisplayMode.TOTAL.id
@@ -473,6 +487,8 @@ class ConverterPrefs(context: Context) {
         private const val KEY_ONLY_WITH_PROGRESS = "only_with_progress"
         private const val KEY_TEXT_PROGRESS_ENABLED = "text_progress_enabled"
         private const val KEY_NETWORK_SPEED_ENABLED = "network_speed_enabled"
+        private const val KEY_NETWORK_SPEED_MIN_THRESHOLD_BYTES_PER_SECOND =
+            "network_speed_min_threshold_bytes_per_second"
         private const val KEY_NETWORK_SPEED_DISPLAY_MODE = "network_speed_display_mode"
         private const val KEY_NETWORK_SPEED_UPLOAD_PREFIX = "network_speed_upload_prefix"
         private const val KEY_NETWORK_SPEED_DOWNLOAD_PREFIX = "network_speed_download_prefix"

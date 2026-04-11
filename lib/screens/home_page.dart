@@ -39,6 +39,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       'https://raw.githubusercontent.com/Spottq/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
   static const bool _dictionaryAutoSyncEnabled = false;
   static const Duration _updateCheckInterval = Duration(hours: 6);
+  static const int _networkSpeedThresholdStepBytesPerSecond = 8 * 1024;
+  static const int _networkSpeedThresholdMaxBytesPerSecond = 1024 * 1024;
 
   final TextEditingController _rulesController = TextEditingController();
   final TextEditingController _otpRulesController = TextEditingController();
@@ -62,6 +64,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _onlyWithProgress = true;
   bool _textProgressEnabled = true;
   bool _networkSpeedEnabled = false;
+  int _networkSpeedMinThresholdBytesPerSecond = 0;
   bool _networkSpeedPrioritizeUpload = false;
   bool _networkSpeedLockscreenOnly = false;
   bool _networkSpeedChipBackgroundDisabled = false;
@@ -107,6 +110,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   late final AnimationController _masterBlockedShakeController;
   late final Animation<double> _masterBlockedShakeOffset;
   bool _masterBlockedHapticInProgress = false;
+  int _lastNetworkSpeedSliderHapticValue = -1;
+  int _lastNetworkSpeedSliderHapticAtMs = 0;
 
   bool get _canToggleMaster => _listenerEnabled && _notificationsGranted;
   bool get _masterSwitchValue => _canToggleMaster && _converterEnabled;
@@ -229,6 +234,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getTextProgressEnabled();
       final bool networkSpeedEnabled =
           await LiveBridgePlatform.getNetworkSpeedEnabled();
+      final int networkSpeedMinThresholdBytesPerSecond =
+          await LiveBridgePlatform.getNetworkSpeedMinThresholdBytesPerSecond();
       final String networkSpeedDisplayMode =
           await LiveBridgePlatform.getNetworkSpeedDisplayMode();
       final String networkSpeedUploadPrefix =
@@ -338,6 +345,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _onlyWithProgress = onlyWithProgress;
         _textProgressEnabled = textProgressEnabled;
         _networkSpeedEnabled = networkSpeedEnabled;
+        _networkSpeedMinThresholdBytesPerSecond =
+            networkSpeedMinThresholdBytesPerSecond;
         _networkSpeedDisplayMode = NetworkSpeedDisplayModeId.from(
           networkSpeedDisplayMode,
         );
@@ -440,6 +449,23 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setNetworkSpeedEnabled(value);
   }
 
+  Future<void> _setNetworkSpeedMinThresholdBytesPerSecond(
+    int value, {
+    bool persist = true,
+  }) async {
+    final int normalized = value
+        .clamp(0, _networkSpeedThresholdMaxBytesPerSecond)
+        .toInt();
+    if (normalized != _networkSpeedMinThresholdBytesPerSecond) {
+      setState(() => _networkSpeedMinThresholdBytesPerSecond = normalized);
+    }
+    if (persist) {
+      await LiveBridgePlatform.setNetworkSpeedMinThresholdBytesPerSecond(
+        normalized,
+      );
+    }
+  }
+
   Future<void> _setNetworkSpeedDisplayMode(
     NetworkSpeedDisplayMode value,
   ) async {
@@ -484,6 +510,25 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     HapticFeedback.selectionClick();
     setState(() => _networkSpeedChipBackgroundDisabled = value);
     await LiveBridgePlatform.setNetworkSpeedChipBackgroundDisabled(value);
+  }
+
+  void _updateNetworkSpeedThresholdDraft(double sliderValue) {
+    final int snappedValue = _snapNetworkSpeedThresholdBytesPerSecond(
+      sliderValue,
+    );
+    if (snappedValue == _networkSpeedMinThresholdBytesPerSecond) {
+      return;
+    }
+
+    setState(() => _networkSpeedMinThresholdBytesPerSecond = snappedValue);
+
+    final int nowMs = DateTime.now().millisecondsSinceEpoch;
+    if (snappedValue != _lastNetworkSpeedSliderHapticValue &&
+        nowMs - _lastNetworkSpeedSliderHapticAtMs >= 72) {
+      _lastNetworkSpeedSliderHapticValue = snappedValue;
+      _lastNetworkSpeedSliderHapticAtMs = nowMs;
+      unawaited(LiveBridgeHaptics.selection());
+    }
   }
 
   Future<void> _setConverterEnabled(bool value) async {
@@ -1455,6 +1500,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       'settings': <String, dynamic>{
         'converter_enabled': _converterEnabled,
         'keep_alive_foreground_enabled': _keepAliveForegroundEnabled,
+        'network_speed_enabled': _networkSpeedEnabled,
+        'network_speed_min_threshold_bytes_per_second':
+            _networkSpeedMinThresholdBytesPerSecond,
         'sync_dnd_enabled': _syncDndEnabled,
         'update_checks_enabled': _updateChecksEnabled,
         'only_with_progress': _onlyWithProgress,
@@ -2630,6 +2678,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               ignoring: !_networkSpeedEnabled,
               child: Column(
                 children: <Widget>[
+                  _buildNetworkSpeedThresholdSetting(s),
+                  const SizedBox(height: 12),
                   _buildModernDropdown<NetworkSpeedDisplayMode>(
                     label: s.networkSpeedDisplayContentTitle,
                     currentValue: _networkSpeedDisplayMode,
@@ -2738,6 +2788,165 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         ],
       ),
     );
+  }
+
+  Widget _buildNetworkSpeedThresholdSetting(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final double sliderMax =
+        _networkSpeedThresholdMaxBytesPerSecond /
+        _networkSpeedThresholdStepBytesPerSecond;
+    final String currentValueLabel = _formatNetworkSpeedThresholdValue(
+      s,
+      _networkSpeedMinThresholdBytesPerSecond,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  s.networkSpeedThresholdTitle,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  currentValueLabel,
+                  style: TextStyle(
+                    color: colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            s.networkSpeedThresholdSubtitle,
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+          ),
+          const SizedBox(height: 12),
+          SliderTheme(
+            data: SliderTheme.of(
+              context,
+            ).copyWith(overlayShape: SliderComponentShape.noOverlay),
+            child: Slider.adaptive(
+              value: _networkSpeedSliderPositionForBytesPerSecond(
+                _networkSpeedMinThresholdBytesPerSecond,
+              ),
+              min: 0,
+              max: sliderMax,
+              label: currentValueLabel,
+              onChangeStart: (double value) {
+                _lastNetworkSpeedSliderHapticValue =
+                    _snapNetworkSpeedThresholdBytesPerSecond(value);
+                _lastNetworkSpeedSliderHapticAtMs = 0;
+              },
+              onChanged: _updateNetworkSpeedThresholdDraft,
+              onChangeEnd: (double value) {
+                _lastNetworkSpeedSliderHapticValue = -1;
+                unawaited(
+                  _setNetworkSpeedMinThresholdBytesPerSecond(
+                    _snapNetworkSpeedThresholdBytesPerSecond(value),
+                  ),
+                );
+              },
+            ),
+          ),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  s.networkSpeedThresholdAlways,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              Text(
+                _formatNetworkSpeedBytesPerSecond(
+                  _networkSpeedThresholdMaxBytesPerSecond,
+                ),
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _snapNetworkSpeedThresholdBytesPerSecond(double sliderValue) {
+    final int snappedValue =
+        sliderValue.round() * _networkSpeedThresholdStepBytesPerSecond;
+    return snappedValue
+        .clamp(0, _networkSpeedThresholdMaxBytesPerSecond)
+        .toInt();
+  }
+
+  double _networkSpeedSliderPositionForBytesPerSecond(int bytesPerSecond) {
+    return (bytesPerSecond / _networkSpeedThresholdStepBytesPerSecond)
+        .clamp(
+          0,
+          _networkSpeedThresholdMaxBytesPerSecond /
+              _networkSpeedThresholdStepBytesPerSecond,
+        )
+        .toDouble();
+  }
+
+  String _formatNetworkSpeedThresholdValue(AppStrings s, int bytesPerSecond) {
+    if (bytesPerSecond <= 0) {
+      return s.networkSpeedThresholdAlways;
+    }
+    return '>= ${_formatNetworkSpeedBytesPerSecond(bytesPerSecond)}';
+  }
+
+  String _formatNetworkSpeedBytesPerSecond(int bytesPerSecond) {
+    final int value = bytesPerSecond.clamp(0, 1 << 31).toInt();
+    if (value < 1024) {
+      return '${value}B/s';
+    }
+    if (value < 1024 * 1024) {
+      return _formatCompactNetworkSpeedValue(value / 1024, 'KB/s');
+    }
+    if (value < 1024 * 1024 * 1024) {
+      return _formatCompactNetworkSpeedValue(value / (1024 * 1024), 'MB/s');
+    }
+    return _formatCompactNetworkSpeedValue(
+      value / (1024 * 1024 * 1024),
+      'GB/s',
+    );
+  }
+
+  String _formatCompactNetworkSpeedValue(double value, String suffix) {
+    final String formatted = value < 10
+        ? value.toStringAsFixed(1)
+        : value.toStringAsFixed(0);
+    return '$formatted$suffix';
   }
 
   Widget _buildActionSettingTile({

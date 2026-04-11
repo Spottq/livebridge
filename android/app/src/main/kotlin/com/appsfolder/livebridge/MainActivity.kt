@@ -255,6 +255,16 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getNetworkSpeedMinThresholdBytesPerSecond" ->
+                res.success(prefs.getNetworkSpeedMinThresholdBytesPerSecond())
+            "setNetworkSpeedMinThresholdBytesPerSecond" -> {
+                prefs.setNetworkSpeedMinThresholdBytesPerSecond(
+                    call.argument<Number>("value")?.toLong() ?: 0L
+                )
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
             "getNetworkSpeedDisplayMode" -> res.success(prefs.getNetworkSpeedDisplayMode())
             "setNetworkSpeedDisplayMode" -> {
                 prefs.setNetworkSpeedDisplayMode(call.argument<String>("value"))
