@@ -2619,15 +2619,38 @@ object LiveUpdateNotifier {
 
         if (!preferInstructionPrimary) {
             val primary = sequenceOf(
-                displayLines.firstOrNull(),
                 candidateLines.firstOrNull { candidate ->
                     isNavigationDistanceText(candidate, parserDictionary)
+                },
+                pickFirstTwoGisNonAuxiliaryLine(displayLines),
+                pickFirstTwoGisNonAuxiliaryLine(remoteLines),
+                pickFirstTwoGisNonAuxiliaryLine(titleLines),
+                candidateLines.firstOrNull { candidate ->
+                    !isTwoGisAuxiliaryLine(candidate)
                 },
                 candidateLines.firstOrNull()
             ).firstOrNull { !it.isNullOrEmpty() } ?: return null
 
             val secondary = sequenceOf(
-                displayLines.drop(1).firstOrNull(),
+                displayLines.drop(1).firstOrNull { candidate ->
+                    !isEquivalentText(candidate, primary) &&
+                            !isTwoGisAuxiliaryLine(candidate)
+                },
+                pickFirstTwoGisDescriptiveLine(
+                    lines = displayLines,
+                    parserDictionary = parserDictionary,
+                    excludedText = primary
+                ),
+                pickFirstTwoGisDescriptiveLine(
+                    lines = remoteLines,
+                    parserDictionary = parserDictionary,
+                    excludedText = primary
+                ),
+                pickFirstTwoGisDescriptiveLine(
+                    lines = titleLines,
+                    parserDictionary = parserDictionary,
+                    excludedText = primary
+                ),
                 candidateLines.firstOrNull { candidate ->
                     !isEquivalentText(candidate, primary) &&
                             !isNavigationDistanceText(candidate, parserDictionary) &&
@@ -2652,42 +2675,78 @@ object LiveUpdateNotifier {
 
         val primary = sequenceOf(
             extractNavigationInstructionToken(combinedText, parserDictionary),
-            titleLines.firstOrNull { candidate ->
-                !isNavigationDistanceText(candidate, parserDictionary)
+            displayLines.firstNotNullOfOrNull { candidate ->
+                extractTwoGisRouteTextCandidate(candidate, parserDictionary)
             },
-            displayLines.firstOrNull { candidate ->
-                !isNavigationDistanceText(candidate, parserDictionary)
+            remoteLines.firstNotNullOfOrNull { candidate ->
+                extractTwoGisRouteTextCandidate(candidate, parserDictionary)
             },
-            remoteLines.firstOrNull { candidate ->
-                !isNavigationDistanceText(candidate, parserDictionary)
+            titleLines.firstNotNullOfOrNull { candidate ->
+                extractTwoGisRouteTextCandidate(candidate, parserDictionary)
             },
-            titleLines.firstOrNull(),
-            displayLines.firstOrNull(),
-            remoteLines.firstOrNull(),
+            pickFirstTwoGisDescriptiveLine(displayLines, parserDictionary),
+            pickFirstTwoGisDescriptiveLine(remoteLines, parserDictionary),
+            pickFirstTwoGisDescriptiveLine(titleLines, parserDictionary),
+            pickFirstTwoGisNonAuxiliaryLine(displayLines),
+            pickFirstTwoGisNonAuxiliaryLine(remoteLines),
+            pickFirstTwoGisNonAuxiliaryLine(titleLines),
+            candidateLines.firstOrNull { candidate ->
+                !isTwoGisAuxiliaryLine(candidate)
+            },
             candidateLines.firstOrNull()
         ).firstOrNull { !it.isNullOrEmpty() } ?: return null
 
         val secondary = sequenceOf(
+            displayLines.firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary) &&
+                        isNavigationDistanceText(candidate, parserDictionary)
+            },
+            remoteLines.firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary) &&
+                        isNavigationDistanceText(candidate, parserDictionary)
+            },
             titleLines.firstOrNull { candidate ->
                 !isEquivalentText(candidate, primary) &&
                         isNavigationDistanceText(candidate, parserDictionary)
             },
-            displayLines.firstOrNull { candidate ->
-                !isEquivalentText(candidate, primary) &&
-                        isNavigationDistanceText(candidate, parserDictionary)
+            displayLines.firstNotNullOfOrNull { candidate ->
+                extractTwoGisRouteTextCandidate(candidate, parserDictionary)
+                    ?.takeIf { !isEquivalentText(it, primary) }
             },
-            remoteLines.firstOrNull { candidate ->
-                !isEquivalentText(candidate, primary) &&
-                        isNavigationDistanceText(candidate, parserDictionary)
+            remoteLines.firstNotNullOfOrNull { candidate ->
+                extractTwoGisRouteTextCandidate(candidate, parserDictionary)
+                    ?.takeIf { !isEquivalentText(it, primary) }
             },
+            titleLines.firstNotNullOfOrNull { candidate ->
+                extractTwoGisRouteTextCandidate(candidate, parserDictionary)
+                    ?.takeIf { !isEquivalentText(it, primary) }
+            },
+            pickFirstTwoGisDescriptiveLine(
+                lines = displayLines,
+                parserDictionary = parserDictionary,
+                excludedText = primary
+            ),
+            pickFirstTwoGisDescriptiveLine(
+                lines = remoteLines,
+                parserDictionary = parserDictionary,
+                excludedText = primary
+            ),
+            pickFirstTwoGisDescriptiveLine(
+                lines = titleLines,
+                parserDictionary = parserDictionary,
+                excludedText = primary
+            ),
             titleLines.drop(1).firstOrNull { candidate ->
-                !isEquivalentText(candidate, primary)
+                !isEquivalentText(candidate, primary) &&
+                        !isTwoGisAuxiliaryLine(candidate)
             },
             displayLines.firstOrNull { candidate ->
-                !isEquivalentText(candidate, primary)
+                !isEquivalentText(candidate, primary) &&
+                        !isTwoGisAuxiliaryLine(candidate)
             },
             remoteLines.firstOrNull { candidate ->
-                !isEquivalentText(candidate, primary)
+                !isEquivalentText(candidate, primary) &&
+                        !isTwoGisAuxiliaryLine(candidate)
             },
             candidateLines.firstOrNull { candidate ->
                 !isEquivalentText(candidate, primary) &&
@@ -2698,6 +2757,54 @@ object LiveUpdateNotifier {
         } ?: return null
 
         return SamsungMiniTextPair(primaryText = primary, secondaryText = secondary)
+    }
+
+    private fun pickFirstTwoGisDescriptiveLine(
+        lines: List<String>,
+        parserDictionary: LiveParserDictionary,
+        excludedText: String? = null
+    ): String? {
+        return lines.firstOrNull { candidate ->
+            !isEquivalentText(candidate, excludedText.orEmpty()) &&
+                    !isTwoGisAuxiliaryLine(candidate) &&
+                    !isNavigationDistanceText(candidate, parserDictionary)
+        }
+    }
+
+    private fun pickFirstTwoGisNonAuxiliaryLine(
+        lines: List<String>,
+        excludedText: String? = null
+    ): String? {
+        return lines.firstOrNull { candidate ->
+            !isEquivalentText(candidate, excludedText.orEmpty()) &&
+                    !isTwoGisAuxiliaryLine(candidate)
+        }
+    }
+
+    private fun extractTwoGisRouteTextCandidate(
+        value: String,
+        parserDictionary: LiveParserDictionary
+    ): String? {
+        val normalized = value
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        if (normalized.isEmpty() || isTwoGisAuxiliaryLine(normalized)) {
+            return null
+        }
+
+        val distanceMatch = parserDictionary.navigationDistancePattern.find(normalized)
+            ?: return normalized.takeIf {
+                !isNavigationDistanceText(it, parserDictionary) && !isTwoGisAuxiliaryLine(it)
+            }
+        if (distanceMatch.range.first != 0) {
+            return null
+        }
+
+        val remainder = normalized
+            .substring(distanceMatch.range.last + 1)
+            .trimStart(' ', '-', '–', '—', '·', '•', ':')
+            .trim()
+        return remainder.takeIf { it.isNotEmpty() && !isTwoGisAuxiliaryLine(it) }
     }
 
     private fun splitNotificationTextLines(value: String): List<String> {
