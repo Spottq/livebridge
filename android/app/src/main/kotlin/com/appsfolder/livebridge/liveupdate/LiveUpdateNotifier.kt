@@ -53,18 +53,6 @@ object LiveUpdateNotifier {
     private const val OTP_AUTOCOPY_COPIED_SHOW_DELAY_MS = 1_000L
     private const val OTP_AUTOCOPY_COPIED_SHOW_DURATION_MS = 1_500L
     private const val AOSP_ISLAND_TEXT_LIMIT = 7
-    private val weatherHighLowPattern = Regex(
-        """\bhighs?\s+([+\-−]?\d{1,3})\s*(?:°\s*(?:c|f|с|ф)?|℃|℉)?(?:\s*(?:to|-|–|—)\s*[+\-−]?\d{1,3}\s*(?:°\s*(?:c|f|с|ф)?|℃|℉)?)?[^\n]{0,40}?\blows?\s+([+\-−]?\d{1,3})\s*(?:°\s*(?:c|f|с|ф)?|℃|℉)?""",
-        setOf(RegexOption.IGNORE_CASE)
-    )
-    private val weatherCelsiusPattern = Regex(
-        """(?:°\s*[cс]|℃)""",
-        setOf(RegexOption.IGNORE_CASE)
-    )
-    private val weatherFahrenheitPattern = Regex(
-        """(?:°\s*[fф]|℉)""",
-        setOf(RegexOption.IGNORE_CASE)
-    )
     private val BLOCKED_SOURCE_PACKAGES = setOf(
         "ru.dublgis.dgismobile"
     )
@@ -1852,64 +1840,20 @@ object LiveUpdateNotifier {
         combinedText: String,
         parserDictionary: LiveParserDictionary
     ): String? {
-        extractWeatherHighLowTemperatureSummary(combinedText, parserDictionary)?.let {
-            return it
-        }
-
         val match = parserDictionary.weatherTemperaturePattern.find(combinedText) ?: return null
-        val rawNumber = normalizeWeatherTemperatureValue(match.groupValues.getOrNull(1))
+        val rawNumber = match.groupValues.getOrNull(1).orEmpty()
+            .replace('−', '-')
+            .trim()
         if (rawNumber.isBlank()) {
             return null
         }
-        val baseTemperature = formatWeatherTemperature(
-            value = rawNumber,
-            unit = inferWeatherTemperatureUnit(combinedText)
-        )
+        val baseTemperature = "${rawNumber}°"
         val conditionEmoji = extractWeatherConditionEmoji(combinedText, parserDictionary)
         return if (conditionEmoji != null) {
-            "$conditionEmoji $baseTemperature"
+            "$baseTemperature · $conditionEmoji"
         } else {
             baseTemperature
         }
-    }
-
-    private fun extractWeatherHighLowTemperatureSummary(
-        combinedText: String,
-        parserDictionary: LiveParserDictionary
-    ): String? {
-        val match = weatherHighLowPattern.find(combinedText) ?: return null
-        val high = normalizeWeatherTemperatureValue(match.groupValues.getOrNull(1))
-        val low = normalizeWeatherTemperatureValue(match.groupValues.getOrNull(2))
-        if (high.isBlank() || low.isBlank()) {
-            return null
-        }
-
-        val unit = inferWeatherTemperatureUnit(match.value) ?: inferWeatherTemperatureUnit(combinedText)
-        val summary = "${formatWeatherTemperature(high, unit)} / ${formatWeatherTemperature(low, unit)}"
-        val conditionEmoji = extractWeatherConditionEmoji(combinedText, parserDictionary)
-        return if (conditionEmoji != null) {
-            "$conditionEmoji $summary"
-        } else {
-            summary
-        }
-    }
-
-    private fun normalizeWeatherTemperatureValue(rawValue: String?): String {
-        return rawValue.orEmpty()
-            .replace('−', '-')
-            .trim()
-    }
-
-    private fun inferWeatherTemperatureUnit(text: String): String? {
-        return when {
-            weatherCelsiusPattern.containsMatchIn(text) -> "C"
-            weatherFahrenheitPattern.containsMatchIn(text) -> "F"
-            else -> null
-        }
-    }
-
-    private fun formatWeatherTemperature(value: String, unit: String?): String {
-        return if (unit != null) "$value°$unit" else "$value°"
     }
 
     private fun isRussianLocale(context: Context): Boolean {
