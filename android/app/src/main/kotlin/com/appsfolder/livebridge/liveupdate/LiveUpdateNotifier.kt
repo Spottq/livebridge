@@ -1057,6 +1057,8 @@ object LiveUpdateNotifier {
             NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
         }
         val preferredChipIcon = when {
+            isSamsungTwoGis ->
+                nowBarRightIcon ?: navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
             shouldTryNavigationArrowIcon ->
                 navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
             samsungBridge.hasCustomRemoteCard ->
