@@ -755,10 +755,9 @@ object LiveUpdateNotifier {
         }
 
         val packageNameLower = sbn.packageName.lowercase(Locale.ROOT)
-        val allowSamsungTwoGisOverride =
-            packageNameLower == TWO_GIS_PACKAGE && SamsungLiveUpdateReparser.isSamsungDevice()
+        val allowTwoGisOverride = packageNameLower == TWO_GIS_PACKAGE
         if (parserDictionary.blockedSourcePackages.contains(packageNameLower) &&
-            !allowSamsungTwoGisOverride
+            !allowTwoGisOverride
         ) {
             return false
         }
@@ -771,8 +770,7 @@ object LiveUpdateNotifier {
         sbn: StatusBarNotification
     ): Boolean {
         val packageNameLower = sbn.packageName.lowercase(Locale.ROOT)
-        val allowSamsungTwoGisGroupSummary =
-            packageNameLower == TWO_GIS_PACKAGE && SamsungLiveUpdateReparser.isSamsungDevice()
+        val allowTwoGisGroupSummary = packageNameLower == TWO_GIS_PACKAGE
         if (appPackageName.isNotEmpty() && sbn.packageName == appPackageName) {
             return false
         }
@@ -784,7 +782,7 @@ object LiveUpdateNotifier {
             return false
         }
         if (source.flags and Notification.FLAG_GROUP_SUMMARY != 0 &&
-            !allowSamsungTwoGisGroupSummary
+            !allowTwoGisGroupSummary
         ) {
             return false
         }
@@ -823,15 +821,16 @@ object LiveUpdateNotifier {
         val samsungLargeIcon = samsungReparse?.largeIconBitmap
         val remoteDrawableAssets = resolveRemoteDrawableAssets(context, sbn)
         val sourcePackageNameLower = sbn.packageName.lowercase(Locale.ROOT)
+        val isTwoGisPackage = sourcePackageNameLower == TWO_GIS_PACKAGE
         val isSamsungTwoGis =
             samsungBridge.enabled &&
                     samsungBridge.hasCustomRemoteCard &&
-                    sourcePackageNameLower == TWO_GIS_PACKAGE
+                    isTwoGisPackage
         val shouldTryNavigationArrowIcon =
             (appPresentationOverride.iconSource == NotificationIconSource.NOTIFICATION ||
-                    isSamsungTwoGis) &&
+                    isTwoGisPackage) &&
                     (smartRuleId == "navigation" ||
-                            isSamsungTwoGis ||
+                            isTwoGisPackage ||
                             (allowNavigationIconHeuristics &&
                                     isLikelyNavigationPackage(sbn.packageName, parserDictionary)))
         val navigationDrawable =
@@ -877,7 +876,7 @@ object LiveUpdateNotifier {
             ?: extractText(source, allowRemoteViewTextFallback)
         val nonSamsungTwoGisTextPair = if (
             !samsungBridge.enabled &&
-            sourcePackageNameLower == TWO_GIS_PACKAGE
+            isTwoGisPackage
         ) {
             resolveTwoGisRemoteViewMiniTextPair(
                 notification = source,
@@ -938,7 +937,7 @@ object LiveUpdateNotifier {
             else -> false
         }
         val hasProgress = sourceHasProgress || progressOverride != null || samsungProgressMax > 0
-        val suppressFrameworkProgressBody = isSamsungTwoGis && samsungBridge.hasCustomRemoteCard
+        val suppressFrameworkProgressBody = isTwoGisPackage
         var resolvedProgressChipText: String? = null
         val determinateProgressPercent = if (hasProgress && !indeterminate && progressMax > 0) {
             val safeMax = progressMax.coerceAtLeast(1)
@@ -949,11 +948,7 @@ object LiveUpdateNotifier {
         } else {
             null
         }
-        val samsungRemoteViewMiniTextPair = if (
-            samsungBridge.enabled &&
-            samsungBridge.hasCustomRemoteCard &&
-            sourcePackageNameLower == TWO_GIS_PACKAGE
-        ) {
+        val samsungRemoteViewMiniTextPair = if (isTwoGisPackage) {
             resolveTwoGisRemoteViewMiniTextPair(
                 notification = source,
                 displayTitle = displayTitle,
@@ -964,7 +959,7 @@ object LiveUpdateNotifier {
         } else {
             null
         }
-        val samsungTwoGisEtaDistanceText = if (isSamsungTwoGis) {
+        val samsungTwoGisEtaDistanceText = if (isTwoGisPackage) {
             extractTwoGisEtaDistanceText(
                 notification = source,
                 displayTitle = displayTitle,
@@ -974,7 +969,7 @@ object LiveUpdateNotifier {
         } else {
             null
         }
-        val samsungTwoGisMainTitleText = if (isSamsungTwoGis) {
+        val samsungTwoGisMainTitleText = if (isTwoGisPackage) {
             samsungRemoteViewMiniTextPair?.primaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
@@ -982,7 +977,7 @@ object LiveUpdateNotifier {
         } else {
             null
         }
-        val samsungTwoGisTurnDistanceText = if (isSamsungTwoGis) {
+        val samsungTwoGisTurnDistanceText = if (isTwoGisPackage) {
             extractNavigationDistanceText(
                 notification = source,
                 fallbackTitle = displayTitle,
@@ -997,7 +992,7 @@ object LiveUpdateNotifier {
         } else {
             null
         }
-        val samsungTwoGisPrimaryText = if (isSamsungTwoGis) {
+        val samsungTwoGisPrimaryText = if (isTwoGisPackage) {
             sequenceOf(
                 samsungTwoGisTurnDistanceText?.trim()?.takeIf { it.isNotEmpty() },
                 samsungTwoGisMainTitleText?.trim()?.takeIf { it.isNotEmpty() }
@@ -1005,7 +1000,7 @@ object LiveUpdateNotifier {
         } else {
             null
         }
-        val samsungTwoGisSecondaryTitleText = if (isSamsungTwoGis) {
+        val samsungTwoGisSecondaryTitleText = if (isTwoGisPackage) {
             samsungTwoGisMainTitleText
                 ?.trim()
                 ?.takeIf { title ->
@@ -1015,7 +1010,7 @@ object LiveUpdateNotifier {
         } else {
             null
         }
-        val samsungTwoGisVisibleSecondaryText = if (isSamsungTwoGis) {
+        val samsungTwoGisVisibleSecondaryText = if (isTwoGisPackage) {
             composeTwoGisVisibleSecondaryText(
                 leadingText = samsungTwoGisSecondaryTitleText,
                 etaDistanceText = samsungTwoGisEtaDistanceText,
@@ -1137,7 +1132,7 @@ object LiveUpdateNotifier {
             builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
         }
 
-        if (isSamsungTwoGis) {
+        if (isTwoGisPackage) {
             val bodyTitle = samsungTwoGisPrimaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
