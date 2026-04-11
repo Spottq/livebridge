@@ -45,6 +45,7 @@ import kotlin.random.Random
 object LiveUpdateNotifier {
     const val CHANNEL_ID = "livebridge_promoted_updates"
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
+    private const val SAMSUNG_ICON_TRAY_SIZE = 48
 
     private const val CHANNEL_NAME = "LiveBridge Updates"
     private const val TAG = "LiveUpdateNotifier"
@@ -830,7 +831,13 @@ object LiveUpdateNotifier {
             else ->
                 samsungLargeIcon ?: sourceLargeIcon
         }
-        val nowBarAppIcon = appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
+        val baseCompactIcon = resolveCompactIcon(
+            iconSource = appPresentationOverride.iconSource,
+            sourceSmallIcon = sourceSmallIcon,
+            samsungSmallIcon = samsungSmallIcon,
+            appSmallIcon = appSmallIcon
+        )
+        val nowBarAppIcon = baseCompactIcon
         val nowBarRightIcon = if (samsungBridge.hasCustomRemoteCard) {
             null
         } else {
@@ -916,25 +923,8 @@ object LiveUpdateNotifier {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
-        val preferredSmallIcon = when (appPresentationOverride.iconSource) {
-            NotificationIconSource.NOTIFICATION -> when {
-                shouldTryNavigationArrowIcon ->
-                    appSmallIcon ?: navigationDrawable?.icon ?: samsungSmallIcon ?: sourceSmallIcon
-                samsungBridge.hasCustomRemoteCard ->
-                    appSmallIcon ?: samsungSmallIcon ?: sourceSmallIcon
-                else ->
-                    appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
-            }
-            NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
-        }
-        val preferredChipIcon = when {
-            shouldTryNavigationArrowIcon ->
-                navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
-            samsungBridge.hasCustomRemoteCard ->
-                samsungSmallIcon ?: sourceSmallIcon ?: appSmallIcon
-            else ->
-                sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
-        }
+        val preferredSmallIcon = baseCompactIcon
+        val preferredChipIcon = baseCompactIcon
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
 
@@ -2509,27 +2499,23 @@ object LiveUpdateNotifier {
                 null
             } else {
                 val packageContext = context.createPackageContext(normalizedPackage, 0)
-                val resourceIcon = runCatching {
-                    IconCompat.createWithResource(
-                        packageContext.resources,
-                        normalizedPackage,
-                        appInfo.icon
-                    )
-                }.getOrNull()
-                val bitmap = runCatching {
+                val standardBitmap = runCatching {
                     packageContext.getDrawable(appInfo.icon)?.let { drawable ->
                         drawableToBitmap(drawable, clipAdaptiveIcon = true)
                     }
                 }.getOrNull()
-                val smallIcon = resourceIcon
-                    ?: bitmap?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
+                val compactBitmap =
+                    resolveSamsungTrayIconBitmap(context, normalizedPackage) ?: standardBitmap
+                val smallIcon =
+                    compactBitmap?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
+                val largeIconBitmap = standardBitmap ?: compactBitmap
 
-                if (smallIcon == null && bitmap == null) {
+                if (smallIcon == null && largeIconBitmap == null) {
                     null
                 } else {
                     AppIconAssets(
                         smallIcon = smallIcon,
-                        largeIconBitmap = bitmap
+                        largeIconBitmap = largeIconBitmap
                     )
                 }
             }
@@ -2617,6 +2603,40 @@ object LiveUpdateNotifier {
             icon = icon,
             bitmap = bitmap
         )
+    }
+
+    private fun resolveCompactIcon(
+        iconSource: NotificationIconSource,
+        sourceSmallIcon: IconCompat?,
+        samsungSmallIcon: IconCompat?,
+        appSmallIcon: IconCompat?
+    ): IconCompat? {
+        return when (iconSource) {
+            NotificationIconSource.NOTIFICATION ->
+                sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+            NotificationIconSource.APP ->
+                appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
+        }
+    }
+
+    private fun resolveSamsungTrayIconBitmap(context: Context, packageName: String): Bitmap? {
+        if (!SamsungLiveUpdateReparser.isSamsungDevice()) {
+            return null
+        }
+
+        return runCatching {
+            val method = context.packageManager.javaClass.getMethod(
+                "semGetApplicationIconForIconTray",
+                String::class.java,
+                Int::class.javaPrimitiveType
+            )
+            val drawable = method.invoke(
+                context.packageManager,
+                packageName,
+                SAMSUNG_ICON_TRAY_SIZE
+            ) as? Drawable
+            drawable?.let(::drawableToBitmap)
+        }.getOrNull()
     }
 
     private fun iconToBitmap(context: Context, icon: android.graphics.drawable.Icon): Bitmap? {
