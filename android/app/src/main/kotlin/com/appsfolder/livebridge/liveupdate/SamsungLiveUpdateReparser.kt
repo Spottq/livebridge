@@ -136,13 +136,16 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         keepCollapsedRemoteView: Boolean,
         preferExpandedRemoteBody: Boolean
     ) {
-        val preferredBodyRemoteView = if (preferExpandedRemoteBody) {
+        val collapsed = if (keepCollapsedRemoteView) {
+            source.contentView ?: source.bigContentView ?: source.headsUpContentView
+        } else {
+            null
+        }
+        val expanded = if (preferExpandedRemoteBody) {
             source.bigContentView ?: source.contentView ?: source.headsUpContentView
         } else {
-            source.contentView
+            source.bigContentView ?: source.contentView ?: source.headsUpContentView
         }
-        val collapsed = if (keepCollapsedRemoteView) preferredBodyRemoteView else null
-        val expanded = source.bigContentView ?: source.contentView ?: source.headsUpContentView
         val headsUp = source.headsUpContentView
 
         if (collapsed != null) {
