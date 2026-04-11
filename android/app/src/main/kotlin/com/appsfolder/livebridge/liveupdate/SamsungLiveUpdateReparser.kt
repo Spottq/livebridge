@@ -31,6 +31,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         disableNowBarRemoteView: Boolean = false,
         disableMiniRemoteView: Boolean = false,
         keepCollapsedRemoteView: Boolean = false,
+        preferExpandedRemoteBody: Boolean = false,
         showSmallIcon: Boolean = true,
         allowNowBarProgress: Boolean = true
     ) {
@@ -52,7 +53,12 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
                 resolveRemoteView(source, preferCompactNowBarRemoteView)
             }
         val hasNowBarRemoteView = nowBarRemoteView != null
-        applyRemoteViewsIfPresent(builder, source, keepCollapsedRemoteView)
+        applyRemoteViewsIfPresent(
+            builder = builder,
+            source = source,
+            keepCollapsedRemoteView = keepCollapsedRemoteView,
+            preferExpandedRemoteBody = preferExpandedRemoteBody
+        )
 
         val extras = Bundle().apply {
             putInt(KEY_STYLE, 1)
@@ -127,10 +133,16 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
     private fun applyRemoteViewsIfPresent(
         builder: NotificationCompat.Builder,
         source: Notification,
-        keepCollapsedRemoteView: Boolean
+        keepCollapsedRemoteView: Boolean,
+        preferExpandedRemoteBody: Boolean
     ) {
-        val collapsed = if (keepCollapsedRemoteView) source.contentView else null
-        val expanded = source.bigContentView ?: source.contentView
+        val preferredBodyRemoteView = if (preferExpandedRemoteBody) {
+            source.bigContentView ?: source.contentView ?: source.headsUpContentView
+        } else {
+            source.contentView
+        }
+        val collapsed = if (keepCollapsedRemoteView) preferredBodyRemoteView else null
+        val expanded = source.bigContentView ?: source.contentView ?: source.headsUpContentView
         val headsUp = source.headsUpContentView
 
         if (collapsed != null) {
