@@ -71,9 +71,14 @@ class AppStrings {
   String get masterToggleLockedHint => isRu
       ? 'Сначала выдайте доступ к уведомлениям и разрешение на уведомления.'
       : 'Grant notification listener access and notifications permission first.';
-  String get githubUrl => 'github.com/Spottq/livebridge';
-  String get githubReleasesUrl => 'github.com/Spottq/livebridge/releases';
+  String get githubUrl => 'github.com/appsfolder/livebridge';
+  String get githubReleasesUrl => 'github.com/appsfolder/livebridge/releases';
   String get downloadPageUrl => 'appsfolder.github.io/livebridge';
+  String get smartExternalDevicesIgnoreDebuggingTitle =>
+      isRu ? 'Игнорировать отладку' : 'Ignore debugging';
+  String get smartExternalDevicesIgnoreDebuggingSubtitle => isRu
+      ? 'Не показывать Live для USB debugging, wireless debugging, ADB и похожих системных уведомлений.'
+      : 'Skip Live updates for USB debugging, wireless debugging, ADB, and similar system notifications.';
   String get reportBug => isRu ? 'Сообщить о баге' : 'Report a bug';
   String get bugReportCopied => isRu
       ? 'Диагностика скопирована в буфер. Вставьте в issue.'

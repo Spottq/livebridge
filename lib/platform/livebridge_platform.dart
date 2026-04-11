@@ -179,6 +179,10 @@ class LiveBridgePlatform {
       _askBool('getSmartExternalDevicesEnabled');
   static Future<bool> setSmartExternalDevicesEnabled(bool value) =>
       _askBool('setSmartExternalDevicesEnabled', {'value': value});
+  static Future<bool> getSmartExternalDevicesIgnoreDebugging() =>
+      _askBool('getSmartExternalDevicesIgnoreDebugging');
+  static Future<bool> setSmartExternalDevicesIgnoreDebugging(bool value) =>
+      _askBool('setSmartExternalDevicesIgnoreDebugging', {'value': value});
   static Future<bool> getSmartVpnEnabled() => _askBool('getSmartVpnEnabled');
   static Future<bool> setSmartVpnEnabled(bool value) =>
       _askBool('setSmartVpnEnabled', {'value': value});

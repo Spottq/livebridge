@@ -25,18 +25,19 @@ class LiveBridgeHomePage extends StatefulWidget {
 
 class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  static const String _forkGithubUrl = 'https://github.com/Spottq/livebridge';
   static const String _projectGithubUrl =
-      'https://github.com/Spottq/livebridge';
+      'https://github.com/appsfolder/livebridge';
   static const String _originalGithubUrl =
       'https://github.com/appsfolder/livebridge';
   static const String _updateGithubReleasesUrl =
       'https://appsfolder.github.io/livebridge/';
   static const String _projectGithubBugReportUrl =
-      'https://github.com/Spottq/livebridge/issues';
+      'https://github.com/appsfolder/livebridge/issues/new/choose?template=bug_report.yml';
   static const String _latestReleaseApiUrl =
       'https://api.github.com/repos/appsfolder/livebridge/releases/latest';
   static const String _dictionaryRawUrl =
-      'https://raw.githubusercontent.com/Spottq/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
+      'https://raw.githubusercontent.com/appsfolder/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
   static const bool _dictionaryAutoSyncEnabled = false;
   static const Duration _updateCheckInterval = Duration(hours: 6);
   static const int _networkSpeedThresholdStepBytesPerSecond = 8 * 1024;
@@ -73,6 +74,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _smartNavigationEnabled = true;
   bool _smartWeatherEnabled = true;
   bool _smartExternalDevicesEnabled = true;
+  bool _smartExternalDevicesIgnoreDebugging = true;
   bool _smartVpnEnabled = true;
   bool _otpDetectionEnabled = true;
   bool _otpAutoCopyEnabled = false;
@@ -260,6 +262,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getSmartWeatherEnabled();
       final bool smartExternalDevicesEnabled =
           await LiveBridgePlatform.getSmartExternalDevicesEnabled();
+      final bool smartExternalDevicesIgnoreDebugging =
+          await LiveBridgePlatform.getSmartExternalDevicesIgnoreDebugging();
       final bool smartVpnEnabled =
           await LiveBridgePlatform.getSmartVpnEnabled();
       final bool otpDetectionEnabled =
@@ -362,6 +366,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _smartNavigationEnabled = smartNavigationEnabled;
         _smartWeatherEnabled = smartWeatherEnabled;
         _smartExternalDevicesEnabled = smartExternalDevicesEnabled;
+        _smartExternalDevicesIgnoreDebugging =
+            smartExternalDevicesIgnoreDebugging;
         _smartVpnEnabled = smartVpnEnabled;
         _otpDetectionEnabled = otpDetectionEnabled;
         _otpAutoCopyEnabled = otpAutoCopyEnabled;
@@ -925,6 +931,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setSmartExternalDevicesEnabled(value);
   }
 
+  Future<void> _setSmartExternalDevicesIgnoreDebugging(bool value) async {
+    LiveBridgeHaptics.toggle(value);
+    setState(() => _smartExternalDevicesIgnoreDebugging = value);
+    await LiveBridgePlatform.setSmartExternalDevicesIgnoreDebugging(value);
+  }
+
   Future<void> _setSmartVpn(bool value) async {
     LiveBridgeHaptics.toggle(value);
     setState(() => _smartVpnEnabled = value);
@@ -1403,6 +1415,15 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  Future<void> _openForkGithub() async {
+    LiveBridgeHaptics.openSurface();
+    final Uri uri = Uri.parse(_forkGithubUrl);
+    final bool opened = await _launchGithubUrl(uri);
+    if (!opened && mounted) {
+      _snack(AppStrings.of(context).githubOpenFailed);
+    }
+  }
+
   Future<void> _openProjectGithub() async {
     LiveBridgeHaptics.openSurface();
     final Uri uri = Uri.parse(_projectGithubUrl);
@@ -1414,21 +1435,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
 
   Future<void> _openUpdateGithub() async {
     LiveBridgeHaptics.openSurface();
-    if (_isSamsungDevice && _hasUpdateAlert) {
-      await LiveBridgePlatform.showToast(
-        AppStrings.of(context).samsungUpdateInstallToast,
-      );
-    }
     final Uri uri = Uri.parse(_updateGithubReleasesUrl);
-    final bool opened = await _launchGithubUrl(uri);
-    if (!opened && mounted) {
-      _snack(AppStrings.of(context).githubOpenFailed);
-    }
-  }
-
-  Future<void> _openOriginalGithub() async {
-    LiveBridgeHaptics.openSurface();
-    final Uri uri = Uri.parse(_originalGithubUrl);
     final bool opened = await _launchGithubUrl(uri);
     if (!opened && mounted) {
       _snack(AppStrings.of(context).githubOpenFailed);
@@ -1512,6 +1519,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         'smart_navigation_enabled': _smartNavigationEnabled,
         'smart_weather_enabled': _smartWeatherEnabled,
         'smart_external_devices_enabled': _smartExternalDevicesEnabled,
+        'smart_external_devices_ignore_debugging':
+            _smartExternalDevicesIgnoreDebugging,
         'smart_vpn_enabled': _smartVpnEnabled,
         'otp_detection_enabled': _otpDetectionEnabled,
         'otp_auto_copy_enabled': _otpAutoCopyEnabled,
@@ -2056,12 +2065,10 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           ],
           _buildGithubLinkCard(
             caption: _hasUpdateAlert ? 'Update source' : 'Forked by',
-            url: _hasUpdateAlert
-                ? s.downloadPageUrl
-                : 'github.com/Spottq/livebridge',
+            url: _hasUpdateAlert ? s.downloadPageUrl : _forkGithubUrl,
             onTap: () {
               unawaited(
-                _hasUpdateAlert ? _openUpdateGithub() : _openProjectGithub(),
+                _hasUpdateAlert ? _openUpdateGithub() : _openForkGithub(),
               );
             },
             highlight: _hasUpdateAlert,
@@ -2069,9 +2076,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           const SizedBox(height: 10),
           _buildGithubLinkCard(
             caption: 'Original app:',
-            url: 'github.com/appsfolder/livebridge',
+            url: _originalGithubUrl.replaceFirst('https://', ''),
             onTap: () {
-              unawaited(_openOriginalGithub());
+              unawaited(_openProjectGithub());
             },
           ),
           const SizedBox(height: 10),
@@ -2608,6 +2615,28 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             subtitle: Text(
               _smartDetectionEnabled
                   ? s.smartExternalDevicesSubtitle
+                  : s.smartNavigationDisabledSubtitle,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            value: _smartExternalDevicesIgnoreDebugging,
+            onChanged: _smartDetectionEnabled && _smartExternalDevicesEnabled
+                ? _setSmartExternalDevicesIgnoreDebugging
+                : null,
+            title: Text(
+              s.smartExternalDevicesIgnoreDebuggingTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              _smartDetectionEnabled && _smartExternalDevicesEnabled
+                  ? s.smartExternalDevicesIgnoreDebuggingSubtitle
                   : s.smartNavigationDisabledSubtitle,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
