@@ -938,6 +938,7 @@ object LiveUpdateNotifier {
             else -> false
         }
         val hasProgress = sourceHasProgress || progressOverride != null || samsungProgressMax > 0
+        val suppressFrameworkProgressBody = isSamsungTwoGis && samsungBridge.hasCustomRemoteCard
         var resolvedProgressChipText: String? = null
         val determinateProgressPercent = if (hasProgress && !indeterminate && progressMax > 0) {
             val safeMax = progressMax.coerceAtLeast(1)
@@ -1021,23 +1022,31 @@ object LiveUpdateNotifier {
 
         if (hasProgress) {
             if (indeterminate || progressMax <= 0) {
-                builder.setProgress(0, 0, true)
-                builder.setStyle(
-                    NotificationCompat.ProgressStyle()
-                        .setProgressIndeterminate(true)
-                        .setStyledByProgress(true)
-                )
+                if (!suppressFrameworkProgressBody) {
+                    builder.setProgress(0, 0, true)
+                    builder.setStyle(
+                        NotificationCompat.ProgressStyle()
+                            .setProgressIndeterminate(true)
+                            .setStyledByProgress(true)
+                    )
+                } else {
+                    builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                }
             } else {
                 val safeMax = progressMax.coerceAtLeast(1)
                 val safeProgress = progressValue.coerceIn(0, safeMax)
                 val percent = determinateProgressPercent ?: 0
 
-                builder.setProgress(safeMax, safeProgress, false)
-                builder.setStyle(
-                    NotificationCompat.ProgressStyle()
-                        .setProgress(percent)
-                        .setStyledByProgress(true)
-                )
+                if (!suppressFrameworkProgressBody) {
+                    builder.setProgress(safeMax, safeProgress, false)
+                    builder.setStyle(
+                        NotificationCompat.ProgressStyle()
+                            .setProgress(percent)
+                            .setStyledByProgress(true)
+                    )
+                } else {
+                    builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
+                }
                 resolvedProgressChipText = if (sourcePackageNameLower == TWO_GIS_PACKAGE) {
                     samsungRemoteViewMiniTextPair?.primaryText?.trim()?.takeIf { it.isNotEmpty() }
                         ?: smartShortTextOverride

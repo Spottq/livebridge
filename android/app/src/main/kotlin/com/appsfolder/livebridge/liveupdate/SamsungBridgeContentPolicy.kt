@@ -13,7 +13,8 @@ internal data class SamsungBridgeTexts(
     val showMiniIcon: Boolean,
     val showSmallIcon: Boolean,
     val allowNowBarProgress: Boolean,
-    val keepCollapsedRemoteView: Boolean
+    val keepCollapsedRemoteView: Boolean,
+    val preferExpandedRemoteBody: Boolean
 )
 
 internal data class SamsungMiniTextPair(
@@ -97,7 +98,8 @@ internal object SamsungBridgeContentPolicy {
             showMiniIcon = !useTextOnlyMiniNowBar,
             showSmallIcon = !useTextOnlyMiniNowBar,
             allowNowBarProgress = !useTextOnlyMiniNowBar,
-            keepCollapsedRemoteView = useTextOnlyMiniNowBar || isTwoGisPackage
+            keepCollapsedRemoteView = useTextOnlyMiniNowBar || isTwoGisPackage,
+            preferExpandedRemoteBody = isTwoGisPackage
         )
     }
 }
