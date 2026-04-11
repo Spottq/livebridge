@@ -7,7 +7,6 @@ import android.provider.Settings
 import android.service.notification.NotificationListenerService
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
-import com.kakao.taxi.liveupdate.networkspeed.NetworkSpeedController
 
 class LiveBridgeTileService : TileService() {
     private val prefs by lazy { ConverterPrefs(applicationContext) }
@@ -35,7 +34,6 @@ class LiveBridgeTileService : TileService() {
             requestNotificationListenerRebindIfPossible()
         }
         syncKeepAliveForegroundService()
-        syncNetworkSpeedForegroundService()
         updateTile()
     }
 
@@ -79,10 +77,6 @@ class LiveBridgeTileService : TileService() {
                 ComponentName(applicationContext, LiveUpdateNotificationListenerService::class.java)
             )
         }
-    }
-
-    private fun syncNetworkSpeedForegroundService() {
-        NetworkSpeedController.sync(applicationContext, prefs)
     }
 
     private fun isNotificationListenerEnabled(): Boolean {

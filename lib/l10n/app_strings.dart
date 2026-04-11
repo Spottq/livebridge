@@ -71,8 +71,8 @@ class AppStrings {
   String get masterToggleLockedHint => isRu
       ? 'Сначала выдайте доступ к уведомлениям и разрешение на уведомления.'
       : 'Grant notification listener access and notifications permission first.';
-  String get githubUrl => 'github.com/appsfolder/livebridge';
-  String get githubReleasesUrl => 'github.com/appsfolder/livebridge/releases';
+  String get githubUrl => 'github.com/Spottq/livebridge';
+  String get githubReleasesUrl => 'github.com/Spottq/livebridge/releases';
   String get downloadPageUrl => 'appsfolder.github.io/livebridge';
   String get reportBug => isRu ? 'Сообщить о баге' : 'Report a bug';
   String get bugReportCopied => isRu
@@ -87,15 +87,6 @@ class AppStrings {
   String backgroundWarningBody(String deviceLabel) => isRu
       ? 'Для $deviceLabel нужно вручную разрешить автозапуск и работу без ограничений в фоне, иначе Live Updates могут не появляться или зависать.'
       : 'On $deviceLabel, allow autostart and unrestricted background activity, otherwise Live Updates may stop appearing or freeze.';
-  String get samsungWarningTitle => isRu
-      ? 'Для Samsung есть версия лучше'
-      : 'A better build is available for Samsung';
-  String get samsungWarningBody => isRu
-      ? 'Для Samsung доступна специальная сборка LiveBridge с улучшенной поддержкой Samsung-функций. Лучше установить ее вместо обычной версии.'
-      : 'There is a dedicated LiveBridge build for Samsung devices with improved Samsung-specific support. It is recommended over the regular build.';
-  String get samsungWarningAction =>
-      isRu ? 'Открыть загрузки' : 'Get Samsung build';
-
   String get accessTitle => isRu ? 'Разрешения' : 'Permissions';
   String get accessSubtitle => isRu
       ? 'Без этих трёх разрешений конвертация будет работать нестабильно.'
@@ -119,25 +110,6 @@ class AppStrings {
   String get keepAliveForegroundInactiveSubtitle => isRu
       ? 'Включите LiveBridge, чтобы режим начал работать.'
       : 'Enable the LiveBridge for this mode to take effect.';
-  String get networkSpeedTitle => isRu ? 'Скорость сети' : 'Network speed';
-  String get networkSpeedSubtitle => isRu
-      ? 'Показывает загрузку и отдачу как отдельный Live Update в статус-баре.'
-      : 'Shows current download and upload as a separate Live Update in the status bar.';
-  String get networkSpeedInactiveSubtitle => isRu
-      ? 'Включите LiveBridge, чтобы монитор скорости начал работать.'
-      : 'Enable LiveBridge for the network speed monitor to start working.';
-  String get networkSpeedThresholdTitle =>
-      isRu ? 'Минимальная скорость для показа' : 'Minimum speed to show';
-  String get networkSpeedThresholdSubtitle => isRu
-      ? 'Лайв-элемент появится, когда суммарная скорость загрузки и отдачи достигнет этого порога.'
-      : 'The live element appears when combined download and upload reach this threshold.';
-  String get networkSpeedThresholdAlways =>
-      isRu ? 'Показывать всегда' : 'Always show';
-  String get smartExternalDevicesIgnoreDebuggingTitle =>
-      isRu ? 'Игнорировать отладку' : 'Ignore debugging';
-  String get smartExternalDevicesIgnoreDebuggingSubtitle => isRu
-      ? 'Не показывать Live для USB debugging, wireless debugging, ADB и похожих системных уведомлений.'
-      : 'Skip Live updates for USB debugging, wireless debugging, ADB, and similar system notifications.';
   String get syncDndTitle => isRu ? 'Синхронизировать DnD' : 'Sync DnD';
   String get syncDndSubtitle => isRu
       ? 'Если на смартфоне включен режим Не беспокоить, уведомления LiveBridge не показываются.'
@@ -147,9 +119,17 @@ class AppStrings {
   String get updateChecksSubtitle => isRu
       ? 'Проверять обновления при входе и не чаще одного раза в 6 часов.'
       : 'Check updates on app start, and no more than once every 6 hours.';
+  String get samsungRemoteParserTitle =>
+      isRu ? 'Samsung RemoteViews репарсер' : 'Samsung RemoteViews reparser';
+  String get samsungRemoteParserSubtitle => isRu
+      ? 'Использует Samsung ongoingActivity extras и RemoteViews для более точного парсинга уведомлений.'
+      : 'Uses Samsung ongoingActivity extras and RemoteViews for improved parsing on One UI.';
   String updateAvailableBanner(String version) => isRu
       ? 'Доступно обновление${version.isNotEmpty ? ': $version' : ''}'
       : 'Update available${version.isNotEmpty ? ': $version' : ''}';
+  String get samsungUpdateInstallToast => isRu
+      ? 'Пожалуйста, установите версию для Samsung, а не универсальную.'
+      : 'Please install the Samsung build instead of the universal one.';
   String get experimentalTitle => isRu ? 'Экспериментальное' : 'Experimental';
   String get animatedIslandTitle =>
       isRu ? 'Анимированный остров' : 'Animated island';
@@ -302,16 +282,67 @@ class AppStrings {
   String get smartVpnSubtitle => isRu
       ? 'Показывает входящий/исходящий трафик в формате *b/s.'
       : 'Shows incoming/outgoing traffic speed in *b/s format.';
+  String get networkSpeedCardTitle =>
+      isRu ? 'Скорость интернета' : 'Network speed';
+  String get networkSpeedEnabledTitle => isRu
+      ? 'Показывать скорость интернета в Now Bar'
+      : 'Show network speed in Now Bar';
+  String get networkSpeedEnabledSubtitle => isRu
+      ? 'Запускает отдельное уведомление с текущей скоростью сети и выводит его в Now Bar.'
+      : 'Runs a dedicated ongoing notification with current network speed and surfaces it in the Now Bar.';
+  String get networkSpeedThresholdTitle =>
+      isRu ? 'Минимальная скорость для показа' : 'Minimum speed to show';
+  String get networkSpeedThresholdSubtitle => isRu
+      ? 'Live-индикатор появится, когда суммарная скорость download и upload достигнет этого порога.'
+      : 'The live element appears when combined download and upload reach this threshold.';
+  String get networkSpeedThresholdAlways =>
+      isRu ? 'Показывать всегда' : 'Always show';
+  String get networkSpeedDisplayContentTitle =>
+      isRu ? 'Отображаемый контент' : 'Display content';
+  String get networkSpeedDisplayModeTotal =>
+      isRu ? 'Общая скорость' : 'Total speed';
+  String get networkSpeedDisplayModeUpload =>
+      isRu ? 'Только upload' : 'Upload only';
+  String get networkSpeedDisplayModeDownload =>
+      isRu ? 'Только download' : 'Download only';
+  String get networkSpeedUploadPrefixTitle =>
+      isRu ? 'Префикс upload' : 'Upload prefix';
+  String get networkSpeedDownloadPrefixTitle =>
+      isRu ? 'Префикс download' : 'Download prefix';
+  String get networkSpeedUnitTitle => isRu ? 'Единица скорости' : 'Speed unit';
+  String get networkSpeedUnitAuto => isRu ? 'Авто' : 'Auto';
+  String get networkSpeedUnitBytes => isRu ? 'B/s' : 'B/s';
+  String get networkSpeedUnitKilobytes => isRu ? 'KB/s' : 'KB/s';
+  String get networkSpeedUnitMegabytes => isRu ? 'MB/s' : 'MB/s';
+  String get networkSpeedUnitGigabytes => isRu ? 'GB/s' : 'GB/s';
+  String networkSpeedCurrentValue(String value) =>
+      isRu ? 'Сейчас: "$value"' : 'Current: "$value"';
+  String get networkSpeedPrioritizeUploadTitle =>
+      isRu ? 'Сначала показывать upload' : 'Prioritize upload speed';
+  String get networkSpeedPrioritizeUploadSubtitle => isRu
+      ? 'В режиме общей скорости upload будет стоять перед download.'
+      : 'In total mode, upload speed is shown before download.';
+  String get networkSpeedLockscreenOnlyTitle =>
+      isRu ? 'Отображать только на локскрине' : 'Display only on lock screen';
+  String get networkSpeedLockscreenOnlySubtitle => isRu
+      ? 'При разблокированном экране индикатор скорости полностью скрывается и возвращается только на локскрине.'
+      : 'When the device is unlocked, network speed is hidden completely and returns only on the lock screen.';
+  String get networkSpeedDisableChipBackgroundTitle =>
+      isRu ? 'Отключить фон chips' : 'Disable chip background';
+  String get networkSpeedDisableChipBackgroundSubtitle => isRu
+      ? 'Убирает плашку у чипов скорости в Now Bar, но оставляет статичный цвет у иконки в развернутом уведомлении.'
+      : 'Removes the pill background from the network speed chips in Now Bar while keeping a fixed accent behind the icon in the expanded notification.';
   String get smartNavigationDisabledSubtitle => isRu
       ? 'Сначала включите умное распознавание.'
       : 'Enable smart status detection first.';
   String get smartDetectionDisabledSubtitle => isRu
-      ? 'Отключено в режиме "Прогресс".'
-      : 'Disabled while "Progress" mode is enabled.';
+      ? 'Отключено в режиме "Нативный прогресс".'
+      : 'Disabled while "Native progress" mode is enabled.';
   String get conflictingModesHint => isRu
-      ? 'Чтобы работали текстовые статусы, отключите режим "Прогресс".'
-      : 'Turn off "Progress" mode to enable food/taxi/navigation text status recognition.';
-  String get onlyProgressTitle => isRu ? 'Прогресс' : 'Progress';
+      ? 'Чтобы работали текстовые статусы, отключите режим "Нативный прогресс".'
+      : 'Turn off "Native progress" mode to enable food/taxi/navigation text status recognition.';
+  String get onlyProgressTitle =>
+      isRu ? 'Нативный прогресс' : 'Native progress';
   String get onlyProgressSubtitle => isRu
       ? 'Если включено, конвертируются только уведомления с системным прогрессбаром.'
       : 'When enabled, only notifications with a system progress bar are converted.';

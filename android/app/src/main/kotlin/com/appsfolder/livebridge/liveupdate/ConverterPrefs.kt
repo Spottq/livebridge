@@ -295,14 +295,6 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_SMART_EXTERNAL_DEVICES_ENABLED, value).apply()
     }
 
-    fun getSmartExternalDevicesIgnoreDebugging(): Boolean {
-        return prefs.getBoolean(KEY_SMART_EXTERNAL_DEVICES_IGNORE_DEBUGGING, true)
-    }
-
-    fun setSmartExternalDevicesIgnoreDebugging(value: Boolean) {
-        prefs.edit().putBoolean(KEY_SMART_EXTERNAL_DEVICES_IGNORE_DEBUGGING, value).apply()
-    }
-
     fun getSmartVpnEnabled(): Boolean {
         return prefs.getBoolean(KEY_SMART_VPN_ENABLED, true)
     }
@@ -522,8 +514,6 @@ class ConverterPrefs(context: Context) {
         private const val KEY_SMART_NAVIGATION_ENABLED = "smart_navigation_enabled"
         private const val KEY_SMART_WEATHER_ENABLED = "smart_weather_enabled"
         private const val KEY_SMART_EXTERNAL_DEVICES_ENABLED = "smart_external_devices_enabled"
-        private const val KEY_SMART_EXTERNAL_DEVICES_IGNORE_DEBUGGING =
-            "smart_external_devices_ignore_debugging"
         private const val KEY_SMART_VPN_ENABLED = "smart_vpn_enabled"
         private const val KEY_OTP_DETECTION_ENABLED = "otp_detection_enabled"
         private const val KEY_OTP_AUTO_COPY_ENABLED = "otp_auto_copy_enabled"

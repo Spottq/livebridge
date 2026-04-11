@@ -36,7 +36,7 @@ import com.kakao.taxi.liveupdate.LiveParserDictionary
 import com.kakao.taxi.liveupdate.LiveParserDictionaryLoader
 import com.kakao.taxi.liveupdate.LiveUpdateNotifier
 import com.kakao.taxi.liveupdate.LiveUpdateNotificationListenerService
-import com.kakao.taxi.liveupdate.networkspeed.NetworkSpeedController
+import com.kakao.taxi.liveupdate.NetworkSpeedForegroundService
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -65,7 +65,7 @@ class MainActivity : FlutterActivity() {
         val prefs = ConverterPrefs(applicationContext)
         initializeKeepAliveDefaultIfNeeded(prefs)
         syncKeepAliveForegroundService(prefs)
-        syncNetworkSpeedForegroundService(prefs)
+        syncNetworkSpeedService(prefs)
         clearDynamicLauncherShortcuts()
         LiveBridgeTileService.requestStateSync(applicationContext)
     }
@@ -248,45 +248,62 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getNetworkSpeedEnabled" -> res.success(prefs.getNetworkSpeedEnabled())
+            "setNetworkSpeedEnabled" -> {
+                prefs.setNetworkSpeedEnabled(call.argument<Boolean>("value") ?: false)
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
+            "getNetworkSpeedMinThresholdBytesPerSecond" ->
+                res.success(prefs.getNetworkSpeedMinThresholdBytesPerSecond())
+            "setNetworkSpeedMinThresholdBytesPerSecond" -> {
+                prefs.setNetworkSpeedMinThresholdBytesPerSecond(
+                    call.argument<Number>("value")?.toLong() ?: 0L
+                )
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
             "getNetworkSpeedDisplayMode" -> res.success(prefs.getNetworkSpeedDisplayMode())
             "setNetworkSpeedDisplayMode" -> {
                 prefs.setNetworkSpeedDisplayMode(call.argument<String>("value"))
-                syncNetworkSpeedForegroundService(prefs)
+                syncNetworkSpeedService(prefs)
                 res.success(true)
             }
 
             "getNetworkSpeedUploadPrefix" -> res.success(prefs.getNetworkSpeedUploadPrefix())
             "setNetworkSpeedUploadPrefix" -> {
                 prefs.setNetworkSpeedUploadPrefix(call.argument<String>("value"))
-                syncNetworkSpeedForegroundService(prefs)
+                syncNetworkSpeedService(prefs)
                 res.success(true)
             }
 
             "getNetworkSpeedDownloadPrefix" -> res.success(prefs.getNetworkSpeedDownloadPrefix())
             "setNetworkSpeedDownloadPrefix" -> {
                 prefs.setNetworkSpeedDownloadPrefix(call.argument<String>("value"))
-                syncNetworkSpeedForegroundService(prefs)
+                syncNetworkSpeedService(prefs)
                 res.success(true)
             }
 
             "getNetworkSpeedUnit" -> res.success(prefs.getNetworkSpeedUnit())
             "setNetworkSpeedUnit" -> {
                 prefs.setNetworkSpeedUnit(call.argument<String>("value"))
-                syncNetworkSpeedForegroundService(prefs)
+                syncNetworkSpeedService(prefs)
                 res.success(true)
             }
 
             "getNetworkSpeedPrioritizeUpload" -> res.success(prefs.getNetworkSpeedPrioritizeUpload())
             "setNetworkSpeedPrioritizeUpload" -> {
                 prefs.setNetworkSpeedPrioritizeUpload(call.argument<Boolean>("value") ?: false)
-                syncNetworkSpeedForegroundService(prefs)
+                syncNetworkSpeedService(prefs)
                 res.success(true)
             }
 
             "getNetworkSpeedLockscreenOnly" -> res.success(prefs.getNetworkSpeedLockscreenOnly())
             "setNetworkSpeedLockscreenOnly" -> {
                 prefs.setNetworkSpeedLockscreenOnly(call.argument<Boolean>("value") ?: false)
-                syncNetworkSpeedForegroundService(prefs)
+                syncNetworkSpeedService(prefs)
                 res.success(true)
             }
 
@@ -294,7 +311,7 @@ class MainActivity : FlutterActivity() {
                 res.success(prefs.getNetworkSpeedChipBackgroundDisabled())
             "setNetworkSpeedChipBackgroundDisabled" -> {
                 prefs.setNetworkSpeedChipBackgroundDisabled(call.argument<Boolean>("value") ?: false)
-                syncNetworkSpeedForegroundService(prefs)
+                syncNetworkSpeedService(prefs)
                 res.success(true)
             }
 
@@ -314,30 +331,6 @@ class MainActivity : FlutterActivity() {
                 val value = call.argument<Boolean>("value") ?: false
                 prefs.setKeepAliveForegroundEnabled(value)
                 syncKeepAliveForegroundService(prefs)
-                res.success(true)
-            }
-
-            "getNetworkSpeedEnabled" -> {
-                syncNetworkSpeedForegroundService(prefs)
-                res.success(prefs.getNetworkSpeedEnabled())
-            }
-
-            "setNetworkSpeedEnabled" -> {
-                val value = call.argument<Boolean>("value") ?: false
-                prefs.setNetworkSpeedEnabled(value)
-                syncNetworkSpeedForegroundService(prefs)
-                res.success(true)
-            }
-
-            "getNetworkSpeedMinThresholdBytesPerSecond" -> {
-                syncNetworkSpeedForegroundService(prefs)
-                res.success(prefs.getNetworkSpeedMinThresholdBytesPerSecond())
-            }
-
-            "setNetworkSpeedMinThresholdBytesPerSecond" -> {
-                val value = call.argument<Number>("value")?.toLong() ?: 0L
-                prefs.setNetworkSpeedMinThresholdBytesPerSecond(value)
-                syncNetworkSpeedForegroundService(prefs)
                 res.success(true)
             }
 
@@ -447,14 +440,6 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
-            "getSmartExternalDevicesIgnoreDebugging" -> res.success(
-                prefs.getSmartExternalDevicesIgnoreDebugging()
-            )
-            "setSmartExternalDevicesIgnoreDebugging" -> {
-                prefs.setSmartExternalDevicesIgnoreDebugging(call.argument<Boolean>("value") ?: true)
-                res.success(true)
-            }
-
             "getSmartVpnEnabled" -> res.success(prefs.getSmartVpnEnabled())
             "setSmartVpnEnabled" -> {
                 prefs.setSmartVpnEnabled(call.argument<Boolean>("value") ?: true)
@@ -550,8 +535,12 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun syncNetworkSpeedForegroundService(prefs: ConverterPrefs) {
-        NetworkSpeedController.sync(applicationContext, prefs)
+    private fun syncNetworkSpeedService(prefs: ConverterPrefs) {
+        if (prefs.getNetworkSpeedEnabled()) {
+            NetworkSpeedForegroundService.sync(applicationContext)
+        } else {
+            NetworkSpeedForegroundService.stop(applicationContext)
+        }
     }
 
     private fun initializeKeepAliveDefaultIfNeeded(prefs: ConverterPrefs) {
@@ -571,7 +560,7 @@ class MainActivity : FlutterActivity() {
             requestNotificationListenerRebind()
         }
         syncKeepAliveForegroundService(prefs)
-        syncNetworkSpeedForegroundService(prefs)
+        syncNetworkSpeedService(prefs)
         LiveBridgeTileService.requestStateSync(applicationContext)
     }
 

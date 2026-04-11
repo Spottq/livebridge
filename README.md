@@ -3,16 +3,6 @@
 
 LiveBridge is a Flutter Android app with native Kotlin logic that converts regular notifications into Android Live Updates (Live Activity-like UX on Android 16+)
 
-## Download
-
-If you just want to install the app, use the download page:
-
-- https://appsfolder.github.io/livebridge/
-
-## For Users
-
-LiveBridge is made for users first. You do not need to build the project yourself unless you want to contribute or test version changes.
-
 ## Screenshots
 
 ### First Slide
@@ -60,8 +50,6 @@ LiveBridge is made for users first. You do not need to build the project yoursel
 
 ## Quick Start
 
-Developer setup:
-
 ```bash
 flutter pub get
 flutter run
@@ -108,4 +96,3 @@ For stable behavior, the app usually needs:
 
 - [D4vidDf](https://github.com/D4vidDf/HyperIsland-ToolKit) for the Hyper Island toolkit
 - [RossSihovsk](https://github.com/RossSihovsk/LiveMedia) for the Live Media
-- [realMoai](https://github.com/realMoai/NowbarMeter) & [Mystery00](https://github.com/Mystery00/PixelMeter) for the Network stats
