@@ -45,7 +45,6 @@ import kotlin.random.Random
 object LiveUpdateNotifier {
     const val CHANNEL_ID = "livebridge_promoted_updates"
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
-    private const val SAMSUNG_ICON_TRAY_SIZE = 48
 
     private const val CHANNEL_NAME = "LiveBridge Updates"
     private const val TAG = "LiveUpdateNotifier"
@@ -831,13 +830,7 @@ object LiveUpdateNotifier {
             else ->
                 samsungLargeIcon ?: sourceLargeIcon
         }
-        val baseCompactIcon = resolveCompactIcon(
-            iconSource = appPresentationOverride.iconSource,
-            sourceSmallIcon = sourceSmallIcon,
-            samsungSmallIcon = samsungSmallIcon,
-            appSmallIcon = appSmallIcon
-        )
-        val nowBarAppIcon = baseCompactIcon
+        val nowBarAppIcon = appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
         val nowBarRightIcon = if (samsungBridge.hasCustomRemoteCard) {
             null
         } else {
@@ -923,8 +916,25 @@ object LiveUpdateNotifier {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
-        val preferredSmallIcon = baseCompactIcon
-        val preferredChipIcon = baseCompactIcon
+        val preferredSmallIcon = when (appPresentationOverride.iconSource) {
+            NotificationIconSource.NOTIFICATION -> when {
+                shouldTryNavigationArrowIcon ->
+                    appSmallIcon ?: navigationDrawable?.icon ?: samsungSmallIcon ?: sourceSmallIcon
+                samsungBridge.hasCustomRemoteCard ->
+                    appSmallIcon ?: samsungSmallIcon ?: sourceSmallIcon
+                else ->
+                    appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
+            }
+            NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
+        }
+        val preferredChipIcon = when {
+            shouldTryNavigationArrowIcon ->
+                navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+            samsungBridge.hasCustomRemoteCard ->
+                samsungSmallIcon ?: sourceSmallIcon ?: appSmallIcon
+            else ->
+                sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+        }
         applySmallIcon(context, builder, preferredSmallIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
 
@@ -980,12 +990,8 @@ object LiveUpdateNotifier {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
         if (smartShortTextOverride != null && !hasProgress) {
-            if (smartRuleId != "weather") {
-                builder.setContentText(smartShortTextOverride)
-            }
-            builder.setShortCriticalText(
-                limitIslandText(smartShortTextOverride, aospCuttingEnabled)
-            )
+            builder.setContentText(smartShortTextOverride)
+            builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
         }
 
         if (samsungBridge.enabled) {
@@ -2499,23 +2505,27 @@ object LiveUpdateNotifier {
                 null
             } else {
                 val packageContext = context.createPackageContext(normalizedPackage, 0)
-                val standardBitmap = runCatching {
+                val resourceIcon = runCatching {
+                    IconCompat.createWithResource(
+                        packageContext.resources,
+                        normalizedPackage,
+                        appInfo.icon
+                    )
+                }.getOrNull()
+                val bitmap = runCatching {
                     packageContext.getDrawable(appInfo.icon)?.let { drawable ->
                         drawableToBitmap(drawable, clipAdaptiveIcon = true)
                     }
                 }.getOrNull()
-                val compactBitmap =
-                    resolveSamsungTrayIconBitmap(context, normalizedPackage) ?: standardBitmap
-                val smallIcon =
-                    compactBitmap?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
-                val largeIconBitmap = standardBitmap ?: compactBitmap
+                val smallIcon = resourceIcon
+                    ?: bitmap?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
 
-                if (smallIcon == null && largeIconBitmap == null) {
+                if (smallIcon == null && bitmap == null) {
                     null
                 } else {
                     AppIconAssets(
                         smallIcon = smallIcon,
-                        largeIconBitmap = largeIconBitmap
+                        largeIconBitmap = bitmap
                     )
                 }
             }
@@ -2603,40 +2613,6 @@ object LiveUpdateNotifier {
             icon = icon,
             bitmap = bitmap
         )
-    }
-
-    private fun resolveCompactIcon(
-        iconSource: NotificationIconSource,
-        sourceSmallIcon: IconCompat?,
-        samsungSmallIcon: IconCompat?,
-        appSmallIcon: IconCompat?
-    ): IconCompat? {
-        return when (iconSource) {
-            NotificationIconSource.NOTIFICATION ->
-                sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
-            NotificationIconSource.APP ->
-                appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
-        }
-    }
-
-    private fun resolveSamsungTrayIconBitmap(context: Context, packageName: String): Bitmap? {
-        if (!SamsungLiveUpdateReparser.isSamsungDevice()) {
-            return null
-        }
-
-        return runCatching {
-            val method = context.packageManager.javaClass.getMethod(
-                "semGetApplicationIconForIconTray",
-                String::class.java,
-                Int::class.javaPrimitiveType
-            )
-            val drawable = method.invoke(
-                context.packageManager,
-                packageName,
-                SAMSUNG_ICON_TRAY_SIZE
-            ) as? Drawable
-            drawable?.let(::drawableToBitmap)
-        }.getOrNull()
     }
 
     private fun iconToBitmap(context: Context, icon: android.graphics.drawable.Icon): Bitmap? {
