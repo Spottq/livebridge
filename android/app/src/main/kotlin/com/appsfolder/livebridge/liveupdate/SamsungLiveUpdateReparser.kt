@@ -32,6 +32,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         disableMiniRemoteView: Boolean = false,
         keepCollapsedRemoteView: Boolean = false,
         preferExpandedRemoteBody: Boolean = false,
+        reuseNotificationRemoteViews: Boolean = true,
         showSmallIcon: Boolean = true,
         allowNowBarProgress: Boolean = true
     ) {
@@ -53,12 +54,14 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
                 resolveRemoteView(source, preferCompactNowBarRemoteView)
             }
         val hasNowBarRemoteView = nowBarRemoteView != null
-        applyRemoteViewsIfPresent(
-            builder = builder,
-            source = source,
-            keepCollapsedRemoteView = keepCollapsedRemoteView,
-            preferExpandedRemoteBody = preferExpandedRemoteBody
-        )
+        if (reuseNotificationRemoteViews) {
+            applyRemoteViewsIfPresent(
+                builder = builder,
+                source = source,
+                keepCollapsedRemoteView = keepCollapsedRemoteView,
+                preferExpandedRemoteBody = preferExpandedRemoteBody
+            )
+        }
 
         val extras = Bundle().apply {
             putInt(KEY_STYLE, 1)
