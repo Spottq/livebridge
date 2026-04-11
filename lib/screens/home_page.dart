@@ -1811,6 +1811,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                     const SizedBox(height: 24),
                     _buildRulesCard(s),
                     const SizedBox(height: 24),
+                    _buildBypassCard(s),
+                    const SizedBox(height: 24),
                     _buildSmartCard(s),
                     const SizedBox(height: 24),
                     _buildNetworkSpeedCard(s),
@@ -2564,20 +2566,24 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             ),
             expandedChild: _buildNativeProgressOptionsPanel(s),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(height: 1),
-          ),
-          Text(
-            s.bypassRulesTitle,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBypassCard(AppStrings s) {
+    final Color color = Theme.of(context).colorScheme.onSurfaceVariant;
+
+    return _sectionPanel(
+      sectionId: 'bypass',
+      title: s.bypassRulesTitle,
+      icon: Icons.content_paste_go_rounded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
           Text(
             s.bypassRulesSubtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(color: color, fontSize: 13),
           ),
           const SizedBox(height: 16),
           _selectedAppsNote(

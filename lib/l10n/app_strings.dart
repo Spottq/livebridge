@@ -137,18 +137,19 @@ class AppStrings {
       : 'Please install the Samsung build instead of the universal one.';
   String get experimentalTitle => isRu ? 'Экспериментальное' : 'Experimental';
   String get notificationDedupTitle =>
-      isRu ? 'Notification dedup' : 'Notification dedup';
+      isRu ? 'Удаление дублей уведомлений' : 'Notification dedup';
   String get notificationDedupSubtitle => isRu
-      ? 'Убирает оригинальные clearable-уведомления, если LiveBridge уже показал свой OTP или статус.'
+      ? 'Убирает исходные смахиваемые уведомления, если LiveBridge уже показал свой OTP или статус.'
       : 'Dismisses original clearable notifications after LiveBridge mirrors an OTP or status update.';
-  String get notificationDedupModeLabel => isRu ? 'Режим dedup' : 'Dedup mode';
+  String get notificationDedupModeLabel =>
+      isRu ? 'Режим удаления дублей' : 'Dedup mode';
   String get notificationDedupModeOtpStatus =>
       isRu ? 'OTP и статусы' : 'OTP and statuses';
   String get notificationDedupModeOtpOnly => isRu ? 'Только OTP' : 'OTP only';
   String get notificationDedupStatusesTitle =>
-      isRu ? 'Также статусы' : 'Also dedup statuses';
+      isRu ? 'Также для статусов' : 'Also dedup statuses';
   String get notificationDedupStatusesSubtitle => isRu
-      ? 'Если выключено, dedup применяется только к OTP-кодам.'
+      ? 'Если выключено, удаление дублей применяется только к OTP-кодам.'
       : 'When disabled, dedup is applied only to OTP notifications.';
   String get animatedIslandTitle =>
       isRu ? 'Анимированный остров' : 'Animated island';
@@ -196,7 +197,7 @@ class AppStrings {
   String get appPresentationIconSourceLabel =>
       isRu ? 'Источник иконки' : 'Icon source';
   String get appPresentationTextTitle =>
-      isRu ? 'Title уведомления' : 'Notification title';
+      isRu ? 'Заголовок уведомления' : 'Notification title';
   String get appPresentationTextNotification =>
       isRu ? 'Текст уведомления' : 'Notification text';
   String get appPresentationIconNotification =>
@@ -223,9 +224,10 @@ class AppStrings {
   String get otpPickerTitle =>
       isRu ? 'Приложения для кодов' : 'Choose apps for code detection';
   String get bypassPickerTitle =>
-      isRu ? 'Приложения bypass' : 'Choose apps for bypass';
-  String get notificationDedupPickerTitle =>
-      isRu ? 'Приложения для dedup' : 'Choose apps for notification dedup';
+      isRu ? 'Приложения обхода' : 'Choose apps for bypass';
+  String get notificationDedupPickerTitle => isRu
+      ? 'Приложения для удаления дублей'
+      : 'Choose apps for notification dedup';
   String get applySelection => isRu ? 'Применить выбор' : 'Apply selection';
   String get searchAppHint =>
       isRu ? 'Поиск по названию или пакету' : 'Search by app or package';
@@ -264,9 +266,9 @@ class AppStrings {
   String get pickAppsHint => isRu
       ? 'Список используется только в режимах "Только указанные" или "Исключить".'
       : 'Selected app list is used only for include/exclude modes.';
-  String get bypassRulesTitle => isRu ? 'Bypass-приложения' : 'Bypass apps';
+  String get bypassRulesTitle => isRu ? 'Приложения обхода' : 'Bypass apps';
   String get bypassRulesSubtitle => isRu
-      ? 'Приложения из списка всегда конвертируются в Live вне зависимости от настроек.'
+      ? 'Приложения из списка всегда конвертируются в Live независимо от остальных настроек.'
       : 'Listed apps are always converted to Live independently of settings.';
   String get saveRules => isRu ? 'Сохранить' : 'Save';
 
@@ -281,7 +283,7 @@ class AppStrings {
       ? 'Преобразует текстовые статусы еды, такси и навигации в единый Live-прогресс.'
       : 'Converts text-only food/taxi/navigation status notifications into a single Live.';
   String get smartMediaPlaybackTitle =>
-      isRu ? 'Media Playback' : 'Media Playback';
+      isRu ? 'Воспроизведение медиа' : 'Media Playback';
   String get smartMediaPlaybackSubtitle => isRu
       ? 'Преобразует уведомления медиаплеера в Live. На некоторых OEM может дублировать нативный плеер.'
       : 'Converts media playback notifications into Live. On some OEMs this may duplicate native media UI.';
@@ -297,7 +299,7 @@ class AppStrings {
   String get smartExternalDevicesTitle =>
       isRu ? 'Внешние устройства' : 'External devices';
   String get smartExternalDevicesSubtitle => isRu
-      ? 'Показывает статус connected/connecting и имя устройства в острове.'
+      ? 'Показывает статус подключения и имя устройства в острове.'
       : 'Shows connected/connecting status and device name in island.';
   String get smartVpnTitle => isRu ? 'VPN-сервисы' : 'VPN services';
   String get smartVpnSubtitle => isRu
@@ -314,7 +316,7 @@ class AppStrings {
   String get networkSpeedThresholdTitle =>
       isRu ? 'Минимальная скорость для показа' : 'Minimum speed to show';
   String get networkSpeedThresholdSubtitle => isRu
-      ? 'Live-индикатор появится, когда суммарная скорость download и upload достигнет этого порога.'
+      ? 'Live-индикатор появится, когда суммарная скорость загрузки и отдачи достигнет этого порога.'
       : 'The live element appears when combined download and upload reach this threshold.';
   String get networkSpeedThresholdAlways =>
       isRu ? 'Показывать всегда' : 'Always show';
@@ -323,13 +325,13 @@ class AppStrings {
   String get networkSpeedDisplayModeTotal =>
       isRu ? 'Общая скорость' : 'Total speed';
   String get networkSpeedDisplayModeUpload =>
-      isRu ? 'Только upload' : 'Upload only';
+      isRu ? 'Только отдача' : 'Upload only';
   String get networkSpeedDisplayModeDownload =>
-      isRu ? 'Только download' : 'Download only';
+      isRu ? 'Только загрузка' : 'Download only';
   String get networkSpeedUploadPrefixTitle =>
-      isRu ? 'Префикс upload' : 'Upload prefix';
+      isRu ? 'Префикс отдачи' : 'Upload prefix';
   String get networkSpeedDownloadPrefixTitle =>
-      isRu ? 'Префикс download' : 'Download prefix';
+      isRu ? 'Префикс загрузки' : 'Download prefix';
   String get networkSpeedUnitTitle => isRu ? 'Единица скорости' : 'Speed unit';
   String get networkSpeedUnitAuto => isRu ? 'Авто' : 'Auto';
   String get networkSpeedUnitBytes => isRu ? 'B/s' : 'B/s';
@@ -339,17 +341,18 @@ class AppStrings {
   String networkSpeedCurrentValue(String value) =>
       isRu ? 'Сейчас: "$value"' : 'Current: "$value"';
   String get networkSpeedPrioritizeUploadTitle =>
-      isRu ? 'Сначала показывать upload' : 'Prioritize upload speed';
+      isRu ? 'Сначала показывать отдачу' : 'Prioritize upload speed';
   String get networkSpeedPrioritizeUploadSubtitle => isRu
-      ? 'В режиме общей скорости upload будет стоять перед download.'
+      ? 'В режиме общей скорости отдача будет стоять перед загрузкой.'
       : 'In total mode, upload speed is shown before download.';
-  String get networkSpeedLockscreenOnlyTitle =>
-      isRu ? 'Отображать только на локскрине' : 'Display only on lock screen';
+  String get networkSpeedLockscreenOnlyTitle => isRu
+      ? 'Показывать только на экране блокировки'
+      : 'Display only on lock screen';
   String get networkSpeedLockscreenOnlySubtitle => isRu
-      ? 'При разблокированном экране индикатор скорости полностью скрывается и возвращается только на локскрине.'
+      ? 'При разблокированном экране индикатор скорости полностью скрывается и возвращается только на экране блокировки.'
       : 'When the device is unlocked, network speed is hidden completely and returns only on the lock screen.';
   String get networkSpeedDisableChipBackgroundTitle =>
-      isRu ? 'Отключить фон chips' : 'Disable chip background';
+      isRu ? 'Отключить фон чипов' : 'Disable chip background';
   String get networkSpeedDisableChipBackgroundSubtitle => isRu
       ? 'Убирает плашку у чипов скорости в Now Bar, но оставляет статичный цвет у иконки в развернутом уведомлении.'
       : 'Removes the pill background from the network speed chips in Now Bar while keeping a fixed accent behind the icon in the expanded notification.';
@@ -379,7 +382,7 @@ class AppStrings {
       ? 'LiveBridge плохо работает на устройствах с AOSP. Можете продолжить, но за последствия я не отвечаю.'
       : 'LiveBridge is not designed for AOSP. You can continue, but i am not responsible for any bugs.';
   String get blockedBypassAction =>
-      isRu ? 'Все равно родолжить' : 'Continue anyway';
+      isRu ? 'Все равно продолжить' : 'Continue anyway';
   String get blockedBypassSaveFailed =>
       isRu ? 'Не удалось сохранить выбор.' : 'Unable to save your choice.';
 
