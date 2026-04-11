@@ -28,6 +28,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         progressMax: Int,
         showSecondaryInNowBar: Boolean = true,
         preferCompactNowBarRemoteView: Boolean = false,
+        disableNowBarRemoteView: Boolean = false,
         disableMiniRemoteView: Boolean = false,
         keepCollapsedRemoteView: Boolean = false,
         showSmallIcon: Boolean = true,
@@ -45,7 +46,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
 
         val nowBarRemoteView =
-            if (disableMiniRemoteView) {
+            if (disableMiniRemoteView || disableNowBarRemoteView) {
                 null
             } else {
                 resolveRemoteView(source, preferCompactNowBarRemoteView)

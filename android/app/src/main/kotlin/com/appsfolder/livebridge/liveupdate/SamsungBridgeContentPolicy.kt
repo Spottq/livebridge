@@ -8,6 +8,7 @@ internal data class SamsungBridgeTexts(
     val nowBarSecondaryText: String?,
     val showSecondaryInNowBar: Boolean,
     val preferCompactNowBarRemoteView: Boolean,
+    val disableNowBarRemoteView: Boolean,
     val disableMiniRemoteView: Boolean,
     val showMiniIcon: Boolean,
     val showSmallIcon: Boolean,
@@ -83,10 +84,10 @@ internal object SamsungBridgeContentPolicy {
                 remoteViewMiniTextPair != null ||
                         (smartRuleId != "navigation" && !hasCustomRemoteCard),
             preferCompactNowBarRemoteView =
-                !useTextOnlyMiniNowBar && (
-                    isTwoGisPackage ||
-                        (sourcePackageName == YANDEX_MAPS_PACKAGE && !hasProgress)
+                !useTextOnlyMiniNowBar && !isTwoGisPackage && (
+                    sourcePackageName == YANDEX_MAPS_PACKAGE && !hasProgress
                 ),
+            disableNowBarRemoteView = isTwoGisPackage,
             disableMiniRemoteView = useTextOnlyMiniNowBar,
             showMiniIcon = !useTextOnlyMiniNowBar,
             showSmallIcon = !useTextOnlyMiniNowBar,
