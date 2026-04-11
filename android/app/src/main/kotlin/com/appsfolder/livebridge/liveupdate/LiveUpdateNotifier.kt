@@ -822,9 +822,16 @@ object LiveUpdateNotifier {
         val samsungSmallIcon = samsungReparse?.icon
         val samsungLargeIcon = samsungReparse?.largeIconBitmap
         val remoteDrawableAssets = resolveRemoteDrawableAssets(context, sbn)
+        val sourcePackageNameLower = sbn.packageName.lowercase(Locale.ROOT)
+        val isSamsungTwoGis =
+            samsungBridge.enabled &&
+                    samsungBridge.hasCustomRemoteCard &&
+                    sourcePackageNameLower == TWO_GIS_PACKAGE
         val shouldTryNavigationArrowIcon =
-            appPresentationOverride.iconSource == NotificationIconSource.NOTIFICATION &&
+            (appPresentationOverride.iconSource == NotificationIconSource.NOTIFICATION ||
+                    isSamsungTwoGis) &&
                     (smartRuleId == "navigation" ||
+                            isSamsungTwoGis ||
                             (allowNavigationIconHeuristics &&
                                     isLikelyNavigationPackage(sbn.packageName, parserDictionary)))
         val navigationDrawable =
@@ -842,17 +849,24 @@ object LiveUpdateNotifier {
                 samsungLargeIcon ?: sourceLargeIcon
         }
         val nowBarAppIcon = appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
-        val nowBarRightIcon = if (samsungBridge.hasCustomRemoteCard) {
+        val nowBarRightIcon = if (samsungBridge.hasCustomRemoteCard && !isSamsungTwoGis) {
             null
         } else {
-            samsungReparse?.rightIcon
-                ?: remoteDrawableAssets?.icon
-                ?: preferredLargeIcon?.let { bitmap ->
-                    runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
-                }
+            if (isSamsungTwoGis) {
+                navigationDrawable?.icon
+                    ?: samsungReparse?.rightIcon
+                    ?: remoteDrawableAssets?.icon
+                    ?: preferredLargeIcon?.let { bitmap ->
+                        runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
+                    }
+            } else {
+                samsungReparse?.rightIcon
+                    ?: remoteDrawableAssets?.icon
+                    ?: preferredLargeIcon?.let { bitmap ->
+                        runCatching { IconCompat.createWithBitmap(bitmap) }.getOrNull()
+                    }
+            }
         }
-
-        val sourcePackageNameLower = sbn.packageName.lowercase(Locale.ROOT)
         val appName = resolveAppName(context, sbn.packageName)
         val allowRemoteViewTextFallback = shouldTryNavigationArrowIcon
         val baseTitle = titleOverride?.takeIf { it.isNotBlank() }
@@ -867,6 +881,7 @@ object LiveUpdateNotifier {
         ) {
             resolveTwoGisRemoteViewMiniTextPair(
                 notification = source,
+                displayTitle = baseTitle,
                 displayText = baseText,
                 parserDictionary = parserDictionary
             )
@@ -940,8 +955,10 @@ object LiveUpdateNotifier {
         ) {
             resolveTwoGisRemoteViewMiniTextPair(
                 notification = source,
+                displayTitle = displayTitle,
                 displayText = displayText,
-                parserDictionary = parserDictionary
+                parserDictionary = parserDictionary,
+                preferInstructionPrimary = true
             )
         } else {
             null
@@ -2326,34 +2343,99 @@ object LiveUpdateNotifier {
 
     private fun resolveTwoGisRemoteViewMiniTextPair(
         notification: Notification,
+        displayTitle: String,
         displayText: String,
-        parserDictionary: LiveParserDictionary
+        parserDictionary: LiveParserDictionary,
+        preferInstructionPrimary: Boolean = false
     ): SamsungMiniTextPair? {
+        val titleLines = splitNotificationTextLines(displayTitle)
         val displayLines = splitNotificationTextLines(displayText)
         val remoteLines = extractRemoteViewTexts(notification)
             .flatMap(::splitNotificationTextLines)
             .filterNot(::isTwoGisAuxiliaryLine)
 
         val candidateLines = linkedSetOf<String>()
+        titleLines.forEach(candidateLines::add)
         displayLines.forEach(candidateLines::add)
         remoteLines.forEach(candidateLines::add)
         if (candidateLines.isEmpty()) {
             return null
         }
 
+        if (!preferInstructionPrimary) {
+            val primary = sequenceOf(
+                displayLines.firstOrNull(),
+                candidateLines.firstOrNull { candidate ->
+                    isNavigationDistanceText(candidate, parserDictionary)
+                },
+                candidateLines.firstOrNull()
+            ).firstOrNull { !it.isNullOrEmpty() } ?: return null
+
+            val secondary = sequenceOf(
+                displayLines.drop(1).firstOrNull(),
+                candidateLines.firstOrNull { candidate ->
+                    !isEquivalentText(candidate, primary) &&
+                            !isNavigationDistanceText(candidate, parserDictionary) &&
+                            !isTwoGisAuxiliaryLine(candidate)
+                }
+            ).firstOrNull { candidate ->
+                !candidate.isNullOrEmpty() && !isEquivalentText(candidate, primary)
+            } ?: return null
+
+            return SamsungMiniTextPair(primaryText = primary, secondaryText = secondary)
+        }
+
+        val combinedText = buildString {
+            if (displayTitle.isNotBlank()) {
+                appendLine(displayTitle)
+            }
+            if (displayText.isNotBlank()) {
+                appendLine(displayText)
+            }
+            remoteLines.forEach(::appendLine)
+        }
+
         val primary = sequenceOf(
-            displayLines.firstOrNull(),
-            candidateLines.firstOrNull { candidate ->
-                isNavigationDistanceText(candidate, parserDictionary)
+            extractNavigationInstructionToken(combinedText, parserDictionary),
+            titleLines.firstOrNull { candidate ->
+                !isNavigationDistanceText(candidate, parserDictionary)
             },
+            displayLines.firstOrNull { candidate ->
+                !isNavigationDistanceText(candidate, parserDictionary)
+            },
+            remoteLines.firstOrNull { candidate ->
+                !isNavigationDistanceText(candidate, parserDictionary)
+            },
+            titleLines.firstOrNull(),
+            displayLines.firstOrNull(),
+            remoteLines.firstOrNull(),
             candidateLines.firstOrNull()
         ).firstOrNull { !it.isNullOrEmpty() } ?: return null
 
         val secondary = sequenceOf(
-            displayLines.drop(1).firstOrNull(),
+            titleLines.firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary) &&
+                        isNavigationDistanceText(candidate, parserDictionary)
+            },
+            displayLines.firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary) &&
+                        isNavigationDistanceText(candidate, parserDictionary)
+            },
+            remoteLines.firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary) &&
+                        isNavigationDistanceText(candidate, parserDictionary)
+            },
+            titleLines.drop(1).firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary)
+            },
+            displayLines.firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary)
+            },
+            remoteLines.firstOrNull { candidate ->
+                !isEquivalentText(candidate, primary)
+            },
             candidateLines.firstOrNull { candidate ->
                 !isEquivalentText(candidate, primary) &&
-                        !isNavigationDistanceText(candidate, parserDictionary) &&
                         !isTwoGisAuxiliaryLine(candidate)
             }
         ).firstOrNull { candidate ->
