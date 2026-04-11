@@ -1728,7 +1728,7 @@ object LiveUpdateNotifier {
         )
 
         return when {
-            !deviceName.isNullOrBlank() && !statusText.isNullOrBlank() -> "$deviceName В· $statusText"
+            !deviceName.isNullOrBlank() && !statusText.isNullOrBlank() -> "$deviceName · $statusText"
             !deviceName.isNullOrBlank() -> deviceName
             else -> statusText
         }
@@ -2588,7 +2588,7 @@ object LiveUpdateNotifier {
 
         return when {
             normalizedLeading.isNotEmpty() && normalizedEtaDistance.isNotEmpty() ->
-                "$normalizedLeading В· $normalizedEtaDistance"
+                "$normalizedLeading · $normalizedEtaDistance"
             normalizedEtaDistance.isNotEmpty() -> normalizedEtaDistance
             normalizedLeading.isNotEmpty() -> normalizedLeading
             normalizedFallback.isNotEmpty() -> normalizedFallback
@@ -2710,7 +2710,9 @@ object LiveUpdateNotifier {
 
     private fun isTwoGisAuxiliaryLine(value: String): Boolean {
         val normalized = normalizeComparableText(value)
-        return normalized == "2gis" || isLikelyNotificationActionLabel(normalized)
+        return normalized == "2gis" ||
+                isLikelyNotificationActionLabel(normalized) ||
+                isRemoteViewMethodLabel(normalized)
     }
 
     private fun isLikelyNotificationActionLabel(normalizedValue: String): Boolean {
@@ -2719,6 +2721,13 @@ object LiveUpdateNotifier {
                 normalizedValue == "stop navigation" ||
                 normalizedValue.contains("route") ||
                 normalizedValue.contains("navigation")
+    }
+
+    private fun isRemoteViewMethodLabel(normalizedValue: String): Boolean {
+        return normalizedValue == "settext" ||
+                normalizedValue == "setcharsequence" ||
+                normalizedValue.startsWith("settext ") ||
+                normalizedValue.startsWith("setcharsequence ")
     }
 
     private fun resolveRemoteViewMiniTextPair(
@@ -3180,6 +3189,7 @@ object LiveUpdateNotifier {
                     methodName.contains("settext") || methodName.contains("setcharsequence")
 
                 for (field in fields) {
+                    val fieldName = field.name.removePrefix("m").lowercase(Locale.ROOT)
                     val value = runCatching {
                         field.isAccessible = true
                         field.get(action)
@@ -3188,7 +3198,9 @@ object LiveUpdateNotifier {
                         is CharSequence -> {
                             val normalized = NotificationTextNormalizer.normalize(value)
                             if (!normalized.isNullOrEmpty()) {
-                                if (likelyTextAction || field.name.contains("text", ignoreCase = true)) {
+                                if (!shouldSkipRemoteViewText(fieldName, normalized, methodName) &&
+                                    (likelyTextAction || field.name.contains("text", ignoreCase = true))
+                                ) {
                                     values.add(normalized)
                                 }
                             }
@@ -3204,6 +3216,17 @@ object LiveUpdateNotifier {
             }
         }
         return values.toList()
+    }
+
+    private fun shouldSkipRemoteViewText(
+        fieldName: String,
+        text: String,
+        methodName: String
+    ): Boolean {
+        val normalizedText = text.lowercase(Locale.ROOT)
+        return fieldName == "methodname" ||
+                normalizedText == methodName ||
+                isRemoteViewMethodLabel(normalizedText)
     }
 
     private fun extractFirstRemoteDrawableResId(

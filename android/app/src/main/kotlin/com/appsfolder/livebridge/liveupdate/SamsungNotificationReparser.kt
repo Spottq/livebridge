@@ -263,6 +263,7 @@ internal object SamsungNotificationReparser {
                     methodName.contains("settext") || methodName.contains("setcharsequence")
 
                 for (field in fields) {
+                    val fieldName = field.name.removePrefix("m").lowercase(Locale.ROOT)
                     val value = runCatching {
                         field.isAccessible = true
                         field.get(action)
@@ -271,6 +272,7 @@ internal object SamsungNotificationReparser {
                         is CharSequence -> {
                             val normalized = normalizeText(value)
                             if (normalized != null &&
+                                !shouldSkipRemoteViewText(fieldName, normalized, methodName) &&
                                 (likelyTextMethod || field.name.contains("text", ignoreCase = true))
                             ) {
                                 values.add(normalized)
@@ -287,6 +289,20 @@ internal object SamsungNotificationReparser {
             }
         }
         return values.toList()
+    }
+
+    private fun shouldSkipRemoteViewText(
+        fieldName: String,
+        text: String,
+        methodName: String
+    ): Boolean {
+        val normalizedText = text.lowercase(Locale.ROOT)
+        return fieldName == "methodname" ||
+                normalizedText == methodName ||
+                normalizedText == "settext" ||
+                normalizedText == "setcharsequence" ||
+                normalizedText.startsWith("settext ") ||
+                normalizedText.startsWith("setcharsequence ")
     }
 
     private fun extractFirstRemoteDrawableResId(
