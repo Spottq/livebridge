@@ -1047,6 +1047,12 @@ object LiveUpdateNotifier {
 
         val preferredSmallIcon = when (appPresentationOverride.iconSource) {
             NotificationIconSource.NOTIFICATION -> when {
+                isSamsungTwoGis ->
+                    sourceSmallIcon
+                        ?: navigationDrawable?.rawIcon
+                        ?: navigationDrawable?.icon
+                        ?: samsungSmallIcon
+                        ?: appSmallIcon
                 shouldTryNavigationArrowIcon ->
                     appSmallIcon ?: navigationDrawable?.icon ?: samsungSmallIcon ?: sourceSmallIcon
                 samsungBridge.hasCustomRemoteCard ->
@@ -1058,7 +1064,12 @@ object LiveUpdateNotifier {
         }
         val preferredChipIcon = when {
             isSamsungTwoGis ->
-                nowBarRightIcon ?: navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+                navigationDrawable?.rawIcon
+                    ?: nowBarRightIcon
+                    ?: navigationDrawable?.icon
+                    ?: sourceSmallIcon
+                    ?: samsungSmallIcon
+                    ?: appSmallIcon
             shouldTryNavigationArrowIcon ->
                 navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
             samsungBridge.hasCustomRemoteCard ->
@@ -2963,6 +2974,11 @@ object LiveUpdateNotifier {
         } catch (_: Exception) {
             null
         }
+        val rawIcon = rawBitmap?.let {
+            runCatching { IconCompat.createWithBitmap(it) }.getOrNull()
+        } ?: runCatching {
+            IconCompat.createWithResource(resources, sbn.packageName, drawableResId)
+        }.getOrNull()
         val bitmap = rawBitmap?.let(::tintBitmapWhite)
         val icon = bitmap?.let {
             runCatching { IconCompat.createWithBitmap(it) }.getOrNull()
@@ -2970,12 +2986,14 @@ object LiveUpdateNotifier {
             IconCompat.createWithResource(resources, sbn.packageName, drawableResId)
         }.getOrNull()
 
-        if (icon == null && bitmap == null) {
+        if (icon == null && bitmap == null && rawIcon == null && rawBitmap == null) {
             return null
         }
         return RemoteDrawableAssets(
             icon = icon,
-            bitmap = bitmap
+            bitmap = bitmap,
+            rawIcon = rawIcon,
+            rawBitmap = rawBitmap
         )
     }
 
@@ -4002,7 +4020,9 @@ object LiveUpdateNotifier {
 
     private data class RemoteDrawableAssets(
         val icon: IconCompat?,
-        val bitmap: Bitmap?
+        val bitmap: Bitmap?,
+        val rawIcon: IconCompat?,
+        val rawBitmap: Bitmap?
     )
 
     private data class SmartStageMatch(
