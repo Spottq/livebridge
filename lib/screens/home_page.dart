@@ -26,25 +26,32 @@ class LiveBridgeHomePage extends StatefulWidget {
 class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static const String _projectGithubUrl =
-      'https://github.com/Spottq/livebridge';
-  static const String _originalGithubUrl =
       'https://github.com/appsfolder/livebridge';
-  static const String _updateGithubReleasesUrl =
+  static const String _projectDownloadPageUrl =
       'https://appsfolder.github.io/livebridge/';
+  static const String _projectDownloadSectionUrl =
+      'https://appsfolder.github.io/livebridge/#download';
   static const String _projectGithubBugReportUrl =
-      'https://github.com/Spottq/livebridge/issues';
+      'https://github.com/appsfolder/livebridge/issues/new/choose?template=bug_report.yml';
   static const String _latestReleaseApiUrl =
       'https://api.github.com/repos/appsfolder/livebridge/releases/latest';
   static const String _dictionaryRawUrl =
-      'https://raw.githubusercontent.com/Spottq/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
+      'https://raw.githubusercontent.com/appsfolder/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
   static const bool _dictionaryAutoSyncEnabled = false;
   static const Duration _updateCheckInterval = Duration(hours: 6);
+  static const String _expandableSettingNativeProgress = 'native_progress';
+  static const String _expandableSettingNetworkSpeed = 'network_speed';
+  static const String _expandableSettingExternalDevices = 'external_devices';
   static const int _networkSpeedThresholdStepBytesPerSecond = 8 * 1024;
   static const int _networkSpeedThresholdMaxBytesPerSecond = 1024 * 1024;
 
   final TextEditingController _rulesController = TextEditingController();
   final TextEditingController _otpRulesController = TextEditingController();
   final TextEditingController _bypassRulesController = TextEditingController();
+  final ValueNotifier<int> _networkSpeedThresholdDraftBytesPerSecond =
+      ValueNotifier<int>(0);
+  final ValueNotifier<double> _networkSpeedThresholdSliderPosition =
+      ValueNotifier<double>(0);
 
   Timer? _statusRefreshTimer;
   Timer? _updateRefreshTimer;
@@ -57,32 +64,29 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _canPostPromoted = false;
   bool _converterEnabled = true;
   bool _keepAliveForegroundEnabled = false;
+  bool _networkSpeedEnabled = false;
+  int _networkSpeedMinThresholdBytesPerSecond = 0;
   bool _syncDndEnabled = false;
   bool _aospCuttingEnabled = false;
   bool _animatedIslandEnabled = false;
   bool _hyperBridgeEnabled = false;
   bool _onlyWithProgress = true;
   bool _textProgressEnabled = true;
-  bool _networkSpeedEnabled = false;
-  int _networkSpeedMinThresholdBytesPerSecond = 0;
-  bool _networkSpeedPrioritizeUpload = false;
-  bool _networkSpeedLockscreenOnly = false;
-  bool _networkSpeedChipBackgroundDisabled = false;
   bool _smartDetectionEnabled = true;
   bool _smartMediaPlaybackEnabled = false;
   bool _smartNavigationEnabled = true;
   bool _smartWeatherEnabled = true;
   bool _smartExternalDevicesEnabled = true;
+  bool _smartExternalDevicesIgnoreDebugging = true;
   bool _smartVpnEnabled = true;
   bool _otpDetectionEnabled = true;
   bool _otpAutoCopyEnabled = false;
   bool _hasCustomParserDictionary = false;
   bool _dictionaryActionInProgress = false;
   bool _showBackgroundWarning = false;
+  bool _showSamsungDeveloperWarning = false;
   bool _hidePromotedAccess = false;
-  bool _isSamsungDevice = false;
   bool _isAospDevice = false;
-  bool _samsungRemoteReparserEnabled = true;
   bool _updateChecksEnabled = true;
   bool _updateAvailable = false;
   String _latestReleaseVersion = '';
@@ -90,6 +94,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   String _deviceLabelForWarning = '';
   final Set<String> _expandedSections = <String>{};
   final Set<String> _expandedSelectedAppNotes = <String>{};
+  final Set<String> _expandedInlineSettings = <String>{};
   final Map<String, InstalledApp> _previewAppsByPackage =
       <String, InstalledApp>{};
   bool _expandedSectionsLoaded = false;
@@ -97,16 +102,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _didInitSectionDefaults = false;
   bool _previewAppsLoaded = false;
   bool _previewAppsLoading = false;
-  Future<void>? _previewAppsWarmupTask;
   PackageMode _packageMode = PackageMode.all;
   PackageMode _otpPackageMode = PackageMode.all;
-  NetworkSpeedDisplayMode _networkSpeedDisplayMode =
-      NetworkSpeedDisplayMode.total;
-  Set<NetworkSpeedUnit> _networkSpeedUnits = <NetworkSpeedUnit>{
-    NetworkSpeedUnit.auto,
-  };
-  String _networkSpeedUploadPrefix = '▲ ';
-  String _networkSpeedDownloadPrefix = '▼ ';
   late final AnimationController _masterBlockedShakeController;
   late final Animation<double> _masterBlockedShakeOffset;
   bool _masterBlockedHapticInProgress = false;
@@ -163,7 +160,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           ),
         );
     _refreshState();
-    unawaited(_ensurePreviewAppsLoaded(forceRefresh: true));
     _statusRefreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       _refreshState(showLoading: false);
     });
@@ -181,6 +177,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     _rulesController.dispose();
     _otpRulesController.dispose();
     _bypassRulesController.dispose();
+    _networkSpeedThresholdDraftBytesPerSecond.dispose();
+    _networkSpeedThresholdSliderPosition.dispose();
     super.dispose();
   }
 
@@ -189,7 +187,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     if (state == AppLifecycleState.resumed) {
       unawaited(_refreshState(showLoading: false));
       unawaited(_checkForUpdatesIfNeeded());
-      unawaited(_ensurePreviewAppsLoaded(forceRefresh: true));
     }
   }
 
@@ -221,6 +218,10 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getConverterEnabled();
       final bool keepAliveForegroundEnabled =
           await LiveBridgePlatform.getKeepAliveForegroundEnabled();
+      final bool networkSpeedEnabled =
+          await LiveBridgePlatform.getNetworkSpeedEnabled();
+      final int networkSpeedMinThresholdBytesPerSecond =
+          await LiveBridgePlatform.getNetworkSpeedMinThresholdBytesPerSecond();
       final bool syncDndEnabled = await LiveBridgePlatform.getSyncDndEnabled();
       final bool aospCuttingEnabled =
           await LiveBridgePlatform.getAospCuttingEnabled();
@@ -232,24 +233,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getOnlyWithProgress();
       final bool textProgressEnabled =
           await LiveBridgePlatform.getTextProgressEnabled();
-      final bool networkSpeedEnabled =
-          await LiveBridgePlatform.getNetworkSpeedEnabled();
-      final int networkSpeedMinThresholdBytesPerSecond =
-          await LiveBridgePlatform.getNetworkSpeedMinThresholdBytesPerSecond();
-      final String networkSpeedDisplayMode =
-          await LiveBridgePlatform.getNetworkSpeedDisplayMode();
-      final String networkSpeedUploadPrefix =
-          await LiveBridgePlatform.getNetworkSpeedUploadPrefix();
-      final String networkSpeedDownloadPrefix =
-          await LiveBridgePlatform.getNetworkSpeedDownloadPrefix();
-      final String networkSpeedUnit =
-          await LiveBridgePlatform.getNetworkSpeedUnit();
-      final bool networkSpeedPrioritizeUpload =
-          await LiveBridgePlatform.getNetworkSpeedPrioritizeUpload();
-      final bool networkSpeedLockscreenOnly =
-          await LiveBridgePlatform.getNetworkSpeedLockscreenOnly();
-      final bool networkSpeedChipBackgroundDisabled =
-          await LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
       final bool smartDetectionEnabled =
           await LiveBridgePlatform.getSmartStatusDetectionEnabled();
       final bool smartMediaPlaybackEnabled =
@@ -260,6 +243,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getSmartWeatherEnabled();
       final bool smartExternalDevicesEnabled =
           await LiveBridgePlatform.getSmartExternalDevicesEnabled();
+      final bool smartExternalDevicesIgnoreDebugging =
+          await LiveBridgePlatform.getSmartExternalDevicesIgnoreDebugging();
       final bool smartVpnEnabled =
           await LiveBridgePlatform.getSmartVpnEnabled();
       final bool otpDetectionEnabled =
@@ -284,8 +269,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.hasCustomParserDictionary();
       final bool backgroundWarningDismissed =
           await LiveBridgePlatform.getBackgroundWarningDismissed();
-      final bool samsungRemoteReparserEnabled =
-          await LiveBridgePlatform.getSamsungRemoteReparserEnabled();
       final bool hasExpandedSectionsState =
           await LiveBridgePlatform.hasExpandedSectionsState();
       final String expandedSectionsRaw = hasExpandedSectionsState
@@ -338,30 +321,28 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _canPostPromoted = canPostPromoted;
         _converterEnabled = converterEnabled;
         _keepAliveForegroundEnabled = keepAliveForegroundEnabled;
+        _networkSpeedEnabled = networkSpeedEnabled;
+        _networkSpeedMinThresholdBytesPerSecond =
+            networkSpeedMinThresholdBytesPerSecond;
+        _networkSpeedThresholdDraftBytesPerSecond.value =
+            networkSpeedMinThresholdBytesPerSecond;
+        _networkSpeedThresholdSliderPosition.value =
+            _networkSpeedSliderPositionForBytesPerSecond(
+              networkSpeedMinThresholdBytesPerSecond,
+            );
         _syncDndEnabled = syncDndEnabled;
         _aospCuttingEnabled = aospCuttingEnabled;
         _animatedIslandEnabled = animatedIslandEnabled;
         _hyperBridgeEnabled = hyperBridgeEnabled;
         _onlyWithProgress = onlyWithProgress;
         _textProgressEnabled = textProgressEnabled;
-        _networkSpeedEnabled = networkSpeedEnabled;
-        _networkSpeedMinThresholdBytesPerSecond =
-            networkSpeedMinThresholdBytesPerSecond;
-        _networkSpeedDisplayMode = NetworkSpeedDisplayModeId.from(
-          networkSpeedDisplayMode,
-        );
-        _networkSpeedUploadPrefix = networkSpeedUploadPrefix;
-        _networkSpeedDownloadPrefix = networkSpeedDownloadPrefix;
-        _networkSpeedUnits = NetworkSpeedUnitSelection.parse(networkSpeedUnit);
-        _networkSpeedPrioritizeUpload = networkSpeedPrioritizeUpload;
-        _networkSpeedLockscreenOnly = networkSpeedLockscreenOnly;
-        _networkSpeedChipBackgroundDisabled =
-            networkSpeedChipBackgroundDisabled;
         _smartDetectionEnabled = smartDetectionEnabled;
         _smartMediaPlaybackEnabled = smartMediaPlaybackEnabled;
         _smartNavigationEnabled = smartNavigationEnabled;
         _smartWeatherEnabled = smartWeatherEnabled;
         _smartExternalDevicesEnabled = smartExternalDevicesEnabled;
+        _smartExternalDevicesIgnoreDebugging =
+            smartExternalDevicesIgnoreDebugging;
         _smartVpnEnabled = smartVpnEnabled;
         _otpDetectionEnabled = otpDetectionEnabled;
         _otpAutoCopyEnabled = otpAutoCopyEnabled;
@@ -371,13 +352,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _currentAppVersion = currentAppVersion;
         _hasCustomParserDictionary = hasCustomParserDictionary;
         _hidePromotedAccess = deviceInfo.shouldHideLiveUpdatesPromotion;
-        _isSamsungDevice = deviceInfo.isSamsung;
         _isAospDevice = deviceInfo.isAospDevice;
-        _samsungRemoteReparserEnabled = samsungRemoteReparserEnabled;
         _showBackgroundWarning =
             !deviceInfo.isPixel &&
             !deviceInfo.isSamsung &&
             !backgroundWarningDismissed;
+        _showSamsungDeveloperWarning = deviceInfo.isSamsung;
         _deviceLabelForWarning = deviceInfo.label;
         _packageMode = packageMode;
         _otpPackageMode = otpPackageMode;
@@ -443,94 +423,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setTextProgressEnabled(value);
   }
 
-  Future<void> _setNetworkSpeedEnabled(bool value) async {
-    HapticFeedback.selectionClick();
-    setState(() => _networkSpeedEnabled = value);
-    await LiveBridgePlatform.setNetworkSpeedEnabled(value);
-  }
-
-  Future<void> _setNetworkSpeedMinThresholdBytesPerSecond(
-    int value, {
-    bool persist = true,
-  }) async {
-    final int normalized = value
-        .clamp(0, _networkSpeedThresholdMaxBytesPerSecond)
-        .toInt();
-    if (normalized != _networkSpeedMinThresholdBytesPerSecond) {
-      setState(() => _networkSpeedMinThresholdBytesPerSecond = normalized);
-    }
-    if (persist) {
-      await LiveBridgePlatform.setNetworkSpeedMinThresholdBytesPerSecond(
-        normalized,
-      );
-    }
-  }
-
-  Future<void> _setNetworkSpeedDisplayMode(
-    NetworkSpeedDisplayMode value,
-  ) async {
-    HapticFeedback.selectionClick();
-    setState(() => _networkSpeedDisplayMode = value);
-    await LiveBridgePlatform.setNetworkSpeedDisplayMode(value.id);
-  }
-
-  Future<void> _setNetworkSpeedUploadPrefix(String value) async {
-    HapticFeedback.selectionClick();
-    setState(() => _networkSpeedUploadPrefix = value);
-    await LiveBridgePlatform.setNetworkSpeedUploadPrefix(value);
-  }
-
-  Future<void> _setNetworkSpeedDownloadPrefix(String value) async {
-    HapticFeedback.selectionClick();
-    setState(() => _networkSpeedDownloadPrefix = value);
-    await LiveBridgePlatform.setNetworkSpeedDownloadPrefix(value);
-  }
-
-  Future<void> _setNetworkSpeedUnits(Set<NetworkSpeedUnit> values) async {
-    HapticFeedback.selectionClick();
-    setState(() => _networkSpeedUnits = Set<NetworkSpeedUnit>.from(values));
-    await LiveBridgePlatform.setNetworkSpeedUnit(
-      NetworkSpeedUnitSelection.encode(values),
-    );
-  }
-
-  Future<void> _setNetworkSpeedPrioritizeUpload(bool value) async {
-    HapticFeedback.selectionClick();
-    setState(() => _networkSpeedPrioritizeUpload = value);
-    await LiveBridgePlatform.setNetworkSpeedPrioritizeUpload(value);
-  }
-
-  Future<void> _setNetworkSpeedLockscreenOnly(bool value) async {
-    HapticFeedback.selectionClick();
-    setState(() => _networkSpeedLockscreenOnly = value);
-    await LiveBridgePlatform.setNetworkSpeedLockscreenOnly(value);
-  }
-
-  Future<void> _setNetworkSpeedChipBackgroundDisabled(bool value) async {
-    HapticFeedback.selectionClick();
-    setState(() => _networkSpeedChipBackgroundDisabled = value);
-    await LiveBridgePlatform.setNetworkSpeedChipBackgroundDisabled(value);
-  }
-
-  void _updateNetworkSpeedThresholdDraft(double sliderValue) {
-    final int snappedValue = _snapNetworkSpeedThresholdBytesPerSecond(
-      sliderValue,
-    );
-    if (snappedValue == _networkSpeedMinThresholdBytesPerSecond) {
-      return;
-    }
-
-    setState(() => _networkSpeedMinThresholdBytesPerSecond = snappedValue);
-
-    final int nowMs = DateTime.now().millisecondsSinceEpoch;
-    if (snappedValue != _lastNetworkSpeedSliderHapticValue &&
-        nowMs - _lastNetworkSpeedSliderHapticAtMs >= 72) {
-      _lastNetworkSpeedSliderHapticValue = snappedValue;
-      _lastNetworkSpeedSliderHapticAtMs = nowMs;
-      unawaited(LiveBridgeHaptics.selection());
-    }
-  }
-
   Future<void> _setConverterEnabled(bool value) async {
     if (!_canToggleMaster) return;
     LiveBridgeHaptics.toggle(value);
@@ -544,6 +436,42 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setKeepAliveForegroundEnabled(value);
   }
 
+  Future<void> _setNetworkSpeedEnabled(bool value) async {
+    LiveBridgeHaptics.toggle(value);
+    setState(() => _networkSpeedEnabled = value);
+    await LiveBridgePlatform.setNetworkSpeedEnabled(value);
+  }
+
+  Future<void> _setNetworkSpeedMinThresholdBytesPerSecond(
+    int value, {
+    bool persist = true,
+  }) async {
+    final int normalized = value
+        .clamp(0, _networkSpeedThresholdMaxBytesPerSecond)
+        .toInt();
+    if (normalized == _networkSpeedMinThresholdBytesPerSecond && !persist) {
+      return;
+    }
+
+    if (normalized != _networkSpeedMinThresholdBytesPerSecond) {
+      setState(() => _networkSpeedMinThresholdBytesPerSecond = normalized);
+    }
+    if (_networkSpeedThresholdDraftBytesPerSecond.value != normalized) {
+      _networkSpeedThresholdDraftBytesPerSecond.value = normalized;
+    }
+    final double sliderPosition = _networkSpeedSliderPositionForBytesPerSecond(
+      normalized,
+    );
+    if (_networkSpeedThresholdSliderPosition.value != sliderPosition) {
+      _networkSpeedThresholdSliderPosition.value = sliderPosition;
+    }
+    if (persist) {
+      await LiveBridgePlatform.setNetworkSpeedMinThresholdBytesPerSecond(
+        normalized,
+      );
+    }
+  }
+
   Future<void> _setSyncDnd(bool value) async {
     LiveBridgeHaptics.toggle(value);
     setState(() => _syncDndEnabled = value);
@@ -554,12 +482,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     LiveBridgeHaptics.toggle(value);
     setState(() => _aospCuttingEnabled = value);
     await LiveBridgePlatform.setAospCuttingEnabled(value);
-  }
-
-  Future<void> _setSamsungRemoteReparserEnabled(bool value) async {
-    HapticFeedback.selectionClick();
-    setState(() => _samsungRemoteReparserEnabled = value);
-    await LiveBridgePlatform.setSamsungRemoteReparserEnabled(value);
   }
 
   Future<void> _setAnimatedIsland(bool value) async {
@@ -809,7 +731,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
 
       return _GithubReleaseInfo(
         version: version,
-        htmlUrl: _updateGithubReleasesUrl,
+        htmlUrl: _projectDownloadPageUrl,
       );
     } catch (_) {
       return null;
@@ -925,89 +847,16 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setSmartExternalDevicesEnabled(value);
   }
 
+  Future<void> _setSmartExternalDevicesIgnoreDebugging(bool value) async {
+    LiveBridgeHaptics.toggle(value);
+    setState(() => _smartExternalDevicesIgnoreDebugging = value);
+    await LiveBridgePlatform.setSmartExternalDevicesIgnoreDebugging(value);
+  }
+
   Future<void> _setSmartVpn(bool value) async {
     LiveBridgeHaptics.toggle(value);
     setState(() => _smartVpnEnabled = value);
     await LiveBridgePlatform.setSmartVpnEnabled(value);
-  }
-
-  String _networkSpeedDisplayModeLabel(
-    NetworkSpeedDisplayMode mode,
-    AppStrings s,
-  ) {
-    switch (mode) {
-      case NetworkSpeedDisplayMode.total:
-        return s.networkSpeedDisplayModeTotal;
-      case NetworkSpeedDisplayMode.upload:
-        return s.networkSpeedDisplayModeUpload;
-      case NetworkSpeedDisplayMode.download:
-        return s.networkSpeedDisplayModeDownload;
-    }
-  }
-
-  String _networkSpeedUnitOptionLabel(NetworkSpeedUnit unit, AppStrings s) {
-    switch (unit) {
-      case NetworkSpeedUnit.auto:
-        return s.networkSpeedUnitAuto;
-      case NetworkSpeedUnit.bytes:
-        return s.networkSpeedUnitBytes;
-      case NetworkSpeedUnit.kilobytes:
-        return s.networkSpeedUnitKilobytes;
-      case NetworkSpeedUnit.megabytes:
-        return s.networkSpeedUnitMegabytes;
-      case NetworkSpeedUnit.gigabytes:
-        return s.networkSpeedUnitGigabytes;
-    }
-  }
-
-  Future<void> _openNetworkSpeedPrefixSheet({
-    required AppStrings s,
-    required bool forUpload,
-  }) async {
-    final String currentValue = forUpload
-        ? _networkSpeedUploadPrefix
-        : _networkSpeedDownloadPrefix;
-    final String? updated = await showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      builder: (BuildContext context) => _NetworkSpeedPrefixSheet(
-        title: forUpload
-            ? s.networkSpeedUploadPrefixTitle
-            : s.networkSpeedDownloadPrefixTitle,
-        initialValue: currentValue,
-        defaultValue: forUpload
-            ? kDefaultNetworkSpeedUploadPrefix
-            : kDefaultNetworkSpeedDownloadPrefix,
-        resetLabel: s.resetToDefault,
-        saveLabel: s.save,
-      ),
-    );
-
-    if (updated == null || updated == currentValue) {
-      return;
-    }
-    if (forUpload) {
-      await _setNetworkSpeedUploadPrefix(updated);
-    } else {
-      await _setNetworkSpeedDownloadPrefix(updated);
-    }
-  }
-
-  Widget _buildNetworkSpeedUnitDropdown(AppStrings s) {
-    return _NetworkSpeedUnitDropdown(
-      label: s.networkSpeedUnitTitle,
-      values: _networkSpeedUnits,
-      optionLabelBuilder: (NetworkSpeedUnit unit) =>
-          _networkSpeedUnitOptionLabel(unit, s),
-      onChanged: (Set<NetworkSpeedUnit> values) {
-        unawaited(_setNetworkSpeedUnits(values));
-      },
-    );
   }
 
   Future<void> _setOtpDetection(bool value) async {
@@ -1022,6 +871,41 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setOtpAutoCopyEnabled(value);
   }
 
+  void _toggleInlineSetting(String settingId) {
+    final bool opening = !_expandedInlineSettings.contains(settingId);
+    setState(() {
+      if (opening) {
+        _expandedInlineSettings.add(settingId);
+      } else {
+        _expandedInlineSettings.remove(settingId);
+      }
+    });
+    unawaited(LiveBridgeHaptics.expand(opening));
+  }
+
+  void _updateNetworkSpeedThresholdDraft(double sliderValue) {
+    if (_networkSpeedThresholdSliderPosition.value != sliderValue) {
+      _networkSpeedThresholdSliderPosition.value = sliderValue;
+    }
+
+    final int snappedValue = _snapNetworkSpeedThresholdBytesPerSecond(
+      sliderValue,
+    );
+    if (_networkSpeedThresholdDraftBytesPerSecond.value == snappedValue) {
+      return;
+    }
+
+    _networkSpeedThresholdDraftBytesPerSecond.value = snappedValue;
+
+    final int nowMs = DateTime.now().millisecondsSinceEpoch;
+    if (snappedValue != _lastNetworkSpeedSliderHapticValue &&
+        nowMs - _lastNetworkSpeedSliderHapticAtMs >= 72) {
+      _lastNetworkSpeedSliderHapticValue = snappedValue;
+      _lastNetworkSpeedSliderHapticAtMs = nowMs;
+      unawaited(LiveBridgeHaptics.selection());
+    }
+  }
+
   Set<String> _parsePackagesFromInput(String value) {
     return value
         .split(RegExp(r'[,\n;\s]+'))
@@ -1031,45 +915,28 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   }
 
   void _cachePreviewApps(List<InstalledApp> apps) {
-    _previewAppsByPackage.clear();
     for (final InstalledApp app in apps) {
       _previewAppsByPackage[app.packageName.toLowerCase()] = app;
     }
     _previewAppsLoaded = true;
   }
 
-  Future<void> _ensurePreviewAppsLoaded({bool forceRefresh = false}) {
-    if (!forceRefresh && _previewAppsLoaded) {
-      return Future<void>.value();
+  Future<void> _ensurePreviewAppsLoaded() async {
+    if (_previewAppsLoaded || _previewAppsLoading) {
+      return;
     }
-    final Future<void>? inFlight = _previewAppsWarmupTask;
-    if (_previewAppsLoading && inFlight != null) {
-      return inFlight;
-    }
-
     _previewAppsLoading = true;
-    final Future<void> task = () async {
-      try {
-        final List<InstalledApp> apps =
-            await LiveBridgePlatform.getInstalledApps(
-              forceRefresh: forceRefresh,
-            );
-        if (mounted) {
-          setState(() => _cachePreviewApps(apps));
-        } else {
-          _cachePreviewApps(apps);
-        }
-      } catch (_) {
-      } finally {
-        _previewAppsLoading = false;
-        _previewAppsWarmupTask = null;
-        if (mounted) {
-          setState(() {});
-        }
+    try {
+      final List<InstalledApp> apps =
+          await LiveBridgePlatform.getInstalledApps();
+      _cachePreviewApps(apps);
+    } catch (_) {
+    } finally {
+      _previewAppsLoading = false;
+      if (mounted) {
+        setState(() {});
       }
-    }();
-    _previewAppsWarmupTask = task;
-    return task;
+    }
   }
 
   Future<void> _openPackagePicker({
@@ -1078,8 +945,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     if (!await _ensureAppListAccess()) return;
     LiveBridgeHaptics.openSurface();
 
-    await _ensurePreviewAppsLoaded();
-    final List<InstalledApp> apps = _previewAppsByPackage.values.toList();
+    final List<InstalledApp> apps = await LiveBridgePlatform.getInstalledApps(
+      forceRefresh: true,
+    );
     if (!mounted || apps.isEmpty) {
       if (mounted) _snack(AppStrings.of(context).appsLoadFailed);
       return;
@@ -1403,32 +1271,11 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  Future<void> _openProjectGithub() async {
+  Future<void> _openGithub() async {
     LiveBridgeHaptics.openSurface();
-    final Uri uri = Uri.parse(_projectGithubUrl);
-    final bool opened = await _launchGithubUrl(uri);
-    if (!opened && mounted) {
-      _snack(AppStrings.of(context).githubOpenFailed);
-    }
-  }
-
-  Future<void> _openUpdateGithub() async {
-    LiveBridgeHaptics.openSurface();
-    if (_isSamsungDevice && _hasUpdateAlert) {
-      await LiveBridgePlatform.showToast(
-        AppStrings.of(context).samsungUpdateInstallToast,
-      );
-    }
-    final Uri uri = Uri.parse(_updateGithubReleasesUrl);
-    final bool opened = await _launchGithubUrl(uri);
-    if (!opened && mounted) {
-      _snack(AppStrings.of(context).githubOpenFailed);
-    }
-  }
-
-  Future<void> _openOriginalGithub() async {
-    LiveBridgeHaptics.openSurface();
-    final Uri uri = Uri.parse(_originalGithubUrl);
+    final Uri uri = Uri.parse(
+      _hasUpdateAlert ? _projectDownloadPageUrl : _projectGithubUrl,
+    );
     final bool opened = await _launchGithubUrl(uri);
     if (!opened && mounted) {
       _snack(AppStrings.of(context).githubOpenFailed);
@@ -1512,6 +1359,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         'smart_navigation_enabled': _smartNavigationEnabled,
         'smart_weather_enabled': _smartWeatherEnabled,
         'smart_external_devices_enabled': _smartExternalDevicesEnabled,
+        'smart_external_devices_ignore_debugging':
+            _smartExternalDevicesIgnoreDebugging,
         'smart_vpn_enabled': _smartVpnEnabled,
         'otp_detection_enabled': _otpDetectionEnabled,
         'otp_auto_copy_enabled': _otpAutoCopyEnabled,
@@ -1573,71 +1422,19 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     setState(() => _showBackgroundWarning = false);
   }
 
-  Widget _buildGithubLinkCard({
-    required String caption,
-    required String url,
-    required VoidCallback onTap,
-    bool highlight = false,
-  }) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final Color accentColor = highlight
-        ? colorScheme.error
-        : colorScheme.onSurfaceVariant;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          caption,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 6),
-        InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: highlight
-                  ? colorScheme.errorContainer.withValues(alpha: 0.55)
-                  : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(14),
-              border: highlight
-                  ? Border.all(
-                      color: colorScheme.error.withValues(alpha: 0.28),
-                      width: 1.1,
-                    )
-                  : null,
-            ),
-            child: Row(
-              children: <Widget>[
-                Icon(Icons.code_rounded, size: 20, color: accentColor),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    url,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: highlight ? colorScheme.error : null,
-                    ),
-                  ),
-                ),
-                Icon(Icons.open_in_new_rounded, size: 18, color: accentColor),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   void _snack(String value) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value)));
+  }
+
+  Future<void> _openSamsungDownloads() async {
+    LiveBridgeHaptics.openSurface();
+    final bool opened = await _launchGithubUrl(
+      Uri.parse(_projectDownloadSectionUrl),
+    );
+    if (!opened && mounted) {
+      _snack(AppStrings.of(context).githubOpenFailed);
+    }
   }
 
   Set<String> _parseExpandedSections(String raw) {
@@ -1725,14 +1522,18 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                       const SizedBox(height: 16),
                       _buildBackgroundWarning(s),
                     ],
+                    if (_showSamsungDeveloperWarning) ...<Widget>[
+                      const SizedBox(height: 16),
+                      _buildSamsungDeveloperWarning(s),
+                    ],
                     const SizedBox(height: 24),
                     _buildAccessCard(s),
                     const SizedBox(height: 24),
                     _buildRulesCard(s),
                     const SizedBox(height: 24),
-                    _buildSmartCard(s),
+                    _buildBypassCard(s),
                     const SizedBox(height: 24),
-                    _buildNetworkSpeedCard(s),
+                    _buildSmartCard(s),
                     const SizedBox(height: 24),
                     _buildOtpCard(s),
                     const SizedBox(height: 24),
@@ -1943,25 +1744,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             activeThumbColor: colorScheme.primary,
           ),
           const SizedBox(height: 8),
-          SwitchListTile.adaptive(
-            value: _updateChecksEnabled,
-            onChanged: _setUpdateChecksEnabled,
-            title: Text(
-              s.updateChecksTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              s.updateChecksSubtitle,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: colorScheme.primary,
-          ),
           if (_isAospDevice) ...<Widget>[
-            const SizedBox(height: 8),
             SwitchListTile.adaptive(
               value: _aospCuttingEnabled,
               onChanged: _setAospCutting,
@@ -1980,6 +1763,24 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               activeThumbColor: colorScheme.primary,
             ),
           ],
+          const SizedBox(height: 8),
+          SwitchListTile.adaptive(
+            value: _updateChecksEnabled,
+            onChanged: _setUpdateChecksEnabled,
+            title: Text(
+              s.updateChecksTitle,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              s.updateChecksSubtitle,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: colorScheme.primary,
+          ),
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
@@ -2054,25 +1855,55 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             ),
             const SizedBox(height: 8),
           ],
-          _buildGithubLinkCard(
-            caption: _hasUpdateAlert ? 'Update source' : 'Forked by',
-            url: _hasUpdateAlert
-                ? s.downloadPageUrl
-                : 'github.com/Spottq/livebridge',
-            onTap: () {
-              unawaited(
-                _hasUpdateAlert ? _openUpdateGithub() : _openProjectGithub(),
-              );
-            },
-            highlight: _hasUpdateAlert,
-          ),
-          const SizedBox(height: 10),
-          _buildGithubLinkCard(
-            caption: 'Original app:',
-            url: 'github.com/appsfolder/livebridge',
-            onTap: () {
-              unawaited(_openOriginalGithub());
-            },
+          InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: _openGithub,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: _hasUpdateAlert
+                    ? colorScheme.errorContainer.withValues(alpha: 0.55)
+                    : colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.3,
+                      ),
+                borderRadius: BorderRadius.circular(14),
+                border: _hasUpdateAlert
+                    ? Border.all(
+                        color: colorScheme.error.withValues(alpha: 0.28),
+                        width: 1.1,
+                      )
+                    : null,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    Icons.code_rounded,
+                    size: 20,
+                    color: _hasUpdateAlert
+                        ? colorScheme.error
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _hasUpdateAlert ? s.downloadPageUrl : s.githubUrl,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: _hasUpdateAlert ? colorScheme.error : null,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.open_in_new_rounded,
+                    size: 18,
+                    color: _hasUpdateAlert
+                        ? colorScheme.error
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -2212,26 +2043,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             contentPadding: EdgeInsets.zero,
             activeThumbColor: colorScheme.primary,
           ),
-          if (_isSamsungDevice) ...<Widget>[
-            const SizedBox(height: 8),
-            SwitchListTile.adaptive(
-              value: _samsungRemoteReparserEnabled,
-              onChanged: _setSamsungRemoteReparserEnabled,
-              title: Text(
-                s.samsungRemoteParserTitle,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(
-                s.samsungRemoteParserSubtitle,
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 13,
-                ),
-              ),
-              contentPadding: EdgeInsets.zero,
-              activeThumbColor: colorScheme.primary,
-            ),
-          ],
         ],
       ),
     );
@@ -2295,6 +2106,78 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     );
   }
 
+  Widget _buildSamsungDeveloperWarning(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool isDark = colorScheme.brightness == Brightness.dark;
+    const Color accent = Color(0xFFF59E0B);
+    final Color background = Color.alphaBlend(
+      accent.withValues(alpha: isDark ? 0.2 : 0.16),
+      colorScheme.surface,
+    );
+    final Color border = accent.withValues(alpha: isDark ? 0.38 : 0.28);
+    final Color accentText = isDark
+        ? const Color(0xFFFFD791)
+        : const Color(0xFF8B4A00);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: isDark ? 0.18 : 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.download_rounded, color: accentText),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  s.samsungWarningTitle,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: accentText,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  s.samsungWarningBody,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    height: 1.4,
+                    color: colorScheme.onSurface.withValues(alpha: 0.82),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _openSamsungDownloads,
+                    icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                    label: Text(s.samsungWarningAction),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildAccessCard(AppStrings s) {
     return _sectionPanel(
       sectionId: 'access',
@@ -2329,12 +2212,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     );
   }
 
-  Widget _buildModernDropdown<T>({
+  Widget _buildModernDropdown({
     required String label,
-    required T currentValue,
-    required List<DropdownMenuItem<T>> items,
-    required void Function(T?) onChanged,
+    required PackageMode currentValue,
+    required void Function(PackageMode?) onChanged,
     VoidCallback? onTap,
+    required AppStrings s,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final bool isLight = colorScheme.brightness == Brightness.light;
@@ -2348,7 +2231,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       alpha: isLight ? 0.5 : 0.65,
     );
 
-    return DropdownButtonFormField<T>(
+    return DropdownButtonFormField<PackageMode>(
       initialValue: currentValue,
       onTap: onTap,
       onChanged: onChanged,
@@ -2385,7 +2268,15 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           vertical: 16,
         ),
       ),
-      items: items,
+      items: PackageMode.values.map((mode) {
+        return DropdownMenuItem<PackageMode>(
+          value: mode,
+          child: Text(
+            _getModeLabel(mode, s),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -2397,21 +2288,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _buildModernDropdown<PackageMode>(
+          _buildModernDropdown(
             label: s.modeLabel,
             currentValue: _packageMode,
-            items: PackageMode.values.map((PackageMode mode) {
-              return DropdownMenuItem<PackageMode>(
-                value: mode,
-                child: Text(
-                  _getModeLabel(mode, s),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              );
-            }).toList(),
             onChanged: (val) {
               if (val != null) {
                 LiveBridgeHaptics.selection();
@@ -2422,6 +2301,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               }
             },
             onTap: LiveBridgeHaptics.openSurface,
+            s: s,
           ),
           const SizedBox(height: 16),
           _selectedAppsNote(
@@ -2446,55 +2326,35 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(height: 1),
           ),
-          SwitchListTile.adaptive(
-            value: _onlyWithProgress,
-            onChanged: _setOnlyWithProgress,
-            title: Text(
-              s.onlyProgressTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+          _buildExpandableTile(
+            settingId: _expandableSettingNativeProgress,
+            title: s.onlyProgressTitle,
+            subtitle: s.onlyProgressSubtitle,
+            trailing: Switch.adaptive(
+              value: _onlyWithProgress,
+              onChanged: _setOnlyWithProgress,
+              activeThumbColor: Theme.of(context).colorScheme.primary,
             ),
-            subtitle: Text(
-              s.onlyProgressSubtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
+            expandedChild: _buildNativeProgressOptionsPanel(s),
           ),
-          const SizedBox(height: 8),
-          SwitchListTile.adaptive(
-            value: _textProgressEnabled,
-            onChanged: _setTextProgressEnabled,
-            title: Text(
-              s.textProgressTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              s.textProgressSubtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(height: 1),
-          ),
-          Text(
-            s.bypassRulesTitle,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBypassCard(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return _sectionPanel(
+      sectionId: 'bypass',
+      title: s.bypassRulesTitle,
+      icon: Icons.content_paste_go_rounded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
           Text(
             s.bypassRulesSubtitle,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 16),
           _selectedAppsNote(
@@ -2598,24 +2458,20 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 8),
-          SwitchListTile.adaptive(
-            value: _smartExternalDevicesEnabled,
-            onChanged: _smartDetectionEnabled ? _setSmartExternalDevices : null,
-            title: Text(
-              s.smartExternalDevicesTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+          _buildExpandableTile(
+            settingId: _expandableSettingExternalDevices,
+            title: s.smartExternalDevicesTitle,
+            subtitle: _smartDetectionEnabled
+                ? s.smartExternalDevicesSubtitle
+                : s.smartNavigationDisabledSubtitle,
+            trailing: Switch.adaptive(
+              value: _smartExternalDevicesEnabled,
+              onChanged: _smartDetectionEnabled
+                  ? _setSmartExternalDevices
+                  : null,
+              activeThumbColor: Theme.of(context).colorScheme.primary,
             ),
-            subtitle: Text(
-              _smartDetectionEnabled
-                  ? s.smartExternalDevicesSubtitle
-                  : s.smartNavigationDisabledSubtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
+            expandedChild: _buildExternalDevicesOptionsPanel(s),
           ),
           const SizedBox(height: 8),
           SwitchListTile.adaptive(
@@ -2637,383 +2493,21 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             contentPadding: EdgeInsets.zero,
             activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNetworkSpeedCard(AppStrings s) {
-    return _sectionPanel(
-      sectionId: 'network_speed',
-      title: s.networkSpeedCardTitle,
-      icon: Icons.speed_rounded,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          SwitchListTile.adaptive(
-            value: _networkSpeedEnabled,
-            onChanged: _setNetworkSpeedEnabled,
-            title: Text(
-              s.networkSpeedEnabledTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              s.networkSpeedEnabledSubtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            child: Divider(height: 1),
-          ),
-          AnimatedOpacity(
-            duration: const Duration(milliseconds: 200),
-            opacity: _networkSpeedEnabled ? 1 : 0.4,
-            child: IgnorePointer(
-              ignoring: !_networkSpeedEnabled,
-              child: Column(
-                children: <Widget>[
-                  _buildNetworkSpeedThresholdSetting(s),
-                  const SizedBox(height: 12),
-                  _buildModernDropdown<NetworkSpeedDisplayMode>(
-                    label: s.networkSpeedDisplayContentTitle,
-                    currentValue: _networkSpeedDisplayMode,
-                    items: NetworkSpeedDisplayMode.values.map((
-                      NetworkSpeedDisplayMode mode,
-                    ) {
-                      return DropdownMenuItem<NetworkSpeedDisplayMode>(
-                        value: mode,
-                        child: Text(
-                          _networkSpeedDisplayModeLabel(mode, s),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (NetworkSpeedDisplayMode? value) {
-                      if (value == null || value == _networkSpeedDisplayMode) {
-                        return;
-                      }
-                      unawaited(_setNetworkSpeedDisplayMode(value));
-                    },
-                    onTap: LiveBridgeHaptics.openSurface,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildActionSettingTile(
-                    title: s.networkSpeedUploadPrefixTitle,
-                    value: s.networkSpeedCurrentValue(
-                      _networkSpeedUploadPrefix,
-                    ),
-                    icon: Icons.north_rounded,
-                    onTap: () =>
-                        _openNetworkSpeedPrefixSheet(s: s, forUpload: true),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildActionSettingTile(
-                    title: s.networkSpeedDownloadPrefixTitle,
-                    value: s.networkSpeedCurrentValue(
-                      _networkSpeedDownloadPrefix,
-                    ),
-                    icon: Icons.south_rounded,
-                    onTap: () =>
-                        _openNetworkSpeedPrefixSheet(s: s, forUpload: false),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildNetworkSpeedUnitDropdown(s),
-                  const SizedBox(height: 12),
-                  SwitchListTile.adaptive(
-                    value: _networkSpeedPrioritizeUpload,
-                    onChanged: _setNetworkSpeedPrioritizeUpload,
-                    title: Text(
-                      s.networkSpeedPrioritizeUploadTitle,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      s.networkSpeedPrioritizeUploadSubtitle,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 13,
-                      ),
-                    ),
-                    contentPadding: EdgeInsets.zero,
-                    activeThumbColor: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile.adaptive(
-                    value: _networkSpeedLockscreenOnly,
-                    onChanged: _setNetworkSpeedLockscreenOnly,
-                    title: Text(
-                      s.networkSpeedLockscreenOnlyTitle,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      s.networkSpeedLockscreenOnlySubtitle,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 13,
-                      ),
-                    ),
-                    contentPadding: EdgeInsets.zero,
-                    activeThumbColor: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile.adaptive(
-                    value: _networkSpeedChipBackgroundDisabled,
-                    onChanged: _setNetworkSpeedChipBackgroundDisabled,
-                    title: Text(
-                      s.networkSpeedDisableChipBackgroundTitle,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: Text(
-                      s.networkSpeedDisableChipBackgroundSubtitle,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 13,
-                      ),
-                    ),
-                    contentPadding: EdgeInsets.zero,
-                    activeThumbColor: Theme.of(context).colorScheme.primary,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNetworkSpeedThresholdSetting(AppStrings s) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final double sliderMax =
-        _networkSpeedThresholdMaxBytesPerSecond /
-        _networkSpeedThresholdStepBytesPerSecond;
-    final String currentValueLabel = _formatNetworkSpeedThresholdValue(
-      s,
-      _networkSpeedMinThresholdBytesPerSecond,
-    );
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface.withValues(alpha: 0.82),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  s.networkSpeedThresholdTitle,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  currentValueLabel,
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 8),
-          Text(
-            s.networkSpeedThresholdSubtitle,
-            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
-          ),
-          const SizedBox(height: 12),
-          SliderTheme(
-            data: SliderTheme.of(
-              context,
-            ).copyWith(overlayShape: SliderComponentShape.noOverlay),
-            child: Slider.adaptive(
-              value: _networkSpeedSliderPositionForBytesPerSecond(
-                _networkSpeedMinThresholdBytesPerSecond,
-              ),
-              min: 0,
-              max: sliderMax,
-              label: currentValueLabel,
-              onChangeStart: (double value) {
-                _lastNetworkSpeedSliderHapticValue =
-                    _snapNetworkSpeedThresholdBytesPerSecond(value);
-                _lastNetworkSpeedSliderHapticAtMs = 0;
-              },
-              onChanged: _updateNetworkSpeedThresholdDraft,
-              onChangeEnd: (double value) {
-                _lastNetworkSpeedSliderHapticValue = -1;
-                unawaited(
-                  _setNetworkSpeedMinThresholdBytesPerSecond(
-                    _snapNetworkSpeedThresholdBytesPerSecond(value),
-                  ),
-                );
-              },
+          _buildExpandableTile(
+            settingId: _expandableSettingNetworkSpeed,
+            title: s.networkSpeedTitle,
+            subtitle: _converterEnabled
+                ? s.networkSpeedSubtitle
+                : s.networkSpeedInactiveSubtitle,
+            trailing: Switch.adaptive(
+              value: _networkSpeedEnabled,
+              onChanged: _setNetworkSpeedEnabled,
+              activeThumbColor: Theme.of(context).colorScheme.primary,
             ),
-          ),
-          Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  s.networkSpeedThresholdAlways,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              Text(
-                _formatNetworkSpeedBytesPerSecond(
-                  _networkSpeedThresholdMaxBytesPerSecond,
-                ),
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-              ),
-            ],
+            expandedChild: _buildNetworkSpeedThresholdPanel(s),
           ),
         ],
-      ),
-    );
-  }
-
-  int _snapNetworkSpeedThresholdBytesPerSecond(double sliderValue) {
-    final int snappedValue =
-        sliderValue.round() * _networkSpeedThresholdStepBytesPerSecond;
-    return snappedValue
-        .clamp(0, _networkSpeedThresholdMaxBytesPerSecond)
-        .toInt();
-  }
-
-  double _networkSpeedSliderPositionForBytesPerSecond(int bytesPerSecond) {
-    return (bytesPerSecond / _networkSpeedThresholdStepBytesPerSecond)
-        .clamp(
-          0,
-          _networkSpeedThresholdMaxBytesPerSecond /
-              _networkSpeedThresholdStepBytesPerSecond,
-        )
-        .toDouble();
-  }
-
-  String _formatNetworkSpeedThresholdValue(AppStrings s, int bytesPerSecond) {
-    if (bytesPerSecond <= 0) {
-      return s.networkSpeedThresholdAlways;
-    }
-    return '>= ${_formatNetworkSpeedBytesPerSecond(bytesPerSecond)}';
-  }
-
-  String _formatNetworkSpeedBytesPerSecond(int bytesPerSecond) {
-    final int value = bytesPerSecond.clamp(0, 1 << 31).toInt();
-    if (value < 1024) {
-      return '${value}B/s';
-    }
-    if (value < 1024 * 1024) {
-      return _formatCompactNetworkSpeedValue(value / 1024, 'KB/s');
-    }
-    if (value < 1024 * 1024 * 1024) {
-      return _formatCompactNetworkSpeedValue(value / (1024 * 1024), 'MB/s');
-    }
-    return _formatCompactNetworkSpeedValue(
-      value / (1024 * 1024 * 1024),
-      'GB/s',
-    );
-  }
-
-  String _formatCompactNetworkSpeedValue(double value, String suffix) {
-    final String formatted = value < 10
-        ? value.toStringAsFixed(1)
-        : value.toStringAsFixed(0);
-    return '$formatted$suffix';
-  }
-
-  Widget _buildActionSettingTile({
-    required String title,
-    required String value,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          LiveBridgeHaptics.openSurface();
-          onTap();
-        },
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: colorScheme.primaryContainer.withValues(alpha: 0.38),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, size: 18, color: colorScheme.primary),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 13,
-                        height: 1.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -3074,21 +2568,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               ignoring: !_otpDetectionEnabled,
               child: Column(
                 children: <Widget>[
-                  _buildModernDropdown<PackageMode>(
+                  _buildModernDropdown(
                     label: s.otpModeLabel,
                     currentValue: _otpPackageMode,
-                    items: PackageMode.values.map((PackageMode mode) {
-                      return DropdownMenuItem<PackageMode>(
-                        value: mode,
-                        child: Text(
-                          _getModeLabel(mode, s),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      );
-                    }).toList(),
                     onChanged: (val) {
                       if (val != null) {
                         LiveBridgeHaptics.selection();
@@ -3099,6 +2581,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                       }
                     },
                     onTap: LiveBridgeHaptics.openSurface,
+                    s: s,
                   ),
                   const SizedBox(height: 16),
                   _selectedAppsNote(
@@ -3185,6 +2668,412 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         ),
       ),
     );
+  }
+
+  Widget _buildExpandableTile({
+    required String settingId,
+    required String title,
+    required String subtitle,
+    required Widget trailing,
+    required Widget expandedChild,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool expanded = _expandedInlineSettings.contains(settingId);
+    final Color outerBorderColor = expanded
+        ? colorScheme.primary.withValues(alpha: 0.26)
+        : Colors.transparent;
+    final Color outerBackgroundColor = expanded
+        ? colorScheme.primaryContainer.withValues(alpha: 0.18)
+        : Colors.transparent;
+    final Color rowHighlightColor = expanded
+        ? colorScheme.primary.withValues(alpha: 0.06)
+        : Colors.transparent;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: outerBackgroundColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: outerBorderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: const WidgetStatePropertyAll<Color>(
+                Colors.transparent,
+              ),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              focusColor: Colors.transparent,
+              onTap: () => _toggleInlineSetting(settingId),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                decoration: BoxDecoration(
+                  color: rowHighlightColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    expanded ? 16 : 0,
+                    10,
+                    expanded ? 10 : 0,
+                    10,
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildExpandableTileChevron(expanded, colorScheme),
+                      const SizedBox(width: 4),
+                      trailing,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: expanded ? 1 : 0),
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: expandedChild,
+            ),
+            builder: (BuildContext context, double value, Widget? child) {
+              return ClipRect(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  heightFactor: value,
+                  child: IgnorePointer(
+                    ignoring: value < 0.99,
+                    child: Opacity(
+                      opacity: value.clamp(0, 1),
+                      child: Transform.translate(
+                        offset: Offset(0, (1 - value) * -14),
+                        child: child,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpandableTileChevron(bool expanded, ColorScheme colorScheme) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: expanded
+            ? colorScheme.primary.withValues(alpha: 0.12)
+            : Colors.transparent,
+        shape: BoxShape.circle,
+      ),
+      child: AnimatedRotation(
+        turns: expanded ? 0.25 : 0.0,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeInOutCubic,
+        child: Icon(
+          Icons.chevron_right_rounded,
+          size: 20,
+          color: expanded ? colorScheme.primary : colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNetworkSpeedThresholdPanel(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final double sliderMax =
+        _networkSpeedThresholdMaxBytesPerSecond /
+        _networkSpeedThresholdStepBytesPerSecond;
+
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surface.withValues(alpha: 0.86),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    s.networkSpeedThresholdTitle,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                ValueListenableBuilder<int>(
+                  valueListenable: _networkSpeedThresholdDraftBytesPerSecond,
+                  builder: (BuildContext context, int currentThreshold, Widget? _) {
+                    final String currentValueLabel = currentThreshold <= 0
+                        ? s.networkSpeedThresholdAlways
+                        : '≥ ${_formatNetworkSpeedBytesPerSecond(currentThreshold)}';
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        currentValueLabel,
+                        style: TextStyle(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              s.networkSpeedThresholdSubtitle,
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ValueListenableBuilder<double>(
+              valueListenable: _networkSpeedThresholdSliderPosition,
+              builder: (BuildContext context, double sliderValue, Widget? _) {
+                final int currentThreshold =
+                    _snapNetworkSpeedThresholdBytesPerSecond(sliderValue);
+                final String currentValueLabel = currentThreshold <= 0
+                    ? s.networkSpeedThresholdAlways
+                    : '≥ ${_formatNetworkSpeedBytesPerSecond(currentThreshold)}';
+                return SliderTheme(
+                  data: SliderTheme.of(
+                    context,
+                  ).copyWith(overlayShape: SliderComponentShape.noOverlay),
+                  child: Slider.adaptive(
+                    value: sliderValue.clamp(0, sliderMax),
+                    min: 0,
+                    max: sliderMax,
+                    label: currentValueLabel,
+                    onChangeStart: (double value) {
+                      _networkSpeedThresholdSliderPosition.value = value;
+                      _lastNetworkSpeedSliderHapticValue =
+                          _snapNetworkSpeedThresholdBytesPerSecond(value);
+                      _lastNetworkSpeedSliderHapticAtMs = 0;
+                    },
+                    onChanged: _updateNetworkSpeedThresholdDraft,
+                    onChangeEnd: (double value) {
+                      final int nextValue =
+                          _snapNetworkSpeedThresholdBytesPerSecond(value);
+                      _lastNetworkSpeedSliderHapticValue = -1;
+                      _networkSpeedThresholdSliderPosition.value =
+                          _networkSpeedSliderPositionForBytesPerSecond(
+                            nextValue,
+                          );
+                      unawaited(
+                        _setNetworkSpeedMinThresholdBytesPerSecond(nextValue),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    s.networkSpeedThresholdAlways,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                Text(
+                  _formatNetworkSpeedBytesPerSecond(
+                    _networkSpeedThresholdMaxBytesPerSecond,
+                  ),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExternalDevicesOptionsPanel(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: _buildInlinePanelSwitchRow(
+        title: s.smartExternalDevicesIgnoreDebuggingTitle,
+        subtitle: s.smartExternalDevicesIgnoreDebuggingSubtitle,
+        value: _smartExternalDevicesIgnoreDebugging,
+        onChanged: _setSmartExternalDevicesIgnoreDebugging,
+      ),
+    );
+  }
+
+  Widget _buildNativeProgressOptionsPanel(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: _buildInlinePanelSwitchRow(
+        title: s.textProgressTitle,
+        subtitle: s.textProgressSubtitle,
+        value: _textProgressEnabled,
+        onChanged: _setTextProgressEnabled,
+      ),
+    );
+  }
+
+  Widget _buildInlinePanelSwitchRow({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool>? onChanged,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        splashFactory: NoSplash.splashFactory,
+        overlayColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        focusColor: Colors.transparent,
+        onTap: onChanged == null ? null : () => onChanged(!value),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Switch.adaptive(
+                value: value,
+                onChanged: onChanged,
+                activeThumbColor: colorScheme.primary,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  int _snapNetworkSpeedThresholdBytesPerSecond(double sliderValue) {
+    final int snappedValue =
+        sliderValue.round() * _networkSpeedThresholdStepBytesPerSecond;
+    return snappedValue
+        .clamp(0, _networkSpeedThresholdMaxBytesPerSecond)
+        .toInt();
+  }
+
+  double _networkSpeedSliderPositionForBytesPerSecond(int bytesPerSecond) {
+    return (bytesPerSecond / _networkSpeedThresholdStepBytesPerSecond)
+        .clamp(
+          0,
+          _networkSpeedThresholdMaxBytesPerSecond /
+              _networkSpeedThresholdStepBytesPerSecond,
+        )
+        .toDouble();
+  }
+
+  String _formatNetworkSpeedBytesPerSecond(int bytesPerSecond) {
+    final int value = bytesPerSecond.clamp(0, 1 << 31).toInt();
+    if (value < 1024) {
+      return '${value}B/s';
+    }
+    if (value < 1024 * 1024) {
+      return _formatCompactNetworkSpeedValue(value / 1024, 'K/s');
+    }
+    if (value < 1024 * 1024 * 1024) {
+      return _formatCompactNetworkSpeedValue(value / (1024 * 1024), 'M/s');
+    }
+    return _formatCompactNetworkSpeedValue(value / (1024 * 1024 * 1024), 'G/s');
+  }
+
+  String _formatCompactNetworkSpeedValue(double value, String suffix) {
+    final String formatted = value < 10
+        ? value.toStringAsFixed(1)
+        : value.toStringAsFixed(0);
+    return '$formatted$suffix';
   }
 
   Widget _ruleButtonsRow({
@@ -3487,370 +3376,4 @@ class _GithubDictionaryInfo {
 
   final String raw;
   final String normalized;
-}
-
-class _NetworkSpeedUnitDropdown extends StatefulWidget {
-  const _NetworkSpeedUnitDropdown({
-    required this.label,
-    required this.values,
-    required this.optionLabelBuilder,
-    required this.onChanged,
-  });
-
-  final String label;
-  final Set<NetworkSpeedUnit> values;
-  final String Function(NetworkSpeedUnit unit) optionLabelBuilder;
-  final ValueChanged<Set<NetworkSpeedUnit>> onChanged;
-
-  @override
-  State<_NetworkSpeedUnitDropdown> createState() =>
-      _NetworkSpeedUnitDropdownState();
-}
-
-class _NetworkSpeedUnitDropdownState extends State<_NetworkSpeedUnitDropdown> {
-  final MenuController _menuController = MenuController();
-  late Set<NetworkSpeedUnit> _draftValues = Set<NetworkSpeedUnit>.from(
-    widget.values,
-  );
-  Set<NetworkSpeedUnit> _committedValues = <NetworkSpeedUnit>{};
-  bool _menuOpen = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _committedValues = Set<NetworkSpeedUnit>.from(widget.values);
-  }
-
-  @override
-  void didUpdateWidget(covariant _NetworkSpeedUnitDropdown oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!_menuOpen && !_sameSelection(widget.values, _draftValues)) {
-      _draftValues = Set<NetworkSpeedUnit>.from(widget.values);
-      _committedValues = Set<NetworkSpeedUnit>.from(widget.values);
-    }
-  }
-
-  bool _sameSelection(Set<NetworkSpeedUnit> a, Set<NetworkSpeedUnit> b) {
-    if (identical(a, b)) {
-      return true;
-    }
-    if (a.length != b.length) {
-      return false;
-    }
-    return a.containsAll(b);
-  }
-
-  void _toggleUnit(NetworkSpeedUnit unit) {
-    final bool checked = _draftValues.contains(unit);
-    final Set<NetworkSpeedUnit> next;
-    if (checked) {
-      next = Set<NetworkSpeedUnit>.from(_draftValues)..remove(unit);
-    } else if (unit == NetworkSpeedUnit.auto) {
-      next = <NetworkSpeedUnit>{NetworkSpeedUnit.auto};
-    } else {
-      next = Set<NetworkSpeedUnit>.from(_draftValues)
-        ..remove(NetworkSpeedUnit.auto)
-        ..add(unit);
-    }
-    setState(() => _draftValues = next);
-  }
-
-  void _commitSelection() {
-    final Set<NetworkSpeedUnit> next = Set<NetworkSpeedUnit>.from(_draftValues);
-    if (_sameSelection(next, _committedValues)) {
-      return;
-    }
-    _committedValues = next;
-    widget.onChanged(next);
-  }
-
-  void _toggleMenu() {
-    if (_menuController.isOpen) {
-      _menuController.close();
-      return;
-    }
-    LiveBridgeHaptics.openSurface();
-    _menuController.open();
-  }
-
-  String _summaryLabel() {
-    if (_draftValues.isEmpty || _draftValues.contains(NetworkSpeedUnit.auto)) {
-      return widget.optionLabelBuilder(NetworkSpeedUnit.auto);
-    }
-    return kNetworkSpeedUnitValues
-        .where(
-          (NetworkSpeedUnit unit) =>
-              unit != NetworkSpeedUnit.auto && _draftValues.contains(unit),
-        )
-        .map(widget.optionLabelBuilder)
-        .join(', ');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    final bool isLight = colorScheme.brightness == Brightness.light;
-    final Color fieldColor = isLight
-        ? Colors.white
-        : colorScheme.surfaceContainerLow;
-    final Color menuColor = isLight
-        ? Colors.white
-        : colorScheme.surfaceContainer;
-    final Color borderColor = colorScheme.primary.withValues(
-      alpha: isLight ? 0.5 : 0.65,
-    );
-
-    return MenuAnchor(
-      controller: _menuController,
-      consumeOutsideTap: true,
-      crossAxisUnconstrained: false,
-      style: MenuStyle(
-        backgroundColor: WidgetStatePropertyAll<Color>(menuColor),
-        shape: WidgetStatePropertyAll<OutlinedBorder>(
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        ),
-        side: WidgetStatePropertyAll<BorderSide>(
-          BorderSide(color: borderColor, width: 1.2),
-        ),
-        padding: const WidgetStatePropertyAll<EdgeInsets>(EdgeInsets.all(0)),
-      ),
-      onOpen: () => setState(() => _menuOpen = true),
-      onClose: () {
-        if (mounted) {
-          setState(() => _menuOpen = false);
-        }
-        _commitSelection();
-      },
-      menuChildren: <Widget>[
-        SizedBox(
-          width: 320,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                for (final NetworkSpeedUnit unit in kNetworkSpeedUnitValues)
-                  _NetworkSpeedUnitMenuRow(
-                    title: widget.optionLabelBuilder(unit),
-                    checked: _draftValues.contains(unit),
-                    onTap: () {
-                      LiveBridgeHaptics.selection();
-                      _toggleUnit(unit);
-                    },
-                  ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: FilledButton.tonalIcon(
-                    onPressed: _menuController.close,
-                    icon: const Icon(Icons.check_rounded, size: 18),
-                    label: Text(
-                      MaterialLocalizations.of(context).okButtonLabel,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-      builder:
-          (BuildContext context, MenuController controller, Widget? child) {
-            return Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(20),
-                onTap: _toggleMenu,
-                child: InputDecorator(
-                  isEmpty: false,
-                  decoration: InputDecoration(
-                    labelText: widget.label,
-                    labelStyle: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    filled: true,
-                    fillColor: fieldColor,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(color: borderColor, width: 1.2),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(color: borderColor, width: 1.2),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(
-                        color: colorScheme.primary,
-                        width: 1.8,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    suffixIcon: Icon(
-                      _menuOpen
-                          ? Icons.keyboard_arrow_up_rounded
-                          : Icons.keyboard_arrow_down_rounded,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  child: Text(
-                    _summaryLabel(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-    );
-  }
-}
-
-class _NetworkSpeedUnitMenuRow extends StatelessWidget {
-  const _NetworkSpeedUnitMenuRow({
-    required this.title,
-    required this.checked,
-    required this.onTap,
-  });
-
-  final String title;
-  final bool checked;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme colorScheme = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-          child: Row(
-            children: <Widget>[
-              Checkbox(
-                value: checked,
-                onChanged: (_) => onTap(),
-                visualDensity: VisualDensity.compact,
-                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: checked ? FontWeight.w700 : FontWeight.w500,
-                    color: checked
-                        ? colorScheme.onSurface
-                        : colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _NetworkSpeedPrefixSheet extends StatefulWidget {
-  const _NetworkSpeedPrefixSheet({
-    required this.title,
-    required this.initialValue,
-    required this.defaultValue,
-    required this.resetLabel,
-    required this.saveLabel,
-  });
-
-  final String title;
-  final String initialValue;
-  final String defaultValue;
-  final String resetLabel;
-  final String saveLabel;
-
-  @override
-  State<_NetworkSpeedPrefixSheet> createState() =>
-      _NetworkSpeedPrefixSheetState();
-}
-
-class _NetworkSpeedPrefixSheetState extends State<_NetworkSpeedPrefixSheet> {
-  late final TextEditingController _controller = TextEditingController(
-    text: widget.initialValue,
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 8,
-          bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              widget.title,
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                OutlinedButton.icon(
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    Navigator.of(context).pop(widget.defaultValue);
-                  },
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: Text(widget.resetLabel),
-                ),
-                const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: () {
-                    HapticFeedback.selectionClick();
-                    Navigator.of(context).pop(_controller.text);
-                  },
-                  icon: const Icon(Icons.check_rounded),
-                  label: Text(widget.saveLabel),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

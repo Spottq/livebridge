@@ -65,7 +65,7 @@
         </service>
 
         <service
-            android:name=".liveupdate.NetworkSpeedForegroundService"
+            android:name=".liveupdate.networkspeed.NetworkSpeedForegroundService"
             android:exported="false"
             android:foregroundServiceType="dataSync"
         />

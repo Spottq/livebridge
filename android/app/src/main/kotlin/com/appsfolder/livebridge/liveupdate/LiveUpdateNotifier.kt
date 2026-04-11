@@ -81,6 +81,12 @@ object LiveUpdateNotifier {
     private const val SMART_ISLAND_TOKEN_MAX_LENGTH = 20
 
     private val OTP_CODE_LENGTH = 4..8
+    private val externalDeviceDebuggingPattern = Regex(
+        """(\badb\b|android\s+debug\s+bridge|usb\s+debug(?:ging)?|wireless\s+debug(?:ging)?|\bdebug(?:ging|ger)?\b|developer\s+options?|usb[-\s]?отладк\p{L}*|беспровод\p{L}*\s+отладк\p{L}*|отладк\p{L}*|параметр\p{L}*\s+разработчик\p{L}*)""",
+        setOf(RegexOption.IGNORE_CASE)
+    )
+    private val weatherCelsiusPattern = Regex("""(?:°\s*[cс]|℃)""", setOf(RegexOption.IGNORE_CASE))
+    private val weatherFahrenheitPattern = Regex("""(?:°\s*[fф]|℉)""", setOf(RegexOption.IGNORE_CASE))
     private val transparentActionIcon by lazy {
         IconCompat.createWithBitmap(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))
     }
@@ -292,6 +298,7 @@ object LiveUpdateNotifier {
                     navigationEnabled = prefs.getSmartNavigationEnabled(),
                     weatherEnabled = prefs.getSmartWeatherEnabled(),
                     externalDevicesEnabled = prefs.getSmartExternalDevicesEnabled(),
+                    externalDevicesIgnoreDebugging = prefs.getSmartExternalDevicesIgnoreDebugging(),
                     vpnEnabled = prefs.getSmartVpnEnabled(),
                     hasNativeProgress = hasNativeProgress
                 )
@@ -755,9 +762,8 @@ object LiveUpdateNotifier {
         }
 
         val packageNameLower = sbn.packageName.lowercase(Locale.ROOT)
-        val allowTwoGisOverride = packageNameLower == TWO_GIS_PACKAGE
         if (parserDictionary.blockedSourcePackages.contains(packageNameLower) &&
-            !allowTwoGisOverride
+            packageNameLower != TWO_GIS_PACKAGE
         ) {
             return false
         }
@@ -770,7 +776,6 @@ object LiveUpdateNotifier {
         sbn: StatusBarNotification
     ): Boolean {
         val packageNameLower = sbn.packageName.lowercase(Locale.ROOT)
-        val allowTwoGisGroupSummary = packageNameLower == TWO_GIS_PACKAGE
         if (appPackageName.isNotEmpty() && sbn.packageName == appPackageName) {
             return false
         }
@@ -782,7 +787,7 @@ object LiveUpdateNotifier {
             return false
         }
         if (source.flags and Notification.FLAG_GROUP_SUMMARY != 0 &&
-            !allowTwoGisGroupSummary
+            packageNameLower != TWO_GIS_PACKAGE
         ) {
             return false
         }
@@ -1047,9 +1052,14 @@ object LiveUpdateNotifier {
                 samsungBridge.hasCustomRemoteCard ->
                     appSmallIcon ?: samsungSmallIcon ?: sourceSmallIcon
                 else ->
-                    appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
+                    navigationDrawable?.icon ?: appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
             }
-            NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
+            NotificationIconSource.APP ->
+                if (isTwoGisPackage) {
+                    navigationDrawable?.icon ?: appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
+                } else {
+                    appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
+                }
         }
         val preferredChipIcon = when {
             shouldTryNavigationArrowIcon ->
@@ -1286,6 +1296,7 @@ object LiveUpdateNotifier {
         navigationEnabled: Boolean,
         weatherEnabled: Boolean,
         externalDevicesEnabled: Boolean,
+        externalDevicesIgnoreDebugging: Boolean,
         vpnEnabled: Boolean,
         hasNativeProgress: Boolean
     ): SmartStageMatch? {
@@ -1321,6 +1332,12 @@ object LiveUpdateNotifier {
                 continue
             }
             if (rule.id == "external_device" && !externalDevicesEnabled) {
+                continue
+            }
+            if (rule.id == "external_device" &&
+                externalDevicesIgnoreDebugging &&
+                isExternalDeviceDebuggingNotification(combinedText)
+            ) {
                 continue
             }
             if (rule.id == "vpn" && !vpnEnabled) {
@@ -1387,6 +1404,10 @@ object LiveUpdateNotifier {
         }
 
         return null
+    }
+
+    private fun isExternalDeviceDebuggingNotification(text: String): Boolean {
+        return externalDeviceDebuggingPattern.containsMatchIn(text)
     }
 
     private fun detectWeatherSmartStage(
@@ -1459,6 +1480,10 @@ object LiveUpdateNotifier {
         source: Notification,
         parserDictionary: LiveParserDictionary
     ): TextProgressMatch? {
+        if (isLikelyNavigationPackage(packageName, parserDictionary)) {
+            return null
+        }
+
         val combinedText = collectNotificationText(
             notification = source,
             fallbackTitle = packageName,
@@ -2020,19 +2045,38 @@ object LiveUpdateNotifier {
         parserDictionary: LiveParserDictionary
     ): String? {
         val match = parserDictionary.weatherTemperaturePattern.find(combinedText) ?: return null
-        val rawNumber = match.groupValues.getOrNull(1).orEmpty()
-            .replace('−', '-')
-            .trim()
+        val rawNumber = normalizeWeatherTemperatureValue(match.groupValues.getOrNull(1))
         if (rawNumber.isBlank()) {
             return null
         }
-        val baseTemperature = "${rawNumber}°"
+        val baseTemperature = formatWeatherTemperature(
+            value = rawNumber,
+            unit = inferWeatherTemperatureUnit(combinedText)
+        )
         val conditionEmoji = extractWeatherConditionEmoji(combinedText, parserDictionary)
         return if (conditionEmoji != null) {
-            "$baseTemperature · $conditionEmoji"
+            "$conditionEmoji $baseTemperature"
         } else {
             baseTemperature
         }
+    }
+
+    private fun normalizeWeatherTemperatureValue(rawValue: String?): String {
+        return rawValue.orEmpty()
+            .replace('−', '-')
+            .trim()
+    }
+
+    private fun inferWeatherTemperatureUnit(text: String): String? {
+        return when {
+            weatherCelsiusPattern.containsMatchIn(text) -> "C"
+            weatherFahrenheitPattern.containsMatchIn(text) -> "F"
+            else -> null
+        }
+    }
+
+    private fun formatWeatherTemperature(value: String, unit: String?): String {
+        return if (unit != null) "$value°$unit" else "$value°"
     }
 
     private fun isRussianLocale(context: Context): Boolean {
@@ -3456,7 +3500,9 @@ object LiveUpdateNotifier {
         val progressMax = extras.getInt(Notification.EXTRA_PROGRESS_MAX, 0)
         val progressValue = extras.getInt(Notification.EXTRA_PROGRESS, 0)
         val indeterminate = extras.getBoolean(Notification.EXTRA_PROGRESS_INDETERMINATE, false)
-        return !indeterminate && progressMax == 100 && progressValue == 0
+        return !indeterminate &&
+                progressMax == 100 &&
+                progressValue in 0..100
     }
 
     private fun extractTitle(
@@ -3719,6 +3765,9 @@ object LiveUpdateNotifier {
         parserDictionary: LiveParserDictionary
     ): Boolean {
         val packageLower = packageName.lowercase(Locale.ROOT)
+        if (packageLower == TWO_GIS_PACKAGE) {
+            return true
+        }
         if (parserDictionary.knownNavigationPackages.contains(packageLower)) {
             return true
         }

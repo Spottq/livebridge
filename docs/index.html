@@ -29,6 +29,9 @@
         --on-primary-container: #00201D;
         --outline: rgba(13, 148, 136, 0.3);
         --border: rgba(26, 33, 32, 0.1);
+        --hero-glow-core: rgba(13, 148, 136, 0.2);
+        --hero-glow-soft: rgba(13, 148, 136, 0.1);
+        --hero-glow-secondary: rgba(153, 246, 228, 0.2);
         --radius: 16px;
         --max: 1100px;
       }
@@ -47,6 +50,9 @@
           --on-primary-container: #A8FFF4;
           --outline: rgba(103, 231, 217, 0.45);
           --border: #223636;
+          --hero-glow-core: rgba(103, 231, 217, 0.24);
+          --hero-glow-soft: rgba(103, 231, 217, 0.12);
+          --hero-glow-secondary: rgba(12, 94, 85, 0.34);
         }
       }
 
@@ -161,8 +167,10 @@
       }
 
       .hero-visual {
+        position: relative;
         display: flex;
         justify-content: flex-end;
+        overflow: visible;
       }
 
       .hero-scroll-wrap {
@@ -306,6 +314,35 @@
 
       .hero-picture {
         max-width: 352px;
+        position: relative;
+        isolation: isolate;
+        overflow: visible;
+      }
+
+      .hero-picture::before,
+      .hero-picture::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 52%;
+        border-radius: 50%;
+        pointer-events: none;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+      }
+
+      .hero-picture::before {
+        width: 122%;
+        aspect-ratio: 1;
+        background: radial-gradient(circle, var(--hero-glow-core) 0%, var(--hero-glow-soft) 42%, transparent 74%);
+        filter: blur(18px);
+      }
+
+      .hero-picture::after {
+        width: 94%;
+        aspect-ratio: 1;
+        background: radial-gradient(circle, var(--hero-glow-secondary) 0%, transparent 72%);
+        filter: blur(32px);
       }
 
       .showcase-img {
@@ -314,6 +351,8 @@
         height: auto;
         display: block;
         border-radius: 24px;
+        position: relative;
+        z-index: 1;
       }
 
       .downloads {
@@ -411,6 +450,7 @@
         width: auto;
         height: 16px;
         opacity: 0.8;
+        transform: translateY(1px);
       }
 
       .build-tag {
@@ -465,6 +505,67 @@
         font-size: 0.85rem;
       }
 
+      .live-counter {
+        display: inline-flex;
+        align-items: baseline;
+        flex-wrap: wrap;
+        gap: 0;
+        white-space: pre-wrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .live-counter-segment {
+        display: inline-flex;
+        align-items: baseline;
+        white-space: pre;
+      }
+
+      .live-counter-char {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 1.06em;
+        overflow: hidden;
+        line-height: 1;
+      }
+
+      .live-counter-char.is-digit {
+        min-width: 0.62em;
+      }
+
+      .live-counter-glyph,
+      .live-counter-face {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 100%;
+      }
+
+      .live-counter-stack {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      .live-counter-face {
+        position: absolute;
+        inset: 0;
+      }
+
+      .live-counter-face--new {
+        transform: translateY(112%);
+      }
+
+      .live-counter-char.is-flipping .live-counter-face--old {
+        animation: live-counter-old-up 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
+      .live-counter-char.is-flipping .live-counter-face--new {
+        animation: live-counter-new-up 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      }
+
       .btn-disabled {
         opacity: 0.5;
         pointer-events: none;
@@ -476,42 +577,94 @@
         margin: 0 auto;
       }
 
-      details {
+      .faq-item {
         background-color: var(--surface);
         border: 1px solid var(--border);
         border-radius: var(--radius);
         margin-bottom: 12px;
+        transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
       }
 
-      summary {
+      .faq-item.is-open {
+        border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+      }
+
+      .faq-trigger {
+        width: 100%;
+        background: transparent;
+        border: 0;
         padding: 20px 24px;
         font-weight: 500;
         font-size: 1.05rem;
         cursor: pointer;
-        list-style: none;
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 16px;
+        color: var(--text);
+        text-align: left;
+        font-family: inherit;
       }
 
-      summary::-webkit-details-marker {
-        display: none;
+      .faq-trigger:focus-visible {
+        outline: 2px solid color-mix(in srgb, var(--primary) 55%, white);
+        outline-offset: -2px;
+        border-radius: var(--radius);
       }
 
-      summary::after {
-        content: '+';
-        font-size: 1.25rem;
-        color: var(--primary);
+      .faq-chevron {
+        width: 10px;
+        height: 10px;
+        flex: 0 0 auto;
+        border-right: 2px solid var(--primary);
+        border-bottom: 2px solid var(--primary);
+        transform: rotate(45deg);
+        transition: transform 220ms ease;
       }
 
-      details[open] summary::after {
-        content: '−';
+      .faq-item.is-open .faq-chevron {
+        transform: rotate(225deg);
       }
 
-      details p {
+      .faq-panel {
+        height: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: height 220ms ease, opacity 180ms ease;
+      }
+
+      .faq-panel-inner {
         padding: 0 24px 24px;
+      }
+
+      .faq-panel-inner p {
         margin: 0;
         color: var(--text-muted);
+      }
+
+      .faq-panel-inner a {
+        color: var(--primary);
+        font-weight: 500;
+        text-decoration: underline;
+        text-decoration-color: color-mix(in srgb, var(--primary) 55%, transparent);
+        text-underline-offset: 0.18em;
+      }
+
+      .faq-panel-inner a:hover {
+        text-decoration-color: var(--primary);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .faq-item,
+        .faq-chevron,
+        .faq-panel {
+          transition: none;
+        }
+
+        .live-counter-char.is-flipping .live-counter-face--old,
+        .live-counter-char.is-flipping .live-counter-face--new {
+          animation: none;
+        }
       }
 
       .footer {
@@ -532,6 +685,26 @@
         }
         50% {
           transform: translateY(5px);
+        }
+      }
+
+      @keyframes live-counter-old-up {
+        from {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        to {
+          transform: translateY(-115%);
+          opacity: 0.28;
+        }
+      }
+
+      @keyframes live-counter-new-up {
+        from {
+          transform: translateY(112%);
+        }
+        to {
+          transform: translateY(0);
         }
       }
 
@@ -796,12 +969,13 @@
         }
 
         .build-title-row {
-          align-items: flex-start;
+          align-items: center;
           gap: 8px;
         }
 
         .samsung-logo-img {
           height: 14px;
+          transform: translateY(1px);
         }
 
         .download-banner {
@@ -821,13 +995,17 @@
           padding: 42px 0 34px;
         }
 
-        summary {
+        .faq-trigger {
           padding: 18px 20px;
           font-size: 1rem;
         }
 
-        details p {
+        .faq-panel-inner {
           padding: 0 20px 20px;
+        }
+
+        .faq-panel-inner p {
+          padding: 0;
         }
 
         .footer {
@@ -972,10 +1150,15 @@
           </div>
 
           <div class="download-grid">
-            <div class="build-card recommended">
+            <div class="build-card recommended" data-build-key="armv8a">
               <div class="build-head">
                 <h3>Modern Android</h3>
-                <span class="build-tag">Recommended</span>
+                <span
+                  class="build-tag"
+                  data-build-tag="armv8a"
+                  data-default-tag="Most devices"
+                  data-recommended-tag="Recommended"
+                >Recommended</span>
               </div>
               <div class="build-meta">
                 <div class="meta-box">
@@ -993,13 +1176,18 @@
               </div>
             </div>
 
-            <div class="build-card">
+            <div class="build-card" data-build-key="samsung">
               <div class="build-head">
                 <div class="build-title-row">
                   <h3>Now Bar version for</h3>
                   <img class="samsung-logo-img" data-icon="samsung-logo" alt="Samsung logo" />
                 </div>
-                <span class="build-tag">Samsung-only</span>
+                <span
+                  class="build-tag"
+                  data-build-tag="samsung"
+                  data-default-tag="Samsung-only"
+                  data-recommended-tag="Recommended"
+                >Samsung-only</span>
               </div>
               <div class="build-meta">
                 <div class="meta-box">
@@ -1017,10 +1205,15 @@
               </div>
             </div>
 
-            <div class="build-card">
+            <div class="build-card" data-build-key="universal">
               <div class="build-head">
                 <h3>Not Sure?</h3>
-                <span class="build-tag">For everyone</span>
+                <span
+                  class="build-tag"
+                  data-build-tag="universal"
+                  data-default-tag="For everyone"
+                  data-recommended-tag="Recommended"
+                >For everyone</span>
               </div>
               <div class="build-meta">
                 <div class="meta-box">
@@ -1038,10 +1231,15 @@
               </div>
             </div>
 
-            <div class="build-card">
+            <div class="build-card" data-build-key="armv7a">
               <div class="build-head">
                 <h3>Older Phone</h3>
-                <span class="build-tag">Legacy CPU</span>
+                <span
+                  class="build-tag"
+                  data-build-tag="armv7a"
+                  data-default-tag="Legacy CPU"
+                  data-recommended-tag="Recommended"
+                >Legacy CPU</span>
               </div>
               <div class="build-meta">
                 <div class="meta-box">
@@ -1066,18 +1264,72 @@
             <h2>FAQ</h2>
           </div>
 
-          <details open>
-            <summary>Which APK should most people download?</summary>
-            <p>The ARMv8-A build is the default choice for nearly every recent Android phone. If your device is from the last several years, start there.</p>
-          </details>
-          <details>
-            <summary>Why is there a separate Samsung build?</summary>
-            <p>The Samsung build is meant for the Samsung-specific package-name replacement flow, which helps with the vendor-specific Now Bar setup.</p>
-          </details>
-          <details>
-            <summary>Will this work on older Android versions?</summary>
-            <p>No. LiveBridge targets Android 16 and newer because the app is built around native Android Live Updates support.</p>
-          </details>
+          <div class="faq-item is-open" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="true" aria-controls="faq-most-people">
+              <span>Which APK should most people download?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-most-people" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>The ARMv8-A build is the default choice for nearly every recent Android phone. If your device is from the last several years, start there.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-samsung-build">
+              <span>Why is there a separate Samsung build?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-samsung-build" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>The Samsung build is meant for the Samsung-specific package-name replacement flow, which helps with the vendor-specific Now Bar setup.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-internet-access">
+              <span>Why does the app need internet access?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-internet-access" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>LiveBridge uses internet access for things like checking for new releases and dictionary updates. Its core job of turning notifications into Live Updates happens locally on your device.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-safety">
+              <span>Is the app safe?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-safety" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>LiveBridge is open source and does not require an account. You can inspect the code, review the permissions it asks for, and verify what it does before installing it. Notification processing stays on-device.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-contact">
+              <span>How can I contact the developer?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-contact" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>You can reach the developer on Telegram: <a href="https://t.me/appsfolder" target="_blank" rel="noreferrer">@appsfolder</a>.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-older-android">
+              <span>Will this work on older Android versions?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-older-android" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>No. LiveBridge targets Android 16 and newer because the app is built around native Android Live Updates support.</p>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
 
@@ -1093,6 +1345,16 @@
       const latestReleasePage = `https://github.com/${owner}/${repo}/releases/latest`;
       const rawAssetBase = `https://raw.githubusercontent.com/${owner}/${repo}/main/assets`;
       const numberFormat = new Intl.NumberFormat("en-US");
+      const defaultRecommendedBuild = "armv8a";
+      const liveRefreshMinMs = 5200;
+      const liveRefreshJitterMs = 900;
+      const liveRefreshHiddenMs = 15000;
+      const liveRefreshErrorMs = 30000;
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+      const counterNumberPattern = /\d[\d,]*/g;
+      let releaseDataPollTimer = null;
+      let releaseDataRequestInFlight = false;
+      let releaseDataEtag = "";
 
       const builds = [
         {
@@ -1120,6 +1382,185 @@
       const sumDownloads = (assets) =>
         assets.reduce((total, asset) => total + (asset.download_count || 0), 0);
 
+      const getNextLiveRefreshDelay = () =>
+        liveRefreshMinMs + Math.floor(Math.random() * liveRefreshJitterMs);
+
+      function clearReleaseDataRefreshTimer() {
+        if (releaseDataPollTimer !== null) {
+          window.clearTimeout(releaseDataPollTimer);
+          releaseDataPollTimer = null;
+        }
+      }
+
+      function scheduleReleaseDataRefresh(delayMs = getNextLiveRefreshDelay()) {
+        clearReleaseDataRefreshTimer();
+        releaseDataPollTimer = window.setTimeout(() => {
+          if (document.hidden) {
+            scheduleReleaseDataRefresh(liveRefreshHiddenMs);
+            return;
+          }
+          loadReleaseData({ preserveOnError: true });
+        }, Math.max(delayMs, 1500));
+      }
+
+      function splitCounterSegments(value) {
+        const text = String(value ?? "");
+        const segments = [];
+        let cursor = 0;
+        let match;
+
+        counterNumberPattern.lastIndex = 0;
+        while ((match = counterNumberPattern.exec(text)) !== null) {
+          if (match.index > cursor) {
+            segments.push({ type: "text", value: text.slice(cursor, match.index) });
+          }
+          segments.push({ type: "number", value: match[0] });
+          cursor = match.index + match[0].length;
+        }
+
+        if (cursor < text.length) {
+          segments.push({ type: "text", value: text.slice(cursor) });
+        }
+
+        return segments.length ? segments : [{ type: "text", value: text }];
+      }
+
+      function createCounterTextSegment(text) {
+        const node = document.createElement("span");
+        node.className = "live-counter-segment live-counter-segment--text";
+        node.textContent = text;
+        node.setAttribute("aria-hidden", "true");
+        return node;
+      }
+
+      function createCounterChar(char, { previousChar = "", animate = false } = {}) {
+        const node = document.createElement("span");
+        const safeChar = char === " " ? "\u00A0" : char;
+        const safePreviousChar = previousChar === " " ? "\u00A0" : previousChar;
+        const isDigit = /\d/.test(char);
+
+        node.className = `live-counter-char${isDigit ? " is-digit" : ""}${animate ? " is-flipping" : ""}`;
+        node.setAttribute("aria-hidden", "true");
+
+        if (animate && isDigit && /\d/.test(previousChar)) {
+          const stack = document.createElement("span");
+          stack.className = "live-counter-stack";
+
+          const oldFace = document.createElement("span");
+          oldFace.className = "live-counter-face live-counter-face--old";
+          oldFace.textContent = safePreviousChar;
+
+          const newFace = document.createElement("span");
+          newFace.className = "live-counter-face live-counter-face--new";
+          newFace.textContent = safeChar;
+
+          stack.append(oldFace, newFace);
+          node.append(stack);
+          return node;
+        }
+
+        const glyph = document.createElement("span");
+        glyph.className = "live-counter-glyph";
+        glyph.textContent = safeChar;
+        node.append(glyph);
+        return node;
+      }
+
+      function createCounterNumberSegment(nextValue, previousValue, animateDigits) {
+        const node = document.createElement("span");
+        node.className = "live-counter-segment live-counter-segment--number";
+
+        const nextChars = Array.from(nextValue);
+        const previousChars = Array.from(previousValue);
+
+        for (let reverseIndex = 0; reverseIndex < nextChars.length; reverseIndex += 1) {
+          const nextChar = nextChars[nextChars.length - 1 - reverseIndex];
+          const previousChar = previousChars[previousChars.length - 1 - reverseIndex] || "";
+          const shouldAnimate =
+            animateDigits &&
+            /\d/.test(nextChar) &&
+            /\d/.test(previousChar) &&
+            nextChar !== previousChar;
+
+          node.prepend(
+            createCounterChar(nextChar, {
+              previousChar: /\d/.test(previousChar) ? previousChar : nextChar,
+              animate: shouldAnimate,
+            })
+          );
+        }
+
+        return node;
+      }
+
+      function renderCounterText(element, nextText, { animate = true } = {}) {
+        if (!element) return;
+
+        const nextValue = String(nextText ?? "");
+        const previousValue = element.dataset.counterValue || "";
+        if (previousValue === nextValue) return;
+
+        if (!/\d/.test(nextValue)) {
+          element.classList.remove("live-counter");
+          element.removeAttribute("aria-label");
+          element.textContent = nextValue;
+          element.dataset.counterValue = nextValue;
+          return;
+        }
+
+        const nextSegments = splitCounterSegments(nextValue);
+        const previousNumberSegments = splitCounterSegments(previousValue)
+          .filter((segment) => segment.type === "number")
+          .map((segment) => segment.value);
+        const fragment = document.createDocumentFragment();
+        const shouldAnimate = Boolean(
+          animate &&
+          previousValue &&
+          !prefersReducedMotion.matches
+        );
+        let numberSegmentIndex = 0;
+
+        nextSegments.forEach((segment) => {
+          if (segment.type === "text") {
+            fragment.append(createCounterTextSegment(segment.value));
+            return;
+          }
+
+          fragment.append(
+            createCounterNumberSegment(
+              segment.value,
+              previousNumberSegments[numberSegmentIndex] || "",
+              shouldAnimate
+            )
+          );
+          numberSegmentIndex += 1;
+        });
+
+        element.classList.add("live-counter");
+        element.setAttribute("aria-label", nextValue);
+        element.replaceChildren(fragment);
+        element.dataset.counterValue = nextValue;
+      }
+
+      function getRateLimitBackoffMs(response) {
+        const remaining = Number(response.headers.get("x-ratelimit-remaining"));
+        const resetAt = Number(response.headers.get("x-ratelimit-reset"));
+
+        if (
+          Number.isFinite(resetAt) &&
+          resetAt > 0 &&
+          (
+            response.status === 403 ||
+            response.status === 429 ||
+            (Number.isFinite(remaining) && remaining <= 5)
+          )
+        ) {
+          return Math.max((resetAt * 1000) - Date.now() + 1000, liveRefreshErrorMs);
+        }
+
+        return null;
+      }
+
       function assetMatches(assetName, matchers) {
         const name = assetName.toLowerCase();
         return matchers.some((matcher) => name.endsWith(matcher) || name.includes(matcher));
@@ -1127,6 +1568,41 @@
 
       function findBuildAsset(assets, matchers) {
         return assets.find((asset) => assetMatches(asset.name, matchers));
+      }
+
+      function looksLikeSamsungDevice() {
+        const ua = navigator.userAgent || "";
+        const platform = navigator.userAgentData?.platform || "";
+        const vendor = navigator.vendor || "";
+        const brands = Array.isArray(navigator.userAgentData?.brands)
+          ? navigator.userAgentData.brands.map((item) => item.brand).join(" ")
+          : "";
+        const signature = `${ua} ${platform} ${vendor} ${brands}`;
+
+        return /Android/i.test(signature) &&
+          /SamsungBrowser|Samsung|SM-[A-Z0-9]+|GT-[A-Z0-9]+|SCH-[A-Z0-9]+|Galaxy/i.test(signature);
+      }
+
+      function applyRecommendedBuild(buildKey) {
+        document.querySelectorAll(".build-card[data-build-key]").forEach((card) => {
+          const key = card.getAttribute("data-build-key");
+          const isRecommended = key === buildKey;
+
+          card.classList.toggle("recommended", isRecommended);
+
+          const tag = card.querySelector("[data-build-tag]");
+          if (tag) {
+            const defaultTag = tag.getAttribute("data-default-tag") || tag.textContent || "";
+            const recommendedTag = tag.getAttribute("data-recommended-tag") || "Recommended";
+            tag.textContent = isRecommended ? recommendedTag : defaultTag;
+          }
+
+          const button = card.querySelector(".build-footer .btn");
+          if (button) {
+            button.classList.toggle("btn-filled", isRecommended);
+            button.classList.toggle("btn-outlined", !isRecommended);
+          }
+        });
       }
 
       function setBuildCardState(build, latestAsset, totalDownloadsForBuild) {
@@ -1139,12 +1615,15 @@
           button.href = latestAsset.browser_download_url;
           button.textContent = "Download APK";
           button.classList.remove("btn-disabled");
-          count.textContent = `${numberFormat.format(totalDownloadsForBuild)} total downloads`;
+          renderCounterText(
+            count,
+            `${numberFormat.format(totalDownloadsForBuild)} total downloads`
+          );
         } else {
           button.href = latestReleasePage;
           button.textContent = "Not in release";
           button.classList.add("btn-disabled");
-          count.textContent = build.fallbackText;
+          renderCounterText(count, build.fallbackText, { animate: false });
         }
       }
 
@@ -1194,19 +1673,120 @@
         });
       }
 
-      async function loadReleaseData() {
+      function initFaqAccordion() {
+        const items = document.querySelectorAll("[data-faq-item]");
+
+        function getPanelHeight(panel) {
+          return `${Math.ceil(panel.scrollHeight + 1)}px`;
+        }
+
+        function setInitialState(item) {
+          const button = item.querySelector(".faq-trigger");
+          const panel = item.querySelector("[data-faq-panel]");
+          const isOpen = item.classList.contains("is-open");
+
+          if (!button || !panel) return;
+
+          button.setAttribute("aria-expanded", String(isOpen));
+          panel.hidden = !isOpen;
+          panel.style.opacity = isOpen ? "1" : "0";
+          panel.style.height = isOpen ? "auto" : "0px";
+        }
+
+        function openItem(item, button, panel) {
+          item.classList.add("is-open");
+          button.setAttribute("aria-expanded", "true");
+          panel.hidden = false;
+          panel.style.height = "0px";
+          panel.style.opacity = "0";
+
+          requestAnimationFrame(() => {
+            panel.style.height = getPanelHeight(panel);
+            panel.style.opacity = "1";
+          });
+
+          const onTransitionEnd = (event) => {
+            if (event.propertyName !== "height") return;
+            panel.style.height = "auto";
+            panel.removeEventListener("transitionend", onTransitionEnd);
+          };
+
+          panel.addEventListener("transitionend", onTransitionEnd);
+        }
+
+        function closeItem(item, button, panel) {
+          panel.style.height = getPanelHeight(panel);
+          panel.style.opacity = "1";
+
+          requestAnimationFrame(() => {
+            item.classList.remove("is-open");
+            button.setAttribute("aria-expanded", "false");
+            panel.style.height = "0px";
+            panel.style.opacity = "0";
+          });
+
+          const onTransitionEnd = (event) => {
+            if (event.propertyName !== "height") return;
+            panel.hidden = true;
+            panel.removeEventListener("transitionend", onTransitionEnd);
+          };
+
+          panel.addEventListener("transitionend", onTransitionEnd);
+        }
+
+        items.forEach((item) => {
+          setInitialState(item);
+
+          const button = item.querySelector(".faq-trigger");
+          const panel = item.querySelector("[data-faq-panel]");
+          if (!button || !panel) return;
+
+          button.addEventListener("click", () => {
+            if (item.classList.contains("is-open")) {
+              closeItem(item, button, panel);
+            } else {
+              openItem(item, button, panel);
+            }
+          });
+        });
+      }
+
+      async function loadReleaseData({ preserveOnError = false } = {}) {
+        if (releaseDataRequestInFlight) return;
+
         const versionEl = document.getElementById("stat-version");
         const totalDownloadsEl = document.getElementById("stat-total-downloads");
         const statusEl = document.getElementById("stat-status");
         const bannerTitleEl = document.getElementById("release-banner-title");
         const bannerCopyEl = document.getElementById("release-banner-copy");
+        let nextRefreshDelay = document.hidden
+          ? liveRefreshHiddenMs
+          : getNextLiveRefreshDelay();
+
+        releaseDataRequestInFlight = true;
 
         try {
-          const response = await fetch(releasesApi, {
-            headers: { Accept: "application/vnd.github+json" },
-          });
+          const headers = { Accept: "application/vnd.github+json" };
+          if (releaseDataEtag) {
+            headers["If-None-Match"] = releaseDataEtag;
+          }
+
+          const response = await fetch(releasesApi, { headers });
+          const rateLimitBackoffMs = getRateLimitBackoffMs(response);
+          if (rateLimitBackoffMs != null) {
+            nextRefreshDelay = rateLimitBackoffMs;
+          }
+
+          if (response.status === 304) {
+            return;
+          }
 
           if (!response.ok) throw new Error(`API error ${response.status}`);
+
+          const responseEtag = response.headers.get("etag");
+          if (responseEtag) {
+            releaseDataEtag = responseEtag;
+          }
 
           const releases = await response.json();
           const publishedReleases = releases.filter((r) => !r.draft && !r.prerelease);
@@ -1227,7 +1807,7 @@
             versionEl.textContent = latest.tag_name || latest.name || "Latest";
           }
           if (totalDownloadsEl) {
-            totalDownloadsEl.textContent = numberFormat.format(allDownloads);
+            renderCounterText(totalDownloadsEl, numberFormat.format(allDownloads));
           }
           if (statusEl) {
             statusEl.textContent = "Live";
@@ -1236,8 +1816,17 @@
             bannerTitleEl.textContent = `Latest release: ${latest.name || latest.tag_name}`;
           }
           if (bannerCopyEl) {
-            bannerCopyEl.textContent = `${numberFormat.format(latestDownloads)} downloads in the latest release, published ${publishedAt}.`;
+            renderCounterText(
+              bannerCopyEl,
+              `${numberFormat.format(latestDownloads)} downloads in the latest release, published ${publishedAt}.`
+            );
           }
+
+          const hasSamsungBuild = Boolean(findBuildAsset(latest.assets || [], ["-samsung.apk"]));
+          const recommendedBuild = looksLikeSamsungDevice() && hasSamsungBuild
+            ? "samsung"
+            : defaultRecommendedBuild;
+          applyRecommendedBuild(recommendedBuild);
 
           for (const build of builds) {
             const latestAsset = findBuildAsset(latest.assets || [], build.matchers);
@@ -1248,39 +1837,59 @@
             setBuildCardState(build, latestAsset, totalDownloadsForBuild);
           }
         } catch (error) {
-          if (versionEl) {
-            versionEl.textContent = "Latest";
-          }
-          if (totalDownloadsEl) {
-            totalDownloadsEl.textContent = "N/A";
-          }
-          if (statusEl) {
-            statusEl.textContent = "API Error";
-          }
-          if (bannerTitleEl) {
-            bannerTitleEl.textContent = "Release data unavailable";
-          }
-          if (bannerCopyEl) {
-            bannerCopyEl.textContent = "You can download the APK manually from GitHub.";
-          }
+          nextRefreshDelay = Math.max(nextRefreshDelay, liveRefreshErrorMs);
 
-          for (const build of builds) {
-            const button = document.getElementById(`button-${build.key}`);
-            const count = document.getElementById(`count-${build.key}`);
-            if (button) {
-              button.href = latestReleasePage;
-              button.textContent = "Open GitHub";
-              button.classList.remove("btn-disabled");
+          if (!preserveOnError) {
+            if (versionEl) {
+              versionEl.textContent = "Latest";
             }
-            if (count) count.textContent = "Could not load stats.";
+            if (totalDownloadsEl) {
+              renderCounterText(totalDownloadsEl, "N/A", { animate: false });
+            }
+            if (statusEl) {
+              statusEl.textContent = "API Error";
+            }
+            if (bannerTitleEl) {
+              bannerTitleEl.textContent = "Release data unavailable";
+            }
+            if (bannerCopyEl) {
+              renderCounterText(
+                bannerCopyEl,
+                "You can download the APK manually from GitHub.",
+                { animate: false }
+              );
+            }
+
+            for (const build of builds) {
+              const button = document.getElementById(`button-${build.key}`);
+              const count = document.getElementById(`count-${build.key}`);
+              if (button) {
+                button.href = latestReleasePage;
+                button.textContent = "Open GitHub";
+                button.classList.remove("btn-disabled");
+              }
+              if (count) {
+                renderCounterText(count, "Could not load stats.", { animate: false });
+              }
+            }
           }
 
           console.error("Failed to load release data", error);
+        } finally {
+          releaseDataRequestInFlight = false;
+          scheduleReleaseDataRefresh(nextRefreshDelay);
         }
       }
 
       hydrateThemeAwareScreenshots();
       hydrateStaticIcons();
+      initFaqAccordion();
+      applyRecommendedBuild(looksLikeSamsungDevice() ? "samsung" : defaultRecommendedBuild);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          scheduleReleaseDataRefresh(450);
+        }
+      });
       loadReleaseData();
     </script>
   </body>
