@@ -283,6 +283,7 @@
   "text_progress_exclude_context_pattern": "(скид|акци|промокод|промо|купон|распрод|кэшб[еэ]к|кешб[еэ]к|discount|promo|coupon|sale|cashback|off\\b|выгод|bonus|бонус|save|deal|special\\s+offer|limited\\s+time|дарим|подар|при\\s+заказ|при\\s+покуп|minimum\\s+order|order\\s+from|в\\s+приложени\\S*\\s+акци|\\d{2,7}\\s*(?:₽|руб\\.?|рубл(?:ей|я|ь)?|rur|usd|eur|\\$|€|kzt|тенге)|влажност|humidity|погод|weather|температур|temperature|давлен|pressure|осадк|precip|комисси|commission|fee\\b|налог|tax\\b|apr\\b|\\bставк(?:а|и|у|е|ой|ах|ам|ами)?\\b|годов(?:ых|ая)?\\s*процент|процентн(?:ая|ые|ых)\\s+ставк|ипотек|кредит|депозит|вклад|сбор\\b|маркетплейс|посыл(?:к|ок)|почт[аы])",
   "weather_package_hints": [
     "weather",
+    "sec.android.daemonapp",
     "meteo",
     "accuweather",
     "weatherchannel",
@@ -293,7 +294,7 @@
     "1weather",
     "todayweather"
   ],
-  "weather_context_pattern": "(погод|weather|температур|temperature|ощущаетс|feels like|влажност|humidity|ветер|wind|осадк|precip|давлен|pressure|прогноз|forecast|uv|aqi)",
+  "weather_context_pattern": "(погод|weather|температур|temperature|ощущаетс|feels like|влажност|humidity|ветер|wind|осадк|precip|давлен|pressure|прогноз|forecast|uv|aqi|today|tomorrow|highs?|lows?|sunny|clear|cloudy|overcast|rain(?:y)?|snow(?:y)?|fog(?:gy)?|mist|haze|wind(?:y)?|gust(?:y)?|thunder(?:storm)?|storm(?:y)?)",
   "weather_temperature_pattern": "(?<!\\d)([+\\-−]?\\d{1,3})\\s*(?:°\\s*(?:c|f|с|ф)?|℃|℉)",
   "weather_day_pattern": "(сегодня|завтра|утром|днем|вечером|ночью|today|tomorrow|morning|afternoon|evening|night)",
   "weather_condition_pattern": "(ясно|пасмурно|облачно|дожд|снег|туман|ветрено|солнечно|sunny|cloudy|overcast|rain|snow|fog|windy|clear)",
