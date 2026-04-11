@@ -964,6 +964,16 @@ object LiveUpdateNotifier {
         } else {
             null
         }
+        val samsungTwoGisEtaDistanceText = if (isSamsungTwoGis) {
+            extractTwoGisEtaDistanceText(
+                notification = source,
+                displayTitle = displayTitle,
+                displayText = displayText,
+                parserDictionary = parserDictionary
+            )
+        } else {
+            null
+        }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(compactPrimaryText)
@@ -1075,6 +1085,37 @@ object LiveUpdateNotifier {
         if (smartShortTextOverride != null && !hasProgress) {
             builder.setContentText(smartShortTextOverride)
             builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
+        }
+
+        if (isSamsungTwoGis) {
+            val bodyTitle = samsungRemoteViewMiniTextPair?.primaryText
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: compactPrimaryText.trim()
+            val bodySubtitle = samsungRemoteViewMiniTextPair?.secondaryText
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+            val bodyBottomText = samsungTwoGisEtaDistanceText
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+
+            builder.setContentTitle(bodyTitle)
+            if (bodyBottomText != null) {
+                builder.setContentText(bodyBottomText)
+            }
+
+            val bodyBigText = sequenceOf(
+                bodySubtitle,
+                bodyBottomText
+            ).filterNotNull()
+                .distinct()
+                .joinToString(separator = "\n")
+                .trim()
+                .ifBlank { null }
+
+            if (bodyBigText != null) {
+                builder.setStyle(NotificationCompat.BigTextStyle().bigText(bodyBigText))
+            }
         }
 
         if (samsungBridge.enabled) {
@@ -2354,6 +2395,37 @@ object LiveUpdateNotifier {
             .replace(Regex("\\s+"), " ")
             .trim()
             .ifBlank { null }
+    }
+
+    private fun extractTwoGisEtaDistanceText(
+        notification: Notification,
+        displayTitle: String,
+        displayText: String,
+        parserDictionary: LiveParserDictionary
+    ): String? {
+        val candidateLines = linkedSetOf<String>()
+        splitNotificationTextLines(displayTitle).forEach(candidateLines::add)
+        splitNotificationTextLines(displayText).forEach(candidateLines::add)
+        extractRemoteViewTexts(notification)
+            .flatMap(::splitNotificationTextLines)
+            .filterNot(::isTwoGisAuxiliaryLine)
+            .forEach(candidateLines::add)
+
+        val etaRegex = Regex(
+            "\\b\\d+\\s*(?:мин|min|minutes?|hrs?|hours?|hr|ч|час(?:а|ов)?)\\b",
+            setOf(RegexOption.IGNORE_CASE)
+        )
+
+        return candidateLines.firstNotNullOfOrNull { candidate ->
+            val etaMatch = etaRegex.find(candidate) ?: return@firstNotNullOfOrNull null
+            val distanceMatch =
+                parserDictionary.navigationDistancePattern.find(candidate, etaMatch.range.last + 1)
+                    ?: return@firstNotNullOfOrNull null
+            candidate.substring(etaMatch.range.first, distanceMatch.range.last + 1)
+                .replace(Regex("\\s+"), " ")
+                .trim()
+                .ifBlank { null }
+        }
     }
 
     private fun resolveTwoGisRemoteViewMiniTextPair(

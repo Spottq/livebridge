@@ -14,7 +14,8 @@ internal data class SamsungBridgeTexts(
     val showSmallIcon: Boolean,
     val allowNowBarProgress: Boolean,
     val keepCollapsedRemoteView: Boolean,
-    val preferExpandedRemoteBody: Boolean
+    val preferExpandedRemoteBody: Boolean,
+    val reuseNotificationRemoteViews: Boolean
 )
 
 internal data class SamsungMiniTextPair(
@@ -45,7 +46,9 @@ internal object SamsungBridgeContentPolicy {
         val useTextOnlyMiniNowBar =
             hasCustomRemoteCard && remoteViewMiniTextPair != null && !isTwoGisPackage
         val shouldClearContentText =
-            !useTextOnlyMiniNowBar && (hasCustomRemoteCard || smartRuleId == "navigation")
+            !isTwoGisPackage &&
+                    !useTextOnlyMiniNowBar &&
+                    (hasCustomRemoteCard || smartRuleId == "navigation")
         val shouldUseSmartShortTextAsSecondary =
             !useTextOnlyMiniNowBar &&
                     smartShortTextOverride != null &&
@@ -98,8 +101,9 @@ internal object SamsungBridgeContentPolicy {
             showMiniIcon = !useTextOnlyMiniNowBar,
             showSmallIcon = !useTextOnlyMiniNowBar,
             allowNowBarProgress = !useTextOnlyMiniNowBar && !isTwoGisPackage,
-            keepCollapsedRemoteView = useTextOnlyMiniNowBar || isTwoGisPackage,
-            preferExpandedRemoteBody = isTwoGisPackage
+            keepCollapsedRemoteView = useTextOnlyMiniNowBar,
+            preferExpandedRemoteBody = false,
+            reuseNotificationRemoteViews = !isTwoGisPackage
         )
     }
 }
