@@ -1109,7 +1109,12 @@ object LiveUpdateNotifier {
                     builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
                 }
                 resolvedProgressChipText = if (sourcePackageNameLower == TWO_GIS_PACKAGE) {
-                    samsungRemoteViewMiniTextPair?.primaryText?.trim()?.takeIf { it.isNotEmpty() }
+                    samsungTwoGisTurnDistanceText?.trim()?.takeIf { it.isNotEmpty() }
+                        ?: smartShortTextOverride?.trim()?.takeIf { it.isNotEmpty() }
+                        ?: samsungRemoteViewMiniTextPair?.secondaryText?.trim()
+                            ?.takeIf { it.isNotEmpty() }
+                        ?: samsungRemoteViewMiniTextPair?.primaryText?.trim()
+                            ?.takeIf { it.isNotEmpty() }
                         ?: smartShortTextOverride
                         ?: "$percent%"
                 } else {
