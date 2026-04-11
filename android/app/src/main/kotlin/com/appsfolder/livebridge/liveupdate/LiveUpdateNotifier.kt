@@ -990,8 +990,12 @@ object LiveUpdateNotifier {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
         if (smartShortTextOverride != null && !hasProgress) {
-            builder.setContentText(smartShortTextOverride)
-            builder.setShortCriticalText(limitIslandText(smartShortTextOverride, aospCuttingEnabled))
+            if (smartRuleId != "weather") {
+                builder.setContentText(smartShortTextOverride)
+            }
+            builder.setShortCriticalText(
+                limitIslandText(smartShortTextOverride, aospCuttingEnabled)
+            )
         }
 
         if (samsungBridge.enabled) {
