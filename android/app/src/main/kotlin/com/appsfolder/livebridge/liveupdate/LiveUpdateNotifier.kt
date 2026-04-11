@@ -1132,7 +1132,8 @@ object LiveUpdateNotifier {
                 otpCode = otpOverride?.code,
                 compactCodeOverride = compactCodeOverride,
                 samsungReparseChipText = samsungReparse?.chipText,
-                remoteViewMiniTextPair = samsungRemoteViewMiniTextPair
+                remoteViewMiniTextPair = samsungRemoteViewMiniTextPair,
+                twoGisEtaDistanceText = samsungTwoGisEtaDistanceText
             )
             SamsungNowBarApplier.apply(
                 context = context,

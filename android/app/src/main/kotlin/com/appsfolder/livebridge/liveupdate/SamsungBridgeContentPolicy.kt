@@ -40,7 +40,8 @@ internal object SamsungBridgeContentPolicy {
         otpCode: String?,
         compactCodeOverride: String?,
         samsungReparseChipText: String?,
-        remoteViewMiniTextPair: SamsungMiniTextPair?
+        remoteViewMiniTextPair: SamsungMiniTextPair?,
+        twoGisEtaDistanceText: String?
     ): SamsungBridgeTexts {
         val isTwoGisPackage = sourcePackageName == TWO_GIS_PACKAGE
         val useTextOnlyMiniNowBar =
@@ -49,7 +50,9 @@ internal object SamsungBridgeContentPolicy {
             !isTwoGisPackage &&
                     !useTextOnlyMiniNowBar &&
                     (hasCustomRemoteCard || smartRuleId == "navigation")
-        val secondaryText = if (!useTextOnlyMiniNowBar && smartShortTextOverride != null && !hasProgress) {
+        val secondaryText = if (isTwoGisPackage) {
+            twoGisEtaDistanceText?.trim()?.takeIf { it.isNotEmpty() } ?: displayText
+        } else if (!useTextOnlyMiniNowBar && smartShortTextOverride != null && !hasProgress) {
             smartShortTextOverride
         } else {
             displayText
@@ -69,6 +72,9 @@ internal object SamsungBridgeContentPolicy {
             ?.takeIf { it.isNotEmpty() }
             ?: compactPrimaryText.trim()
         val nowBarSecondaryText = when {
+            isTwoGisPackage -> twoGisEtaDistanceText
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
             remoteViewMiniTextPair != null -> remoteViewMiniTextPair.secondaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
