@@ -60,20 +60,20 @@ object LiveUpdateNotifier {
         "com.waze"
     )
     private val NAVIGATION_DISTANCE_PATTERN = Regex(
-        "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:РєРј|km|Рј|m|mi|ft|РјРёР»СЊ|С„СѓС‚)\\b",
+        "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val TEXT_PROGRESS_PERCENT_PATTERN = Regex("(?<!\\d)(\\d{1,3})\\s*%")
     private val TEXT_PROGRESS_DISCOUNT_CONTEXT_PATTERN = Regex(
-        "(СЃРєРёРґ|Р°РєС†Рё|РїСЂРѕРјРѕРєРѕРґ|РїСЂРѕРјРѕ|РєСѓРїРѕРЅ|СЂР°СЃРїСЂРѕРґ|РєСЌС€Р±[РµСЌ]Рє|РєРµС€Р±[РµСЌ]Рє|discount|promo|coupon|sale|cashback|off\\b|РІС‹РіРѕРґ|bonus|Р±РѕРЅСѓСЃ|save|deal|special\\s+offer|limited\\s+time|РґР°СЂРёРј|РїРѕРґР°СЂ)",
+        "(скид|акци|промокод|промо|купон|распрод|кэшб[еэ]к|кешб[еэ]к|discount|promo|coupon|sale|cashback|off\\b|выгод|bonus|бонус|save|deal|special\\s+offer|limited\\s+time|дарим|подар)",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val TEXT_PROGRESS_OFFER_CONTEXT_PATTERN = Regex(
-        "(РїСЂРё\\s+Р·Р°РєР°Р·|РїСЂРё\\s+РїРѕРєСѓРї|minimum\\s+order|order\\s+from|РІ\\s+РїСЂРёР»РѕР¶РµРЅРё\\S*\\s+Р°РєС†Рё)",
+        "(при\\s+заказ|при\\s+покуп|minimum\\s+order|order\\s+from|в\\s+приложени\\S*\\s+акци)",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val TEXT_PROGRESS_MONEY_CONTEXT_PATTERN = Regex(
-        "(\\d{2,7}\\s*(?:в‚Ѕ|СЂСѓР±\\.?|СЂСѓР±Р»(?:РµР№|СЏ|СЊ)?|rur|usd|eur|\\$|в‚¬|kzt|С‚РµРЅРіРµ))",
+        "(\\d{2,7}\\s*(?:₽|руб\\.?|рубл(?:ей|я|ь)?|rur|usd|eur|\\$|€|kzt|тенге))",
         setOf(RegexOption.IGNORE_CASE)
     )
     private const val SMART_ISLAND_ANIMATION_MIN_DELAY_MS = 2_000L
@@ -82,15 +82,15 @@ object LiveUpdateNotifier {
 
     private val OTP_CODE_LENGTH = 4..8
     private val weatherHighLowPattern = Regex(
-        """\bhighs?\s+([+\-в€’]?\d{1,3})\s*(?:В°\s*(?:c|f|СЃ|С„)?|в„ѓ|в„‰)?(?:\s*(?:to|-|вЂ“|вЂ”)\s*[+\-в€’]?\d{1,3}\s*(?:В°\s*(?:c|f|СЃ|С„)?|в„ѓ|в„‰)?)?[^\n]{0,40}?\blows?\s+([+\-в€’]?\d{1,3})\s*(?:В°\s*(?:c|f|СЃ|С„)?|в„ѓ|в„‰)?""",
+        """\bhighs?\s+([+\-−]?\d{1,3})\s*(?:°\s*(?:c|f|с|ф)?|℃|℉)?(?:\s*(?:to|-|–|—)\s*[+\-−]?\d{1,3}\s*(?:°\s*(?:c|f|с|ф)?|℃|℉)?)?[^\n]{0,40}?\blows?\s+([+\-−]?\d{1,3})\s*(?:°\s*(?:c|f|с|ф)?|℃|℉)?""",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val externalDeviceDebuggingPattern = Regex(
-        """(\badb\b|android\s+debug\s+bridge|usb\s+debug(?:ging)?|wireless\s+debug(?:ging)?|\bdebug(?:ging|ger)?\b|developer\s+options?|usb[-\s]?РѕС‚Р»Р°РґРє\p{L}*|Р±РµСЃРїСЂРѕРІРѕРґ\p{L}*\s+РѕС‚Р»Р°РґРє\p{L}*|РѕС‚Р»Р°РґРє\p{L}*|РїР°СЂР°РјРµС‚СЂ\p{L}*\s+СЂР°Р·СЂР°Р±РѕС‚С‡РёРє\p{L}*)""",
+        """(\badb\b|android\s+debug\s+bridge|usb\s+debug(?:ging)?|wireless\s+debug(?:ging)?|\bdebug(?:ging|ger)?\b|developer\s+options?|usb[-\s]?отладк\p{L}*|беспровод\p{L}*\s+отладк\p{L}*|отладк\p{L}*|параметр\p{L}*\s+разработчик\p{L}*)""",
         setOf(RegexOption.IGNORE_CASE)
     )
-    private val weatherCelsiusPattern = Regex("""(?:В°\s*[cСЃ]|в„ѓ)""", setOf(RegexOption.IGNORE_CASE))
-    private val weatherFahrenheitPattern = Regex("""(?:В°\s*[fС„]|в„‰)""", setOf(RegexOption.IGNORE_CASE))
+    private val weatherCelsiusPattern = Regex("""(?:°\s*[cс]|℃)""", setOf(RegexOption.IGNORE_CASE))
+    private val weatherFahrenheitPattern = Regex("""(?:°\s*[fф]|℉)""", setOf(RegexOption.IGNORE_CASE))
     private val transparentActionIcon by lazy {
         IconCompat.createWithBitmap(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))
     }
@@ -2023,11 +2023,10 @@ object LiveUpdateNotifier {
     }
 
     private fun normalizeVpnSpeedToken(raw: String): String {
-        return raw
+        return NotificationTextNormalizer.repair(raw)
             .replace(Regex("\\s+"), "")
-            .replace("/СЃ", "/s")
-            .replace("/РЎ", "/s")
-            .replace("СЃРµРє", "s", ignoreCase = true)
+            .replace("/с", "/s", ignoreCase = true)
+            .replace("сек", "s", ignoreCase = true)
     }
 
     private fun extractNavigationDistanceText(
@@ -2199,7 +2198,7 @@ object LiveUpdateNotifier {
             nextGeneration
         }
 
-        val copiedLabel = if (isRussianLocale(context)) "РЎРєРѕРїРёСЂРѕРІР°РЅРѕ" else "Copied"
+        val copiedLabel = if (isRussianLocale(context)) "Скопировано" else "Copied"
 
         scheduleOtpAnimationStep(
             context = context,
@@ -2554,7 +2553,7 @@ object LiveUpdateNotifier {
             .forEach(candidateLines::add)
 
         val etaRegex = Regex(
-            "\\b\\d+\\s*(?:РјРёРЅ|min|minutes?|hrs?|hours?|hr|С‡|С‡Р°СЃ(?:Р°|РѕРІ)?)\\b",
+            "\\b\\d+\\s*(?:мин|min|minutes?|hrs?|hours?|hr|ч|час(?:а|ов)?)\\b",
             setOf(RegexOption.IGNORE_CASE)
         )
 
@@ -3187,8 +3186,8 @@ object LiveUpdateNotifier {
                     }.getOrNull()
                     when (value) {
                         is CharSequence -> {
-                            val normalized = value.toString().trim()
-                            if (normalized.isNotEmpty()) {
+                            val normalized = NotificationTextNormalizer.normalize(value)
+                            if (!normalized.isNullOrEmpty()) {
                                 if (likelyTextAction || field.name.contains("text", ignoreCase = true)) {
                                     values.add(normalized)
                                 }
@@ -3197,8 +3196,7 @@ object LiveUpdateNotifier {
 
                         is Array<*> -> {
                             value.filterIsInstance<CharSequence>()
-                                .map { it.toString().trim() }
-                                .filter { it.isNotEmpty() }
+                                .mapNotNull { NotificationTextNormalizer.normalize(it) }
                                 .forEach(values::add)
                         }
                     }
@@ -3372,7 +3370,7 @@ object LiveUpdateNotifier {
         }
 
         val language = locale?.language?.lowercase(Locale.ROOT).orEmpty()
-        return if (language.startsWith("ru")) "РЎРєРѕРїРёСЂРѕРІР°С‚СЊ РєРѕРґ" else "Copy code"
+        return if (language.startsWith("ru")) "Скопировать код" else "Copy code"
     }
 
     private fun copySourceActions(
@@ -3439,7 +3437,9 @@ object LiveUpdateNotifier {
                 if (index in usedIndexes) {
                     return@firstOrNull false
                 }
-                val title = action.title?.toString()?.lowercase(Locale.ROOT).orEmpty()
+                val title = NotificationTextNormalizer.normalize(action.title)
+                    ?.lowercase(Locale.ROOT)
+                    .orEmpty()
                 keywords.any(title::contains)
             } ?: return null
             usedIndexes += candidate.index
@@ -3447,16 +3447,16 @@ object LiveUpdateNotifier {
         }
 
         val previousAction = pickByKeywords(
-            listOf("previous", "prev", "РЅР°Р·Р°Рґ", "РїСЂРµРґ", "rewind", "вЏ®")
+            listOf("previous", "prev", "назад", "пред", "rewind", "⏮")
         )
         val pauseAction = pickByKeywords(
-            listOf("pause", "РїР°СѓР·Р°", "вЏё")
+            listOf("pause", "пауза", "⏸")
         )
         val playAction = pickByKeywords(
-            listOf("play", "РёРіСЂР°С‚СЊ", "РІРѕСЃРїСЂРѕРёР·", "resume", "в–¶", "вЏЇ")
+            listOf("play", "играть", "воспроиз", "resume", "▶", "⏯")
         )
         val nextAction = pickByKeywords(
-            listOf("next", "СЃР»РµРґ", "skip", "forward", "вЏ­")
+            listOf("next", "след", "skip", "forward", "⏭")
         )
 
         val centerAction = when (isPlaying) {
@@ -3498,14 +3498,14 @@ object LiveUpdateNotifier {
             NotificationCompat.Action.Builder(
                 transparentActionIcon,
                 titleOverride?.takeIf { it.isNotBlank() }
-                    ?: copied.title?.toString()?.takeIf { it.isNotBlank() }
-                    ?: frameworkAction.title?.toString()?.takeIf { it.isNotBlank() }
+                    ?: NotificationTextNormalizer.normalize(copied.title)
+                    ?: NotificationTextNormalizer.normalize(frameworkAction.title)
                     ?: "Action",
                 copied.actionIntent ?: frameworkAction.actionIntent
             ).build()
         } catch (_: Exception) {
             val title = titleOverride?.takeIf { it.isNotBlank() }
-                ?: frameworkAction.title?.toString()?.takeIf { it.isNotBlank() }
+                ?: NotificationTextNormalizer.normalize(frameworkAction.title)
                 ?: "Action"
             NotificationCompat.Action.Builder(
                 transparentActionIcon,
@@ -3554,7 +3554,7 @@ object LiveUpdateNotifier {
         val extras = notification.extras
         val title = extras.getCharSequence(Notification.EXTRA_TITLE)
             ?: extras.getCharSequence(Notification.EXTRA_TITLE_BIG)
-        val normalizedTitle = title?.toString()?.takeIf { it.isNotBlank() }
+        val normalizedTitle = NotificationTextNormalizer.normalize(title)
         if (normalizedTitle != null) {
             return normalizedTitle
         }
@@ -3570,7 +3570,7 @@ object LiveUpdateNotifier {
         val text = extras.getCharSequence(Notification.EXTRA_TEXT)
             ?: extras.getCharSequence(Notification.EXTRA_BIG_TEXT)
             ?: extras.getCharSequence(Notification.EXTRA_SUB_TEXT)
-        val normalized = text?.toString()?.takeIf { it.isNotBlank() }
+        val normalized = NotificationTextNormalizer.normalize(text)
         if (normalized != null) {
             return normalized
         }
@@ -3590,8 +3590,8 @@ object LiveUpdateNotifier {
         val parts = mutableListOf<String>()
 
         fun add(value: CharSequence?) {
-            val text = value?.toString()?.trim().orEmpty()
-            if (text.isNotBlank()) {
+            val text = NotificationTextNormalizer.normalize(value)
+            if (text != null) {
                 parts.add(text)
             }
         }
@@ -3874,14 +3874,13 @@ object LiveUpdateNotifier {
         if (base.isNotBlank()) {
             parts += base
         }
-        notification.tickerText?.toString()?.trim()?.takeIf { it.isNotBlank() }?.let(parts::add)
+        NotificationTextNormalizer.normalize(notification.tickerText)?.let(parts::add)
         notification.channelId?.trim()?.takeIf { it.isNotBlank() }?.let(parts::add)
         notification.group?.trim()?.takeIf { it.isNotBlank() }?.let(parts::add)
         notification.sortKey?.trim()?.takeIf { it.isNotBlank() }?.let(parts::add)
         notification.category?.trim()?.takeIf { it.isNotBlank() }?.let(parts::add)
         notification.actions
-            ?.mapNotNull { it.title?.toString()?.trim() }
-            ?.filter { it.isNotBlank() }
+            ?.mapNotNull { NotificationTextNormalizer.normalize(it.title) }
             ?.forEach(parts::add)
 
         if (parts.isEmpty()) {

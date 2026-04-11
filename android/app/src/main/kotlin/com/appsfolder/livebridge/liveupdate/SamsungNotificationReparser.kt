@@ -437,10 +437,7 @@ internal object SamsungNotificationReparser {
     }
 
     private fun normalizeText(value: CharSequence?): String? {
-        val normalized = value?.toString()?.trim().orEmpty()
-            .replace(Regex("\\s+"), " ")
-            .trim()
-        return normalized.ifBlank { null }
+        return NotificationTextNormalizer.normalize(value)
     }
 
     private fun firstNotBlank(vararg values: String?): String? {
