@@ -975,7 +975,13 @@ object LiveUpdateNotifier {
             .setWhen(resolveStableWhen(source, sbn.postTime))
             .setShowWhen(false)
             .setColor(progressColor)
-            .setCategory(if (hasProgress) Notification.CATEGORY_PROGRESS else Notification.CATEGORY_STATUS)
+            .setCategory(
+                if (hasProgress && !suppressFrameworkProgressBody) {
+                    Notification.CATEGORY_PROGRESS
+                } else {
+                    Notification.CATEGORY_STATUS
+                }
+            )
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 

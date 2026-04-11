@@ -97,7 +97,7 @@ internal object SamsungBridgeContentPolicy {
             disableMiniRemoteView = useTextOnlyMiniNowBar,
             showMiniIcon = !useTextOnlyMiniNowBar,
             showSmallIcon = !useTextOnlyMiniNowBar,
-            allowNowBarProgress = !useTextOnlyMiniNowBar,
+            allowNowBarProgress = !useTextOnlyMiniNowBar && !isTwoGisPackage,
             keepCollapsedRemoteView = useTextOnlyMiniNowBar || isTwoGisPackage,
             preferExpandedRemoteBody = isTwoGisPackage
         )
