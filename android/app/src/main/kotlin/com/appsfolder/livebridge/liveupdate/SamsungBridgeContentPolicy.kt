@@ -41,6 +41,7 @@ internal object SamsungBridgeContentPolicy {
         compactCodeOverride: String?,
         samsungReparseChipText: String?,
         remoteViewMiniTextPair: SamsungMiniTextPair?,
+        twoGisPrimaryText: String?,
         twoGisEtaDistanceText: String?,
         twoGisVisibleSecondaryText: String?
     ): SamsungBridgeTexts {
@@ -66,7 +67,7 @@ internal object SamsungBridgeContentPolicy {
             displayText
         }
         val chipText = sequenceOf(
-            remoteViewMiniTextPair?.primaryText?.trim()?.takeIf { isTwoGisPackage },
+            twoGisPrimaryText?.trim()?.takeIf { isTwoGisPackage && it.isNotEmpty() },
             resolvedProgressChipText?.trim()?.takeIf { !isTwoGisPackage },
             otpShortTextOverride?.trim(),
             otpCode?.trim(),
@@ -75,10 +76,20 @@ internal object SamsungBridgeContentPolicy {
             smartShortTextOverride?.trim(),
             compactPrimaryText.trim()
         ).firstOrNull { !it.isNullOrEmpty() }
-        val nowBarPrimaryText = remoteViewMiniTextPair?.primaryText
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
-            ?: compactPrimaryText.trim()
+        val nowBarPrimaryText = if (isTwoGisPackage) {
+            twoGisPrimaryText
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: remoteViewMiniTextPair?.primaryText
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+                ?: compactPrimaryText.trim()
+        } else {
+            remoteViewMiniTextPair?.primaryText
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: compactPrimaryText.trim()
+        }
         val nowBarSecondaryText = when {
             isTwoGisPackage -> twoGisVisibleSecondaryText
                 ?.trim()

@@ -974,18 +974,50 @@ object LiveUpdateNotifier {
         } else {
             null
         }
+        val samsungTwoGisMainTitleText = if (isSamsungTwoGis) {
+            samsungRemoteViewMiniTextPair?.primaryText
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: compactPrimaryText.trim().takeIf { it.isNotEmpty() }
+        } else {
+            null
+        }
         val samsungTwoGisTurnDistanceText = if (isSamsungTwoGis) {
             extractNavigationDistanceText(
                 notification = source,
                 fallbackTitle = displayTitle,
                 parserDictionary = parserDictionary
             )
+                ?: samsungRemoteViewMiniTextPair?.secondaryText
+                    ?.trim()
+                    ?.takeIf { candidate ->
+                        candidate.isNotEmpty() &&
+                                isNavigationDistanceText(candidate, parserDictionary)
+                    }
+        } else {
+            null
+        }
+        val samsungTwoGisPrimaryText = if (isSamsungTwoGis) {
+            sequenceOf(
+                samsungTwoGisTurnDistanceText?.trim()?.takeIf { it.isNotEmpty() },
+                samsungTwoGisMainTitleText?.trim()?.takeIf { it.isNotEmpty() }
+            ).firstOrNull { !it.isNullOrEmpty() }
+        } else {
+            null
+        }
+        val samsungTwoGisSecondaryTitleText = if (isSamsungTwoGis) {
+            samsungTwoGisMainTitleText
+                ?.trim()
+                ?.takeIf { title ->
+                    title.isNotEmpty() &&
+                            !isEquivalentText(title, samsungTwoGisPrimaryText.orEmpty())
+                }
         } else {
             null
         }
         val samsungTwoGisVisibleSecondaryText = if (isSamsungTwoGis) {
             composeTwoGisVisibleSecondaryText(
-                turnDistanceText = samsungTwoGisTurnDistanceText,
+                leadingText = samsungTwoGisSecondaryTitleText,
                 etaDistanceText = samsungTwoGisEtaDistanceText,
                 fallbackText = displayText
             )
@@ -1106,11 +1138,11 @@ object LiveUpdateNotifier {
         }
 
         if (isSamsungTwoGis) {
-            val bodyTitle = samsungRemoteViewMiniTextPair?.primaryText
+            val bodyTitle = samsungTwoGisPrimaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
                 ?: compactPrimaryText.trim()
-            val bodySubtitle = samsungRemoteViewMiniTextPair?.secondaryText
+            val bodySubtitle = samsungTwoGisSecondaryTitleText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
             val bodyBottomText = samsungTwoGisVisibleSecondaryText
@@ -1123,7 +1155,9 @@ object LiveUpdateNotifier {
             }
 
             val bodyBigText = sequenceOf(
-                bodySubtitle,
+                bodySubtitle?.takeIf { subtitle ->
+                    bodyBottomText == null || !bodyBottomText.startsWith(subtitle)
+                },
                 bodyBottomText
             ).filterNotNull()
                 .distinct()
@@ -1151,6 +1185,7 @@ object LiveUpdateNotifier {
                 compactCodeOverride = compactCodeOverride,
                 samsungReparseChipText = samsungReparse?.chipText,
                 remoteViewMiniTextPair = samsungRemoteViewMiniTextPair,
+                twoGisPrimaryText = samsungTwoGisPrimaryText,
                 twoGisEtaDistanceText = samsungTwoGisEtaDistanceText,
                 twoGisVisibleSecondaryText = samsungTwoGisVisibleSecondaryText
             )
@@ -2449,11 +2484,11 @@ object LiveUpdateNotifier {
     }
 
     private fun composeTwoGisVisibleSecondaryText(
-        turnDistanceText: String?,
+        leadingText: String?,
         etaDistanceText: String?,
         fallbackText: String
     ): String? {
-        val normalizedTurn = turnDistanceText
+        val normalizedLeading = leadingText
             ?.replace(Regex("\\s+"), " ")
             ?.trim()
             .orEmpty()
@@ -2466,10 +2501,10 @@ object LiveUpdateNotifier {
             .trim()
 
         return when {
-            normalizedTurn.isNotEmpty() && normalizedEtaDistance.isNotEmpty() ->
-                "$normalizedTurn · $normalizedEtaDistance"
+            normalizedLeading.isNotEmpty() && normalizedEtaDistance.isNotEmpty() ->
+                "$normalizedLeading · $normalizedEtaDistance"
             normalizedEtaDistance.isNotEmpty() -> normalizedEtaDistance
-            normalizedTurn.isNotEmpty() -> normalizedTurn
+            normalizedLeading.isNotEmpty() -> normalizedLeading
             normalizedFallback.isNotEmpty() -> normalizedFallback
             else -> null
         }
