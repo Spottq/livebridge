@@ -26,17 +26,17 @@ class LiveBridgeHomePage extends StatefulWidget {
 class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static const String _projectGithubUrl =
-      'https://github.com/Spottq/livebridge';
+      'https://github.com/appsfolder/livebridge';
   static const String _originalGithubUrl =
       'https://github.com/appsfolder/livebridge';
   static const String _updateGithubReleasesUrl =
-      'https://appsfolder.github.io/livebridge/';
+      'https://appsfolder.github.io/livebridge/#download';
   static const String _projectGithubBugReportUrl =
-      'https://github.com/Spottq/livebridge/issues';
+      'https://github.com/appsfolder/livebridge/issues/new/choose?template=bug_report.yml';
   static const String _latestReleaseApiUrl =
       'https://api.github.com/repos/appsfolder/livebridge/releases/latest';
   static const String _dictionaryRawUrl =
-      'https://raw.githubusercontent.com/Spottq/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
+      'https://raw.githubusercontent.com/appsfolder/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
   static const bool _dictionaryAutoSyncEnabled = false;
   static const Duration _updateCheckInterval = Duration(hours: 6);
   static const int _networkSpeedThresholdStepBytesPerSecond = 8 * 1024;
@@ -2056,9 +2056,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           ],
           _buildGithubLinkCard(
             caption: _hasUpdateAlert ? 'Update source' : 'Forked by',
-            url: _hasUpdateAlert
-                ? s.downloadPageUrl
-                : 'github.com/Spottq/livebridge',
+            url: _hasUpdateAlert ? s.downloadPageUrl : s.githubUrl,
             onTap: () {
               unawaited(
                 _hasUpdateAlert ? _openUpdateGithub() : _openProjectGithub(),
