@@ -229,6 +229,28 @@ class NetworkSpeedUnitSelection {
   }
 }
 
+enum NotificationDedupMode { otpStatus, otpOnly }
+
+extension NotificationDedupModeId on NotificationDedupMode {
+  String get id {
+    switch (this) {
+      case NotificationDedupMode.otpStatus:
+        return 'otp_status';
+      case NotificationDedupMode.otpOnly:
+        return 'otp_only';
+    }
+  }
+
+  static NotificationDedupMode from(String? value) {
+    switch (value) {
+      case 'otp_only':
+        return NotificationDedupMode.otpOnly;
+      default:
+        return NotificationDedupMode.otpStatus;
+    }
+  }
+}
+
 enum AppCompactTextSource { title, text }
 
 extension AppCompactTextSourceId on AppCompactTextSource {

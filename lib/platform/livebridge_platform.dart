@@ -159,6 +159,22 @@ class LiveBridgePlatform {
       _askBool('getHyperBridgeEnabled');
   static Future<bool> setHyperBridgeEnabled(bool value) =>
       _askBool('setHyperBridgeEnabled', {'value': value});
+  static Future<bool> getNotificationDedupEnabled() =>
+      _askBool('getNotificationDedupEnabled');
+  static Future<bool> setNotificationDedupEnabled(bool value) =>
+      _askBool('setNotificationDedupEnabled', {'value': value});
+  static Future<String> getNotificationDedupMode() =>
+      _askStr('getNotificationDedupMode');
+  static Future<bool> setNotificationDedupMode(String value) =>
+      _askBool('setNotificationDedupMode', {'value': value});
+  static Future<String> getNotificationDedupPackageRules() =>
+      _askStr('getNotificationDedupPackageRules');
+  static Future<bool> setNotificationDedupPackageRules(String value) =>
+      _askBool('setNotificationDedupPackageRules', {'value': value});
+  static Future<String> getNotificationDedupPackageMode() =>
+      _askStr('getNotificationDedupPackageMode');
+  static Future<bool> setNotificationDedupPackageMode(String value) =>
+      _askBool('setNotificationDedupPackageMode', {'value': value});
   static Future<bool> getSmartStatusDetectionEnabled() =>
       _askBool('getSmartStatusDetectionEnabled');
   static Future<bool> setSmartStatusDetectionEnabled(bool value) =>

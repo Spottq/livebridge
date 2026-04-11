@@ -255,6 +255,51 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_HYPERBRIDGE_ENABLED, value).apply()
     }
 
+    fun getNotificationDedupEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NOTIFICATION_DEDUP_ENABLED, false)
+    }
+
+    fun setNotificationDedupEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_NOTIFICATION_DEDUP_ENABLED, value).apply()
+    }
+
+    fun getNotificationDedupMode(): String {
+        val raw = prefs.getString(
+            KEY_NOTIFICATION_DEDUP_MODE,
+            NotificationDedupMode.OTP_STATUS.id
+        ) ?: NotificationDedupMode.OTP_STATUS.id
+        return NotificationDedupMode.from(raw).id
+    }
+
+    fun setNotificationDedupMode(value: String?) {
+        val mode = NotificationDedupMode.from(value)
+        prefs.edit().putString(KEY_NOTIFICATION_DEDUP_MODE, mode.id).apply()
+    }
+
+    fun getNotificationDedupPackageRulesRaw(): String {
+        return prefs.getString(KEY_NOTIFICATION_DEDUP_PACKAGE_RULES, "") ?: ""
+    }
+
+    fun setNotificationDedupPackageRulesRaw(value: String?) {
+        val normalized = value?.trim().orEmpty()
+        prefs.edit()
+            .putString(KEY_NOTIFICATION_DEDUP_PACKAGE_RULES, normalized)
+            .apply()
+    }
+
+    fun getNotificationDedupPackageMode(): String {
+        val raw = prefs.getString(
+            KEY_NOTIFICATION_DEDUP_PACKAGE_MODE,
+            PackageMode.ALL.id
+        ) ?: PackageMode.ALL.id
+        return PackageMode.from(raw).id
+    }
+
+    fun setNotificationDedupPackageMode(value: String?) {
+        val mode = PackageMode.from(value)
+        prefs.edit().putString(KEY_NOTIFICATION_DEDUP_PACKAGE_MODE, mode.id).apply()
+    }
+
     fun getSmartStatusDetectionEnabled(): Boolean {
         return prefs.getBoolean(KEY_SMART_STATUS_ENABLED, true)
     }
@@ -467,6 +512,17 @@ class ConverterPrefs(context: Context) {
         return packageName.lowercase(Locale.ROOT) in packages
     }
 
+    fun isNotificationDedupPackageAllowed(packageName: String): Boolean {
+        val mode = PackageMode.from(getNotificationDedupPackageMode())
+        val packages = parsePackageRules(getNotificationDedupPackageRulesRaw())
+
+        return when (mode) {
+            PackageMode.ALL -> true
+            PackageMode.INCLUDE -> packages.isNotEmpty() && packageName in packages
+            PackageMode.EXCLUDE -> packageName !in packages
+        }
+    }
+
     private fun parsePackageRules(raw: String): Set<String> {
         return raw
             .split(',', ';', '\n', '\r', '\t', ' ')
@@ -483,6 +539,17 @@ class ConverterPrefs(context: Context) {
         companion object {
             fun from(raw: String?): PackageMode {
                 return entries.firstOrNull { it.id == raw } ?: ALL
+            }
+        }
+    }
+
+    private enum class NotificationDedupMode(val id: String) {
+        OTP_STATUS("otp_status"),
+        OTP_ONLY("otp_only");
+
+        companion object {
+            fun from(raw: String?): NotificationDedupMode {
+                return entries.firstOrNull { it.id == raw } ?: OTP_STATUS
             }
         }
     }
@@ -517,6 +584,10 @@ class ConverterPrefs(context: Context) {
         private const val KEY_AOSP_CUTTING_ENABLED = "aosp_cutting_enabled"
         private const val KEY_ANIMATED_ISLAND_ENABLED = "animated_island_enabled"
         private const val KEY_HYPERBRIDGE_ENABLED = "hyperbridge_enabled"
+        private const val KEY_NOTIFICATION_DEDUP_ENABLED = "notification_dedup_enabled"
+        private const val KEY_NOTIFICATION_DEDUP_MODE = "notification_dedup_mode"
+        private const val KEY_NOTIFICATION_DEDUP_PACKAGE_RULES = "notification_dedup_package_rules"
+        private const val KEY_NOTIFICATION_DEDUP_PACKAGE_MODE = "notification_dedup_package_mode"
         private const val KEY_SMART_STATUS_ENABLED = "smart_status_enabled"
         private const val KEY_SMART_MEDIA_PLAYBACK_ENABLED = "smart_media_playback_enabled"
         private const val KEY_SMART_NAVIGATION_ENABLED = "smart_navigation_enabled"

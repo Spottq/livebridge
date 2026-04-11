@@ -14,6 +14,8 @@ import kotlin.math.min
 class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private val prefs by lazy { ConverterPrefs(applicationContext) }
     private val mainHandler = Handler(Looper.getMainLooper())
+    private val selfDismissLock = Any()
+    private val selfDismissedSourceKeys = mutableSetOf<String>()
     private var rebindAttempts = 0
     private var rebindScheduled = false
     private var snapshotSyncScheduled = false
@@ -44,7 +46,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                     continue
                 }
                 try {
-                    LiveUpdateNotifier.maybeMirror(applicationContext, prefs, sbn)
+                    processIncomingNotification(sbn)
                 } catch (error: Throwable) {
                     Log.e(TAG, "Snapshot sync processing failed: ${sbn.key}", error)
                 }
@@ -99,7 +101,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                 continue
             }
             try {
-                LiveUpdateNotifier.maybeMirror(applicationContext, prefs, sbn)
+                processIncomingNotification(sbn)
             } catch (error: Throwable) {
                 Log.e(TAG, "Failed to restore active notification: ${sbn.key}", error)
             }
@@ -129,7 +131,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
 
         try {
-            LiveUpdateNotifier.maybeMirror(applicationContext, prefs, sbn)
+            processIncomingNotification(sbn)
         } catch (error: Throwable) {
             Log.e(TAG, "Failed to process posted notification: ${sbn.key}", error)
         }
@@ -141,6 +143,9 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
         if (sbn.packageName == packageName) {
+            return
+        }
+        if (consumeSelfDismissedSourceKey(sbn.key)) {
             return
         }
 
@@ -160,6 +165,65 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         rebindScheduled = false
         snapshotSyncScheduled = false
         super.onDestroy()
+    }
+
+    private fun processIncomingNotification(sbn: StatusBarNotification) {
+        val result = LiveUpdateNotifier.maybeMirror(applicationContext, prefs, sbn)
+        maybeDismissOriginalSource(sbn, result)
+    }
+
+    private fun maybeDismissOriginalSource(
+        sbn: StatusBarNotification,
+        result: LiveUpdateNotifier.MirrorResult
+    ) {
+        if (!result.mirrored) {
+            return
+        }
+        if (!prefs.getNotificationDedupEnabled()) {
+            return
+        }
+        if (!sbn.isClearable) {
+            return
+        }
+        if (!prefs.isNotificationDedupPackageAllowed(sbn.packageName)) {
+            return
+        }
+        val shouldDismiss = when (prefs.getNotificationDedupMode()) {
+            "otp_only" -> result.dedupKind == LiveUpdateNotifier.MirrorDedupKind.OTP
+            else -> {
+                result.dedupKind == LiveUpdateNotifier.MirrorDedupKind.OTP ||
+                        result.dedupKind == LiveUpdateNotifier.MirrorDedupKind.STATUS
+            }
+        }
+        if (!shouldDismiss) {
+            return
+        }
+
+        rememberSelfDismissedSourceKey(sbn.key)
+        try {
+            cancelNotification(sbn.key)
+        } catch (error: Throwable) {
+            forgetSelfDismissedSourceKey(sbn.key)
+            Log.e(TAG, "Failed to auto-dismiss original notification: ${sbn.key}", error)
+        }
+    }
+
+    private fun rememberSelfDismissedSourceKey(sbnKey: String) {
+        synchronized(selfDismissLock) {
+            selfDismissedSourceKeys.add(sbnKey)
+        }
+    }
+
+    private fun forgetSelfDismissedSourceKey(sbnKey: String) {
+        synchronized(selfDismissLock) {
+            selfDismissedSourceKeys.remove(sbnKey)
+        }
+    }
+
+    private fun consumeSelfDismissedSourceKey(sbnKey: String): Boolean {
+        return synchronized(selfDismissLock) {
+            selfDismissedSourceKeys.remove(sbnKey)
+        }
     }
 
     private fun scheduleRebind(reason: String) {

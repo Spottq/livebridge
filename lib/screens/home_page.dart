@@ -14,7 +14,7 @@ import '../utils/livebridge_haptics.dart';
 import '../widgets/shared_widgets.dart';
 import 'app_presentation_settings_page.dart';
 
-enum _PackagePickerTarget { conversion, otp, bypass }
+enum _PackagePickerTarget { conversion, otp, bypass, dedup }
 
 class LiveBridgeHomePage extends StatefulWidget {
   const LiveBridgeHomePage({super.key});
@@ -40,12 +40,18 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       'https://raw.githubusercontent.com/appsfolder/livebridge/refs/heads/main/android/app/src/main/assets/liveupdate_dictionary.json';
   static const bool _dictionaryAutoSyncEnabled = false;
   static const Duration _updateCheckInterval = Duration(hours: 6);
+  static const String _expandableSettingNativeProgress = 'native_progress';
+  static const String _expandableSettingExternalDevices = 'external_devices';
+  static const String _expandableSettingNotificationDedup =
+      'notification_dedup';
   static const int _networkSpeedThresholdStepBytesPerSecond = 8 * 1024;
   static const int _networkSpeedThresholdMaxBytesPerSecond = 1024 * 1024;
 
   final TextEditingController _rulesController = TextEditingController();
   final TextEditingController _otpRulesController = TextEditingController();
   final TextEditingController _bypassRulesController = TextEditingController();
+  final TextEditingController _notificationDedupRulesController =
+      TextEditingController();
 
   Timer? _statusRefreshTimer;
   Timer? _updateRefreshTimer;
@@ -62,6 +68,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _aospCuttingEnabled = false;
   bool _animatedIslandEnabled = false;
   bool _hyperBridgeEnabled = false;
+  bool _notificationDedupEnabled = false;
   bool _onlyWithProgress = true;
   bool _textProgressEnabled = true;
   bool _networkSpeedEnabled = false;
@@ -92,6 +99,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   String _deviceLabelForWarning = '';
   final Set<String> _expandedSections = <String>{};
   final Set<String> _expandedSelectedAppNotes = <String>{};
+  final Set<String> _expandedInlineSettings = <String>{};
   final Map<String, InstalledApp> _previewAppsByPackage =
       <String, InstalledApp>{};
   bool _expandedSectionsLoaded = false;
@@ -109,6 +117,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   };
   String _networkSpeedUploadPrefix = '▲ ';
   String _networkSpeedDownloadPrefix = '▼ ';
+  PackageMode _notificationDedupPackageMode = PackageMode.all;
+  NotificationDedupMode _notificationDedupMode =
+      NotificationDedupMode.otpStatus;
   late final AnimationController _masterBlockedShakeController;
   late final Animation<double> _masterBlockedShakeOffset;
   bool _masterBlockedHapticInProgress = false;
@@ -183,6 +194,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     _rulesController.dispose();
     _otpRulesController.dispose();
     _bypassRulesController.dispose();
+    _notificationDedupRulesController.dispose();
     super.dispose();
   }
 
@@ -230,6 +242,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getAnimatedIslandEnabled();
       final bool hyperBridgeEnabled =
           await LiveBridgePlatform.getHyperBridgeEnabled();
+      final bool notificationDedupEnabled =
+          await LiveBridgePlatform.getNotificationDedupEnabled();
+      final NotificationDedupMode notificationDedupMode =
+          NotificationDedupModeId.from(
+            await LiveBridgePlatform.getNotificationDedupMode(),
+          );
       final bool onlyWithProgress =
           await LiveBridgePlatform.getOnlyWithProgress();
       final bool textProgressEnabled =
@@ -305,6 +323,11 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       );
       final String bypassPackageRules =
           await LiveBridgePlatform.getBypassPackageRules();
+      final String notificationDedupPackageRules =
+          await LiveBridgePlatform.getNotificationDedupPackageRules();
+      final PackageMode notificationDedupPackageMode = PackageModeId.from(
+        await LiveBridgePlatform.getNotificationDedupPackageMode(),
+      );
       final String otpPackageRules =
           await LiveBridgePlatform.getOtpPackageRules();
       final PackageMode otpPackageMode = PackageModeId.from(
@@ -346,6 +369,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _aospCuttingEnabled = aospCuttingEnabled;
         _animatedIslandEnabled = animatedIslandEnabled;
         _hyperBridgeEnabled = hyperBridgeEnabled;
+        _notificationDedupEnabled = notificationDedupEnabled;
+        _notificationDedupMode = notificationDedupMode;
         _onlyWithProgress = onlyWithProgress;
         _textProgressEnabled = textProgressEnabled;
         _networkSpeedEnabled = networkSpeedEnabled;
@@ -387,8 +412,10 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _deviceLabelForWarning = deviceInfo.label;
         _packageMode = packageMode;
         _otpPackageMode = otpPackageMode;
+        _notificationDedupPackageMode = notificationDedupPackageMode;
         _rulesController.text = packageRules;
         _bypassRulesController.text = bypassPackageRules;
+        _notificationDedupRulesController.text = notificationDedupPackageRules;
         _otpRulesController.text = otpPackageRules;
         _isLoading = false;
       });
@@ -427,6 +454,14 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         case _PackagePickerTarget.bypass:
           await LiveBridgePlatform.setBypassPackageRules(
             _bypassRulesController.text,
+          );
+          break;
+        case _PackagePickerTarget.dedup:
+          await LiveBridgePlatform.setNotificationDedupPackageRules(
+            _notificationDedupRulesController.text,
+          );
+          await LiveBridgePlatform.setNotificationDedupPackageMode(
+            _notificationDedupPackageMode.id,
           );
           break;
       }
@@ -578,6 +613,30 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     LiveBridgeHaptics.toggle(value);
     setState(() => _hyperBridgeEnabled = value);
     await LiveBridgePlatform.setHyperBridgeEnabled(value);
+  }
+
+  Future<void> _setNotificationDedupEnabled(bool value) async {
+    LiveBridgeHaptics.toggle(value);
+    setState(() => _notificationDedupEnabled = value);
+    await LiveBridgePlatform.setNotificationDedupEnabled(value);
+  }
+
+  Future<void> _setNotificationDedupMode(NotificationDedupMode value) async {
+    LiveBridgeHaptics.selection();
+    setState(() => _notificationDedupMode = value);
+    await LiveBridgePlatform.setNotificationDedupMode(value.id);
+  }
+
+  void _toggleInlineSetting(String settingId) {
+    final bool opening = !_expandedInlineSettings.contains(settingId);
+    setState(() {
+      if (opening) {
+        _expandedInlineSettings.add(settingId);
+      } else {
+        _expandedInlineSettings.remove(settingId);
+      }
+    });
+    unawaited(LiveBridgeHaptics.expand(opening));
   }
 
   Future<void> _setUpdateChecksEnabled(bool value) async {
@@ -1114,6 +1173,10 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         targetController = _bypassRulesController;
         pickerTitle = s.bypassPickerTitle;
         break;
+      case _PackagePickerTarget.dedup:
+        targetController = _notificationDedupRulesController;
+        pickerTitle = s.notificationDedupPickerTitle;
+        break;
     }
     final Set<String> initial = _parsePackagesFromInput(targetController.text);
 
@@ -1462,6 +1525,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     final List<String> bypassPackageRules = _parseRulesText(
       _bypassRulesController.text,
     );
+    final List<String> notificationDedupPackageRules = _parseRulesText(
+      _notificationDedupRulesController.text,
+    );
     final List<String> otpPackageRules = _parseRulesText(
       _otpRulesController.text,
     );
@@ -1527,6 +1593,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         'aosp_cutting_enabled': _aospCuttingEnabled,
         'animated_island_enabled': _animatedIslandEnabled,
         'hyper_bridge_enabled': _hyperBridgeEnabled,
+        'notification_dedup_enabled': _notificationDedupEnabled,
+        'notification_dedup_mode': _notificationDedupMode.id,
       },
       'rules': <String, dynamic>{
         'package_mode': _packageMode.id,
@@ -1534,6 +1602,10 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         'package_rules_count': packageRules.length,
         'bypass_package_rules': bypassPackageRules,
         'bypass_package_rules_count': bypassPackageRules.length,
+        'notification_dedup_package_mode': _notificationDedupPackageMode.id,
+        'notification_dedup_package_rules': notificationDedupPackageRules,
+        'notification_dedup_package_rules_count':
+            notificationDedupPackageRules.length,
         'otp_package_mode': _otpPackageMode.id,
         'otp_package_rules': otpPackageRules,
         'otp_package_rules_count': otpPackageRules.length,
@@ -2202,6 +2274,18 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             activeThumbColor: colorScheme.primary,
           ),
           const SizedBox(height: 8),
+          _buildExpandableTile(
+            settingId: _expandableSettingNotificationDedup,
+            title: s.notificationDedupTitle,
+            subtitle: s.notificationDedupSubtitle,
+            trailing: Switch.adaptive(
+              value: _notificationDedupEnabled,
+              onChanged: _setNotificationDedupEnabled,
+              activeThumbColor: colorScheme.primary,
+            ),
+            expandedChild: _buildNotificationDedupOptionsPanel(s),
+          ),
+          const SizedBox(height: 8),
           SwitchListTile.adaptive(
             value: _hyperBridgeEnabled,
             onChanged: _setHyperBridge,
@@ -2396,6 +2480,22 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     );
   }
 
+  Widget _buildNotificationDedupStatusesSwitchRow(AppStrings s) {
+    final bool value =
+        _notificationDedupMode == NotificationDedupMode.otpStatus;
+    return _buildInlinePanelSwitchRow(
+      title: s.notificationDedupStatusesTitle,
+      subtitle: s.notificationDedupStatusesSubtitle,
+      value: value,
+      onChanged: (bool enabled) {
+        final NotificationDedupMode nextMode = enabled
+            ? NotificationDedupMode.otpStatus
+            : NotificationDedupMode.otpOnly;
+        unawaited(_setNotificationDedupMode(nextMode));
+      },
+    );
+  }
+
   Widget _buildRulesCard(AppStrings s) {
     return _sectionPanel(
       sectionId: 'rules',
@@ -2453,40 +2553,16 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             padding: EdgeInsets.symmetric(vertical: 16),
             child: Divider(height: 1),
           ),
-          SwitchListTile.adaptive(
-            value: _onlyWithProgress,
-            onChanged: _setOnlyWithProgress,
-            title: Text(
-              s.onlyProgressTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+          _buildExpandableTile(
+            settingId: _expandableSettingNativeProgress,
+            title: s.onlyProgressTitle,
+            subtitle: s.onlyProgressSubtitle,
+            trailing: Switch.adaptive(
+              value: _onlyWithProgress,
+              onChanged: _setOnlyWithProgress,
+              activeThumbColor: Theme.of(context).colorScheme.primary,
             ),
-            subtitle: Text(
-              s.onlyProgressSubtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile.adaptive(
-            value: _textProgressEnabled,
-            onChanged: _setTextProgressEnabled,
-            title: Text(
-              s.textProgressTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              s.textProgressSubtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
+            expandedChild: _buildNativeProgressOptionsPanel(s),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -2605,46 +2681,20 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 8),
-          SwitchListTile.adaptive(
-            value: _smartExternalDevicesEnabled,
-            onChanged: _smartDetectionEnabled ? _setSmartExternalDevices : null,
-            title: Text(
-              s.smartExternalDevicesTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+          _buildExpandableTile(
+            settingId: _expandableSettingExternalDevices,
+            title: s.smartExternalDevicesTitle,
+            subtitle: _smartDetectionEnabled
+                ? s.smartExternalDevicesSubtitle
+                : s.smartNavigationDisabledSubtitle,
+            trailing: Switch.adaptive(
+              value: _smartExternalDevicesEnabled,
+              onChanged: _smartDetectionEnabled
+                  ? _setSmartExternalDevices
+                  : null,
+              activeThumbColor: Theme.of(context).colorScheme.primary,
             ),
-            subtitle: Text(
-              _smartDetectionEnabled
-                  ? s.smartExternalDevicesSubtitle
-                  : s.smartNavigationDisabledSubtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(height: 8),
-          SwitchListTile.adaptive(
-            value: _smartExternalDevicesIgnoreDebugging,
-            onChanged: _smartDetectionEnabled && _smartExternalDevicesEnabled
-                ? _setSmartExternalDevicesIgnoreDebugging
-                : null,
-            title: Text(
-              s.smartExternalDevicesIgnoreDebuggingTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              _smartDetectionEnabled && _smartExternalDevicesEnabled
-                  ? s.smartExternalDevicesIgnoreDebuggingSubtitle
-                  : s.smartNavigationDisabledSubtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
+            expandedChild: _buildExternalDevicesOptionsPanel(s),
           ),
           const SizedBox(height: 8),
           SwitchListTile.adaptive(
@@ -2707,7 +2757,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               ignoring: !_networkSpeedEnabled,
               child: Column(
                 children: <Widget>[
-                  _buildNetworkSpeedThresholdSetting(s),
+                  _buildNetworkSpeedThresholdPanel(s),
                   const SizedBox(height: 12),
                   _buildModernDropdown<NetworkSpeedDisplayMode>(
                     label: s.networkSpeedDisplayContentTitle,
@@ -2832,11 +2882,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surface.withValues(alpha: 0.82),
+        color: _expandablePanelBackgroundColor(colorScheme),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-        ),
+        border: _expandablePanelBorder(colorScheme),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3211,6 +3259,334 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
               child: Text(actionLabel),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpandableTile({
+    required String settingId,
+    required String title,
+    required String subtitle,
+    required Widget trailing,
+    required Widget expandedChild,
+  }) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool isLight = colorScheme.brightness == Brightness.light;
+    final bool expanded = _expandedInlineSettings.contains(settingId);
+    final Color outerBorderColor = expanded
+        ? colorScheme.primary.withValues(alpha: 0.26)
+        : Colors.transparent;
+    final Color outerBackgroundColor = expanded
+        ? (isLight
+              ? theme.scaffoldBackgroundColor
+              : colorScheme.primaryContainer.withValues(alpha: 0.18))
+        : Colors.transparent;
+    final Color rowHighlightColor = expanded
+        ? colorScheme.primary.withValues(alpha: isLight ? 0.04 : 0.06)
+        : Colors.transparent;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: outerBackgroundColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: outerBorderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              splashFactory: NoSplash.splashFactory,
+              overlayColor: const WidgetStatePropertyAll<Color>(
+                Colors.transparent,
+              ),
+              splashColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              focusColor: Colors.transparent,
+              onTap: () => _toggleInlineSetting(settingId),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                decoration: BoxDecoration(
+                  color: rowHighlightColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    expanded ? 16 : 0,
+                    10,
+                    expanded ? 10 : 0,
+                    10,
+                  ),
+                  child: Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildExpandableTileChevron(expanded, colorScheme),
+                      const SizedBox(width: 4),
+                      trailing,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0, end: expanded ? 1 : 0),
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: expandedChild,
+            ),
+            builder: (BuildContext context, double value, Widget? child) {
+              return ClipRect(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  heightFactor: value,
+                  child: IgnorePointer(
+                    ignoring: value < 0.99,
+                    child: Opacity(
+                      opacity: value.clamp(0, 1),
+                      child: Transform.translate(
+                        offset: Offset(0, (1 - value) * -14),
+                        child: child,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpandableTileChevron(bool expanded, ColorScheme colorScheme) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: expanded
+            ? colorScheme.primary.withValues(alpha: 0.12)
+            : Colors.transparent,
+        shape: BoxShape.circle,
+      ),
+      child: AnimatedRotation(
+        turns: expanded ? 0.25 : 0.0,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeInOutCubic,
+        child: Icon(
+          Icons.chevron_right_rounded,
+          size: 20,
+          color: expanded ? colorScheme.primary : colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNetworkSpeedThresholdPanel(AppStrings s) {
+    return _buildNetworkSpeedThresholdSetting(s);
+  }
+
+  Widget _buildExternalDevicesOptionsPanel(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _expandablePanelBackgroundColor(colorScheme),
+        borderRadius: BorderRadius.circular(20),
+        border: _expandablePanelBorder(colorScheme),
+      ),
+      child: _buildInlinePanelSwitchRow(
+        title: s.smartExternalDevicesIgnoreDebuggingTitle,
+        subtitle: s.smartExternalDevicesIgnoreDebuggingSubtitle,
+        value: _smartExternalDevicesIgnoreDebugging,
+        onChanged: _setSmartExternalDevicesIgnoreDebugging,
+      ),
+    );
+  }
+
+  Widget _buildNativeProgressOptionsPanel(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _expandablePanelBackgroundColor(colorScheme),
+        borderRadius: BorderRadius.circular(20),
+        border: _expandablePanelBorder(colorScheme),
+      ),
+      child: _buildInlinePanelSwitchRow(
+        title: s.textProgressTitle,
+        subtitle: s.textProgressSubtitle,
+        value: _textProgressEnabled,
+        onChanged: _setTextProgressEnabled,
+      ),
+    );
+  }
+
+  Widget _buildNotificationDedupOptionsPanel(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _expandablePanelBackgroundColor(colorScheme),
+        borderRadius: BorderRadius.circular(20),
+        border: _expandablePanelBorder(colorScheme),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _buildNotificationDedupStatusesSwitchRow(s),
+          const SizedBox(height: 14),
+          _buildModernDropdown(
+            label: s.modeLabel,
+            currentValue: _notificationDedupPackageMode,
+            items: PackageMode.values.map((PackageMode mode) {
+              return DropdownMenuItem<PackageMode>(
+                value: mode,
+                child: Text(
+                  _getModeLabel(mode, s),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }).toList(),
+            onChanged: (PackageMode? value) {
+              if (value == null) {
+                return;
+              }
+              LiveBridgeHaptics.selection();
+              setState(() => _notificationDedupPackageMode = value);
+              unawaited(_persistRules(target: _PackagePickerTarget.dedup));
+            },
+            onTap: LiveBridgeHaptics.openSurface,
+          ),
+          const SizedBox(height: 16),
+          _selectedAppsNote(
+            noteId: 'dedup',
+            selectedPackages: _parsePackagesFromInput(
+              _notificationDedupRulesController.text,
+            ),
+            s: s,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            s.pickAppsHint,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _ruleButtonsRow(
+            onPick: () =>
+                _openPackagePicker(target: _PackagePickerTarget.dedup),
+            s: s,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _expandablePanelBackgroundColor(ColorScheme colorScheme) {
+    if (colorScheme.brightness == Brightness.light) {
+      return Colors.white;
+    }
+    return colorScheme.surface.withValues(alpha: 0.86);
+  }
+
+  Border? _expandablePanelBorder(ColorScheme colorScheme) {
+    if (colorScheme.brightness != Brightness.light) {
+      return null;
+    }
+    return Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.5));
+  }
+
+  Widget _buildInlinePanelSwitchRow({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool>? onChanged,
+  }) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        splashFactory: NoSplash.splashFactory,
+        overlayColor: const WidgetStatePropertyAll<Color>(Colors.transparent),
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        focusColor: Colors.transparent,
+        onTap: onChanged == null ? null : () => onChanged(!value),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Switch.adaptive(
+                value: value,
+                onChanged: onChanged,
+                activeThumbColor: colorScheme.primary,
+              ),
+            ],
+          ),
         ),
       ),
     );

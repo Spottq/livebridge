@@ -410,6 +410,34 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getNotificationDedupEnabled" -> res.success(prefs.getNotificationDedupEnabled())
+            "setNotificationDedupEnabled" -> {
+                prefs.setNotificationDedupEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+
+            "getNotificationDedupMode" -> res.success(prefs.getNotificationDedupMode())
+            "setNotificationDedupMode" -> {
+                prefs.setNotificationDedupMode(call.argument<String>("value"))
+                res.success(true)
+            }
+
+            "getNotificationDedupPackageRules" -> {
+                res.success(prefs.getNotificationDedupPackageRulesRaw())
+            }
+            "setNotificationDedupPackageRules" -> {
+                prefs.setNotificationDedupPackageRulesRaw(call.argument<String>("value"))
+                res.success(true)
+            }
+
+            "getNotificationDedupPackageMode" -> {
+                res.success(prefs.getNotificationDedupPackageMode())
+            }
+            "setNotificationDedupPackageMode" -> {
+                prefs.setNotificationDedupPackageMode(call.argument<String>("value"))
+                res.success(true)
+            }
+
             "getSmartStatusDetectionEnabled" -> res.success(prefs.getSmartStatusDetectionEnabled())
             "setSmartStatusDetectionEnabled" -> {
                 prefs.setSmartStatusDetectionEnabled(call.argument<Boolean>("value") ?: true)
