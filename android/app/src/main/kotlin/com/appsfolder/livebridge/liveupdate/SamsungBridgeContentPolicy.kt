@@ -41,7 +41,8 @@ internal object SamsungBridgeContentPolicy {
         compactCodeOverride: String?,
         samsungReparseChipText: String?,
         remoteViewMiniTextPair: SamsungMiniTextPair?,
-        twoGisEtaDistanceText: String?
+        twoGisEtaDistanceText: String?,
+        twoGisVisibleSecondaryText: String?
     ): SamsungBridgeTexts {
         val isTwoGisPackage = sourcePackageName == TWO_GIS_PACKAGE
         val useTextOnlyMiniNowBar =
@@ -56,7 +57,9 @@ internal object SamsungBridgeContentPolicy {
                     !hasProgress &&
                     smartRuleId != "weather"
         val secondaryText = if (isTwoGisPackage) {
-            twoGisEtaDistanceText?.trim()?.takeIf { it.isNotEmpty() } ?: displayText
+            twoGisVisibleSecondaryText?.trim()?.takeIf { it.isNotEmpty() }
+                ?: twoGisEtaDistanceText?.trim()?.takeIf { it.isNotEmpty() }
+                ?: displayText
         } else if (shouldUseSmartShortTextAsSecondary) {
             smartShortTextOverride
         } else {
@@ -77,7 +80,10 @@ internal object SamsungBridgeContentPolicy {
             ?.takeIf { it.isNotEmpty() }
             ?: compactPrimaryText.trim()
         val nowBarSecondaryText = when {
-            isTwoGisPackage -> twoGisEtaDistanceText
+            isTwoGisPackage -> twoGisVisibleSecondaryText
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+                ?: twoGisEtaDistanceText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
             remoteViewMiniTextPair != null -> remoteViewMiniTextPair.secondaryText

@@ -974,6 +974,24 @@ object LiveUpdateNotifier {
         } else {
             null
         }
+        val samsungTwoGisTurnDistanceText = if (isSamsungTwoGis) {
+            extractNavigationDistanceText(
+                notification = source,
+                fallbackTitle = displayTitle,
+                parserDictionary = parserDictionary
+            )
+        } else {
+            null
+        }
+        val samsungTwoGisVisibleSecondaryText = if (isSamsungTwoGis) {
+            composeTwoGisVisibleSecondaryText(
+                turnDistanceText = samsungTwoGisTurnDistanceText,
+                etaDistanceText = samsungTwoGisEtaDistanceText,
+                fallbackText = displayText
+            )
+        } else {
+            null
+        }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setContentTitle(compactPrimaryText)
@@ -1095,7 +1113,7 @@ object LiveUpdateNotifier {
             val bodySubtitle = samsungRemoteViewMiniTextPair?.secondaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
-            val bodyBottomText = samsungTwoGisEtaDistanceText
+            val bodyBottomText = samsungTwoGisVisibleSecondaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
 
@@ -1133,7 +1151,8 @@ object LiveUpdateNotifier {
                 compactCodeOverride = compactCodeOverride,
                 samsungReparseChipText = samsungReparse?.chipText,
                 remoteViewMiniTextPair = samsungRemoteViewMiniTextPair,
-                twoGisEtaDistanceText = samsungTwoGisEtaDistanceText
+                twoGisEtaDistanceText = samsungTwoGisEtaDistanceText,
+                twoGisVisibleSecondaryText = samsungTwoGisVisibleSecondaryText
             )
             SamsungNowBarApplier.apply(
                 context = context,
@@ -2426,6 +2445,33 @@ object LiveUpdateNotifier {
                 .replace(Regex("\\s+"), " ")
                 .trim()
                 .ifBlank { null }
+        }
+    }
+
+    private fun composeTwoGisVisibleSecondaryText(
+        turnDistanceText: String?,
+        etaDistanceText: String?,
+        fallbackText: String
+    ): String? {
+        val normalizedTurn = turnDistanceText
+            ?.replace(Regex("\\s+"), " ")
+            ?.trim()
+            .orEmpty()
+        val normalizedEtaDistance = etaDistanceText
+            ?.replace(Regex("\\s+"), " ")
+            ?.trim()
+            .orEmpty()
+        val normalizedFallback = fallbackText
+            .replace(Regex("\\s+"), " ")
+            .trim()
+
+        return when {
+            normalizedTurn.isNotEmpty() && normalizedEtaDistance.isNotEmpty() ->
+                "$normalizedTurn · $normalizedEtaDistance"
+            normalizedEtaDistance.isNotEmpty() -> normalizedEtaDistance
+            normalizedTurn.isNotEmpty() -> normalizedTurn
+            normalizedFallback.isNotEmpty() -> normalizedFallback
+            else -> null
         }
     }
 
