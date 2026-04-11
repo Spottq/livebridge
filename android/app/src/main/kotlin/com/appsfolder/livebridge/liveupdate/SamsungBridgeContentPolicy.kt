@@ -40,7 +40,12 @@ internal object SamsungBridgeContentPolicy {
         val useTextOnlyMiniNowBar = hasCustomRemoteCard && remoteViewMiniTextPair != null
         val shouldClearContentText =
             !useTextOnlyMiniNowBar && (hasCustomRemoteCard || smartRuleId == "navigation")
-        val secondaryText = if (!useTextOnlyMiniNowBar && smartShortTextOverride != null && !hasProgress) {
+        val shouldUseSmartShortTextAsSecondary =
+            !useTextOnlyMiniNowBar &&
+                    smartShortTextOverride != null &&
+                    !hasProgress &&
+                    smartRuleId != "weather"
+        val secondaryText = if (shouldUseSmartShortTextAsSecondary) {
             smartShortTextOverride
         } else {
             displayText
