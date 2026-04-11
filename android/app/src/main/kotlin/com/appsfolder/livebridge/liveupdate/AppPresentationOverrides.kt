@@ -1,4 +1,4 @@
-package com.kakao.taxi.liveupdate
+package com.waymo.carapp.liveupdate
 
 import org.json.JSONObject
 import java.util.Locale

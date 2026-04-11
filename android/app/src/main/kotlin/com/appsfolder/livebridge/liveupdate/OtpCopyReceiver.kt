@@ -1,4 +1,4 @@
-package com.kakao.taxi.liveupdate
+package com.waymo.carapp.liveupdate
 
 import android.content.BroadcastReceiver
 import android.content.ClipData
@@ -38,7 +38,7 @@ class OtpCopyReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        const val ACTION_COPY_OTP = "com.kakao.taxi.action.COPY_OTP"
+        const val ACTION_COPY_OTP = "com.waymo.carapp.action.COPY_OTP"
         const val EXTRA_OTP_CODE = "otp_code"
     }
 }

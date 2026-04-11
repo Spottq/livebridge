@@ -1,4 +1,4 @@
-package com.kakao.taxi.liveupdate
+package com.waymo.carapp.liveupdate
 
 import android.app.Notification
 import android.content.Context

@@ -1,4 +1,4 @@
-package com.kakao.taxi.liveupdate
+package com.waymo.carapp.liveupdate
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -12,8 +12,8 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import com.kakao.taxi.MainActivity
-import com.kakao.taxi.R
+import com.waymo.carapp.MainActivity
+import com.waymo.carapp.R
 
 class KeepAliveForegroundService : Service() {
     override fun onCreate() {

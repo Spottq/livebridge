@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.kakao.taxi"
+    namespace = "com.waymo.carapp"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.locnall.KimGiSa"
+        applicationId = "com.waymo.carapp"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // Live Updates are available starting from Android 16 (API 36).

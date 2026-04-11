@@ -1,4 +1,4 @@
-package com.kakao.taxi.liveupdate
+package com.waymo.carapp.liveupdate
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -187,7 +187,7 @@ class NetworkSpeedForegroundService : Service() {
 
     companion object {
         private const val TAG = "NetworkSpeedService"
-        private const val ACTION_REFRESH = "com.kakao.taxi.liveupdate.NETWORK_SPEED_REFRESH"
+        private const val ACTION_REFRESH = "com.waymo.carapp.liveupdate.NETWORK_SPEED_REFRESH"
         private const val SAMPLE_INTERVAL_MS = 1500L
         private const val CHANNEL_NAME_EN = "Network Speed"
         private const val CHANNEL_NAME_RU =

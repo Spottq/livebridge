@@ -1,4 +1,4 @@
-package com.kakao.taxi.liveupdate
+package com.waymo.carapp.liveupdate
 
 internal data class SamsungBridgeContext(
     val enabled: Boolean,

@@ -1,4 +1,4 @@
-package com.kakao.taxi.liveupdate
+package com.waymo.carapp.liveupdate
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -36,7 +36,7 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.IconCompat
-import com.kakao.taxi.R
+import com.waymo.carapp.R
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt

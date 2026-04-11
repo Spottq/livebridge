@@ -1,4 +1,4 @@
-package com.kakao.taxi.liveupdate
+package com.waymo.carapp.liveupdate
 
 import android.app.Notification
 import android.app.PendingIntent
@@ -8,8 +8,8 @@ import android.graphics.Color
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
-import com.kakao.taxi.MainActivity
-import com.kakao.taxi.R
+import com.waymo.carapp.MainActivity
+import com.waymo.carapp.R
 
 internal class NetworkSpeedNotificationBuilder(
     private val context: Context

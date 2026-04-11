@@ -1,4 +1,4 @@
-package com.kakao.taxi.liveupdate
+package com.waymo.carapp.liveupdate
 
 internal enum class NetworkSpeedUnit(val id: String) {
     AUTO("auto"),
