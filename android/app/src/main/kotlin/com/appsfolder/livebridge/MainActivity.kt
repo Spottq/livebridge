@@ -88,7 +88,7 @@ class MainActivity : FlutterActivity() {
 
         when (call.method) {
             "isDeviceBlocked" -> res.success(
-                DeviceBlocker.isBlockedDevice() && !prefs.getPixelJokeBypassEnabled()
+                DeviceBlocker.isBlockedDevice()
             )
 
             "getPixelJokeBypassEnabled" -> res.success(prefs.getPixelJokeBypassEnabled())
@@ -315,7 +315,9 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
-            "getConverterEnabled" -> res.success(prefs.getConverterEnabled())
+            "getConverterEnabled" -> res.success(
+                !DeviceBlocker.isBlockedDevice() && prefs.getConverterEnabled()
+            )
             "setConverterEnabled" -> {
                 val value = call.argument<Boolean>("value") ?: true
                 applyConverterEnabled(prefs, value)
@@ -567,7 +569,7 @@ class MainActivity : FlutterActivity() {
             prefs.getConverterEnabled() &&
                     prefs.getKeepAliveForegroundEnabled() &&
                     isNotificationListenerEnabled() &&
-                    (!DeviceBlocker.isBlockedDevice() || prefs.getPixelJokeBypassEnabled())
+                    !DeviceBlocker.isBlockedDevice()
         if (shouldRun) {
             KeepAliveForegroundService.start(applicationContext)
         } else {
@@ -576,7 +578,7 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun syncNetworkSpeedService(prefs: ConverterPrefs) {
-        if (prefs.getNetworkSpeedEnabled()) {
+        if (prefs.getNetworkSpeedEnabled() && !DeviceBlocker.isBlockedDevice()) {
             NetworkSpeedForegroundService.sync(applicationContext)
         } else {
             NetworkSpeedForegroundService.stop(applicationContext)
@@ -593,8 +595,9 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun applyConverterEnabled(prefs: ConverterPrefs, value: Boolean) {
-        prefs.setConverterEnabled(value)
-        if (!value) {
+        val effectiveValue = value && !DeviceBlocker.isBlockedDevice()
+        prefs.setConverterEnabled(effectiveValue)
+        if (!effectiveValue) {
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
         } else {
             requestNotificationListenerRebind()

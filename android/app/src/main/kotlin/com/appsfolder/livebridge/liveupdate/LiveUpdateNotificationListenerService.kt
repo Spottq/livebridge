@@ -23,8 +23,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private val snapshotSyncRunnable = object : Runnable {
         override fun run() {
             snapshotSyncScheduled = false
-            if (isBlockedByJoke()) {
-                scheduleSnapshotSync()
+            if (isUnsupportedDevice()) {
+                LiveUpdateNotifier.cancelAllMirrored(applicationContext)
                 return
             }
             if (!prefs.getConverterEnabled()) {
@@ -59,7 +59,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     override fun onCreate() {
         super.onCreate()
 
-        if (isBlockedByJoke()) {
+        if (isUnsupportedDevice()) {
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
             return
         }
@@ -76,7 +76,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         rebindAttempts = 0
         rebindScheduled = false
 
-        if (isBlockedByJoke()) {
+        if (isUnsupportedDevice()) {
+            LiveUpdateNotifier.cancelAllMirrored(applicationContext)
             return
         }
         if (!prefs.getConverterEnabled()) {
@@ -111,7 +112,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
-        if (isBlockedByJoke()) {
+        if (isUnsupportedDevice()) {
             return
         }
         scheduleRebind("listener_disconnected")
@@ -119,7 +120,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
         sbn ?: return
-        if (isBlockedByJoke()) {
+        if (isUnsupportedDevice()) {
             return
         }
         if (sbn.packageName == packageName) {
@@ -139,7 +140,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         sbn ?: return
-        if (isBlockedByJoke()) {
+        if (isUnsupportedDevice()) {
             return
         }
         if (sbn.packageName == packageName) {
@@ -156,8 +157,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
     }
 
-    private fun isBlockedByJoke(): Boolean {
-        return DeviceBlocker.isBlockedDevice() && !prefs.getPixelJokeBypassEnabled()
+    private fun isUnsupportedDevice(): Boolean {
+        return DeviceBlocker.isBlockedDevice()
     }
 
     override fun onDestroy() {

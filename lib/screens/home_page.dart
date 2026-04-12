@@ -30,6 +30,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       'https://github.com/appsfolder/livebridge';
   static const String _originalGithubUrl =
       'https://github.com/appsfolder/livebridge';
+  static const String _standardDownloadUrl =
+      'https://appsfolder.github.io/livebridge/#download';
   static const String _updateGithubReleasesUrl =
       'https://appsfolder.github.io/livebridge/';
   static const String _projectGithubBugReportUrl =
@@ -1314,17 +1316,6 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     _snack(AppStrings.of(context).liveUpdatesUnavailable);
   }
 
-  Future<void> _acknowledgeBlockedJoke() async {
-    LiveBridgeHaptics.confirm();
-    final bool saved = await LiveBridgePlatform.setPixelJokeBypassEnabled(true);
-    if (!mounted) return;
-    if (!saved) {
-      _snack(AppStrings.of(context).blockedBypassSaveFailed);
-      return;
-    }
-    await _refreshState();
-  }
-
   Future<void> _downloadParserDictionary() async {
     if (_dictionaryActionInProgress) return;
     LiveBridgeHaptics.confirm();
@@ -1478,7 +1469,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     }
   }
 
-  Future<bool> _launchGithubUrl(Uri uri) async {
+  Future<bool> _launchExternalUrl(Uri uri) async {
     final bool openedInBrowserView = await launchUrl(
       uri,
       mode: LaunchMode.inAppBrowserView,
@@ -1492,7 +1483,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   Future<void> _openForkGithub() async {
     LiveBridgeHaptics.openSurface();
     final Uri uri = Uri.parse(_forkGithubUrl);
-    final bool opened = await _launchGithubUrl(uri);
+    final bool opened = await _launchExternalUrl(uri);
     if (!opened && mounted) {
       _snack(AppStrings.of(context).githubOpenFailed);
     }
@@ -1501,7 +1492,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   Future<void> _openProjectGithub() async {
     LiveBridgeHaptics.openSurface();
     final Uri uri = Uri.parse(_projectGithubUrl);
-    final bool opened = await _launchGithubUrl(uri);
+    final bool opened = await _launchExternalUrl(uri);
     if (!opened && mounted) {
       _snack(AppStrings.of(context).githubOpenFailed);
     }
@@ -1510,11 +1501,37 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   Future<void> _openUpdateGithub() async {
     LiveBridgeHaptics.openSurface();
     final Uri uri = Uri.parse(_updateGithubReleasesUrl);
-    final bool opened = await _launchGithubUrl(uri);
+    final bool opened = await _launchExternalUrl(uri);
     if (!opened && mounted) {
       _snack(AppStrings.of(context).githubOpenFailed);
     }
   }
+
+  Future<void> _openStandardDownloadPage() async {
+    LiveBridgeHaptics.openSurface();
+    final Uri uri = Uri.parse(_standardDownloadUrl);
+    final bool opened = await _launchExternalUrl(uri);
+    if (!opened && mounted) {
+      final AppStrings s = AppStrings.of(context);
+      _snack(
+        s.isRu
+            ? '\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043e\u0442\u043a\u0440\u044b\u0442\u044c \u0441\u0441\u044b\u043b\u043a\u0443.'
+            : 'Unable to open link.',
+      );
+    }
+  }
+
+  String _blockedTitle(AppStrings s) => s.isRu
+      ? '\u042d\u0442\u043e \u0432\u0435\u0440\u0441\u0438\u044f LiveBridge \u0442\u043e\u043b\u044c\u043a\u043e \u0434\u043b\u044f Samsung'
+      : 'This LiveBridge build is for Samsung only';
+
+  String _blockedSubtitle(AppStrings s) => s.isRu
+      ? '\u0423 \u0432\u0430\u0441 \u043d\u0435 Samsung, \u043f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430 \u0443\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u0435 \u043e\u0431\u044b\u0447\u043d\u0443\u044e \u0432\u0435\u0440\u0441\u0438\u044e LiveBridge.'
+      : 'You do not have a Samsung device. Please install the regular LiveBridge build.';
+
+  String _blockedInstallAction(AppStrings s) => s.isRu
+      ? '\u0423\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u043e\u0431\u044b\u0447\u043d\u0443\u044e \u0432\u0435\u0440\u0441\u0438\u044e'
+      : 'Install regular version';
 
   List<String> _parseRulesText(String raw) {
     return raw
@@ -1653,7 +1670,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
       _snack(copied ? s.bugReportCopied : s.bugReportCopyFailed);
     }
     final Uri uri = Uri.parse(_projectGithubBugReportUrl);
-    final bool opened = await _launchGithubUrl(uri);
+    final bool opened = await _launchExternalUrl(uri);
     if (!opened && mounted) {
       _snack(AppStrings.of(context).githubOpenFailed);
     }
@@ -1845,64 +1862,77 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
 
   Widget _buildBlockedScreen(AppStrings s) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final EdgeInsets viewPadding = MediaQuery.of(context).padding;
 
     return Padding(
-      padding: const EdgeInsets.all(32),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 400),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Stack(
-                alignment: Alignment.center,
-                children: <Widget>[
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: colorScheme.errorContainer.withValues(alpha: 0.3),
-                      shape: BoxShape.circle,
+      padding: EdgeInsets.fromLTRB(
+        24,
+        viewPadding.top + 24,
+        24,
+        viewPadding.bottom + 24,
+      ),
+      child: Column(
+        children: <Widget>[
+          Expanded(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 400),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Stack(
+                      alignment: Alignment.center,
+                      children: <Widget>[
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: colorScheme.errorContainer.withValues(
+                              alpha: 0.3,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        Icon(
+                          Icons.phone_android_rounded,
+                          size: 64,
+                          color: colorScheme.error,
+                        ),
+                      ],
                     ),
-                  ),
-                  Icon(
-                    Icons.phone_android_rounded,
-                    size: 64,
-                    color: colorScheme.error,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32),
-              Text(
-                s.blockedTitle,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                    const SizedBox(height: 32),
+                    Text(
+                      _blockedTitle(s),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _blockedSubtitle(s),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                s.blockedSubtitle,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 48),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: _acknowledgeBlockedJoke,
-                  icon: const Icon(Icons.visibility_off_outlined),
-                  label: Text(
-                    s.blockedBypassAction,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _openStandardDownloadPage,
+              icon: const Icon(Icons.download_rounded),
+              label: Text(
+                _blockedInstallAction(s),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

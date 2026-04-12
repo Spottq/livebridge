@@ -13,6 +13,9 @@ class LiveBridgeTileService : TileService() {
 
     override fun onStartListening() {
         super.onStartListening()
+        if (isUnsupportedDevice()) {
+            enforceUnsupportedState()
+        }
         updateTile()
     }
 
@@ -26,6 +29,12 @@ class LiveBridgeTileService : TileService() {
     }
 
     private fun toggleConverter() {
+        if (isUnsupportedDevice()) {
+            enforceUnsupportedState()
+            updateTile()
+            return
+        }
+
         val newValue = !prefs.getConverterEnabled()
         prefs.setConverterEnabled(newValue)
         if (!newValue) {
@@ -39,14 +48,21 @@ class LiveBridgeTileService : TileService() {
 
     private fun updateTile() {
         val tile = qsTile ?: return
-        val enabled = prefs.getConverterEnabled()
+        val unsupported = isUnsupportedDevice()
+        val enabled = !unsupported && prefs.getConverterEnabled()
         tile.state = if (enabled) Tile.STATE_ACTIVE else Tile.STATE_INACTIVE
         tile.label = "LiveBridge"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            tile.subtitle = if (enabled) {
-                if (isRussianLocale()) "Включено" else "Enabled"
-            } else {
-                if (isRussianLocale()) "Выключено" else "Disabled"
+            tile.subtitle = when {
+                unsupported -> {
+                    if (isRussianLocale()) {
+                        "\u0422\u043e\u043b\u044c\u043a\u043e Samsung"
+                    } else {
+                        "Samsung only"
+                    }
+                }
+                enabled -> if (isRussianLocale()) "\u0412\u043a\u043b\u044e\u0447\u0435\u043d\u043e" else "Enabled"
+                else -> if (isRussianLocale()) "\u0412\u044b\u043a\u043b\u044e\u0447\u0435\u043d\u043e" else "Disabled"
             }
         }
         tile.updateTile()
@@ -57,12 +73,23 @@ class LiveBridgeTileService : TileService() {
             prefs.getConverterEnabled() &&
                     prefs.getKeepAliveForegroundEnabled() &&
                     isNotificationListenerEnabled() &&
-                    (!DeviceBlocker.isBlockedDevice() || prefs.getPixelJokeBypassEnabled())
+                    !DeviceBlocker.isBlockedDevice()
         if (shouldRun) {
             KeepAliveForegroundService.start(applicationContext)
         } else {
             KeepAliveForegroundService.stop(applicationContext)
         }
+    }
+
+    private fun enforceUnsupportedState() {
+        prefs.setConverterEnabled(false)
+        LiveUpdateNotifier.cancelAllMirrored(applicationContext)
+        KeepAliveForegroundService.stop(applicationContext)
+        NetworkSpeedForegroundService.stop(applicationContext)
+    }
+
+    private fun isUnsupportedDevice(): Boolean {
+        return DeviceBlocker.isBlockedDevice()
     }
 
     private fun requestNotificationListenerRebindIfPossible() {

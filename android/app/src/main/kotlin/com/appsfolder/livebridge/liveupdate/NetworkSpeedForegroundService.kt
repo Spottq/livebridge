@@ -87,6 +87,10 @@ class NetworkSpeedForegroundService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        if (DeviceBlocker.isBlockedDevice()) {
+            stopSelfSafely()
+            return START_NOT_STICKY
+        }
         if (!prefs.getNetworkSpeedEnabled()) {
             stopSelfSafely()
             return START_NOT_STICKY
@@ -130,6 +134,10 @@ class NetworkSpeedForegroundService : Service() {
     }
 
     private fun refreshServiceState() {
+        if (DeviceBlocker.isBlockedDevice()) {
+            stopSelfSafely()
+            return
+        }
         if (!prefs.getNetworkSpeedEnabled()) {
             stopSelfSafely()
             return
@@ -199,7 +207,7 @@ class NetworkSpeedForegroundService : Service() {
 
         fun sync(context: Context) {
             val prefs = ConverterPrefs(context)
-            if (!prefs.getNetworkSpeedEnabled()) {
+            if (!prefs.getNetworkSpeedEnabled() || DeviceBlocker.isBlockedDevice()) {
                 stop(context)
                 return
             }

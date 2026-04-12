@@ -1,6 +1,7 @@
 package com.kakao.taxi.liveupdate
 
 import android.os.Build
+import java.util.Locale
 
 object DeviceProps {
     private val marketNameKeys = listOf(
@@ -20,6 +21,12 @@ object DeviceProps {
             }
         }
         return Build.MODEL ?: ""
+    }
+
+    fun isSamsungDevice(): Boolean {
+        val manufacturer = (Build.MANUFACTURER ?: "").lowercase(Locale.ROOT)
+        val brand = (Build.BRAND ?: "").lowercase(Locale.ROOT)
+        return manufacturer.contains("samsung") || brand.contains("samsung")
     }
 
     private fun readSystemProperty(key: String): String? {

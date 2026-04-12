@@ -22,6 +22,10 @@ class KeepAliveForegroundService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (DeviceBlocker.isBlockedDevice()) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
         val notification = buildNotification()
         startForegroundCompat(notification)
         return START_STICKY
