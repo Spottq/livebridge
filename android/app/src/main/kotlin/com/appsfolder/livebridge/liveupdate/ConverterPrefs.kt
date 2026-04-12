@@ -332,6 +332,14 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_SMART_WEATHER_ENABLED, value).apply()
     }
 
+    fun getSmartWeatherLockscreenOnly(): Boolean {
+        return prefs.getBoolean(KEY_SMART_WEATHER_LOCKSCREEN_ONLY, false)
+    }
+
+    fun setSmartWeatherLockscreenOnly(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_WEATHER_LOCKSCREEN_ONLY, value).apply()
+    }
+
     fun getSmartExternalDevicesEnabled(): Boolean {
         return prefs.getBoolean(KEY_SMART_EXTERNAL_DEVICES_ENABLED, true)
     }
@@ -592,6 +600,7 @@ class ConverterPrefs(context: Context) {
         private const val KEY_SMART_MEDIA_PLAYBACK_ENABLED = "smart_media_playback_enabled"
         private const val KEY_SMART_NAVIGATION_ENABLED = "smart_navigation_enabled"
         private const val KEY_SMART_WEATHER_ENABLED = "smart_weather_enabled"
+        private const val KEY_SMART_WEATHER_LOCKSCREEN_ONLY = "smart_weather_lockscreen_only"
         private const val KEY_SMART_EXTERNAL_DEVICES_ENABLED = "smart_external_devices_enabled"
         private const val KEY_SMART_EXTERNAL_DEVICES_IGNORE_DEBUGGING =
             "smart_external_devices_ignore_debugging"

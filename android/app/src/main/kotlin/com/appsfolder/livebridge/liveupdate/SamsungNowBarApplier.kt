@@ -16,6 +16,7 @@ internal object SamsungNowBarApplier {
         chipIcon: IconCompat?,
         nowBarIcon: IconCompat?,
         rightIcon: IconCompat?,
+        lockscreenOnly: Boolean,
         hasProgress: Boolean,
         progressValue: Int,
         progressMax: Int
@@ -47,7 +48,8 @@ internal object SamsungNowBarApplier {
             preferExpandedRemoteBody = texts.preferExpandedRemoteBody,
             reuseNotificationRemoteViews = texts.reuseNotificationRemoteViews,
             showSmallIcon = texts.showSmallIcon,
-            allowNowBarProgress = texts.allowNowBarProgress
+            allowNowBarProgress = texts.allowNowBarProgress,
+            lockscreenOnly = lockscreenOnly
         )
     }
 }

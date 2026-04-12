@@ -296,6 +296,10 @@ class AppStrings {
   String get smartWeatherSubtitle => isRu
       ? 'Распознавание погодных уведомлений (температура в острове).'
       : 'Weather notification detection (temperature in island).';
+  String get smartWeatherLockscreenOnlyTitle => isRu
+      ? 'Показывать только на экране блокировки'
+      : 'Display only on lock screen';
+  String get smartWeatherLockscreenOnlySubtitle => '';
   String get smartExternalDevicesTitle =>
       isRu ? 'Внешние устройства' : 'External devices';
   String get smartExternalDevicesSubtitle => isRu

@@ -943,6 +943,8 @@ object LiveUpdateNotifier {
         ).firstOrNull { !it.isNullOrEmpty() } ?: displayTitle
         val aospCuttingEnabled = runtimePrefs.getAospCuttingEnabled()
         val hyperBridgeEnabled = runtimePrefs.getHyperBridgeEnabled()
+        val weatherLockscreenOnly =
+            smartRuleId == "weather" && runtimePrefs.getSmartWeatherLockscreenOnly()
 
         val sourceHasProgress = hasEffectiveProgress(sbn.packageName, source)
         val samsungProgressMax = samsungReparse?.progressMax ?: 0
@@ -1226,6 +1228,7 @@ object LiveUpdateNotifier {
                 chipIcon = preferredChipIcon,
                 nowBarIcon = nowBarAppIcon,
                 rightIcon = nowBarRightIcon,
+                lockscreenOnly = weatherLockscreenOnly,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
                 progressMax = progressMax

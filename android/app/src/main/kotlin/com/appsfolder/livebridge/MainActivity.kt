@@ -461,6 +461,11 @@ class MainActivity : FlutterActivity() {
                 prefs.setSmartWeatherEnabled(call.argument<Boolean>("value") ?: true)
                 res.success(true)
             }
+            "getSmartWeatherLockscreenOnly" -> res.success(prefs.getSmartWeatherLockscreenOnly())
+            "setSmartWeatherLockscreenOnly" -> {
+                prefs.setSmartWeatherLockscreenOnly(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
 
             "getSmartExternalDevicesEnabled" -> res.success(prefs.getSmartExternalDevicesEnabled())
             "setSmartExternalDevicesEnabled" -> {

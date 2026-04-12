@@ -52,11 +52,17 @@ internal object SamsungBridgeContentPolicy {
             !isTwoGisPackage &&
                     !useTextOnlyMiniNowBar &&
                     (hasCustomRemoteCard || smartRuleId == "navigation")
+        val shouldUseSmartShortTextAsSecondary =
+            !isTwoGisPackage &&
+                    !useTextOnlyMiniNowBar &&
+                    smartShortTextOverride != null &&
+                    !hasProgress &&
+                    smartRuleId != "weather"
         val secondaryText = if (isTwoGisPackage) {
             twoGisVisibleSecondaryText?.trim()?.takeIf { it.isNotEmpty() }
                 ?: twoGisEtaDistanceText?.trim()?.takeIf { it.isNotEmpty() }
                 ?: displayText
-        } else if (!useTextOnlyMiniNowBar && smartShortTextOverride != null && !hasProgress) {
+        } else if (shouldUseSmartShortTextAsSecondary) {
             smartShortTextOverride
         } else {
             displayText

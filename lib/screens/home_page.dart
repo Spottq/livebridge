@@ -41,6 +41,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   static const bool _dictionaryAutoSyncEnabled = false;
   static const Duration _updateCheckInterval = Duration(hours: 6);
   static const String _expandableSettingNativeProgress = 'native_progress';
+  static const String _expandableSettingWeather = 'weather';
   static const String _expandableSettingExternalDevices = 'external_devices';
   static const String _expandableSettingNotificationDedup =
       'notification_dedup';
@@ -80,6 +81,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _smartMediaPlaybackEnabled = false;
   bool _smartNavigationEnabled = true;
   bool _smartWeatherEnabled = true;
+  bool _smartWeatherLockscreenOnly = false;
   bool _smartExternalDevicesEnabled = true;
   bool _smartExternalDevicesIgnoreDebugging = true;
   bool _smartVpnEnabled = true;
@@ -278,6 +280,8 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getSmartNavigationEnabled();
       final bool smartWeatherEnabled =
           await LiveBridgePlatform.getSmartWeatherEnabled();
+      final bool smartWeatherLockscreenOnly =
+          await LiveBridgePlatform.getSmartWeatherLockscreenOnly();
       final bool smartExternalDevicesEnabled =
           await LiveBridgePlatform.getSmartExternalDevicesEnabled();
       final bool smartExternalDevicesIgnoreDebugging =
@@ -390,6 +394,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _smartMediaPlaybackEnabled = smartMediaPlaybackEnabled;
         _smartNavigationEnabled = smartNavigationEnabled;
         _smartWeatherEnabled = smartWeatherEnabled;
+        _smartWeatherLockscreenOnly = smartWeatherLockscreenOnly;
         _smartExternalDevicesEnabled = smartExternalDevicesEnabled;
         _smartExternalDevicesIgnoreDebugging =
             smartExternalDevicesIgnoreDebugging;
@@ -982,6 +987,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     LiveBridgeHaptics.toggle(value);
     setState(() => _smartWeatherEnabled = value);
     await LiveBridgePlatform.setSmartWeatherEnabled(value);
+  }
+
+  Future<void> _setSmartWeatherLockscreenOnly(bool value) async {
+    LiveBridgeHaptics.toggle(value);
+    setState(() => _smartWeatherLockscreenOnly = value);
+    await LiveBridgePlatform.setSmartWeatherLockscreenOnly(value);
   }
 
   Future<void> _setSmartExternalDevices(bool value) async {
@@ -1584,6 +1595,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         'smart_media_playback_enabled': _smartMediaPlaybackEnabled,
         'smart_navigation_enabled': _smartNavigationEnabled,
         'smart_weather_enabled': _smartWeatherEnabled,
+        'smart_weather_lockscreen_only': _smartWeatherLockscreenOnly,
         'smart_external_devices_enabled': _smartExternalDevicesEnabled,
         'smart_external_devices_ignore_debugging':
             _smartExternalDevicesIgnoreDebugging,
@@ -2667,24 +2679,18 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
           const SizedBox(height: 8),
-          SwitchListTile.adaptive(
-            value: _smartWeatherEnabled,
-            onChanged: _smartDetectionEnabled ? _setSmartWeather : null,
-            title: Text(
-              s.smartWeatherTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+          _buildExpandableTile(
+            settingId: _expandableSettingWeather,
+            title: s.smartWeatherTitle,
+            subtitle: _smartDetectionEnabled
+                ? s.smartWeatherSubtitle
+                : s.smartNavigationDisabledSubtitle,
+            trailing: Switch.adaptive(
+              value: _smartWeatherEnabled,
+              onChanged: _smartDetectionEnabled ? _setSmartWeather : null,
+              activeThumbColor: Theme.of(context).colorScheme.primary,
             ),
-            subtitle: Text(
-              _smartDetectionEnabled
-                  ? s.smartWeatherSubtitle
-                  : s.smartNavigationDisabledSubtitle,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-            contentPadding: EdgeInsets.zero,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
+            expandedChild: _buildWeatherOptionsPanel(s),
           ),
           const SizedBox(height: 8),
           _buildExpandableTile(
@@ -3425,6 +3431,25 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     return _buildNetworkSpeedThresholdSetting(s);
   }
 
+  Widget _buildWeatherOptionsPanel(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _expandablePanelBackgroundColor(colorScheme),
+        borderRadius: BorderRadius.circular(20),
+        border: _expandablePanelBorder(colorScheme),
+      ),
+      child: _buildInlinePanelSwitchRow(
+        title: s.smartWeatherLockscreenOnlyTitle,
+        subtitle: s.smartWeatherLockscreenOnlySubtitle,
+        value: _smartWeatherLockscreenOnly,
+        onChanged: _setSmartWeatherLockscreenOnly,
+      ),
+    );
+  }
+
   Widget _buildExternalDevicesOptionsPanel(AppStrings s) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
@@ -3574,14 +3599,16 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
                       title,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: colorScheme.onSurfaceVariant,
-                        fontSize: 13,
+                    if (subtitle.isNotEmpty) ...<Widget>[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: colorScheme.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),

@@ -34,7 +34,8 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         preferExpandedRemoteBody: Boolean = false,
         reuseNotificationRemoteViews: Boolean = true,
         showSmallIcon: Boolean = true,
-        allowNowBarProgress: Boolean = true
+        allowNowBarProgress: Boolean = true,
+        lockscreenOnly: Boolean = false
     ) {
         val normalizedPrimary = primaryText.trim()
         if (normalizedPrimary.isEmpty()) {
@@ -64,7 +65,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
 
         val extras = Bundle().apply {
-            putInt(KEY_STYLE, 1)
+            putInt(KEY_STYLE, if (lockscreenOnly) STYLE_NOW_BAR_ONLY else STYLE_DEFAULT)
             putCharSequence(KEY_PRIMARY_INFO, normalizedPrimary)
             // Avoid duplicated bottom subtitle when custom RemoteViews is used.
             if (showSecondaryInNowBar &&
@@ -229,6 +230,8 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
 
         private const val DEFAULT_CHIP_BG_COLOR = 0xFF0F766E.toInt()
+        private const val STYLE_DEFAULT = 1
+        private const val STYLE_NOW_BAR_ONLY = 2
 
         fun isSamsungDevice(): Boolean {
             val manufacturer = (Build.MANUFACTURER ?: "").lowercase(Locale.ROOT)
