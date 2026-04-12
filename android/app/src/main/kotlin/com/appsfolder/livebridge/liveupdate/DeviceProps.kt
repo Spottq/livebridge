@@ -4,6 +4,7 @@ import android.os.Build
 import java.util.Locale
 
 object DeviceProps {
+    private const val DEBUG_FORCE_NON_SAMSUNG_PROP = "debug.livebridge.force_non_samsung"
     private val marketNameKeys = listOf(
         "ro.product.marketname",
         "ro.vendor.product.marketname",
@@ -24,6 +25,10 @@ object DeviceProps {
     }
 
     fun isSamsungDevice(): Boolean {
+        val forced = readSystemProperty(DEBUG_FORCE_NON_SAMSUNG_PROP)
+        if (forced == "1" || forced.equals("true", ignoreCase = true)) {
+            return false
+        }
         val manufacturer = (Build.MANUFACTURER ?: "").lowercase(Locale.ROOT)
         val brand = (Build.BRAND ?: "").lowercase(Locale.ROOT)
         return manufacturer.contains("samsung") || brand.contains("samsung")
