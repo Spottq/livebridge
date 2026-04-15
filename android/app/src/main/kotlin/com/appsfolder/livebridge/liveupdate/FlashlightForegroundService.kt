@@ -93,7 +93,16 @@ class FlashlightForegroundService : Service() {
                 )
             }
             ACTION_DISABLE -> {
-                prefs.setSmartFlashlightEnabled(false)
+                runCatching {
+                    controller.apply(
+                        enabled = false,
+                        requestedLevelIndex = prefs.getSmartFlashlightLevel()
+                    )
+                }.onFailure { error ->
+                    Log.e(TAG, "Failed to disable flashlight from notification", error)
+                }
+                stopSelfSafely(clearPreference = false)
+                return START_NOT_STICKY
             }
         }
 
