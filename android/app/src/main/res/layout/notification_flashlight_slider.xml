@@ -18,30 +18,30 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="18dp"
+        android:layout_height="24dp"
         android:layout_marginTop="8dp">
 
         <LinearLayout
             android:id="@+id/flashlight_slider_track"
             android:layout_width="match_parent"
-            android:layout_height="18dp"
+            android:layout_height="24dp"
             android:background="@drawable/bg_flashlight_slider_track"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp">
+            android:paddingStart="2dp"
+            android:paddingEnd="2dp">
 
             <FrameLayout
                 android:id="@+id/flashlight_segment_slot_1"
                 android:layout_width="0dp"
-                android:layout_height="18dp"
+                android:layout_height="24dp"
                 android:layout_weight="1"
                 android:foregroundGravity="center">
 
                 <ImageView
                     android:id="@+id/flashlight_segment_1"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/flashlight_segment_inactive" />
             </FrameLayout>
@@ -49,14 +49,14 @@
             <FrameLayout
                 android:id="@+id/flashlight_segment_slot_2"
                 android:layout_width="0dp"
-                android:layout_height="18dp"
+                android:layout_height="24dp"
                 android:layout_weight="1"
                 android:foregroundGravity="center">
 
                 <ImageView
                     android:id="@+id/flashlight_segment_2"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/flashlight_segment_inactive" />
             </FrameLayout>
@@ -64,14 +64,14 @@
             <FrameLayout
                 android:id="@+id/flashlight_segment_slot_3"
                 android:layout_width="0dp"
-                android:layout_height="18dp"
+                android:layout_height="24dp"
                 android:layout_weight="1"
                 android:foregroundGravity="center">
 
                 <ImageView
                     android:id="@+id/flashlight_segment_3"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/flashlight_segment_inactive" />
             </FrameLayout>
@@ -79,14 +79,14 @@
             <FrameLayout
                 android:id="@+id/flashlight_segment_slot_4"
                 android:layout_width="0dp"
-                android:layout_height="18dp"
+                android:layout_height="24dp"
                 android:layout_weight="1"
                 android:foregroundGravity="center">
 
                 <ImageView
                     android:id="@+id/flashlight_segment_4"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/flashlight_segment_inactive" />
             </FrameLayout>
@@ -94,14 +94,14 @@
             <FrameLayout
                 android:id="@+id/flashlight_segment_slot_5"
                 android:layout_width="0dp"
-                android:layout_height="18dp"
+                android:layout_height="24dp"
                 android:layout_weight="1"
                 android:foregroundGravity="center">
 
                 <ImageView
                     android:id="@+id/flashlight_segment_5"
-                    android:layout_width="18dp"
-                    android:layout_height="18dp"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
                     android:layout_gravity="center"
                     android:src="@drawable/flashlight_segment_inactive" />
             </FrameLayout>
