@@ -309,6 +309,25 @@ class AppStrings {
   String get smartVpnSubtitle => isRu
       ? 'Показывает входящий/исходящий трафик в формате *b/s.'
       : 'Shows incoming/outgoing traffic speed in *b/s format.';
+  String get smartFlashlightTitle => isRu ? 'Фонарик' : 'Flashlight';
+  String get smartFlashlightSubtitle => isRu
+      ? 'Создаёт тестовое уведомление Now Bar с 5-точечным управлением яркостью фонарика.'
+      : 'Creates a test Now Bar notification with a 5-point flashlight brightness control.';
+  String get smartFlashlightUnsupportedSubtitle => isRu
+      ? 'Устройство включает фонарик, но не даёт 5 отдельных уровней яркости.'
+      : 'This device can enable the flashlight, but it does not expose 5 separate brightness levels.';
+  String get smartFlashlightUnavailableSubtitle => isRu
+      ? 'На этом устройстве нет доступного фонарика.'
+      : 'This device does not expose a usable flashlight.';
+  String smartFlashlightBrightnessLabel(int level) => isRu
+      ? 'Яркость ${level.clamp(1, 5)}/5'
+      : 'Brightness ${level.clamp(1, 5)}/5';
+  String get smartFlashlightLevelSelectorHint => isRu
+      ? 'Правая точка = максимальная яркость.'
+      : 'The rightmost point is maximum brightness.';
+  String get smartFlashlightFallbackWarning => isRu
+      ? 'Показан fallback: точки отключены, потому что устройство не поддерживает 5 уровней яркости фонарика.'
+      : 'Fallback mode: the dots are disabled because this device does not support 5 flashlight brightness levels.';
   String get networkSpeedCardTitle =>
       isRu ? 'Скорость интернета' : 'Network speed';
   String get networkSpeedEnabledTitle => isRu

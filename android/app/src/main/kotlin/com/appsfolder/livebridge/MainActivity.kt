@@ -29,6 +29,8 @@ import com.kakao.taxi.liveupdate.AppPresentationOverridesLoader
 import com.kakao.taxi.liveupdate.ConverterPrefs
 import com.kakao.taxi.liveupdate.DeviceBlocker
 import com.kakao.taxi.liveupdate.DeviceProps
+import com.kakao.taxi.liveupdate.FlashlightController
+import com.kakao.taxi.liveupdate.FlashlightForegroundService
 import com.kakao.taxi.liveupdate.InstalledAppsRepository
 import com.kakao.taxi.liveupdate.KeepAliveForegroundService
 import com.kakao.taxi.liveupdate.LiveBridgeTileService
@@ -66,6 +68,7 @@ class MainActivity : FlutterActivity() {
         initializeKeepAliveDefaultIfNeeded(prefs)
         syncKeepAliveForegroundService(prefs)
         syncNetworkSpeedService(prefs)
+        syncFlashlightService(prefs)
         clearDynamicLauncherShortcuts()
         LiveBridgeTileService.requestStateSync(applicationContext)
     }
@@ -487,6 +490,23 @@ class MainActivity : FlutterActivity() {
                 prefs.setSmartVpnEnabled(call.argument<Boolean>("value") ?: true)
                 res.success(true)
             }
+            "getSmartFlashlightEnabled" -> res.success(prefs.getSmartFlashlightEnabled())
+            "setSmartFlashlightEnabled" -> {
+                prefs.setSmartFlashlightEnabled(call.argument<Boolean>("value") ?: false)
+                syncFlashlightService(prefs)
+                res.success(true)
+            }
+            "getSmartFlashlightLevel" -> res.success(prefs.getSmartFlashlightLevel())
+            "setSmartFlashlightLevel" -> {
+                prefs.setSmartFlashlightLevel(
+                    call.argument<Number>("value")?.toInt() ?: FlashlightController.DEFAULT_LEVEL_INDEX
+                )
+                syncFlashlightService(prefs)
+                res.success(true)
+            }
+            "getFlashlightCapability" -> {
+                res.success(FlashlightController(applicationContext).getCapability().toMap())
+            }
 
             "getOtpDetectionEnabled" -> res.success(prefs.getOtpDetectionEnabled())
             "setOtpDetectionEnabled" -> {
@@ -582,6 +602,14 @@ class MainActivity : FlutterActivity() {
             NetworkSpeedForegroundService.sync(applicationContext)
         } else {
             NetworkSpeedForegroundService.stop(applicationContext)
+        }
+    }
+
+    private fun syncFlashlightService(prefs: ConverterPrefs) {
+        if (prefs.getSmartFlashlightEnabled()) {
+            FlashlightForegroundService.sync(applicationContext)
+        } else {
+            FlashlightForegroundService.stop(applicationContext)
         }
     }
 

@@ -364,6 +364,25 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_SMART_VPN_ENABLED, value).apply()
     }
 
+    fun getSmartFlashlightEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SMART_FLASHLIGHT_ENABLED, false)
+    }
+
+    fun setSmartFlashlightEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_FLASHLIGHT_ENABLED, value).apply()
+    }
+
+    fun getSmartFlashlightLevel(): Int {
+        return prefs.getInt(KEY_SMART_FLASHLIGHT_LEVEL, DEFAULT_SMART_FLASHLIGHT_LEVEL)
+            .coerceIn(0, 4)
+    }
+
+    fun setSmartFlashlightLevel(value: Int) {
+        prefs.edit()
+            .putInt(KEY_SMART_FLASHLIGHT_LEVEL, value.coerceIn(0, 4))
+            .apply()
+    }
+
     fun getOtpDetectionEnabled(): Boolean {
         return prefs.getBoolean(KEY_OTP_DETECTION_ENABLED, true)
     }
@@ -605,6 +624,8 @@ class ConverterPrefs(context: Context) {
         private const val KEY_SMART_EXTERNAL_DEVICES_IGNORE_DEBUGGING =
             "smart_external_devices_ignore_debugging"
         private const val KEY_SMART_VPN_ENABLED = "smart_vpn_enabled"
+        private const val KEY_SMART_FLASHLIGHT_ENABLED = "smart_flashlight_enabled"
+        private const val KEY_SMART_FLASHLIGHT_LEVEL = "smart_flashlight_level"
         private const val KEY_OTP_DETECTION_ENABLED = "otp_detection_enabled"
         private const val KEY_OTP_AUTO_COPY_ENABLED = "otp_auto_copy_enabled"
         private const val KEY_OTP_PACKAGE_RULES = "otp_package_rules"
@@ -623,5 +644,6 @@ class ConverterPrefs(context: Context) {
         private const val KEY_PACKAGE_FILTER_LEGACY = "package_filter"
         private const val DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX = "▲ "
         private const val DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX = "▼ "
+        private const val DEFAULT_SMART_FLASHLIGHT_LEVEL = 4
     }
 }

@@ -79,6 +79,32 @@ class DeviceInfo {
   }
 }
 
+class FlashlightCapability {
+  const FlashlightCapability({
+    this.available = false,
+    this.supportsStrengthControl = false,
+    this.supportsFiveLevels = false,
+    this.maxStrengthLevel = 0,
+  });
+
+  final bool available;
+  final bool supportsStrengthControl;
+  final bool supportsFiveLevels;
+  final int maxStrengthLevel;
+
+  bool get supportsInteractiveLevels => available && supportsFiveLevels;
+  bool get hasFallbackWarning => available && !supportsFiveLevels;
+
+  factory FlashlightCapability.fromMap(Map<String, dynamic> map) {
+    return FlashlightCapability(
+      available: map['available'] == true,
+      supportsStrengthControl: map['supportsStrengthControl'] == true,
+      supportsFiveLevels: map['supportsFiveLevels'] == true,
+      maxStrengthLevel: (map['maxStrengthLevel'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
 enum PackageMode { all, include, exclude }
 
 extension PackageModeId on PackageMode {

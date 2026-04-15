@@ -45,6 +45,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   static const String _expandableSettingNativeProgress = 'native_progress';
   static const String _expandableSettingWeather = 'weather';
   static const String _expandableSettingExternalDevices = 'external_devices';
+  static const String _expandableSettingFlashlight = 'flashlight';
   static const String _expandableSettingNotificationDedup =
       'notification_dedup';
   static const int _networkSpeedThresholdStepBytesPerSecond = 8 * 1024;
@@ -87,6 +88,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _smartExternalDevicesEnabled = true;
   bool _smartExternalDevicesIgnoreDebugging = true;
   bool _smartVpnEnabled = true;
+  bool _smartFlashlightEnabled = false;
   bool _otpDetectionEnabled = true;
   bool _otpAutoCopyEnabled = false;
   bool _hasCustomParserDictionary = false;
@@ -112,6 +114,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   bool _previewAppsLoaded = false;
   bool _previewAppsLoading = false;
   Future<void>? _previewAppsWarmupTask;
+  FlashlightCapability _flashlightCapability = const FlashlightCapability();
   PackageMode _packageMode = PackageMode.all;
   PackageMode _otpPackageMode = PackageMode.all;
   NetworkSpeedDisplayMode _networkSpeedDisplayMode =
@@ -121,6 +124,7 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
   };
   String _networkSpeedUploadPrefix = '▲ ';
   String _networkSpeedDownloadPrefix = '▼ ';
+  int _smartFlashlightLevel = 4;
   PackageMode _notificationDedupPackageMode = PackageMode.all;
   NotificationDedupMode _notificationDedupMode =
       NotificationDedupMode.otpStatus;
@@ -290,6 +294,12 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
           await LiveBridgePlatform.getSmartExternalDevicesIgnoreDebugging();
       final bool smartVpnEnabled =
           await LiveBridgePlatform.getSmartVpnEnabled();
+      final bool smartFlashlightEnabled =
+          await LiveBridgePlatform.getSmartFlashlightEnabled();
+      final int smartFlashlightLevel =
+          await LiveBridgePlatform.getSmartFlashlightLevel();
+      final FlashlightCapability flashlightCapability =
+          await LiveBridgePlatform.getFlashlightCapability();
       final bool otpDetectionEnabled =
           await LiveBridgePlatform.getOtpDetectionEnabled();
       final bool otpAutoCopyEnabled =
@@ -401,6 +411,9 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         _smartExternalDevicesIgnoreDebugging =
             smartExternalDevicesIgnoreDebugging;
         _smartVpnEnabled = smartVpnEnabled;
+        _smartFlashlightEnabled = smartFlashlightEnabled;
+        _smartFlashlightLevel = smartFlashlightLevel.clamp(0, 4).toInt();
+        _flashlightCapability = flashlightCapability;
         _otpDetectionEnabled = otpDetectionEnabled;
         _otpAutoCopyEnabled = otpAutoCopyEnabled;
         _updateChecksEnabled = updateChecksEnabled;
@@ -1015,6 +1028,30 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
     await LiveBridgePlatform.setSmartVpnEnabled(value);
   }
 
+  Future<void> _setSmartFlashlightEnabled(bool value) async {
+    LiveBridgeHaptics.toggle(value);
+    setState(() => _smartFlashlightEnabled = value);
+    await LiveBridgePlatform.setSmartFlashlightEnabled(value);
+    final bool actualEnabled =
+        await LiveBridgePlatform.getSmartFlashlightEnabled();
+    final FlashlightCapability capability =
+        await LiveBridgePlatform.getFlashlightCapability();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _smartFlashlightEnabled = actualEnabled;
+      _flashlightCapability = capability;
+    });
+  }
+
+  Future<void> _setSmartFlashlightLevel(int value) async {
+    HapticFeedback.selectionClick();
+    final int normalized = value.clamp(0, 4).toInt();
+    setState(() => _smartFlashlightLevel = normalized);
+    await LiveBridgePlatform.setSmartFlashlightLevel(normalized);
+  }
+
   String _networkSpeedDisplayModeLabel(
     NetworkSpeedDisplayMode mode,
     AppStrings s,
@@ -1617,6 +1654,11 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         'smart_external_devices_ignore_debugging':
             _smartExternalDevicesIgnoreDebugging,
         'smart_vpn_enabled': _smartVpnEnabled,
+        'smart_flashlight_enabled': _smartFlashlightEnabled,
+        'smart_flashlight_level': _smartFlashlightLevel,
+        'smart_flashlight_available': _flashlightCapability.available,
+        'smart_flashlight_supports_five_levels':
+            _flashlightCapability.supportsFiveLevels,
         'otp_detection_enabled': _otpDetectionEnabled,
         'otp_auto_copy_enabled': _otpAutoCopyEnabled,
         'aosp_cutting_enabled': _aospCuttingEnabled,
@@ -2758,6 +2800,24 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
             contentPadding: EdgeInsets.zero,
             activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
+          const SizedBox(height: 8),
+          _buildExpandableTile(
+            settingId: _expandableSettingFlashlight,
+            title: s.smartFlashlightTitle,
+            subtitle: !_flashlightCapability.available
+                ? s.smartFlashlightUnavailableSubtitle
+                : _flashlightCapability.supportsFiveLevels
+                ? s.smartFlashlightSubtitle
+                : s.smartFlashlightUnsupportedSubtitle,
+            trailing: Switch.adaptive(
+              value: _smartFlashlightEnabled,
+              onChanged: _flashlightCapability.available
+                  ? _setSmartFlashlightEnabled
+                  : null,
+              activeThumbColor: Theme.of(context).colorScheme.primary,
+            ),
+            expandedChild: _buildFlashlightOptionsPanel(s),
+          ),
         ],
       ),
     );
@@ -3495,6 +3555,55 @@ class _LiveBridgeHomePageState extends State<LiveBridgeHomePage>
         subtitle: s.smartExternalDevicesIgnoreDebuggingSubtitle,
         value: _smartExternalDevicesIgnoreDebugging,
         onChanged: _setSmartExternalDevicesIgnoreDebugging,
+      ),
+    );
+  }
+
+  Widget _buildFlashlightOptionsPanel(AppStrings s) {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+    final bool interactive = _flashlightCapability.supportsInteractiveLevels;
+    final String helperText = !_flashlightCapability.available
+        ? s.smartFlashlightUnavailableSubtitle
+        : interactive
+        ? s.smartFlashlightLevelSelectorHint
+        : s.smartFlashlightFallbackWarning;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _expandablePanelBackgroundColor(colorScheme),
+        borderRadius: BorderRadius.circular(20),
+        border: _expandablePanelBorder(colorScheme),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            interactive
+                ? s.smartFlashlightBrightnessLabel(_smartFlashlightLevel + 1)
+                : s.smartFlashlightTitle,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: interactive ? 1 : 0.58,
+            child: IgnorePointer(
+              ignoring: !interactive,
+              child: _FlashlightSegmentedSelector(
+                value: interactive ? _smartFlashlightLevel : null,
+                onChanged: (int next) {
+                  unawaited(_setSmartFlashlightLevel(next));
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            helperText,
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
+          ),
+        ],
       ),
     );
   }
@@ -4319,6 +4428,93 @@ class _NetworkSpeedPrefixSheetState extends State<_NetworkSpeedPrefixSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _FlashlightSegmentedSelector extends StatelessWidget {
+  const _FlashlightSegmentedSelector({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final int? value;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const Color badgeBlue = Color(0xFF387AFF);
+    const Color trackColor = Color(0xFF5F5F61);
+    const Color activeFill = Color(0xFF17171A);
+    const Color inactiveFill = Color(0xFF848487);
+    final bool interactive = value != null;
+
+    return Row(
+      children: <Widget>[
+        Container(
+          width: 28,
+          height: 28,
+          decoration: const BoxDecoration(
+            color: badgeBlue,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.flashlight_on_rounded,
+            size: 16,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Container(
+            height: 22,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: const BoxDecoration(
+              color: trackColor,
+              borderRadius: BorderRadius.all(Radius.circular(999)),
+            ),
+            child: Row(
+              children: List<Widget>.generate(5, (int index) {
+                final bool selected = interactive && value == index;
+                return Expanded(
+                  child: InkWell(
+                    onTap: interactive ? () => onChanged(index) : null,
+                    borderRadius: BorderRadius.circular(16),
+                    splashFactory: NoSplash.splashFactory,
+                    overlayColor: const WidgetStatePropertyAll<Color>(
+                      Colors.transparent,
+                    ),
+                    child: Center(
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        curve: Curves.easeOutCubic,
+                        width: selected ? 24 : 10,
+                        height: selected ? 24 : 10,
+                        decoration: BoxDecoration(
+                          color: selected ? activeFill : inactiveFill,
+                          shape: BoxShape.circle,
+                          border: selected
+                              ? Border.all(color: badgeBlue, width: 2)
+                              : null,
+                          boxShadow: selected
+                              ? <BoxShadow>[
+                                  BoxShadow(
+                                    color: badgeBlue.withValues(alpha: 0.2),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

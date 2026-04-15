@@ -206,6 +206,23 @@ class LiveBridgePlatform {
   static Future<bool> getSmartVpnEnabled() => _askBool('getSmartVpnEnabled');
   static Future<bool> setSmartVpnEnabled(bool value) =>
       _askBool('setSmartVpnEnabled', {'value': value});
+  static Future<bool> getSmartFlashlightEnabled() =>
+      _askBool('getSmartFlashlightEnabled');
+  static Future<bool> setSmartFlashlightEnabled(bool value) =>
+      _askBool('setSmartFlashlightEnabled', {'value': value});
+  static Future<int> getSmartFlashlightLevel() =>
+      _askInt('getSmartFlashlightLevel');
+  static Future<bool> setSmartFlashlightLevel(int value) =>
+      _askBool('setSmartFlashlightLevel', {'value': value});
+  static Future<FlashlightCapability> getFlashlightCapability() async {
+    final Map<dynamic, dynamic>? res = await _channel
+        .invokeMethod<Map<dynamic, dynamic>>('getFlashlightCapability');
+    final Map<String, dynamic> map = res == null
+        ? const <String, dynamic>{}
+        : Map<String, dynamic>.from(res);
+    return FlashlightCapability.fromMap(map);
+  }
+
   static Future<bool> getOtpDetectionEnabled() =>
       _askBool('getOtpDetectionEnabled');
   static Future<bool> setOtpDetectionEnabled(bool value) =>
