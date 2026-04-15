@@ -3,129 +3,114 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="6dp"
+    android:paddingTop="8dp"
     android:paddingBottom="4dp">
 
-    <TextView
-        android:id="@+id/flashlight_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="#FFF5F7FA"
-        android:textSize="16sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="18dp"
-        android:layout_marginTop="10dp">
-
-        <LinearLayout
-            android:id="@+id/flashlight_slider_track"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="18dp"
-            android:background="@drawable/bg_flashlight_slider_track"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp">
+            android:layout_height="18dp">
 
-            <FrameLayout
-                android:id="@+id/flashlight_segment_slot_1"
-                android:layout_width="0dp"
+            <LinearLayout
+                android:id="@+id/flashlight_slider_track"
+                android:layout_width="match_parent"
                 android:layout_height="18dp"
-                android:layout_weight="1"
-                android:foregroundGravity="center">
+                android:background="@drawable/bg_flashlight_slider_track"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
 
-                <ImageView
-                    android:id="@+id/flashlight_segment_1"
-                    android:layout_width="18dp"
+                <FrameLayout
+                    android:id="@+id/flashlight_segment_slot_1"
+                    android:layout_width="0dp"
                     android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/flashlight_segment_inactive" />
-            </FrameLayout>
+                    android:layout_weight="1"
+                    android:foregroundGravity="center">
 
-            <FrameLayout
-                android:id="@+id/flashlight_segment_slot_2"
-                android:layout_width="0dp"
-                android:layout_height="18dp"
-                android:layout_weight="1"
-                android:foregroundGravity="center">
+                    <ImageView
+                        android:id="@+id/flashlight_segment_1"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/flashlight_segment_inactive" />
+                </FrameLayout>
 
-                <ImageView
-                    android:id="@+id/flashlight_segment_2"
-                    android:layout_width="18dp"
+                <FrameLayout
+                    android:id="@+id/flashlight_segment_slot_2"
+                    android:layout_width="0dp"
                     android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/flashlight_segment_inactive" />
-            </FrameLayout>
+                    android:layout_weight="1"
+                    android:foregroundGravity="center">
 
-            <FrameLayout
-                android:id="@+id/flashlight_segment_slot_3"
-                android:layout_width="0dp"
-                android:layout_height="18dp"
-                android:layout_weight="1"
-                android:foregroundGravity="center">
+                    <ImageView
+                        android:id="@+id/flashlight_segment_2"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/flashlight_segment_inactive" />
+                </FrameLayout>
 
-                <ImageView
-                    android:id="@+id/flashlight_segment_3"
-                    android:layout_width="18dp"
+                <FrameLayout
+                    android:id="@+id/flashlight_segment_slot_3"
+                    android:layout_width="0dp"
                     android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/flashlight_segment_inactive" />
-            </FrameLayout>
+                    android:layout_weight="1"
+                    android:foregroundGravity="center">
 
-            <FrameLayout
-                android:id="@+id/flashlight_segment_slot_4"
-                android:layout_width="0dp"
-                android:layout_height="18dp"
-                android:layout_weight="1"
-                android:foregroundGravity="center">
+                    <ImageView
+                        android:id="@+id/flashlight_segment_3"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/flashlight_segment_inactive" />
+                </FrameLayout>
 
-                <ImageView
-                    android:id="@+id/flashlight_segment_4"
-                    android:layout_width="18dp"
+                <FrameLayout
+                    android:id="@+id/flashlight_segment_slot_4"
+                    android:layout_width="0dp"
                     android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/flashlight_segment_inactive" />
-            </FrameLayout>
+                    android:layout_weight="1"
+                    android:foregroundGravity="center">
 
-            <FrameLayout
-                android:id="@+id/flashlight_segment_slot_5"
-                android:layout_width="0dp"
-                android:layout_height="18dp"
-                android:layout_weight="1"
-                android:foregroundGravity="center">
+                    <ImageView
+                        android:id="@+id/flashlight_segment_4"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/flashlight_segment_inactive" />
+                </FrameLayout>
 
-                <ImageView
-                    android:id="@+id/flashlight_segment_5"
-                    android:layout_width="18dp"
+                <FrameLayout
+                    android:id="@+id/flashlight_segment_slot_5"
+                    android:layout_width="0dp"
                     android:layout_height="18dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/flashlight_segment_inactive" />
-            </FrameLayout>
-        </LinearLayout>
+                    android:layout_weight="1"
+                    android:foregroundGravity="center">
 
-        <TextView
-            android:id="@+id/flashlight_disabled_overlay"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="#33000000"
-            android:text=""
-            android:visibility="gone" />
-    </FrameLayout>
+                    <ImageView
+                        android:id="@+id/flashlight_segment_5"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/flashlight_segment_inactive" />
+                </FrameLayout>
+            </LinearLayout>
 
-    <TextView
-        android:id="@+id/flashlight_action_button"
-        android:layout_width="match_parent"
-        android:layout_height="38dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_flashlight_action_button"
-        android:gravity="center"
-        android:textColor="#FFF5F7FA"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+            <TextView
+                android:id="@+id/flashlight_disabled_overlay"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#33000000"
+                android:text=""
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
 
     <TextView
         android:id="@+id/flashlight_warning"
