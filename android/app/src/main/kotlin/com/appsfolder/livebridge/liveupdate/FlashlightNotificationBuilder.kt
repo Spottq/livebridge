@@ -19,7 +19,6 @@ internal class FlashlightNotificationBuilder(
         prefs: ConverterPrefs,
         capability: FlashlightCapability
     ): Notification {
-        val sourceSnapshot = FlashlightSourceState.snapshot()
         val title = notificationTitle()
         val levelIndex = prefs.getSmartFlashlightLevel().coerceIn(0, FlashlightController.FLASHLIGHT_LEVEL_COUNT - 1)
         val effectiveLevelIndex = if (capability.supportsFiveLevels) {
@@ -47,16 +46,16 @@ internal class FlashlightNotificationBuilder(
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
-        val chipIconCompat = sourceSnapshot.iconCompat
-            ?: IconCompat.createWithResource(context, R.drawable.ic_flashlight_stat)
-        val smallIconCompat = sourceSnapshot.iconCompat
-            ?: IconCompat.createWithResource(context, R.drawable.ic_flashlight_stat)
+        val chipIconCompat = IconCompat.createWithResource(
+            context,
+            R.drawable.ic_flashlight_system_notification
+        )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(smallIconCompat)
+            .setSmallIcon(R.drawable.ic_flashlight_system_notification)
             .setContentTitle(title)
             .setContentIntent(contentIntent)
-            .setColor(sourceSnapshot.accentColor)
+            .setColor(DEFAULT_ICON_ACCENT_COLOR)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
@@ -82,7 +81,7 @@ internal class FlashlightNotificationBuilder(
                     chipText = chipText,
                     chipIcon = chipIconCompat,
                     remoteView = nowBarRemoteView,
-                    chipBackgroundColor = sourceSnapshot.accentColor
+                    chipBackgroundColor = DEFAULT_ICON_ACCENT_COLOR
                 )
             )
         }
@@ -305,6 +304,7 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"
         private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
         private const val STYLE_DEFAULT = 1
+        private const val DEFAULT_ICON_ACCENT_COLOR = 0xFF387AFF.toInt()
         private const val REMOTE_VIEW_TAG = "flashlight_segments_remote"
         private const val REQUEST_CODE_DISABLE = 500
     }
