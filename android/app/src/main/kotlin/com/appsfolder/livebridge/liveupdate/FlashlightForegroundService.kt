@@ -9,7 +9,6 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.hardware.camera2.CameraManager
 import android.os.IBinder
-import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -27,25 +26,22 @@ class FlashlightForegroundService : Service() {
     private var capability = FlashlightCapability(available = false)
     private var isForegroundActive = false
     private var isTorchCallbackRegistered = false
-    private var ignoreTorchOffCallbacksUntilElapsedMs = 0L
 
     private val torchCallback = object : CameraManager.TorchCallback() {
         override fun onTorchModeChanged(cameraId: String, enabled: Boolean) {
             val activeCameraId = capability.cameraId ?: return
-            if (cameraId != activeCameraId || !prefs.getSmartFlashlightEnabled()) {
+            if (cameraId != activeCameraId) {
                 return
             }
             Log.d(TAG, "onTorchModeChanged cameraId=$cameraId enabled=$enabled")
-            if (!enabled && SystemClock.elapsedRealtime() < ignoreTorchOffCallbacksUntilElapsedMs) {
-                Log.d(TAG, "Ignoring early OFF torch callback during startup grace window")
-                return
-            }
-            if (!enabled) {
-                prefs.setSmartFlashlightEnabled(false)
+            if (!prefs.getSmartFlashlightEnabled()) {
                 stopSelfSafely(clearPreference = false)
                 return
             }
-            ignoreTorchOffCallbacksUntilElapsedMs = 0L
+            if (!enabled) {
+                stopSelfSafely(clearPreference = false)
+                return
+            }
             refreshNotification()
         }
 
@@ -55,16 +51,19 @@ class FlashlightForegroundService : Service() {
                 return
             }
             Log.d(TAG, "onTorchModeUnavailable cameraId=$cameraId")
-            prefs.setSmartFlashlightEnabled(false)
             stopSelfSafely(clearPreference = false)
         }
 
         override fun onTorchStrengthLevelChanged(cameraId: String, newStrengthLevel: Int) {
             val activeCameraId = capability.cameraId ?: return
-            if (cameraId != activeCameraId || !prefs.getSmartFlashlightEnabled()) {
+            if (cameraId != activeCameraId) {
                 return
             }
             Log.d(TAG, "onTorchStrengthLevelChanged cameraId=$cameraId level=$newStrengthLevel")
+            if (!prefs.getSmartFlashlightEnabled()) {
+                stopSelfSafely(clearPreference = false)
+                return
+            }
             capability = controller.getCapability()
             if (capability.supportsFiveLevels) {
                 prefs.setSmartFlashlightLevel(
@@ -103,28 +102,28 @@ class FlashlightForegroundService : Service() {
             return START_NOT_STICKY
         }
 
-        val updatedCapability = runCatching {
-            controller.apply(
-                enabled = true,
-                requestedLevelIndex = prefs.getSmartFlashlightLevel()
-            )
-        }.onFailure { error ->
-            Log.e(TAG, "Failed to enable flashlight foreground service", error)
-            prefs.setSmartFlashlightEnabled(false)
-            stopSelfSafely(clearPreference = false)
-        }.getOrNull() ?: return START_NOT_STICKY
+        val desiredLevel = prefs.getSmartFlashlightLevel()
+        capability = if (intent?.action == ACTION_SET_LEVEL) {
+            runCatching {
+                controller.apply(
+                    enabled = true,
+                    requestedLevelIndex = desiredLevel
+                )
+            }.onFailure { error ->
+                Log.e(TAG, "Failed to adjust flashlight level", error)
+                stopSelfSafely(clearPreference = false)
+            }.getOrNull() ?: return START_NOT_STICKY
+        } else {
+            controller.getCapability()
+        }
 
-        capability = updatedCapability
         Log.d(
             TAG,
-            "Torch apply success available=${updatedCapability.available} " +
-                "supportsFiveLevels=${updatedCapability.supportsFiveLevels} " +
-                "level=${prefs.getSmartFlashlightLevel()}"
+            "Flashlight mirror sync available=${capability.available} " +
+                "supportsFiveLevels=${capability.supportsFiveLevels} " +
+                "level=$desiredLevel action=${intent?.action}"
         )
-        ignoreTorchOffCallbacksUntilElapsedMs =
-            SystemClock.elapsedRealtime() + INITIAL_OFF_CALLBACK_GRACE_MS
-        if (!updatedCapability.available) {
-            prefs.setSmartFlashlightEnabled(false)
+        if (!capability.available) {
             stopSelfSafely(clearPreference = false)
             return START_NOT_STICKY
         }
@@ -138,8 +137,6 @@ class FlashlightForegroundService : Service() {
 
     override fun onDestroy() {
         unregisterTorchCallbackIfNeeded()
-        ignoreTorchOffCallbacksUntilElapsedMs = 0L
-        runCatching { controller.apply(enabled = false, requestedLevelIndex = prefs.getSmartFlashlightLevel()) }
         hideNotification()
         super.onDestroy()
     }
@@ -152,7 +149,6 @@ class FlashlightForegroundService : Service() {
             )
         }.onFailure { error ->
             Log.e(TAG, "Failed to refresh flashlight notification", error)
-            prefs.setSmartFlashlightEnabled(false)
             stopSelfSafely(clearPreference = false)
         }.getOrNull() ?: return
 
@@ -165,7 +161,6 @@ class FlashlightForegroundService : Service() {
             }
         }.onFailure { error ->
             Log.e(TAG, "Failed to post flashlight notification", error)
-            prefs.setSmartFlashlightEnabled(false)
             stopSelfSafely(clearPreference = false)
         }
     }
@@ -232,7 +227,6 @@ class FlashlightForegroundService : Service() {
             "Shows a flashlight control notification and mirrors it into the Now Bar"
         private const val CHANNEL_DESCRIPTION_RU =
             "\u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u0435 \u0444\u043e\u043d\u0430\u0440\u0438\u043a\u0430 \u0438 \u0432\u044b\u0432\u043e\u0434\u0438\u0442 \u0435\u0433\u043e \u0432 Now Bar"
-        private const val INITIAL_OFF_CALLBACK_GRACE_MS = 1500L
 
         fun sync(context: Context) {
             val prefs = ConverterPrefs(context)
