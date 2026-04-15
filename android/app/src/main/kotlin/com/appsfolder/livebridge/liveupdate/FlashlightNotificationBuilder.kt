@@ -39,15 +39,11 @@ internal class FlashlightNotificationBuilder(
         )
         val contentView = buildNotificationRemoteViews(
             title = title,
-            capability = capability,
-            effectiveLevelIndex = effectiveLevelIndex,
-            sourceSnapshot = sourceSnapshot
+            capability = capability
         )
         val expandedView = buildExpandedRemoteViews(
             title = title,
-            capability = capability,
-            effectiveLevelIndex = effectiveLevelIndex,
-            sourceSnapshot = sourceSnapshot
+            capability = capability
         )
         val nowBarRemoteView = buildNowBarRemoteViews(
             capability = capability,
@@ -98,9 +94,7 @@ internal class FlashlightNotificationBuilder(
 
     private fun buildNotificationRemoteViews(
         title: String,
-        capability: FlashlightCapability,
-        effectiveLevelIndex: Int,
-        sourceSnapshot: FlashlightSourceSnapshot
+        capability: FlashlightCapability
     ): RemoteViews {
         return RemoteViews(context.packageName, R.layout.notification_flashlight_expanded).apply {
             setTextViewText(R.id.flashlight_title, title)
@@ -119,15 +113,11 @@ internal class FlashlightNotificationBuilder(
 
     private fun buildExpandedRemoteViews(
         title: String,
-        capability: FlashlightCapability,
-        effectiveLevelIndex: Int,
-        sourceSnapshot: FlashlightSourceSnapshot
+        capability: FlashlightCapability
     ): RemoteViews {
         return buildNotificationRemoteViews(
             title = title,
-            capability = capability,
-            effectiveLevelIndex = effectiveLevelIndex,
-            sourceSnapshot = sourceSnapshot
+            capability = capability
         )
     }
 
