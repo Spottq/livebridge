@@ -40,7 +40,7 @@ internal class FlashlightNotificationBuilder(
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
-        val nowBarRemoteView = buildNowBarRemoteViews(
+        val compactView = buildCompactRemoteViews(
             title = title,
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
@@ -58,7 +58,9 @@ internal class FlashlightNotificationBuilder(
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .setCustomContentView(compactView)
             .setCustomBigContentView(expandedView)
+            .setCustomHeadsUpContentView(compactView)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setRequestPromotedOngoing(true)
 
@@ -73,8 +75,7 @@ internal class FlashlightNotificationBuilder(
             builder.addExtras(
                 buildSamsungExtras(
                     title = title,
-                    chipText = chipText,
-                    remoteView = nowBarRemoteView
+                    chipText = chipText
                 )
             )
         }
@@ -107,7 +108,7 @@ internal class FlashlightNotificationBuilder(
         }
     }
 
-    private fun buildNowBarRemoteViews(
+    private fun buildCompactRemoteViews(
         title: String,
         capability: FlashlightCapability,
         effectiveLevelIndex: Int
@@ -165,8 +166,7 @@ internal class FlashlightNotificationBuilder(
 
     private fun buildSamsungExtras(
         title: String,
-        chipText: String?,
-        remoteView: RemoteViews
+        chipText: String?
     ): Bundle {
         return Bundle().apply {
             putInt(KEY_STYLE, STYLE_DEFAULT)
@@ -174,10 +174,6 @@ internal class FlashlightNotificationBuilder(
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
             putBoolean(KEY_SHOW_SMALL_ICON, false)
-            putParcelable(KEY_REMOTE_VIEW, remoteView)
-            putInt(KEY_REMOTE_VIEW_POSITION, 1)
-            putString(KEY_REMOTE_VIEW_TAG, REMOTE_VIEW_TAG)
-            putInt(KEY_NOWBAR_CHRONOMETER_POSITION, 1)
         }
     }
 
@@ -221,7 +217,11 @@ internal class FlashlightNotificationBuilder(
                 "5-step brightness is unavailable"
             }
         }
-        return null
+        return if (isRussianLocale()) {
+            "\u0412\u043a\u043b\u044e\u0447\u0435\u043d\u043e"
+        } else {
+            "On"
+        }
     }
 
     private fun chipText(
@@ -234,7 +234,11 @@ internal class FlashlightNotificationBuilder(
                 "On"
             }
         }
-        return null
+        return if (isRussianLocale()) {
+            "\u0412\u043a\u043b."
+        } else {
+            "On"
+        }
     }
 
     private fun warningText(capability: FlashlightCapability): String? {
@@ -286,13 +290,8 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
-        private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
-        private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"
-        private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"
-        private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
         private const val STYLE_DEFAULT = 1
         private const val DEFAULT_ICON_ACCENT_COLOR = 0xFF387AFF.toInt()
-        private const val REMOTE_VIEW_TAG = "flashlight_segments_remote"
         private const val REQUEST_CODE_DISABLE = 500
     }
 }
