@@ -120,13 +120,6 @@ internal class FlashlightNotificationBuilder(
         effectiveLevelIndex: Int,
         interactive: Boolean
     ) {
-        val segmentContainerIds = intArrayOf(
-            R.id.flashlight_segment_slot_1,
-            R.id.flashlight_segment_slot_2,
-            R.id.flashlight_segment_slot_3,
-            R.id.flashlight_segment_slot_4,
-            R.id.flashlight_segment_slot_5
-        )
         val segmentImageIds = intArrayOf(
             R.id.flashlight_segment_1,
             R.id.flashlight_segment_2,
@@ -147,7 +140,7 @@ internal class FlashlightNotificationBuilder(
             )
             if (interactive) {
                 remoteViews.setOnClickPendingIntent(
-                    segmentContainerIds[index],
+                    segmentImageIds[index],
                     levelPendingIntent(index)
                 )
             }

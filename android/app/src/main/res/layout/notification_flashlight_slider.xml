@@ -104,11 +104,12 @@
             </FrameLayout>
         </LinearLayout>
 
-        <View
+        <TextView
             android:id="@+id/flashlight_disabled_overlay"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="#33000000"
+            android:text=""
             android:visibility="gone" />
     </FrameLayout>
 </LinearLayout>
