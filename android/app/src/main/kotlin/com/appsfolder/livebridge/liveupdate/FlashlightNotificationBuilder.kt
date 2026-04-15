@@ -4,10 +4,12 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.IconCompat
 import com.kakao.taxi.MainActivity
 import com.kakao.taxi.R
 
@@ -43,6 +45,7 @@ internal class FlashlightNotificationBuilder(
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
+        val iconCompat = IconCompat.createWithResource(context, R.drawable.ic_flashlight_badge)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_flashlight_stat)
@@ -67,6 +70,7 @@ internal class FlashlightNotificationBuilder(
                 buildSamsungExtras(
                     title = title,
                     chipText = chipText,
+                    iconCompat = iconCompat,
                     remoteView = nowBarRemoteView
                 )
             )
@@ -151,14 +155,21 @@ internal class FlashlightNotificationBuilder(
     private fun buildSamsungExtras(
         title: String,
         chipText: String,
+        iconCompat: IconCompat,
         remoteView: RemoteViews
     ): Bundle {
+        val icon = runCatching { iconCompat.toIcon(context) }.getOrNull()
         return Bundle().apply {
             putInt(KEY_STYLE, STYLE_DEFAULT)
             putCharSequence(KEY_PRIMARY_INFO, title)
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
+            putInt(KEY_CHIP_BG_COLOR, Color.TRANSPARENT)
             putBoolean(KEY_SHOW_SMALL_ICON, false)
+            icon?.let {
+                putParcelable(KEY_CHIP_ICON, it)
+                putParcelable(KEY_NOWBAR_ICON, it)
+            }
             putParcelable(KEY_REMOTE_VIEW, remoteView)
             putInt(KEY_REMOTE_VIEW_POSITION, 1)
             putString(KEY_REMOTE_VIEW_TAG, REMOTE_VIEW_TAG)
@@ -255,7 +266,10 @@ internal class FlashlightNotificationBuilder(
         private const val ONGOING_PREFIX = "android.ongoingActivityNoti."
         private const val KEY_STYLE = "${ONGOING_PREFIX}style"
         private const val KEY_PRIMARY_INFO = "${ONGOING_PREFIX}primaryInfo"
+        private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
+        private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
         private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
+        private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"

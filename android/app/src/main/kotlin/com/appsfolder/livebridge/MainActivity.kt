@@ -607,8 +607,7 @@ class MainActivity : FlutterActivity() {
 
     private fun syncFlashlightService(prefs: ConverterPrefs) {
         if (prefs.getSmartFlashlightEnabled()) {
-            requestNotificationListenerRebind()
-            LiveUpdateNotificationListenerService.requestFlashlightSnapshotSync()
+            FlashlightForegroundService.sync(applicationContext)
         } else {
             FlashlightForegroundService.stop(applicationContext)
         }
