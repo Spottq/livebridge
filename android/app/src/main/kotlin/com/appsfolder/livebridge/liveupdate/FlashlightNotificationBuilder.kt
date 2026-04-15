@@ -58,9 +58,11 @@ internal class FlashlightNotificationBuilder(
             ?: IconCompat.createWithResource(context, R.drawable.ic_flashlight_badge)
         val smallIconCompat = sourceSnapshot.iconCompat
             ?: IconCompat.createWithResource(context, R.drawable.ic_flashlight_stat)
+        val notificationIcon = smallIconCompat.toIcon(context)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(smallIconCompat)
+            .setLargeIcon(notificationIcon)
             .setContentTitle(title)
             .setContentText(secondaryText)
             .setContentIntent(contentIntent)
@@ -102,9 +104,9 @@ internal class FlashlightNotificationBuilder(
     ): RemoteViews {
         return RemoteViews(context.packageName, R.layout.notification_flashlight_expanded).apply {
             setTextViewText(R.id.flashlight_title, title)
+            setTextViewText(R.id.flashlight_status, secondaryText(capability))
             setTextViewText(R.id.flashlight_action_button, disableButtonText())
             setOnClickPendingIntent(R.id.flashlight_action_button, disablePendingIntent())
-            applySourceIcon(this, sourceSnapshot)
             val warning = warningText(capability)
             if (warning.isNullOrEmpty()) {
                 setViewVisibility(R.id.flashlight_warning, View.GONE)
@@ -112,12 +114,6 @@ internal class FlashlightNotificationBuilder(
                 setViewVisibility(R.id.flashlight_warning, View.VISIBLE)
                 setTextViewText(R.id.flashlight_warning, warning)
             }
-            applySliderState(
-                remoteViews = this,
-                capability = capability,
-                effectiveLevelIndex = effectiveLevelIndex,
-                interactive = capability.supportsFiveLevels
-            )
         }
     }
 
