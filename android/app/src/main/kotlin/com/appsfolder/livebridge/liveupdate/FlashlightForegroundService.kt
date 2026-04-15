@@ -125,6 +125,7 @@ class FlashlightForegroundService : Service() {
         } else {
             controller.getCapability()
         }
+
         Log.d(
             TAG,
             "Flashlight mirror sync available=${capability.available} " +
