@@ -4,7 +4,6 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
@@ -27,8 +26,8 @@ internal class FlashlightNotificationBuilder(
         } else {
             FlashlightController.DEFAULT_LEVEL_INDEX
         }
-        val secondaryText = secondaryText(capability, effectiveLevelIndex)
-        val chipText = chipText(capability, effectiveLevelIndex)
+        val secondaryText = secondaryText(capability)
+        val chipText = chipText()
         val contentIntent = PendingIntent.getActivity(
             context,
             0,
@@ -38,6 +37,7 @@ internal class FlashlightNotificationBuilder(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val expandedView = buildExpandedRemoteViews(
+            title = title,
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
@@ -64,6 +64,13 @@ internal class FlashlightNotificationBuilder(
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setRequestPromotedOngoing(true)
             .setShortCriticalText(chipText)
+            .addAction(
+                NotificationCompat.Action.Builder(
+                    0,
+                    disableButtonText(),
+                    disablePendingIntent()
+                ).build()
+            )
 
         if (SamsungLiveUpdateReparser.isSamsungDevice()) {
             builder.addExtras(
@@ -80,10 +87,12 @@ internal class FlashlightNotificationBuilder(
     }
 
     private fun buildExpandedRemoteViews(
+        title: String,
         capability: FlashlightCapability,
         effectiveLevelIndex: Int
     ): RemoteViews {
         return RemoteViews(context.packageName, R.layout.notification_flashlight_expanded).apply {
+            setTextViewText(R.id.flashlight_title, title)
             val warning = warningText(capability)
             if (warning.isNullOrEmpty()) {
                 setViewVisibility(R.id.flashlight_warning, View.GONE)
@@ -164,7 +173,6 @@ internal class FlashlightNotificationBuilder(
             putCharSequence(KEY_PRIMARY_INFO, title)
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
-            putInt(KEY_CHIP_BG_COLOR, Color.TRANSPARENT)
             putBoolean(KEY_SHOW_SMALL_ICON, false)
             icon?.let {
                 putParcelable(KEY_CHIP_ICON, it)
@@ -189,10 +197,18 @@ internal class FlashlightNotificationBuilder(
         )
     }
 
-    private fun secondaryText(
-        capability: FlashlightCapability,
-        effectiveLevelIndex: Int
-    ): String {
+    private fun disablePendingIntent(): PendingIntent {
+        return PendingIntent.getService(
+            context,
+            REQUEST_CODE_DISABLE,
+            Intent(context, FlashlightForegroundService::class.java).apply {
+                action = FlashlightForegroundService.ACTION_DISABLE
+            },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun secondaryText(capability: FlashlightCapability): String {
         if (!capability.available) {
             return if (isRussianLocale()) {
                 "\u0424\u043e\u043d\u0430\u0440\u0438\u043a \u043d\u0435\u0434\u043e\u0441\u0442\u0443\u043f\u0435\u043d"
@@ -200,32 +216,15 @@ internal class FlashlightNotificationBuilder(
                 "Flashlight unavailable"
             }
         }
-        if (!capability.supportsFiveLevels) {
-            return if (isRussianLocale()) {
-                "\u042f\u0440\u043a\u043e\u0441\u0442\u044c 1/5 \u043d\u0435 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442\u0441\u044f"
-            } else {
-                "5-step brightness is unavailable"
-            }
-        }
-        return if (isRussianLocale()) {
-            "\u042f\u0440\u043a\u043e\u0441\u0442\u044c ${effectiveLevelIndex + 1}/5"
-        } else {
-            "Brightness ${effectiveLevelIndex + 1}/5"
-        }
+        return onText()
     }
 
-    private fun chipText(
-        capability: FlashlightCapability,
-        effectiveLevelIndex: Int
-    ): String {
-        if (!capability.supportsFiveLevels) {
-            return if (isRussianLocale()) {
-                "\u0412\u043a\u043b."
-            } else {
-                "On"
-            }
+    private fun chipText(): String {
+        return if (isRussianLocale()) {
+            "\u0424\u043e\u043d\u0430\u0440\u0438\u043a"
+        } else {
+            "Flashlight"
         }
-        return "${effectiveLevelIndex + 1}/5"
     }
 
     private fun warningText(capability: FlashlightCapability): String? {
@@ -254,6 +253,22 @@ internal class FlashlightNotificationBuilder(
         }
     }
 
+    private fun disableButtonText(): String {
+        return if (isRussianLocale()) {
+            "\u041e\u0442\u043a\u043b\u044e\u0447\u0438\u0442\u044c"
+        } else {
+            "Turn off"
+        }
+    }
+
+    private fun onText(): String {
+        return if (isRussianLocale()) {
+            "\u0412\u043a\u043b\u044e\u0447\u0435\u043d\u043e"
+        } else {
+            "On"
+        }
+    }
+
     private fun isRussianLocale(): Boolean {
         val locale = context.resources.configuration.locales.get(0)
         return locale?.language?.startsWith("ru", ignoreCase = true) == true
@@ -266,7 +281,6 @@ internal class FlashlightNotificationBuilder(
         private const val ONGOING_PREFIX = "android.ongoingActivityNoti."
         private const val KEY_STYLE = "${ONGOING_PREFIX}style"
         private const val KEY_PRIMARY_INFO = "${ONGOING_PREFIX}primaryInfo"
-        private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
         private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
         private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
         private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
@@ -279,5 +293,6 @@ internal class FlashlightNotificationBuilder(
         private const val STYLE_DEFAULT = 1
         private const val DEFAULT_ICON_ACCENT_COLOR = 0xFF387AFF.toInt()
         private const val REMOTE_VIEW_TAG = "flashlight_segments_remote"
+        private const val REQUEST_CODE_DISABLE = 500
     }
 }

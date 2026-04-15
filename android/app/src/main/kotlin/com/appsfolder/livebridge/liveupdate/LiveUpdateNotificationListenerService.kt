@@ -24,11 +24,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         override fun run() {
             snapshotSyncScheduled = false
             if (isUnsupportedDevice()) {
+                FlashlightForegroundService.stop(applicationContext)
                 LiveUpdateNotifier.cancelAllMirrored(applicationContext)
-                return
-            }
-            if (!prefs.getConverterEnabled()) {
-                scheduleSnapshotSync()
                 return
             }
 
@@ -41,8 +38,16 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                 return
             }
 
+            syncFlashlightMirror(snapshots)
+
+            if (!prefs.getConverterEnabled()) {
+                LiveUpdateNotifier.cancelAllMirrored(applicationContext)
+                scheduleSnapshotSync()
+                return
+            }
+
             for (sbn in snapshots) {
-                if (sbn.packageName == packageName) {
+                if (sbn.packageName == packageName || isFlashlightSourceNotification(sbn)) {
                     continue
                 }
                 try {
@@ -58,8 +63,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     override fun onCreate() {
         super.onCreate()
+        activeInstance = this
 
         if (isUnsupportedDevice()) {
+            FlashlightForegroundService.stop(applicationContext)
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
             return
         }
@@ -77,12 +84,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         rebindScheduled = false
 
         if (isUnsupportedDevice()) {
+            FlashlightForegroundService.stop(applicationContext)
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
-            return
-        }
-        if (!prefs.getConverterEnabled()) {
-            LiveUpdateNotifier.cancelAllMirrored(applicationContext)
-            scheduleSnapshotSync()
             return
         }
 
@@ -93,12 +96,21 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             emptyList()
         }
 
+        syncFlashlightMirror(snapshots)
+
+        if (!prefs.getConverterEnabled()) {
+            LiveUpdateNotifier.cancelAllMirrored(applicationContext)
+            scheduleSnapshotSync()
+            return
+        }
+
         if (snapshots.isEmpty()) {
+            scheduleSnapshotSync()
             return
         }
 
         for (sbn in snapshots) {
-            if (sbn.packageName == packageName) {
+            if (sbn.packageName == packageName || isFlashlightSourceNotification(sbn)) {
                 continue
             }
             try {
@@ -126,6 +138,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         if (sbn.packageName == packageName) {
             return
         }
+        if (isFlashlightSourceNotification(sbn)) {
+            syncFlashlightMirror(listOf(sbn))
+            return
+        }
         if (!prefs.getConverterEnabled()) {
             LiveUpdateNotifier.cancelMirrored(applicationContext, sbn)
             return
@@ -144,6 +160,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
         if (sbn.packageName == packageName) {
+            return
+        }
+        if (isFlashlightSourceNotification(sbn)) {
+            FlashlightForegroundService.stop(applicationContext)
             return
         }
         if (consumeSelfDismissedSourceKey(sbn.key)) {
@@ -165,12 +185,42 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         mainHandler.removeCallbacksAndMessages(null)
         rebindScheduled = false
         snapshotSyncScheduled = false
+        if (activeInstance === this) {
+            activeInstance = null
+        }
         super.onDestroy()
     }
 
     private fun processIncomingNotification(sbn: StatusBarNotification) {
         val result = LiveUpdateNotifier.maybeMirror(applicationContext, prefs, sbn)
         maybeDismissOriginalSource(sbn, result)
+    }
+
+    private fun syncFlashlightMirror(snapshots: Collection<StatusBarNotification>) {
+        if (!prefs.getSmartFlashlightEnabled()) {
+            FlashlightForegroundService.stop(applicationContext)
+            return
+        }
+
+        if (snapshots.any(::isFlashlightSourceNotification)) {
+            FlashlightForegroundService.sync(applicationContext)
+        } else {
+            FlashlightForegroundService.stop(applicationContext)
+        }
+    }
+
+    private fun isFlashlightSourceNotification(sbn: StatusBarNotification): Boolean {
+        if (sbn.packageName != FLASHLIGHT_SOURCE_PACKAGE) {
+            return false
+        }
+        return sbn.notification.channelId == FLASHLIGHT_SOURCE_CHANNEL_ID ||
+            sbn.tag == FLASHLIGHT_SOURCE_TAG
+    }
+
+    private fun requestImmediateFlashlightSnapshotSync() {
+        mainHandler.removeCallbacks(snapshotSyncRunnable)
+        snapshotSyncScheduled = true
+        mainHandler.post(snapshotSyncRunnable)
     }
 
     private fun maybeDismissOriginalSource(
@@ -261,6 +311,16 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val MAX_REBIND_DELAY_MS = 30_000L
         private const val MAX_REBIND_ATTEMPTS = 6
         private const val SNAPSHOT_SYNC_INTERVAL_MS = 4_000L
+        private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
+        private const val FLASHLIGHT_SOURCE_CHANNEL_ID = "FLASHLIGHT_ONGOING"
+        private const val FLASHLIGHT_SOURCE_TAG = "Flashlight"
+
+        @Volatile
+        private var activeInstance: LiveUpdateNotificationListenerService? = null
+
+        fun requestFlashlightSnapshotSync() {
+            activeInstance?.requestImmediateFlashlightSnapshotSync()
+        }
 
         private fun requestRebindIfEnabled(context: Context, reason: String): Boolean {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {

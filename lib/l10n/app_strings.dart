@@ -311,8 +311,8 @@ class AppStrings {
       : 'Shows incoming/outgoing traffic speed in *b/s format.';
   String get smartFlashlightTitle => isRu ? 'Фонарик' : 'Flashlight';
   String get smartFlashlightSubtitle => isRu
-      ? 'Создаёт тестовое уведомление Now Bar с 5-точечным управлением яркостью фонарика.'
-      : 'Creates a test Now Bar notification with a 5-point flashlight brightness control.';
+      ? 'Показывает уведомление фонарика в Now Bar, когда системный фонарик включён.'
+      : 'Shows a flashlight Now Bar notification when the system flashlight is on.';
   String get smartFlashlightUnsupportedSubtitle => isRu
       ? 'Устройство включает фонарик, но не даёт 5 отдельных уровней яркости.'
       : 'This device can enable the flashlight, but it does not expose 5 separate brightness levels.';
