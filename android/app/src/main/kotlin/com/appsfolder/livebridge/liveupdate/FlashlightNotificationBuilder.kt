@@ -37,13 +37,9 @@ internal class FlashlightNotificationBuilder(
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val contentView = buildNotificationRemoteViews(
-            title = title,
-            capability = capability
-        )
         val expandedView = buildExpandedRemoteViews(
-            title = title,
-            capability = capability
+            capability = capability,
+            effectiveLevelIndex = effectiveLevelIndex
         )
         val nowBarRemoteView = buildNowBarRemoteViews(
             capability = capability,
@@ -70,12 +66,17 @@ internal class FlashlightNotificationBuilder(
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .setCustomContentView(contentView)
             .setCustomBigContentView(expandedView)
-            .setCustomHeadsUpContentView(contentView)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setRequestPromotedOngoing(true)
             .setShortCriticalText(chipText)
+            .addAction(
+                NotificationCompat.Action.Builder(
+                    0,
+                    disableButtonText(),
+                    disablePendingIntent()
+                ).build()
+            )
 
         if (SamsungLiveUpdateReparser.isSamsungDevice()) {
             builder.addExtras(
@@ -92,15 +93,11 @@ internal class FlashlightNotificationBuilder(
         return builder.build()
     }
 
-    private fun buildNotificationRemoteViews(
-        title: String,
-        capability: FlashlightCapability
+    private fun buildExpandedRemoteViews(
+        capability: FlashlightCapability,
+        effectiveLevelIndex: Int
     ): RemoteViews {
         return RemoteViews(context.packageName, R.layout.notification_flashlight_expanded).apply {
-            setTextViewText(R.id.flashlight_title, title)
-            setTextViewText(R.id.flashlight_status, secondaryText(capability))
-            setTextViewText(R.id.flashlight_action_button, disableButtonText())
-            setOnClickPendingIntent(R.id.flashlight_action_button, disablePendingIntent())
             val warning = warningText(capability)
             if (warning.isNullOrEmpty()) {
                 setViewVisibility(R.id.flashlight_warning, View.GONE)
@@ -108,17 +105,13 @@ internal class FlashlightNotificationBuilder(
                 setViewVisibility(R.id.flashlight_warning, View.VISIBLE)
                 setTextViewText(R.id.flashlight_warning, warning)
             }
+            applySliderState(
+                remoteViews = this,
+                capability = capability,
+                effectiveLevelIndex = effectiveLevelIndex,
+                interactive = capability.supportsFiveLevels
+            )
         }
-    }
-
-    private fun buildExpandedRemoteViews(
-        title: String,
-        capability: FlashlightCapability
-    ): RemoteViews {
-        return buildNotificationRemoteViews(
-            title = title,
-            capability = capability
-        )
     }
 
     private fun buildNowBarRemoteViews(
