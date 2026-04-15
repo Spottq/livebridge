@@ -311,14 +311,14 @@ class AppStrings {
       : 'Shows incoming/outgoing traffic speed in *b/s format.';
   String get smartFlashlightTitle => isRu ? 'Фонарик' : 'Flashlight';
   String get smartFlashlightSubtitle => isRu
-      ? 'Зеркалит системное уведомление фонарика в Now Bar и даёт 5-точечный выбор яркости.'
-      : 'Mirrors the system flashlight notification into the Now Bar and adds a 5-point brightness selector.';
+      ? 'Создаёт тестовое уведомление Now Bar с 5-точечным управлением яркостью фонарика.'
+      : 'Creates a test Now Bar notification with a 5-point flashlight brightness control.';
   String get smartFlashlightUnsupportedSubtitle => isRu
-      ? 'Зеркалит фонарик в Now Bar, но на этом устройстве нет 5 отдельных уровней яркости.'
-      : 'Mirrors the flashlight into the Now Bar, but this device does not expose 5 separate brightness levels.';
+      ? 'Устройство включает фонарик, но не даёт 5 отдельных уровней яркости.'
+      : 'This device can enable the flashlight, but it does not expose 5 separate brightness levels.';
   String get smartFlashlightUnavailableSubtitle => isRu
-      ? 'На этом устройстве нет доступного фонарика для Now Bar.'
-      : 'This device does not expose a usable flashlight for the Now Bar.';
+      ? 'На этом устройстве нет доступного фонарика.'
+      : 'This device does not expose a usable flashlight.';
   String smartFlashlightBrightnessLabel(int level) => isRu
       ? 'Яркость ${level.clamp(1, 5)}/5'
       : 'Brightness ${level.clamp(1, 5)}/5';
