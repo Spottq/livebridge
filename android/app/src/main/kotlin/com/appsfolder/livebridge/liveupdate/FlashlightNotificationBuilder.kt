@@ -19,6 +19,7 @@ internal class FlashlightNotificationBuilder(
         prefs: ConverterPrefs,
         capability: FlashlightCapability
     ): Notification {
+        val sourceSnapshot = FlashlightSourceState.snapshot()
         val title = notificationTitle()
         val levelIndex = prefs.getSmartFlashlightLevel().coerceIn(0, FlashlightController.FLASHLIGHT_LEVEL_COUNT - 1)
         val effectiveLevelIndex = if (capability.supportsFiveLevels) {
@@ -36,23 +37,34 @@ internal class FlashlightNotificationBuilder(
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val contentView = buildNotificationRemoteViews(
+            title = title,
+            capability = capability,
+            effectiveLevelIndex = effectiveLevelIndex,
+            sourceSnapshot = sourceSnapshot
+        )
         val expandedView = buildExpandedRemoteViews(
             title = title,
             capability = capability,
-            effectiveLevelIndex = effectiveLevelIndex
+            effectiveLevelIndex = effectiveLevelIndex,
+            sourceSnapshot = sourceSnapshot
         )
         val nowBarRemoteView = buildNowBarRemoteViews(
             capability = capability,
-            effectiveLevelIndex = effectiveLevelIndex
+            effectiveLevelIndex = effectiveLevelIndex,
+            sourceSnapshot = sourceSnapshot
         )
-        val iconCompat = IconCompat.createWithResource(context, R.drawable.ic_flashlight_badge)
+        val iconCompat = sourceSnapshot.iconCompat
+            ?: IconCompat.createWithResource(context, R.drawable.ic_flashlight_badge)
+        val smallIconCompat = sourceSnapshot.iconCompat
+            ?: IconCompat.createWithResource(context, R.drawable.ic_flashlight_stat)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_flashlight_stat)
+            .setSmallIcon(smallIconCompat)
             .setContentTitle(title)
             .setContentText(secondaryText)
             .setContentIntent(contentIntent)
-            .setColor(DEFAULT_ICON_ACCENT_COLOR)
+            .setColor(sourceSnapshot.accentColor)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
@@ -60,17 +72,12 @@ internal class FlashlightNotificationBuilder(
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .setCustomContentView(contentView)
             .setCustomBigContentView(expandedView)
+            .setCustomHeadsUpContentView(contentView)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setRequestPromotedOngoing(true)
             .setShortCriticalText(chipText)
-            .addAction(
-                NotificationCompat.Action.Builder(
-                    0,
-                    disableButtonText(),
-                    disablePendingIntent()
-                ).build()
-            )
 
         if (SamsungLiveUpdateReparser.isSamsungDevice()) {
             builder.addExtras(
@@ -78,7 +85,8 @@ internal class FlashlightNotificationBuilder(
                     title = title,
                     chipText = chipText,
                     iconCompat = iconCompat,
-                    remoteView = nowBarRemoteView
+                    remoteView = nowBarRemoteView,
+                    chipBackgroundColor = sourceSnapshot.accentColor
                 )
             )
         }
@@ -86,13 +94,17 @@ internal class FlashlightNotificationBuilder(
         return builder.build()
     }
 
-    private fun buildExpandedRemoteViews(
+    private fun buildNotificationRemoteViews(
         title: String,
         capability: FlashlightCapability,
-        effectiveLevelIndex: Int
+        effectiveLevelIndex: Int,
+        sourceSnapshot: FlashlightSourceSnapshot
     ): RemoteViews {
         return RemoteViews(context.packageName, R.layout.notification_flashlight_expanded).apply {
             setTextViewText(R.id.flashlight_title, title)
+            setTextViewText(R.id.flashlight_action_button, disableButtonText())
+            setOnClickPendingIntent(R.id.flashlight_action_button, disablePendingIntent())
+            applySourceIcon(this, sourceSnapshot)
             val warning = warningText(capability)
             if (warning.isNullOrEmpty()) {
                 setViewVisibility(R.id.flashlight_warning, View.GONE)
@@ -109,11 +121,27 @@ internal class FlashlightNotificationBuilder(
         }
     }
 
+    private fun buildExpandedRemoteViews(
+        title: String,
+        capability: FlashlightCapability,
+        effectiveLevelIndex: Int,
+        sourceSnapshot: FlashlightSourceSnapshot
+    ): RemoteViews {
+        return buildNotificationRemoteViews(
+            title = title,
+            capability = capability,
+            effectiveLevelIndex = effectiveLevelIndex,
+            sourceSnapshot = sourceSnapshot
+        )
+    }
+
     private fun buildNowBarRemoteViews(
         capability: FlashlightCapability,
-        effectiveLevelIndex: Int
+        effectiveLevelIndex: Int,
+        sourceSnapshot: FlashlightSourceSnapshot
     ): RemoteViews {
         return RemoteViews(context.packageName, R.layout.notification_flashlight_slider).apply {
+            applySourceIcon(this, sourceSnapshot)
             applySliderState(
                 remoteViews = this,
                 capability = capability,
@@ -165,7 +193,8 @@ internal class FlashlightNotificationBuilder(
         title: String,
         chipText: String,
         iconCompat: IconCompat,
-        remoteView: RemoteViews
+        remoteView: RemoteViews,
+        chipBackgroundColor: Int
     ): Bundle {
         val icon = runCatching { iconCompat.toIcon(context) }.getOrNull()
         return Bundle().apply {
@@ -173,6 +202,7 @@ internal class FlashlightNotificationBuilder(
             putCharSequence(KEY_PRIMARY_INFO, title)
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
+            putInt(KEY_CHIP_BG_COLOR, chipBackgroundColor)
             putBoolean(KEY_SHOW_SMALL_ICON, false)
             icon?.let {
                 putParcelable(KEY_CHIP_ICON, it)
@@ -182,6 +212,18 @@ internal class FlashlightNotificationBuilder(
             putInt(KEY_REMOTE_VIEW_POSITION, 1)
             putString(KEY_REMOTE_VIEW_TAG, REMOTE_VIEW_TAG)
             putInt(KEY_NOWBAR_CHRONOMETER_POSITION, 1)
+        }
+    }
+
+    private fun applySourceIcon(
+        remoteViews: RemoteViews,
+        sourceSnapshot: FlashlightSourceSnapshot
+    ) {
+        val icon = sourceSnapshot.iconCompat?.toIcon(context)
+        if (icon != null) {
+            remoteViews.setImageViewIcon(R.id.flashlight_slider_icon, icon)
+        } else {
+            remoteViews.setImageViewResource(R.id.flashlight_slider_icon, R.drawable.ic_flashlight_badge)
         }
     }
 
@@ -281,6 +323,7 @@ internal class FlashlightNotificationBuilder(
         private const val ONGOING_PREFIX = "android.ongoingActivityNoti."
         private const val KEY_STYLE = "${ONGOING_PREFIX}style"
         private const val KEY_PRIMARY_INFO = "${ONGOING_PREFIX}primaryInfo"
+        private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
         private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
         private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
         private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
@@ -291,7 +334,6 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"
         private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
         private const val STYLE_DEFAULT = 1
-        private const val DEFAULT_ICON_ACCENT_COLOR = 0xFF387AFF.toInt()
         private const val REMOTE_VIEW_TAG = "flashlight_segments_remote"
         private const val REQUEST_CODE_DISABLE = 500
     }

@@ -132,6 +132,17 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/flashlight_action_button"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_flashlight_action_button"
+        android:gravity="center"
+        android:textColor="#FFF5F7FA"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <TextView
         android:id="@+id/flashlight_warning"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
