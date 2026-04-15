@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import androidx.core.graphics.drawable.IconCompat
 import com.kakao.taxi.MainActivity
 import com.kakao.taxi.R
 
@@ -18,6 +19,7 @@ internal class FlashlightNotificationBuilder(
         prefs: ConverterPrefs,
         capability: FlashlightCapability
     ): Notification {
+        val sourceSnapshot = FlashlightSourceState.snapshot()
         val title = notificationTitle()
         val levelIndex = prefs.getSmartFlashlightLevel().coerceIn(0, FlashlightController.FLASHLIGHT_LEVEL_COUNT - 1)
         val effectiveLevelIndex = if (capability.supportsFiveLevels) {
@@ -45,12 +47,16 @@ internal class FlashlightNotificationBuilder(
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
+        val chipIconCompat = sourceSnapshot.iconCompat
+            ?: IconCompat.createWithResource(context, R.drawable.ic_flashlight_stat)
+        val smallIconCompat = sourceSnapshot.iconCompat
+            ?: IconCompat.createWithResource(context, R.drawable.ic_flashlight_stat)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_flashlight_stat)
+            .setSmallIcon(smallIconCompat)
             .setContentTitle(title)
             .setContentIntent(contentIntent)
-            .setColor(DEFAULT_ICON_ACCENT_COLOR)
+            .setColor(sourceSnapshot.accentColor)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
@@ -74,7 +80,9 @@ internal class FlashlightNotificationBuilder(
                 buildSamsungExtras(
                     title = title,
                     chipText = chipText,
-                    remoteView = nowBarRemoteView
+                    chipIcon = chipIconCompat,
+                    remoteView = nowBarRemoteView,
+                    chipBackgroundColor = sourceSnapshot.accentColor
                 )
             )
         }
@@ -166,14 +174,22 @@ internal class FlashlightNotificationBuilder(
     private fun buildSamsungExtras(
         title: String,
         chipText: String?,
-        remoteView: RemoteViews
+        chipIcon: IconCompat,
+        remoteView: RemoteViews,
+        chipBackgroundColor: Int
     ): Bundle {
+        val icon = runCatching { chipIcon.toIcon(context) }.getOrNull()
         return Bundle().apply {
             putInt(KEY_STYLE, STYLE_DEFAULT)
             putCharSequence(KEY_PRIMARY_INFO, title)
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
+            putInt(KEY_CHIP_BG_COLOR, chipBackgroundColor)
             putBoolean(KEY_SHOW_SMALL_ICON, false)
+            icon?.let {
+                putParcelable(KEY_CHIP_ICON, it)
+                putParcelable(KEY_NOWBAR_ICON, it)
+            }
             putParcelable(KEY_REMOTE_VIEW, remoteView)
             putInt(KEY_REMOTE_VIEW_POSITION, 1)
             putString(KEY_REMOTE_VIEW_TAG, REMOTE_VIEW_TAG)
@@ -278,7 +294,10 @@ internal class FlashlightNotificationBuilder(
         private const val ONGOING_PREFIX = "android.ongoingActivityNoti."
         private const val KEY_STYLE = "${ONGOING_PREFIX}style"
         private const val KEY_PRIMARY_INFO = "${ONGOING_PREFIX}primaryInfo"
+        private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
+        private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
         private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
+        private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
@@ -286,7 +305,6 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"
         private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
         private const val STYLE_DEFAULT = 1
-        private const val DEFAULT_ICON_ACCENT_COLOR = 0xFF387AFF.toInt()
         private const val REMOTE_VIEW_TAG = "flashlight_segments_remote"
         private const val REQUEST_CODE_DISABLE = 500
     }

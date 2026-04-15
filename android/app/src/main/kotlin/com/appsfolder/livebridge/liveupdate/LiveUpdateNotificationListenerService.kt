@@ -24,6 +24,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         override fun run() {
             snapshotSyncScheduled = false
             if (isUnsupportedDevice()) {
+                FlashlightSourceState.clear()
                 FlashlightForegroundService.stop(applicationContext)
                 LiveUpdateNotifier.cancelAllMirrored(applicationContext)
                 return
@@ -66,6 +67,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         activeInstance = this
 
         if (isUnsupportedDevice()) {
+            FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
             return
@@ -84,6 +86,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         rebindScheduled = false
 
         if (isUnsupportedDevice()) {
+            FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
             return
@@ -163,6 +166,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
         if (isFlashlightSourceNotification(sbn)) {
+            FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
             return
         }
@@ -198,14 +202,17 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     private fun syncFlashlightMirror(snapshots: Collection<StatusBarNotification>) {
         if (!prefs.getSmartFlashlightEnabled()) {
+            FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
             return
         }
 
-        val hasActiveFlashlight = snapshots.any(::isFlashlightSourceNotification)
-        if (hasActiveFlashlight) {
+        val sourceNotification = snapshots.firstOrNull(::isFlashlightSourceNotification)
+        if (sourceNotification != null) {
+            FlashlightSourceState.updateFrom(sourceNotification.notification)
             FlashlightForegroundService.sync(applicationContext)
         } else {
+            FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
         }
     }
