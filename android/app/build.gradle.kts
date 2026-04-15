@@ -11,12 +11,12 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
     defaultConfig {
@@ -45,7 +45,6 @@ android {
 dependencies {
     implementation("androidx.core:core-ktx:1.17.0")
     implementation("io.github.d4viddf:hyperisland_kit:0.4.3")
-    implementation(project(":nowbar"))
 }
 
 flutter {
