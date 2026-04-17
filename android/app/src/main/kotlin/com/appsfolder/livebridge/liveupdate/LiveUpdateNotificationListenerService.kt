@@ -273,7 +273,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private fun handleObservedTorchState(enabled: Boolean) {
         if (!prefs.getSmartFlashlightEnabled()) {
             if (!enabled) {
-                clearTrackedFlashlightSourceKey()
+                resetFlashlightSourceDismissState()
                 FlashlightSourceState.clear()
                 FlashlightForegroundService.stop(applicationContext)
             }
@@ -291,7 +291,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     private fun handleObservedTorchUnavailable() {
-        clearTrackedFlashlightSourceKey()
+        resetFlashlightSourceDismissState()
         FlashlightSourceState.clear()
         FlashlightForegroundService.stop(applicationContext)
     }
@@ -299,7 +299,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private fun syncFlashlightMirror(snapshots: Collection<StatusBarNotification>) {
         syncTorchMonitoring()
         if (!prefs.getSmartFlashlightEnabled()) {
-            clearTrackedFlashlightSourceKey()
+            resetFlashlightSourceDismissState()
             FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
             return
@@ -336,6 +336,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         if (prefs.getSmartFlashlightEnabled()) {
             refreshTorchCallbackRegistration()
         } else {
+            resetFlashlightSourceDismissState()
             unregisterTorchCallbackIfNeeded()
         }
         snapshotSyncScheduled = true
@@ -343,12 +344,22 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     private fun requestTrackedFlashlightSourceDismissal() {
+        if (!prefs.getSmartFlashlightEnabled()) {
+            resetFlashlightSourceDismissState()
+            Log.v(TAG, "Skip flashlight source dismiss request: smart flashlight disabled")
+            return
+        }
         mainHandler.post {
             dismissTrackedFlashlightSourceNotification()
         }
     }
 
     private fun dismissTrackedFlashlightSourceNotification() {
+        if (!prefs.getSmartFlashlightEnabled() || !FlashlightForegroundService.hasActiveNotification()) {
+            resetFlashlightSourceDismissState()
+            Log.v(TAG, "Skip flashlight source dismiss: feature disabled or LiveBridge notification hidden")
+            return
+        }
         val sourceKey = synchronized(selfDismissLock) {
             trackedFlashlightSourceKey?.also(selfDismissedFlashlightSourceKeys::add)
         }
@@ -394,6 +405,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     private fun verifyFlashlightSourceDismissal(sourceKey: String) {
+        if (!prefs.getSmartFlashlightEnabled() || !FlashlightForegroundService.hasActiveNotification()) {
+            Log.v(TAG, "Skip flashlight source dismissal verify: feature disabled or LiveBridge notification hidden")
+            return
+        }
         val stillPresent = runCatching {
             activeNotifications?.any { it.key == sourceKey } == true
         }.getOrElse { error ->
@@ -493,6 +508,13 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
     }
 
+    private fun resetFlashlightSourceDismissState() {
+        synchronized(selfDismissLock) {
+            trackedFlashlightSourceKey = null
+            selfDismissedFlashlightSourceKeys.clear()
+        }
+    }
+
     private fun forgetSelfDismissedFlashlightSourceKey(sbnKey: String) {
         synchronized(selfDismissLock) {
             selfDismissedFlashlightSourceKeys.remove(sbnKey)
@@ -539,7 +561,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val MAX_REBIND_DELAY_MS = 30_000L
         private const val MAX_REBIND_ATTEMPTS = 6
         private const val SNAPSHOT_SYNC_INTERVAL_MS = 4_000L
-        private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 5_000L
+        private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 1_500L
         private const val FLASHLIGHT_SOURCE_VERIFY_DELAY_MS = 300L
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
         private const val FLASHLIGHT_SOURCE_CHANNEL_ID = "FLASHLIGHT_ONGOING"
