@@ -40,7 +40,7 @@
                     android:layout_weight="1" />
 
                 <FrameLayout
-                    android:layout_width="22dp"
+                    android:layout_width="25dp"
                     android:layout_height="match_parent"
                     android:background="@drawable/bg_flashlight_slider_track_start" />
 
@@ -82,7 +82,7 @@
                     android:background="@drawable/bg_flashlight_slider_track_middle" />
 
                 <FrameLayout
-                    android:layout_width="22dp"
+                    android:layout_width="25dp"
                     android:layout_height="match_parent"
                     android:background="@drawable/bg_flashlight_slider_track_end" />
 
