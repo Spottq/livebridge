@@ -41,7 +41,7 @@ internal class FlashlightNotificationBuilder(
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        val expandedView = buildExpandedRemoteViews(
+        val notificationView = buildExpandedRemoteViews(
             title = title,
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
@@ -69,8 +69,9 @@ internal class FlashlightNotificationBuilder(
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .setCustomBigContentView(expandedView)
-            .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+            .setCustomContentView(notificationView)
+            .setCustomBigContentView(notificationView)
+            .setCustomHeadsUpContentView(notificationView)
             .setRequestPromotedOngoing(true)
         expandedLargeIcon?.let(builder::setLargeIcon)
 
