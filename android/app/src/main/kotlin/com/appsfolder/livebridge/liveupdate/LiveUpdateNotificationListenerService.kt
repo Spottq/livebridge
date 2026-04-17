@@ -246,18 +246,79 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         mainHandler.post(snapshotSyncRunnable)
     }
 
-    private fun dismissTrackedFlashlightSourceNotification(): Boolean {
+    private fun requestTrackedFlashlightSourceDismissal() {
+        mainHandler.post {
+            dismissTrackedFlashlightSourceNotification()
+        }
+    }
+
+    private fun dismissTrackedFlashlightSourceNotification() {
         val sourceKey = synchronized(selfDismissLock) {
             trackedFlashlightSourceKey?.also(selfDismissedFlashlightSourceKeys::add)
-        } ?: return false
+        }
+        if (sourceKey == null) {
+            Log.v(TAG, "Skip flashlight source dismiss: no tracked key")
+            return
+        }
 
-        return try {
+        val cancelDirectRequested = runCatching {
             cancelNotification(sourceKey)
-            true
-        } catch (error: Throwable) {
+        }.onSuccess {
+            Log.i(TAG, "Requested flashlight source cancel via cancelNotification: $sourceKey")
+        }.onFailure { error ->
+            Log.w(TAG, "cancelNotification failed for flashlight source: $sourceKey", error)
+        }.isSuccess
+
+        val cancelBatchRequested = runCatching {
+            cancelNotifications(arrayOf(sourceKey))
+        }.onSuccess {
+            Log.i(TAG, "Requested flashlight source cancel via cancelNotifications: $sourceKey")
+        }.onFailure { error ->
+            Log.w(TAG, "cancelNotifications failed for flashlight source: $sourceKey", error)
+        }.isSuccess
+
+        val snoozeRequested = runCatching {
+            snoozeNotification(sourceKey, FLASHLIGHT_SOURCE_SNOOZE_MS)
+        }.onSuccess {
+            Log.i(TAG, "Requested flashlight source snooze fallback: $sourceKey")
+        }.onFailure { error ->
+            Log.w(TAG, "snoozeNotification failed for flashlight source: $sourceKey", error)
+        }.isSuccess
+
+        if (!cancelDirectRequested && !cancelBatchRequested && !snoozeRequested) {
             forgetSelfDismissedFlashlightSourceKey(sourceKey)
-            Log.e(TAG, "Failed to dismiss SystemUI flashlight notification: $sourceKey", error)
+            Log.w(TAG, "Unable to dismiss or snooze SystemUI flashlight notification: $sourceKey")
+            return
+        }
+
+        mainHandler.postDelayed(
+            { verifyFlashlightSourceDismissal(sourceKey) },
+            FLASHLIGHT_SOURCE_VERIFY_DELAY_MS
+        )
+    }
+
+    private fun verifyFlashlightSourceDismissal(sourceKey: String) {
+        val stillPresent = runCatching {
+            activeNotifications?.any { it.key == sourceKey } == true
+        }.getOrElse { error ->
+            Log.w(TAG, "Failed to verify flashlight source dismissal: $sourceKey", error)
             false
+        }
+        if (!stillPresent) {
+            Log.i(TAG, "Flashlight source no longer active after dismissal: $sourceKey")
+            return
+        }
+
+        val snoozeRequested = runCatching {
+            snoozeNotification(sourceKey, FLASHLIGHT_SOURCE_SNOOZE_MS)
+        }.onSuccess {
+            Log.i(TAG, "Retried flashlight source snooze after failed dismissal: $sourceKey")
+        }.onFailure { error ->
+            Log.w(TAG, "Retry snooze failed for flashlight source: $sourceKey", error)
+        }.isSuccess
+
+        if (!snoozeRequested) {
+            Log.w(TAG, "Flashlight source is still active after all dismissal attempts: $sourceKey")
         }
     }
 
@@ -317,6 +378,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     private fun rememberTrackedFlashlightSourceKey(sbnKey: String) {
         synchronized(selfDismissLock) {
+            selfDismissedFlashlightSourceKeys.remove(sbnKey)
             trackedFlashlightSourceKey = sbnKey
         }
     }
@@ -381,6 +443,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val MAX_REBIND_DELAY_MS = 30_000L
         private const val MAX_REBIND_ATTEMPTS = 6
         private const val SNAPSHOT_SYNC_INTERVAL_MS = 4_000L
+        private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 24L * 60L * 60L * 1_000L
+        private const val FLASHLIGHT_SOURCE_VERIFY_DELAY_MS = 300L
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
         private const val FLASHLIGHT_SOURCE_CHANNEL_ID = "FLASHLIGHT_ONGOING"
         private const val FLASHLIGHT_SOURCE_TAG = "Flashlight"
@@ -392,8 +456,13 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             activeInstance?.requestImmediateFlashlightSnapshotSync()
         }
 
-        fun requestFlashlightSourceDismissal(): Boolean {
-            return activeInstance?.dismissTrackedFlashlightSourceNotification() == true
+        fun requestFlashlightSourceDismissal() {
+            val listener = activeInstance
+            if (listener == null) {
+                Log.w(TAG, "Skip flashlight source dismiss: listener is not active")
+                return
+            }
+            listener.requestTrackedFlashlightSourceDismissal()
         }
 
         private fun requestRebindIfEnabled(context: Context, reason: String): Boolean {
