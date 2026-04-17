@@ -40,10 +40,15 @@
                     android:layout_weight="1" />
 
                 <FrameLayout
+                    android:layout_width="20dp"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_flashlight_slider_track_start" />
+
+                <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:background="@drawable/bg_flashlight_slider_track_start" />
+                    android:background="@drawable/bg_flashlight_slider_track_middle" />
             </LinearLayout>
 
             <FrameLayout
@@ -74,6 +79,11 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:background="@drawable/bg_flashlight_slider_track_middle" />
+
+                <FrameLayout
+                    android:layout_width="20dp"
+                    android:layout_height="match_parent"
                     android:background="@drawable/bg_flashlight_slider_track_end" />
 
                 <FrameLayout
