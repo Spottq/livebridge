@@ -46,10 +46,11 @@ internal class FlashlightNotificationBuilder(
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
-        val chipIconCompat = IconCompat.createWithResource(
+        val statusBarIconCompat = IconCompat.createWithResource(
             context,
             R.drawable.ic_flashlight_system_notification
         )
+        val expandedIcon = runCatching { statusBarIconCompat.toIcon(context) }.getOrNull()
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_flashlight_system_notification)
@@ -66,6 +67,7 @@ internal class FlashlightNotificationBuilder(
             .setCustomBigContentView(expandedView)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setRequestPromotedOngoing(true)
+        expandedIcon?.let { builder.setLargeIcon(it) }
 
         if (!secondaryText.isNullOrEmpty()) {
             builder.setContentText(secondaryText)
@@ -79,7 +81,7 @@ internal class FlashlightNotificationBuilder(
                 buildSamsungExtras(
                     title = title,
                     chipText = chipText,
-                    chipIcon = chipIconCompat,
+                    chipIcon = statusBarIconCompat,
                     remoteView = nowBarRemoteView,
                     chipBackgroundColor = DEFAULT_ICON_ACCENT_COLOR
                 )
