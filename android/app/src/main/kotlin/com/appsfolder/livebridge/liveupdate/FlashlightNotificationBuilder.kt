@@ -51,14 +51,14 @@ internal class FlashlightNotificationBuilder(
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
-        val statusBarIconCompat = sourceSnapshot.iconCompat ?: IconCompat.createWithResource(
+        val statusBarIconCompat = IconCompat.createWithResource(
             context,
             R.drawable.ic_flashlight_system_notification
         )
         val expandedLargeIcon = sourceSnapshot.largeIconBitmap ?: iconToBitmap(statusBarIconCompat)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(statusBarIconCompat)
+            .setSmallIcon(R.drawable.ic_flashlight_system_notification)
             .setContentTitle(title)
             .setContentIntent(contentIntent)
             .setColor(sourceSnapshot.accentColor)
@@ -203,10 +203,12 @@ internal class FlashlightNotificationBuilder(
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
             putInt(KEY_CHIP_BG_COLOR, chipBackgroundColor)
-            putBoolean(KEY_SHOW_SMALL_ICON, false)
+            putBoolean(KEY_SHOW_SMALL_ICON, true)
             icon?.let {
                 putParcelable(KEY_CHIP_ICON, it)
                 putParcelable(KEY_NOWBAR_ICON, it)
+                putParcelable(KEY_FIRST_ICON, it)
+                putParcelable(KEY_SECONDARY_INFO_ICON, it)
             }
             putParcelable(KEY_REMOTE_VIEW, remoteView)
             putInt(KEY_REMOTE_VIEW_POSITION, 1)
@@ -334,8 +336,10 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
         private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
         private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
+        private const val KEY_FIRST_ICON = "${ONGOING_PREFIX}firstIcon"
         private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
+        private const val KEY_SECONDARY_INFO_ICON = "${ONGOING_PREFIX}secondaryInfoIcon"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
         private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"
