@@ -16,6 +16,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val selfDismissLock = Any()
     private val selfDismissedSourceKeys = mutableSetOf<String>()
+    private val selfDismissedFlashlightSourceKeys = mutableSetOf<String>()
+    private var trackedFlashlightSourceKey: String? = null
     private var rebindAttempts = 0
     private var rebindScheduled = false
     private var snapshotSyncScheduled = false
@@ -166,6 +168,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
         if (isFlashlightSourceNotification(sbn)) {
+            forgetTrackedFlashlightSourceKey(sbn.key)
+            if (consumeSelfDismissedFlashlightSourceKey(sbn.key)) {
+                return
+            }
             FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
             return
@@ -202,6 +208,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     private fun syncFlashlightMirror(snapshots: Collection<StatusBarNotification>) {
         if (!prefs.getSmartFlashlightEnabled()) {
+            clearTrackedFlashlightSourceKey()
             FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
             return
@@ -209,6 +216,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
         val sourceNotification = snapshots.firstOrNull(::isFlashlightSourceNotification)
         if (sourceNotification != null) {
+            rememberTrackedFlashlightSourceKey(sourceNotification.key)
             FlashlightSourceState.updateFrom(
                 context = applicationContext,
                 packageName = sourceNotification.packageName,
@@ -216,6 +224,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             )
             FlashlightForegroundService.sync(applicationContext)
         } else {
+            clearTrackedFlashlightSourceKey()
+            if (FlashlightForegroundService.hasActiveNotification()) {
+                return
+            }
             FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
         }
@@ -232,6 +244,21 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         mainHandler.removeCallbacks(snapshotSyncRunnable)
         snapshotSyncScheduled = true
         mainHandler.post(snapshotSyncRunnable)
+    }
+
+    private fun dismissTrackedFlashlightSourceNotification(): Boolean {
+        val sourceKey = synchronized(selfDismissLock) {
+            trackedFlashlightSourceKey?.also(selfDismissedFlashlightSourceKeys::add)
+        } ?: return false
+
+        return try {
+            cancelNotification(sourceKey)
+            true
+        } catch (error: Throwable) {
+            forgetSelfDismissedFlashlightSourceKey(sourceKey)
+            Log.e(TAG, "Failed to dismiss SystemUI flashlight notification: $sourceKey", error)
+            false
+        }
     }
 
     private fun maybeDismissOriginalSource(
@@ -288,6 +315,38 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
     }
 
+    private fun rememberTrackedFlashlightSourceKey(sbnKey: String) {
+        synchronized(selfDismissLock) {
+            trackedFlashlightSourceKey = sbnKey
+        }
+    }
+
+    private fun forgetTrackedFlashlightSourceKey(sbnKey: String) {
+        synchronized(selfDismissLock) {
+            if (trackedFlashlightSourceKey == sbnKey) {
+                trackedFlashlightSourceKey = null
+            }
+        }
+    }
+
+    private fun clearTrackedFlashlightSourceKey() {
+        synchronized(selfDismissLock) {
+            trackedFlashlightSourceKey = null
+        }
+    }
+
+    private fun forgetSelfDismissedFlashlightSourceKey(sbnKey: String) {
+        synchronized(selfDismissLock) {
+            selfDismissedFlashlightSourceKeys.remove(sbnKey)
+        }
+    }
+
+    private fun consumeSelfDismissedFlashlightSourceKey(sbnKey: String): Boolean {
+        return synchronized(selfDismissLock) {
+            selfDismissedFlashlightSourceKeys.remove(sbnKey)
+        }
+    }
+
     private fun scheduleRebind(reason: String) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             return
@@ -331,6 +390,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
         fun requestFlashlightSnapshotSync() {
             activeInstance?.requestImmediateFlashlightSnapshotSync()
+        }
+
+        fun requestFlashlightSourceDismissal(): Boolean {
+            return activeInstance?.dismissTrackedFlashlightSourceNotification() == true
         }
 
         private fun requestRebindIfEnabled(context: Context, reason: String): Boolean {

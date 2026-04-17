@@ -171,10 +171,14 @@ class FlashlightForegroundService : Service() {
         }.onFailure { error ->
             Log.e(TAG, "Failed to post flashlight notification", error)
             stopSelfSafely(clearPreference = false)
+        }.onSuccess {
+            setActiveNotificationVisible(true)
+            LiveUpdateNotificationListenerService.requestFlashlightSourceDismissal()
         }
     }
 
     private fun hideNotification() {
+        setActiveNotificationVisible(false)
         if (isForegroundActive) {
             runCatching { stopForeground(STOP_FOREGROUND_REMOVE) }
             isForegroundActive = false
@@ -237,6 +241,11 @@ class FlashlightForegroundService : Service() {
         private const val CHANNEL_DESCRIPTION_RU =
             "\u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u0435 \u0444\u043e\u043d\u0430\u0440\u0438\u043a\u0430 \u0438 \u0432\u044b\u0432\u043e\u0434\u0438\u0442 \u0435\u0433\u043e \u0432 Now Bar"
 
+        @Volatile
+        private var activeNotificationVisible = false
+
+        fun hasActiveNotification(): Boolean = activeNotificationVisible
+
         fun sync(context: Context) {
             val prefs = ConverterPrefs(context)
             if (!prefs.getSmartFlashlightEnabled()) {
@@ -252,9 +261,14 @@ class FlashlightForegroundService : Service() {
         }
 
         fun stop(context: Context) {
+            setActiveNotificationVisible(false)
             context.stopService(Intent(context, FlashlightForegroundService::class.java))
             NotificationManagerCompat.from(context)
                 .cancel(FlashlightNotificationBuilder.NOTIFICATION_ID)
+        }
+
+        private fun setActiveNotificationVisible(value: Boolean) {
+            activeNotificationVisible = value
         }
 
         private fun ensureChannel(context: Context) {
