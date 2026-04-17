@@ -2,6 +2,7 @@ package com.kakao.taxi.liveupdate
 
 import android.content.ComponentName
 import android.content.Context
+import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -13,14 +14,36 @@ import kotlin.math.min
 
 class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private val prefs by lazy { ConverterPrefs(applicationContext) }
+    private val flashlightController by lazy { FlashlightController(applicationContext) }
     private val mainHandler = Handler(Looper.getMainLooper())
     private val selfDismissLock = Any()
     private val selfDismissedSourceKeys = mutableSetOf<String>()
     private val selfDismissedFlashlightSourceKeys = mutableSetOf<String>()
     private var trackedFlashlightSourceKey: String? = null
+    private var isTorchCallbackRegistered = false
     private var rebindAttempts = 0
     private var rebindScheduled = false
     private var snapshotSyncScheduled = false
+
+    private val torchCallback = object : CameraManager.TorchCallback() {
+        override fun onTorchModeChanged(cameraId: String, enabled: Boolean) {
+            val flashlightCameraId = flashlightController.getCapability().cameraId ?: return
+            if (cameraId != flashlightCameraId) {
+                return
+            }
+            Log.d(TAG, "Listener torch mode changed: cameraId=$cameraId enabled=$enabled")
+            handleObservedTorchState(enabled)
+        }
+
+        override fun onTorchModeUnavailable(cameraId: String) {
+            val flashlightCameraId = flashlightController.getCapability().cameraId ?: return
+            if (cameraId != flashlightCameraId) {
+                return
+            }
+            Log.d(TAG, "Listener torch unavailable: cameraId=$cameraId")
+            handleObservedTorchUnavailable()
+        }
+    }
 
     private val snapshotSyncRunnable = object : Runnable {
         override fun run() {
@@ -78,6 +101,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
         }
 
+        syncTorchMonitoring()
         LiveUpdateNotifier.ensureChannel(applicationContext)
         scheduleSnapshotSync()
     }
@@ -94,6 +118,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
 
+        syncTorchMonitoring()
         val snapshots = try {
             activeNotifications?.toList().orEmpty()
         } catch (error: Throwable) {
@@ -192,6 +217,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onDestroy() {
+        unregisterTorchCallbackIfNeeded()
         mainHandler.removeCallbacksAndMessages(null)
         rebindScheduled = false
         snapshotSyncScheduled = false
@@ -206,7 +232,72 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         maybeDismissOriginalSource(sbn, result)
     }
 
+    private fun syncTorchMonitoring() {
+        if (prefs.getSmartFlashlightEnabled()) {
+            ensureTorchCallbackRegistered()
+        } else {
+            unregisterTorchCallbackIfNeeded()
+        }
+    }
+
+    private fun ensureTorchCallbackRegistered() {
+        if (isTorchCallbackRegistered) {
+            return
+        }
+        runCatching { flashlightController.registerTorchCallback(torchCallback) }
+            .onSuccess {
+                isTorchCallbackRegistered = true
+                Log.d(TAG, "Listener torch callback registered")
+            }
+            .onFailure { error ->
+                Log.w(TAG, "Failed to register listener torch callback", error)
+            }
+    }
+
+    private fun refreshTorchCallbackRegistration() {
+        unregisterTorchCallbackIfNeeded()
+        ensureTorchCallbackRegistered()
+    }
+
+    private fun unregisterTorchCallbackIfNeeded() {
+        if (!isTorchCallbackRegistered) {
+            return
+        }
+        runCatching { flashlightController.unregisterTorchCallback(torchCallback) }
+            .onFailure { error ->
+                Log.w(TAG, "Failed to unregister listener torch callback", error)
+            }
+        isTorchCallbackRegistered = false
+    }
+
+    private fun handleObservedTorchState(enabled: Boolean) {
+        if (!prefs.getSmartFlashlightEnabled()) {
+            if (!enabled) {
+                clearTrackedFlashlightSourceKey()
+                FlashlightSourceState.clear()
+                FlashlightForegroundService.stop(applicationContext)
+            }
+            return
+        }
+
+        if (enabled) {
+            FlashlightForegroundService.sync(applicationContext)
+            return
+        }
+
+        clearTrackedFlashlightSourceKey()
+        FlashlightSourceState.clear()
+        FlashlightForegroundService.stop(applicationContext)
+    }
+
+    private fun handleObservedTorchUnavailable() {
+        clearTrackedFlashlightSourceKey()
+        FlashlightSourceState.clear()
+        FlashlightForegroundService.stop(applicationContext)
+    }
+
     private fun syncFlashlightMirror(snapshots: Collection<StatusBarNotification>) {
+        syncTorchMonitoring()
         if (!prefs.getSmartFlashlightEnabled()) {
             clearTrackedFlashlightSourceKey()
             FlashlightSourceState.clear()
@@ -242,6 +333,11 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     fun requestImmediateFlashlightSnapshotSync() {
         mainHandler.removeCallbacks(snapshotSyncRunnable)
+        if (prefs.getSmartFlashlightEnabled()) {
+            refreshTorchCallbackRegistration()
+        } else {
+            unregisterTorchCallbackIfNeeded()
+        }
         snapshotSyncScheduled = true
         mainHandler.post(snapshotSyncRunnable)
     }
@@ -443,7 +539,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val MAX_REBIND_DELAY_MS = 30_000L
         private const val MAX_REBIND_ATTEMPTS = 6
         private const val SNAPSHOT_SYNC_INTERVAL_MS = 4_000L
-        private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 24L * 60L * 60L * 1_000L
+        private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 5_000L
         private const val FLASHLIGHT_SOURCE_VERIFY_DELAY_MS = 300L
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
         private const val FLASHLIGHT_SOURCE_CHANNEL_ID = "FLASHLIGHT_ONGOING"

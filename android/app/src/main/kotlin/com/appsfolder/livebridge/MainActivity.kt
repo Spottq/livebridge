@@ -611,6 +611,7 @@ class MainActivity : FlutterActivity() {
             LiveUpdateNotificationListenerService.requestFlashlightSnapshotSync()
         } else {
             FlashlightForegroundService.stop(applicationContext)
+            LiveUpdateNotificationListenerService.requestFlashlightSnapshotSync()
         }
     }
 
