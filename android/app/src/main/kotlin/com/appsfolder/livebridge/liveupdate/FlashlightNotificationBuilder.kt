@@ -4,6 +4,10 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
@@ -19,6 +23,7 @@ internal class FlashlightNotificationBuilder(
         prefs: ConverterPrefs,
         capability: FlashlightCapability
     ): Notification {
+        val sourceSnapshot = FlashlightSourceState.snapshot()
         val title = notificationTitle()
         val levelIndex = prefs.getSmartFlashlightLevel().coerceIn(0, FlashlightController.FLASHLIGHT_LEVEL_COUNT - 1)
         val effectiveLevelIndex = if (capability.supportsFiveLevels) {
@@ -46,17 +51,17 @@ internal class FlashlightNotificationBuilder(
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
-        val statusBarIconCompat = IconCompat.createWithResource(
+        val statusBarIconCompat = sourceSnapshot.iconCompat ?: IconCompat.createWithResource(
             context,
             R.drawable.ic_flashlight_system_notification
         )
-        val expandedIcon = runCatching { statusBarIconCompat.toIcon(context) }.getOrNull()
+        val expandedLargeIcon = sourceSnapshot.largeIconBitmap ?: iconToBitmap(statusBarIconCompat)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_flashlight_system_notification)
+            .setSmallIcon(statusBarIconCompat)
             .setContentTitle(title)
             .setContentIntent(contentIntent)
-            .setColor(DEFAULT_ICON_ACCENT_COLOR)
+            .setColor(sourceSnapshot.accentColor)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
@@ -67,7 +72,7 @@ internal class FlashlightNotificationBuilder(
             .setCustomBigContentView(expandedView)
             .setStyle(NotificationCompat.DecoratedCustomViewStyle())
             .setRequestPromotedOngoing(true)
-        expandedIcon?.let { builder.setLargeIcon(it) }
+        expandedLargeIcon?.let(builder::setLargeIcon)
 
         if (!secondaryText.isNullOrEmpty()) {
             builder.setContentText(secondaryText)
@@ -83,7 +88,7 @@ internal class FlashlightNotificationBuilder(
                     chipText = chipText,
                     chipIcon = statusBarIconCompat,
                     remoteView = nowBarRemoteView,
-                    chipBackgroundColor = DEFAULT_ICON_ACCENT_COLOR
+                    chipBackgroundColor = sourceSnapshot.accentColor
                 )
             )
         }
@@ -208,6 +213,25 @@ internal class FlashlightNotificationBuilder(
             putString(KEY_REMOTE_VIEW_TAG, REMOTE_VIEW_TAG)
             putInt(KEY_NOWBAR_CHRONOMETER_POSITION, 1)
         }
+    }
+
+    private fun iconToBitmap(iconCompat: IconCompat): Bitmap? {
+        return runCatching {
+            iconCompat.toIcon(context).loadDrawable(context)?.let(::drawableToBitmap)
+        }.getOrNull()
+    }
+
+    private fun drawableToBitmap(drawable: Drawable): Bitmap {
+        if (drawable is BitmapDrawable && drawable.bitmap != null) {
+            return drawable.bitmap
+        }
+        val width = drawable.intrinsicWidth.coerceAtLeast(1).coerceAtMost(512)
+        val height = drawable.intrinsicHeight.coerceAtLeast(1).coerceAtMost(512)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        return bitmap
     }
 
     private fun levelPendingIntent(levelIndex: Int): PendingIntent {
