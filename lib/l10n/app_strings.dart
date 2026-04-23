@@ -41,7 +41,7 @@ class AppStrings {
   }) {
     if (isRu) return ru;
     if (isTr) return tr ?? en;
-    if (isPtBr) return ptBr ?? _ptBrTranslations[en] ?? en;
+    if (isPtBr) return ptBr ?? en;
     if (isZhHant) return zhHant ?? zhHans ?? en;
     if (isZhHans) return zhHans ?? zhHant ?? en;
     return en;
@@ -55,6 +55,7 @@ class AppStrings {
     en: 'Refresh',
     ru: 'Обновить',
     tr: 'Yenile',
+    ptBr: 'Atualizar',
     zhHans: '刷新',
     zhHant: '重新整理',
   );
@@ -63,6 +64,7 @@ class AppStrings {
     en: 'Notification permission granted.',
     ru: 'Разрешение на уведомления выдано.',
     tr: 'Bildirim izni verildi.',
+    ptBr: 'Permissão de notificações concedida.',
     zhHans: '通知权限已授予。',
     zhHant: '通知權限已授予。',
   );
@@ -71,6 +73,7 @@ class AppStrings {
     en: 'Notification permission was not granted.',
     ru: 'Разрешение на уведомления не выдано.',
     tr: 'Bildirim izni verilmedi.',
+    ptBr: 'Permissão de notificações não concedida.',
     zhHans: '未授予通知权限。',
     zhHant: '未授予通知權限。',
   );
@@ -79,6 +82,8 @@ class AppStrings {
     en: 'Unable to open Listener settings on this device.',
     ru: 'Не удалось открыть настройки Listener.',
     tr: 'Bu cihazda Listener ayarları açılamıyor.',
+    ptBr:
+        'Não foi possível abrir as configurações do Listener neste dispositivo.',
     zhHans: '此设备无法打开监听器设置。',
     zhHant: '此裝置無法開啟監聽器設定。',
   );
@@ -87,6 +92,7 @@ class AppStrings {
     en: 'Unable to open app notification settings.',
     ru: 'Не удалось открыть настройки уведомлений.',
     tr: 'Uygulama bildirim ayarları açılamıyor.',
+    ptBr: 'Não foi possível abrir as configurações de notificação do app.',
     zhHans: '无法打开应用通知设置。',
     zhHant: '無法開啟應用通知設定。',
   );
@@ -95,6 +101,8 @@ class AppStrings {
     en: 'Unable to open Live Updates settings on this device.',
     ru: 'Не удалось открыть настройки Live Updates.',
     tr: 'Bu cihazda Live Updates ayarları açılamıyor.',
+    ptBr:
+        'Não foi possível abrir as configurações de Live Updates neste dispositivo.',
     zhHans: '此设备无法打开 Live Updates 设置。',
     zhHant: '此裝置無法開啟 Live Updates 設定。',
   );
@@ -103,6 +111,7 @@ class AppStrings {
     en: 'Unable to open GitHub link.',
     ru: 'Не удалось открыть ссылку GitHub.',
     tr: 'GitHub bağlantısı açılamıyor.',
+    ptBr: 'Não foi possível abrir o link do GitHub.',
     zhHans: '无法打开 GitHub 链接。',
     zhHant: '無法開啟 GitHub 連結。',
   );
@@ -111,6 +120,7 @@ class AppStrings {
     en: 'Unable to open link.',
     ru: 'Не удалось открыть ссылку.',
     tr: 'Bağlantı açılamıyor.',
+    ptBr: 'Não foi possível abrir o link.',
     zhHans: '无法打开链接。',
     zhHant: '無法開啟連結。',
   );
@@ -119,6 +129,7 @@ class AppStrings {
     en: 'Unable to check updates. Try disabling VPN.',
     ru: 'Не удалось проверить обновления. Попробуйте отключить VPN.',
     tr: 'Güncellemeler denetlenemiyor. VPN\'i kapatmayı deneyin.',
+    ptBr: 'Não foi possível verificar atualizações. Tente desativar a VPN.',
     zhHans: '无法检查更新。请尝试关闭 VPN。',
     zhHant: '無法檢查更新。請嘗試關閉 VPN。',
   );
@@ -127,6 +138,7 @@ class AppStrings {
     en: 'Dictionary is empty or invalid.',
     ru: 'Словарь пустой или поврежден.',
     tr: 'Sözlük boş veya geçersiz.',
+    ptBr: 'O dicionário está vazio ou inválido.',
     zhHans: '词典为空或无效。',
     zhHant: '字典為空或無效。',
   );
@@ -135,6 +147,7 @@ class AppStrings {
     en: 'Dictionary updated from GitHub.',
     ru: 'Словарь обновлен из GitHub.',
     tr: 'Sözlük GitHub\'dan güncellendi.',
+    ptBr: 'Dicionário atualizado pelo GitHub.',
     zhHans: '词典已从 GitHub 更新。',
     zhHant: '字典已從 GitHub 更新。',
   );
@@ -143,6 +156,7 @@ class AppStrings {
     en: 'Invalid dictionary JSON.',
     ru: 'Невалидный JSON словаря.',
     tr: 'Geçersiz sözlük JSON\'u.',
+    ptBr: 'JSON do dicionário inválido.',
     zhHans: '词典 JSON 无效。',
     zhHant: '字典 JSON 無效。',
   );
@@ -151,6 +165,7 @@ class AppStrings {
     en: 'Failed to update dictionary from GitHub.',
     ru: 'Не удалось обновить словарь из GitHub.',
     tr: 'Sözlük GitHub\'dan güncellenemedi.',
+    ptBr: 'Falha ao atualizar o dicionário pelo GitHub.',
     zhHans: '从 GitHub 更新词典失败。',
     zhHant: '從 GitHub 更新字典失敗。',
   );
@@ -159,6 +174,7 @@ class AppStrings {
     en: 'Dictionary',
     ru: 'Словарь',
     tr: 'Sözlük',
+    ptBr: 'Dicionário',
     zhHans: '词典',
     zhHant: '字典',
   );
@@ -167,6 +183,7 @@ class AppStrings {
     en: 'tap to manage',
     ru: 'нажмите для управления',
     tr: 'yönetmek için dokunun',
+    ptBr: 'toque para gerenciar',
     zhHans: '点按以管理',
     zhHant: '點按以管理',
   );
@@ -175,6 +192,7 @@ class AppStrings {
     en: 'Dictionary languages',
     ru: 'Языки словаря',
     tr: 'Sözlük dilleri',
+    ptBr: 'Idiomas do dicionário',
     zhHans: '词典语言',
     zhHant: '字典語言',
   );
@@ -183,6 +201,7 @@ class AppStrings {
     en: 'tap to choose',
     ru: 'нажмите для выбора',
     tr: 'seçmek için dokunun',
+    ptBr: 'toque para escolher',
     zhHans: '点按以选择',
     zhHant: '點按以選擇',
   );
@@ -191,6 +210,7 @@ class AppStrings {
     en: 'Select languages for conversion',
     ru: 'Выберите языки для конвертации',
     tr: 'Dönüştürme için dilleri seçin',
+    ptBr: 'Selecione idiomas para conversão',
     zhHans: '选择用于转换的语言',
     zhHant: '選擇用於轉換的語言',
   );
@@ -199,6 +219,7 @@ class AppStrings {
     en: 'Update dictionaries',
     ru: 'Обновить словари',
     tr: 'Sözlükleri güncelle',
+    ptBr: 'Atualizar dicionários',
     zhHans: '更新词典',
     zhHant: '更新字典',
   );
@@ -207,6 +228,7 @@ class AppStrings {
     en: 'Dictionary editor',
     ru: 'Редактор словаря',
     tr: 'Sözlük düzenleyici',
+    ptBr: 'Editor de dicionário',
     zhHans: '词典编辑器',
     zhHant: '字典編輯器',
   );
@@ -215,17 +237,25 @@ class AppStrings {
     en: '(coming soon)',
     ru: '(скоро)',
     tr: '(yakında)',
+    ptBr: '(em breve)',
     zhHans: '（即将推出）',
     zhHant: '（即將推出）',
   );
 
-  String get navHome =>
-      tr(en: 'Home', ru: 'Домой', tr: 'Ana sayfa', zhHans: '主页', zhHant: '首頁');
+  String get navHome => tr(
+    en: 'Home',
+    ru: 'Домой',
+    tr: 'Ana sayfa',
+    ptBr: 'Início',
+    zhHans: '主页',
+    zhHant: '首頁',
+  );
 
   String get navRules => tr(
     en: 'Rules',
     ru: 'Правила',
     tr: 'Kurallar',
+    ptBr: 'Regras',
     zhHans: '规则',
     zhHant: '規則',
   );
@@ -234,6 +264,7 @@ class AppStrings {
     en: 'Settings',
     ru: 'Настройки',
     tr: 'Ayarlar',
+    ptBr: 'Configurações',
     zhHans: '设置',
     zhHant: '設定',
   );
@@ -242,6 +273,7 @@ class AppStrings {
     en: 'Rules',
     ru: 'Правила',
     tr: 'Kurallar',
+    ptBr: 'Regras',
     zhHans: '规则',
     zhHant: '規則',
   );
@@ -250,6 +282,7 @@ class AppStrings {
     en: 'App config',
     ru: 'Настройки приложения',
     tr: 'Uygulama yapılandırması',
+    ptBr: 'Configuração do app',
     zhHans: '应用配置',
     zhHant: '應用配置',
   );
@@ -258,6 +291,7 @@ class AppStrings {
     en: 'Brand-specific',
     ru: 'Brand-specific',
     tr: 'Markaya özel',
+    ptBr: 'Específico da marca',
     zhHans: '品牌特定',
     zhHant: '品牌特定',
   );
@@ -266,6 +300,7 @@ class AppStrings {
     en: 'App updates',
     ru: 'Обновления приложения',
     tr: 'Uygulama güncellemeleri',
+    ptBr: 'Atualizações do app',
     zhHans: '应用更新',
     zhHant: '應用更新',
   );
@@ -274,6 +309,7 @@ class AppStrings {
     en: 'LiveBridge is running',
     ru: 'LiveBridge запущен',
     tr: 'LiveBridge çalışıyor',
+    ptBr: 'LiveBridge está em execução',
     zhHans: 'LiveBridge 正在运行',
     zhHant: 'LiveBridge 正在執行',
   );
@@ -282,17 +318,25 @@ class AppStrings {
     en: 'LiveBridge is disabled',
     ru: 'LiveBridge выключен',
     tr: 'LiveBridge devre dışı',
+    ptBr: 'LiveBridge está desativado',
     zhHans: 'LiveBridge 已关闭',
     zhHant: 'LiveBridge 已關閉',
   );
 
-  String get statusByPrefix =>
-      tr(en: 'by ', ru: 'by ', tr: 'by ', zhHans: 'by ', zhHant: 'by ');
+  String get statusByPrefix => tr(
+    en: 'by ',
+    ru: 'by ',
+    tr: 'by ',
+    ptBr: 'por ',
+    zhHans: 'by ',
+    zhHant: 'by ',
+  );
 
   String get discussTitle => tr(
     en: 'Discuss',
     ru: 'Discuss',
     tr: 'Tartış',
+    ptBr: 'Discutir',
     zhHans: '讨论',
     zhHant: '討論',
   );
@@ -301,6 +345,7 @@ class AppStrings {
     en: 'telegram topics',
     ru: 'telegram topics',
     tr: 'telegram konuları',
+    ptBr: 'tópicos no Telegram',
     zhHans: 'telegram 话题',
     zhHant: 'telegram 話題',
   );
@@ -309,6 +354,7 @@ class AppStrings {
     en: 'all apps',
     ru: 'все приложения',
     tr: 'tüm uygulamalar',
+    ptBr: 'todos os apps',
     zhHans: '所有应用',
     zhHant: '所有應用程式',
   );
@@ -317,6 +363,7 @@ class AppStrings {
     en: 'only selected',
     ru: 'только выбранные',
     tr: 'yalnızca seçilenler',
+    ptBr: 'somente selecionados',
     zhHans: '仅已选择',
     zhHant: '僅已選取',
   );
@@ -325,6 +372,7 @@ class AppStrings {
     en: 'exclude selected',
     ru: 'исключая выбранные',
     tr: 'seçilenleri hariç tut',
+    ptBr: 'excluir selecionados',
     zhHans: '排除已选择',
     zhHant: '排除已選取',
   );
@@ -333,6 +381,7 @@ class AppStrings {
     en: 'check required',
     ru: 'требуется проверка',
     tr: 'kontrol gerekli',
+    ptBr: 'verificação necessária',
     zhHans: '需要检查',
     zhHant: '需要檢查',
   );
@@ -341,6 +390,7 @@ class AppStrings {
     en: 'all set',
     ru: 'всё хорошо',
     tr: 'hazır',
+    ptBr: 'tudo certo',
     zhHans: '已就绪',
     zhHant: '已就緒',
   );
@@ -349,6 +399,7 @@ class AppStrings {
     en: 'tap to update',
     ru: 'нажмите для обновления',
     tr: 'güncellemek için dokunun',
+    ptBr: 'toque para atualizar',
     zhHans: '点按更新',
     zhHant: '點按更新',
   );
@@ -357,6 +408,7 @@ class AppStrings {
     en: 'latest version',
     ru: 'последняя версия',
     tr: 'son sürüm',
+    ptBr: 'versão mais recente',
     zhHans: '最新版本',
     zhHant: '最新版本',
   );
@@ -365,6 +417,7 @@ class AppStrings {
     en: 'Recent conversions',
     ru: 'Последние конвертации',
     tr: 'Son dönüştürmeler',
+    ptBr: 'Conversões recentes',
     zhHans: '最近转换',
     zhHant: '最近轉換',
   );
@@ -373,6 +426,7 @@ class AppStrings {
     en: 'no conversions yet',
     ru: 'конвертаций пока нет',
     tr: 'henüz dönüştürme yok',
+    ptBr: 'nenhuma conversão ainda',
     zhHans: '暂无转换',
     zhHant: '暫無轉換',
   );
@@ -381,6 +435,7 @@ class AppStrings {
     en: 'conversion log is disabled',
     ru: 'лог конвертаций выключен',
     tr: 'dönüştürme günlüğü kapalı',
+    ptBr: 'o log de conversões está desativado',
     zhHans: '转换日志已关闭',
     zhHant: '轉換記錄已關閉',
   );
@@ -389,6 +444,7 @@ class AppStrings {
     en: 'enable',
     ru: 'включить',
     tr: 'etkinleştir',
+    ptBr: 'ativar',
     zhHans: '启用',
     zhHant: '啟用',
   );
@@ -397,6 +453,7 @@ class AppStrings {
     en: 'Payload copied',
     ru: 'Payload скопирован',
     tr: 'Payload kopyalandı',
+    ptBr: 'Payload copiado',
     zhHans: 'Payload 已复制',
     zhHant: 'Payload 已複製',
   );
@@ -405,6 +462,7 @@ class AppStrings {
     en: 'Progress',
     ru: 'Прогресс',
     tr: 'İlerleme',
+    ptBr: 'Progresso',
     zhHans: '进度',
     zhHant: '進度',
   );
@@ -413,6 +471,7 @@ class AppStrings {
     en: 'Native progress',
     ru: 'Нативный прогресс',
     tr: 'Yerel ilerleme',
+    ptBr: 'Progresso nativo',
     zhHans: '原生进度',
     zhHant: '原生進度',
   );
@@ -421,6 +480,7 @@ class AppStrings {
     en: 'OTP codes',
     ru: 'OTP-коды',
     tr: 'OTP kodları',
+    ptBr: 'Códigos OTP',
     zhHans: 'OTP 验证码',
     zhHant: 'OTP 驗證碼',
   );
@@ -429,6 +489,7 @@ class AppStrings {
     en: 'Auto-copy code',
     ru: 'Автокопирование кода',
     tr: 'Kodu otomatik kopyala',
+    ptBr: 'Copiar código automaticamente',
     zhHans: '自动复制验证码',
     zhHant: '自動複製驗證碼',
   );
@@ -437,17 +498,25 @@ class AppStrings {
     en: 'Smart conversion',
     ru: 'Умная конвертация',
     tr: 'Akıllı dönüştürme',
+    ptBr: 'Conversão inteligente',
     zhHans: '智能转换',
     zhHant: '智慧轉換',
   );
 
-  String get taxiTitle =>
-      tr(en: 'Taxi', ru: 'Такси', tr: 'Taksi', zhHans: '打车', zhHant: '叫車');
+  String get taxiTitle => tr(
+    en: 'Taxi',
+    ru: 'Такси',
+    tr: 'Taksi',
+    ptBr: 'Táxi',
+    zhHans: '打车',
+    zhHant: '叫車',
+  );
 
   String get deliveriesTitle => tr(
     en: 'Deliveries',
     ru: 'Доставки',
     tr: 'Teslimatlar',
+    ptBr: 'Entregas',
     zhHans: '外卖',
     zhHant: '外送',
   );
@@ -456,6 +525,7 @@ class AppStrings {
     en: 'Remove original message',
     ru: 'Удалять исходное уведомление',
     tr: 'Orijinal bildirimi kaldır',
+    ptBr: 'Remover mensagem original',
     zhHans: '移除原始通知',
     zhHant: '移除原始通知',
   );
@@ -464,6 +534,7 @@ class AppStrings {
     en: '(exp)',
     ru: '(exp)',
     tr: '(deneysel)',
+    ptBr: '(exp)',
     zhHans: '（实验）',
     zhHant: '（實驗）',
   );
@@ -472,6 +543,7 @@ class AppStrings {
     en: 'All apps',
     ru: 'Все приложения',
     tr: 'Tüm uygulamalar',
+    ptBr: 'Todos os apps',
     zhHans: '所有应用',
     zhHant: '所有應用程式',
   );
@@ -480,6 +552,7 @@ class AppStrings {
     en: 'Only selected',
     ru: 'Только выбранные',
     tr: 'Yalnızca seçilenler',
+    ptBr: 'Somente selecionados',
     zhHans: '仅已选择',
     zhHant: '僅已選取',
   );
@@ -488,6 +561,7 @@ class AppStrings {
     en: 'Exclude selected',
     ru: 'Исключить выбранные',
     tr: 'Seçilenleri hariç tut',
+    ptBr: 'Excluir selecionados',
     zhHans: '排除已选择',
     zhHant: '排除已選取',
   );
@@ -496,6 +570,7 @@ class AppStrings {
     en: 'Conversion mode',
     ru: 'Режим конвертации',
     tr: 'Dönüştürme modu',
+    ptBr: 'Modo de conversão',
     zhHans: '转换模式',
     zhHant: '轉換模式',
   );
@@ -504,6 +579,7 @@ class AppStrings {
     en: 'Selected apps',
     ru: 'Приложения',
     tr: 'Seçili uygulamalar',
+    ptBr: 'Apps selecionados',
     zhHans: '已选择应用',
     zhHant: '已選取應用程式',
   );
@@ -512,6 +588,7 @@ class AppStrings {
     en: 'show system',
     ru: 'показать системные',
     tr: 'sistem uygulamalarını göster',
+    ptBr: 'mostrar sistema',
     zhHans: '显示系统',
     zhHant: '顯示系統',
   );
@@ -520,6 +597,7 @@ class AppStrings {
     en: 'hide system',
     ru: 'скрыть системные',
     tr: 'sistem uygulamalarını gizle',
+    ptBr: 'ocultar sistema',
     zhHans: '隐藏系统',
     zhHant: '隱藏系統',
   );
@@ -528,17 +606,25 @@ class AppStrings {
     en: 'Network & Connections',
     ru: 'Сеть и подключения',
     tr: 'Ağ ve Bağlantılar',
+    ptBr: 'Rede e conexões',
     zhHans: '网络与连接',
     zhHant: '網路與連線',
   );
 
-  String get vpnsTitle =>
-      tr(en: 'VPNs', ru: 'VPN', tr: 'VPN\'ler', zhHans: 'VPN', zhHant: 'VPN');
+  String get vpnsTitle => tr(
+    en: 'VPNs',
+    ru: 'VPN',
+    tr: 'VPN\'ler',
+    ptBr: 'VPNs',
+    zhHans: 'VPN',
+    zhHant: 'VPN',
+  );
 
   String get externalDevicesTitle => tr(
     en: 'External devices',
     ru: 'Внешние устройства',
     tr: 'Harici cihazlar',
+    ptBr: 'Dispositivos externos',
     zhHans: '外接设备',
     zhHant: '外接裝置',
   );
@@ -547,6 +633,7 @@ class AppStrings {
     en: 'Ignore debugging devices',
     ru: 'Игнорировать отладочные устройства',
     tr: 'Hata ayıklama cihazlarını yok say',
+    ptBr: 'Ignorar dispositivos de depuração',
     zhHans: '忽略调试设备',
     zhHant: '忽略偵錯裝置',
   );
@@ -555,6 +642,7 @@ class AppStrings {
     en: 'Network speed threshold',
     ru: 'Порог скорости сети',
     tr: 'Ağ hızı eşiği',
+    ptBr: 'Limite de velocidade de rede',
     zhHans: '网速阈值',
     zhHant: '網速門檻',
   );
@@ -563,6 +651,7 @@ class AppStrings {
     en: 'Miscellaneous',
     ru: 'Разное',
     tr: 'Diğer',
+    ptBr: 'Diversos',
     zhHans: '其他',
     zhHant: '其他',
   );
@@ -571,6 +660,7 @@ class AppStrings {
     en: 'Navigation (maps)',
     ru: 'Навигация (карты)',
     tr: 'Navigasyon (haritalar)',
+    ptBr: 'Navegação (mapas)',
     zhHans: '导航（地图）',
     zhHant: '導航（地圖）',
   );
@@ -579,6 +669,7 @@ class AppStrings {
     en: 'Media playback',
     ru: 'Медиа',
     tr: 'Medya oynatma',
+    ptBr: 'Reprodução de mídia',
     zhHans: '媒体播放',
     zhHant: '媒體播放',
   );
@@ -587,17 +678,25 @@ class AppStrings {
     en: 'Weather broadcasts',
     ru: 'Погодные уведомления',
     tr: 'Hava durumu bildirimleri',
+    ptBr: 'Alertas de clima',
     zhHans: '天气播报',
     zhHant: '天氣播報',
   );
 
-  String get bypassTitle =>
-      tr(en: 'Bypass', ru: 'Bypass', tr: 'Bypass', zhHans: '绕过', zhHant: '繞過');
+  String get bypassTitle => tr(
+    en: 'Bypass',
+    ru: 'Bypass',
+    tr: 'Bypass',
+    ptBr: 'Bypass',
+    zhHans: '绕过',
+    zhHant: '繞過',
+  );
 
   String get perAppSettingsTitle => tr(
     en: 'Per-app settings',
     ru: 'Настройки приложений',
     tr: 'Uygulama bazlı ayarlar',
+    ptBr: 'Configurações por app',
     zhHans: '按应用设置',
     zhHant: '各應用設定',
   );
@@ -606,6 +705,7 @@ class AppStrings {
     en: 'Defaults',
     ru: 'По умолчанию',
     tr: 'Varsayılanlar',
+    ptBr: 'Padrões',
     zhHans: '默认值',
     zhHant: '預設值',
   );
@@ -614,6 +714,7 @@ class AppStrings {
     en: 'tap to change default behavior',
     ru: 'нажмите, чтобы изменить поведение',
     tr: 'varsayılan davranışı değiştirmek için dokunun',
+    ptBr: 'toque para alterar o comportamento padrão',
     zhHans: '点按更改默认行为',
     zhHant: '點按變更預設行為',
   );
@@ -622,6 +723,7 @@ class AppStrings {
     en: 'Apps list',
     ru: 'Список приложений',
     tr: 'Uygulama listesi',
+    ptBr: 'Lista de apps',
     zhHans: '应用列表',
     zhHant: '應用程式清單',
   );
@@ -630,6 +732,7 @@ class AppStrings {
     en: 'Export',
     ru: 'Экспорт',
     tr: 'Dışa aktar',
+    ptBr: 'Exportar',
     zhHans: '导出',
     zhHant: '匯出',
   );
@@ -638,6 +741,7 @@ class AppStrings {
     en: 'Import',
     ru: 'Импорт',
     tr: 'İçe aktar',
+    ptBr: 'Importar',
     zhHans: '导入',
     zhHant: '匯入',
   );
@@ -646,6 +750,7 @@ class AppStrings {
     en: 'Title source',
     ru: 'Источник заголовка',
     tr: 'Başlık kaynağı',
+    ptBr: 'Origem do título',
     zhHans: '标题来源',
     zhHant: '標題來源',
   );
@@ -654,6 +759,7 @@ class AppStrings {
     en: 'Content source',
     ru: 'Источник контента',
     tr: 'İçerik kaynağı',
+    ptBr: 'Origem do conteúdo',
     zhHans: '内容来源',
     zhHant: '內容來源',
   );
@@ -662,6 +768,7 @@ class AppStrings {
     en: 'Notification title',
     ru: 'Заголовок уведомления',
     tr: 'Bildirim başlığı',
+    ptBr: 'Título da notificação',
     zhHans: '通知标题',
     zhHant: '通知標題',
   );
@@ -670,6 +777,7 @@ class AppStrings {
     en: 'App title',
     ru: 'Название приложения',
     tr: 'Uygulama başlığı',
+    ptBr: 'Título do app',
     zhHans: '应用标题',
     zhHant: '應用標題',
   );
@@ -678,6 +786,7 @@ class AppStrings {
     en: 'Notification text',
     ru: 'Текст уведомления',
     tr: 'Bildirim metni',
+    ptBr: 'Texto da notificação',
     zhHans: '通知文本',
     zhHant: '通知文字',
   );
@@ -686,6 +795,7 @@ class AppStrings {
     en: 'New version available',
     ru: 'Доступна новая версия',
     tr: 'Yeni sürüm mevcut',
+    ptBr: 'Nova versão disponível',
     zhHans: '有新版本可用',
     zhHant: '有新版本可用',
   );
@@ -694,6 +804,7 @@ class AppStrings {
     en: 'Checking for updates',
     ru: 'Проверяем обновления',
     tr: 'Güncellemeler denetleniyor',
+    ptBr: 'Verificando atualizações',
     zhHans: '正在检查更新',
     zhHant: '正在檢查更新',
   );
@@ -702,6 +813,7 @@ class AppStrings {
     en: 'You’re all set',
     ru: 'Всё хорошо',
     tr: 'Her şey hazır',
+    ptBr: 'Tudo certo',
     zhHans: '已是最新',
     zhHant: '已是最新',
   );
@@ -710,6 +822,7 @@ class AppStrings {
     en: 'tap to go to downloads',
     ru: 'перейти к загрузке',
     tr: 'indirmelere gitmek için dokunun',
+    ptBr: 'toque para ir aos downloads',
     zhHans: '点按前往下载',
     zhHant: '點按前往下載',
   );
@@ -718,6 +831,7 @@ class AppStrings {
     en: 'please wait a moment',
     ru: 'подождите немного',
     tr: 'lütfen biraz bekleyin',
+    ptBr: 'aguarde um momento',
     zhHans: '请稍等',
     zhHant: '請稍候',
   );
@@ -726,6 +840,7 @@ class AppStrings {
     en: 'latest version already',
     ru: 'установлена последняя версия',
     tr: 'zaten son sürüm',
+    ptBr: 'já está na versão mais recente',
     zhHans: '已经是最新版本',
     zhHant: '已是最新版本',
   );
@@ -734,6 +849,7 @@ class AppStrings {
     en: 'Visit project page',
     ru: 'Открыть страницу проекта',
     tr: 'Proje sayfasını aç',
+    ptBr: 'Abrir página do projeto',
     zhHans: '访问项目页面',
     zhHant: '前往專案頁面',
   );
@@ -742,6 +858,7 @@ class AppStrings {
     en: 'Visit GitHub',
     ru: 'Открыть GitHub',
     tr: 'GitHub\'ı aç',
+    ptBr: 'Abrir GitHub',
     zhHans: '访问 GitHub',
     zhHant: '前往 GitHub',
   );
@@ -750,6 +867,7 @@ class AppStrings {
     en: 'New version available',
     ru: 'Доступна новая версия',
     tr: 'Yeni sürüm mevcut',
+    ptBr: 'Nova versão disponível',
     zhHans: '有新版本可用',
     zhHant: '有新版本可用',
   );
@@ -767,6 +885,7 @@ class AppStrings {
     en: 'update available | tap to see',
     ru: 'доступно обновление | посмотреть',
     tr: 'güncelleme mevcut | görmek için dokunun',
+    ptBr: 'atualização disponível | toque para ver',
     zhHans: '有可用更新 | 点按查看',
     zhHant: '有可用更新 | 點按查看',
   );
@@ -775,6 +894,7 @@ class AppStrings {
     en: 'tap to open update settings',
     ru: 'нажмите для настройки',
     tr: 'güncelleme ayarlarını açmak için dokunun',
+    ptBr: 'toque para abrir ajustes de atualização',
     zhHans: '点按打开更新设置',
     zhHant: '點按開啟更新設定',
   );
@@ -783,6 +903,7 @@ class AppStrings {
     en: 'Conversion log',
     ru: 'Лог конвертаций',
     tr: 'Dönüştürme günlüğü',
+    ptBr: 'Log de conversões',
     zhHans: '转换日志',
     zhHant: '轉換記錄',
   );
@@ -791,6 +912,7 @@ class AppStrings {
     en: 'Log length',
     ru: 'Размер лога',
     tr: 'Günlük boyutu',
+    ptBr: 'Tamanho do log',
     zhHans: '日志大小',
     zhHant: '記錄大小',
   );
@@ -799,17 +921,25 @@ class AppStrings {
     en: 'Xiaomi HyperIsland',
     ru: 'Xiaomi HyperIsland',
     tr: 'Xiaomi HyperIsland',
+    ptBr: 'Xiaomi HyperIsland',
     zhHans: '小米 HyperIsland',
     zhHant: '小米 HyperIsland',
   );
 
-  String get lengthTitle =>
-      tr(en: 'Length', ru: 'Длина', tr: 'Uzunluk', zhHans: '长度', zhHant: '長度');
+  String get lengthTitle => tr(
+    en: 'Length',
+    ru: 'Длина',
+    tr: 'Uzunluk',
+    ptBr: 'Tamanho',
+    zhHans: '长度',
+    zhHant: '長度',
+  );
 
   String get otpDedupTitle => tr(
     en: 'OTP dedup',
     ru: 'OTP dedup',
     tr: 'OTP tekilleştirme',
+    ptBr: 'Deduplicação de OTP',
     zhHans: 'OTP 去重',
     zhHant: 'OTP 去重',
   );
@@ -818,6 +948,7 @@ class AppStrings {
     en: 'Smart conversion dedup',
     ru: 'Smart conversion dedup',
     tr: 'Akıllı dönüştürme tekilleştirme',
+    ptBr: 'Deduplicação da conversão inteligente',
     zhHans: '智能转换去重',
     zhHant: '智慧轉換去重',
   );
@@ -826,6 +957,7 @@ class AppStrings {
     en: 'Animated Island',
     ru: 'Анимированный остров',
     tr: 'Animasyonlu ada',
+    ptBr: 'Ilha animada',
     zhHans: '动态岛动画',
     zhHant: '動態島動畫',
   );
@@ -834,6 +966,7 @@ class AppStrings {
     en: 'Update frequency',
     ru: 'Частота обновления',
     tr: 'Güncelleme sıklığı',
+    ptBr: 'Frequência de atualização',
     zhHans: '更新频率',
     zhHant: '更新頻率',
   );
@@ -842,6 +975,7 @@ class AppStrings {
     en: 'Copy debug JSON',
     ru: 'Скопировать debug JSON',
     tr: 'Debug JSON\'unu kopyala',
+    ptBr: 'Copiar JSON de debug',
     zhHans: '复制调试 JSON',
     zhHant: '複製偵錯 JSON',
   );
@@ -850,6 +984,7 @@ class AppStrings {
     en: 'Open GitHub page',
     ru: 'Открыть GitHub',
     tr: 'GitHub sayfasını aç',
+    ptBr: 'Abrir página do GitHub',
     zhHans: '打开 GitHub 页面',
     zhHant: '開啟 GitHub 頁面',
   );
@@ -858,6 +993,7 @@ class AppStrings {
     en: 'Auto-copy debug JSON',
     ru: 'Автокопирование debug JSON',
     tr: 'Debug JSON\'unu otomatik kopyala',
+    ptBr: 'Copiar JSON de debug automaticamente',
     zhHans: '自动复制调试 JSON',
     zhHant: '自動複製偵錯 JSON',
   );
@@ -884,6 +1020,7 @@ class AppStrings {
     en: 'Title',
     ru: 'Заголовок',
     tr: 'Başlık',
+    ptBr: 'Título',
     zhHans: '标题',
     zhHant: '標題',
   );
@@ -892,6 +1029,7 @@ class AppStrings {
     en: 'Payload JSON',
     ru: 'Payload JSON',
     tr: 'Payload JSON',
+    ptBr: 'Payload JSON',
     zhHans: 'Payload JSON',
     zhHant: 'Payload JSON',
   );
@@ -900,6 +1038,7 @@ class AppStrings {
     en: 'loading apps...',
     ru: 'загрузка приложений...',
     tr: 'uygulamalar yükleniyor...',
+    ptBr: 'carregando apps...',
     zhHans: '正在加载应用...',
     zhHant: '正在載入應用程式...',
   );
@@ -908,6 +1047,7 @@ class AppStrings {
     en: 'Search for apps...',
     ru: 'Поиск приложений...',
     tr: 'Uygulama ara...',
+    ptBr: 'Buscar apps...',
     zhHans: '搜索应用...',
     zhHant: '搜尋應用程式...',
   );
@@ -918,6 +1058,7 @@ class AppStrings {
     en: 'Report a bug',
     ru: 'Сообщить о баге',
     tr: 'Hata bildir',
+    ptBr: 'Reportar um bug',
     zhHans: '报告问题',
     zhHant: '回報問題',
   );
@@ -926,6 +1067,7 @@ class AppStrings {
     en: 'Diagnostics copied to clipboard. Paste it into the issue.',
     ru: 'Диагностика скопирована в буфер. Вставьте в issue.',
     tr: 'Tanılama panoya kopyalandı. Issue içine yapıştırın.',
+    ptBr: 'Diagnóstico copiado para a área de transferência. Cole no issue.',
     zhHans: '诊断信息已复制到剪贴板，请粘贴到 issue 中。',
     zhHant: '診斷資訊已複製到剪貼簿，請貼到 issue。',
   );
@@ -934,6 +1076,7 @@ class AppStrings {
     en: 'Failed to copy diagnostics.',
     ru: 'Не удалось скопировать диагностику.',
     tr: 'Tanılama kopyalanamadı.',
+    ptBr: 'Falha ao copiar diagnóstico.',
     zhHans: '复制诊断信息失败。',
     zhHant: '複製診斷資訊失敗。',
   );
@@ -942,6 +1085,7 @@ class AppStrings {
     en: 'Permissions',
     ru: 'Разрешения',
     tr: 'İzinler',
+    ptBr: 'Permissões',
     zhHans: '权限',
     zhHant: '權限',
   );
@@ -950,6 +1094,7 @@ class AppStrings {
     en: 'Notification Listener access',
     ru: 'Доступ к уведомлениям',
     tr: 'Bildirim dinleyicisi erişimi',
+    ptBr: 'Acesso ao Notification Listener',
     zhHans: '通知监听访问',
     zhHant: '通知監聽存取',
   );
@@ -958,6 +1103,7 @@ class AppStrings {
     en: 'Post notifications permission',
     ru: 'Отправка уведомлений',
     tr: 'Bildirim gönderme izni',
+    ptBr: 'Permissão para enviar notificações',
     zhHans: '发送通知权限',
     zhHant: '發送通知權限',
   );
@@ -966,6 +1112,7 @@ class AppStrings {
     en: 'Live Updates promotion',
     ru: 'Разрешение на Live Updates',
     tr: 'Live Updates tanıtımı',
+    ptBr: 'Permissão para Live Updates',
     zhHans: 'Live Updates 推送权限',
     zhHant: 'Live Updates 推送權限',
   );
@@ -974,6 +1121,7 @@ class AppStrings {
     en: 'Settings',
     ru: 'Настройки',
     tr: 'Ayarlar',
+    ptBr: 'Configurações',
     zhHans: '设置',
     zhHant: '設定',
   );
@@ -982,6 +1130,7 @@ class AppStrings {
     en: 'Alt background mode',
     ru: 'Альтернативный фоновый режим',
     tr: 'Alternatif arka plan modu',
+    ptBr: 'Modo alternativo em segundo plano',
     zhHans: '替代后台模式',
     zhHant: '替代背景模式',
   );
@@ -990,6 +1139,7 @@ class AppStrings {
     en: 'Network speed',
     ru: 'Скорость сети',
     tr: 'Ağ hızı',
+    ptBr: 'Velocidade da rede',
     zhHans: '网速',
     zhHant: '網速',
   );
@@ -998,6 +1148,7 @@ class AppStrings {
     en: 'Always show',
     ru: 'Показывать всегда',
     tr: 'Her zaman göster',
+    ptBr: 'Sempre mostrar',
     zhHans: '始终显示',
     zhHant: '永遠顯示',
   );
@@ -1006,6 +1157,7 @@ class AppStrings {
     en: 'Sync DnD',
     ru: 'Синхронизировать DnD',
     tr: 'DnD eşitle',
+    ptBr: 'Sincronizar Não Perturbe',
     zhHans: '同步勿扰',
     zhHant: '同步勿擾',
   );
@@ -1014,6 +1166,7 @@ class AppStrings {
     en: 'Prevent dismissing',
     ru: 'Запретить скрытие',
     tr: 'Kapatmayı engelle',
+    ptBr: 'Impedir dispensa',
     zhHans: '防止被关闭',
     zhHant: '防止被關閉',
   );
@@ -1022,6 +1175,7 @@ class AppStrings {
     en: 'Update checking',
     ru: 'Проверка обновлений',
     tr: 'Güncelleme denetimi',
+    ptBr: 'Verificação de atualizações',
     zhHans: '检查更新',
     zhHant: '檢查更新',
   );
@@ -1030,6 +1184,7 @@ class AppStrings {
     en: 'Experimental',
     ru: 'Экспериментальное',
     tr: 'Deneysel',
+    ptBr: 'Experimental',
     zhHans: '实验功能',
     zhHant: '實驗功能',
   );
@@ -1038,6 +1193,7 @@ class AppStrings {
     en: 'AOSP cutting',
     ru: 'Обрезка AOSP',
     tr: 'AOSP kırpma',
+    ptBr: 'Recorte AOSP',
     zhHans: 'AOSP 裁剪',
     zhHant: 'AOSP 裁切',
   );
@@ -1046,6 +1202,7 @@ class AppStrings {
     en: 'Per-app behavior',
     ru: 'Поведение приложений',
     tr: 'Uygulama bazlı davranış',
+    ptBr: 'Comportamento por app',
     zhHans: '按应用行为',
     zhHant: '各應用行為',
   );
@@ -1054,6 +1211,7 @@ class AppStrings {
     en: 'Unable to load per-app settings.',
     ru: 'Не удалось загрузить настройки приложений.',
     tr: 'Uygulama bazlı ayarlar yüklenemiyor.',
+    ptBr: 'Não foi possível carregar configurações por app.',
     zhHans: '无法加载按应用设置。',
     zhHant: '無法載入各應用設定。',
   );
@@ -1062,6 +1220,7 @@ class AppStrings {
     en: 'Unable to save per-app settings.',
     ru: 'Не удалось сохранить настройки приложений.',
     tr: 'Uygulama bazlı ayarlar kaydedilemiyor.',
+    ptBr: 'Não foi possível salvar configurações por app.',
     zhHans: '无法保存按应用设置。',
     zhHant: '無法儲存各應用設定。',
   );
@@ -1070,6 +1229,7 @@ class AppStrings {
     en: 'Failed to save settings JSON.',
     ru: 'Не удалось сохранить JSON настроек.',
     tr: 'Ayarlar JSON\'u kaydedilemedi.',
+    ptBr: 'Falha ao salvar JSON de configurações.',
     zhHans: '保存设置 JSON 失败。',
     zhHant: '儲存設定 JSON 失敗。',
   );
@@ -1078,6 +1238,7 @@ class AppStrings {
     en: 'Settings saved to Downloads.',
     ru: 'Настройки сохранены в Загрузки.',
     tr: 'Ayarlar İndirilenler klasörüne kaydedildi.',
+    ptBr: 'Configurações salvas em Downloads.',
     zhHans: '设置已保存到下载目录。',
     zhHant: '設定已儲存到下載資料夾。',
   );
@@ -1086,6 +1247,7 @@ class AppStrings {
     en: 'Per-app settings imported.',
     ru: 'Настройки приложений загружены.',
     tr: 'Uygulama bazlı ayarlar içe aktarıldı.',
+    ptBr: 'Configurações por app importadas.',
     zhHans: '已导入按应用设置。',
     zhHant: '已匯入各應用設定。',
   );
@@ -1094,6 +1256,7 @@ class AppStrings {
     en: 'Failed to import settings JSON.',
     ru: 'Не удалось загрузить JSON настроек.',
     tr: 'Ayarlar JSON\'u içe aktarılamadı.',
+    ptBr: 'Falha ao importar JSON de configurações.',
     zhHans: '导入设置 JSON 失败。',
     zhHant: '匯入設定 JSON 失敗。',
   );
@@ -1102,6 +1265,7 @@ class AppStrings {
     en: 'Invalid per-app settings JSON.',
     ru: 'Невалидный JSON настроек приложений.',
     tr: 'Geçersiz uygulama bazlı ayarlar JSON\'u.',
+    ptBr: 'JSON de configurações por app inválido.',
     zhHans: '按应用设置 JSON 无效。',
     zhHant: '各應用設定 JSON 無效。',
   );
@@ -1110,6 +1274,7 @@ class AppStrings {
     en: 'Download settings',
     ru: 'Скачать настройки',
     tr: 'Ayarları indir',
+    ptBr: 'Baixar configurações',
     zhHans: '下载设置',
     zhHant: '下載設定',
   );
@@ -1118,17 +1283,25 @@ class AppStrings {
     en: 'Upload settings',
     ru: 'Загрузить настройки',
     tr: 'Ayarları yükle',
+    ptBr: 'Enviar configurações',
     zhHans: '上传设置',
     zhHant: '上傳設定',
   );
 
-  String get save =>
-      tr(en: 'Save', ru: 'Сохранить', tr: 'Kaydet', zhHans: '保存', zhHant: '儲存');
+  String get save => tr(
+    en: 'Save',
+    ru: 'Сохранить',
+    tr: 'Kaydet',
+    ptBr: 'Salvar',
+    zhHans: '保存',
+    zhHant: '儲存',
+  );
 
   String get appsLoadFailed => tr(
     en: 'Unable to load installed apps list.',
     ru: 'Не удалось загрузить список приложений.',
     tr: 'Yüklü uygulama listesi yüklenemiyor.',
+    ptBr: 'Não foi possível carregar a lista de apps instalados.',
     zhHans: '无法加载已安装应用列表。',
     zhHant: '無法載入已安裝應用清單。',
   );
@@ -1137,6 +1310,7 @@ class AppStrings {
     en: 'App list access',
     ru: 'Доступ к списку приложений',
     tr: 'Uygulama listesi erişimi',
+    ptBr: 'Acesso à lista de apps',
     zhHans: '应用列表访问',
     zhHant: '應用清單存取',
   );
@@ -1145,6 +1319,8 @@ class AppStrings {
     en: 'Allow LiveBridge to read installed apps so you can pick apps for rules?',
     ru: 'Разрешить LiveBridge читать список установленных приложений для выбора правил?',
     tr: 'Kurallar için uygulama seçebilmeniz adına LiveBridge yüklü uygulamaları okuyabilsin mi?',
+    ptBr:
+        'Permitir que o LiveBridge leia os apps instalados para que você possa escolher apps para as regras?',
     zhHans: '允许 LiveBridge 读取已安装应用列表，以便为规则选择应用吗？',
     zhHant: '允許 LiveBridge 讀取已安裝應用清單，以便為規則選擇應用程式嗎？',
   );
@@ -1153,17 +1329,25 @@ class AppStrings {
     en: 'Unable to save access preference.',
     ru: 'Не удалось сохранить выбор доступа.',
     tr: 'Erişim tercihi kaydedilemiyor.',
+    ptBr: 'Não foi possível salvar a preferência de acesso.',
     zhHans: '无法保存访问偏好。',
     zhHant: '無法儲存存取偏好。',
   );
 
-  String get cancel =>
-      tr(en: 'Cancel', ru: 'Отмена', tr: 'İptal', zhHans: '取消', zhHant: '取消');
+  String get cancel => tr(
+    en: 'Cancel',
+    ru: 'Отмена',
+    tr: 'İptal',
+    ptBr: 'Cancelar',
+    zhHans: '取消',
+    zhHant: '取消',
+  );
 
   String get allow => tr(
     en: 'Allow',
     ru: 'Разрешить',
     tr: 'İzin ver',
+    ptBr: 'Permitir',
     zhHans: '允许',
     zhHant: '允許',
   );
@@ -1425,161 +1609,8 @@ class AppStrings {
     en: 'Text progress',
     ru: 'Текстовые прогрессы',
     tr: 'Metin ilerlemesi',
+    ptBr: 'Progresso por texto',
     zhHans: '文本进度',
     zhHant: '文字進度',
   );
 }
-
-const Map<String, String> _ptBrTranslations = <String, String>{
-  'Refresh': 'Atualizar',
-  'Notification permission granted.': 'Permissão de notificações concedida.',
-  'Notification permission was not granted.':
-      'Permissão de notificações não concedida.',
-  'Unable to open Listener settings on this device.':
-      'Não foi possível abrir as configurações do Listener neste dispositivo.',
-  'Unable to open app notification settings.':
-      'Não foi possível abrir as configurações de notificação do app.',
-  'Unable to open Live Updates settings on this device.':
-      'Não foi possível abrir as configurações de Live Updates neste dispositivo.',
-  'Unable to open GitHub link.': 'Não foi possível abrir o link do GitHub.',
-  'Unable to open link.': 'Não foi possível abrir o link.',
-  'Unable to check updates. Try disabling VPN.':
-      'Não foi possível verificar atualizações. Tente desativar a VPN.',
-  'Dictionary is empty or invalid.': 'O dicionário está vazio ou inválido.',
-  'Dictionary updated from GitHub.': 'Dicionário atualizado pelo GitHub.',
-  'Invalid dictionary JSON.': 'JSON do dicionário inválido.',
-  'Failed to update dictionary from GitHub.':
-      'Falha ao atualizar o dicionário pelo GitHub.',
-  'Dictionary': 'Dicionário',
-  'tap to manage': 'toque para gerenciar',
-  'Dictionary languages': 'Idiomas do dicionário',
-  'tap to choose': 'toque para escolher',
-  'Select languages for conversion': 'Selecione idiomas para conversão',
-  'Update dictionaries': 'Atualizar dicionários',
-  'Dictionary editor': 'Editor de dicionário',
-  '(coming soon)': '(em breve)',
-  'Home': 'Início',
-  'Rules': 'Regras',
-  'Settings': 'Configurações',
-  'App config': 'Configuração do app',
-  'Brand-specific': 'Específico da marca',
-  'App updates': 'Atualizações do app',
-  'LiveBridge is running': 'LiveBridge está em execução',
-  'LiveBridge is disabled': 'LiveBridge está desativado',
-  'by ': 'por ',
-  'Discuss': 'Discutir',
-  'telegram topics': 'tópicos no Telegram',
-  'all apps': 'todos os apps',
-  'only selected': 'somente selecionados',
-  'exclude selected': 'excluir selecionados',
-  'check required': 'verificação necessária',
-  'all set': 'tudo certo',
-  'tap to update': 'toque para atualizar',
-  'latest version': 'versão mais recente',
-  'Recent conversions': 'Conversões recentes',
-  'no conversions yet': 'nenhuma conversão ainda',
-  'conversion log is disabled': 'o log de conversões está desativado',
-  'enable': 'ativar',
-  'Payload copied': 'Payload copiado',
-  'Progress': 'Progresso',
-  'Native progress': 'Progresso nativo',
-  'OTP codes': 'Códigos OTP',
-  'Auto-copy code': 'Copiar código automaticamente',
-  'Smart conversion': 'Conversão inteligente',
-  'Taxi': 'Táxi',
-  'Deliveries': 'Entregas',
-  'Remove original message': 'Remover mensagem original',
-  '(exp)': '(exp)',
-  'All apps': 'Todos os apps',
-  'Only selected': 'Somente selecionados',
-  'Exclude selected': 'Excluir selecionados',
-  'Conversion mode': 'Modo de conversão',
-  'Selected apps': 'Apps selecionados',
-  'show system': 'mostrar sistema',
-  'hide system': 'ocultar sistema',
-  'Network & Connections': 'Rede e conexões',
-  'VPNs': 'VPNs',
-  'External devices': 'Dispositivos externos',
-  'Ignore debugging devices': 'Ignorar dispositivos de depuração',
-  'Network speed threshold': 'Limite de velocidade de rede',
-  'Miscellaneous': 'Diversos',
-  'Navigation (maps)': 'Navegação (mapas)',
-  'Media playback': 'Reprodução de mídia',
-  'Weather broadcasts': 'Alertas de clima',
-  'Bypass': 'Bypass',
-  'Per-app settings': 'Configurações por app',
-  'Defaults': 'Padrões',
-  'tap to change default behavior': 'toque para alterar o comportamento padrão',
-  'Apps list': 'Lista de apps',
-  'Export': 'Exportar',
-  'Import': 'Importar',
-  'Title source': 'Origem do título',
-  'Content source': 'Origem do conteúdo',
-  'Notification title': 'Título da notificação',
-  'App title': 'Título do app',
-  'Notification text': 'Texto da notificação',
-  'New version available': 'Nova versão disponível',
-  'Checking for updates': 'Verificando atualizações',
-  'You’re all set': 'Tudo certo',
-  'tap to go to downloads': 'toque para ir aos downloads',
-  'please wait a moment': 'aguarde um momento',
-  'latest version already': 'já está na versão mais recente',
-  'Visit project page': 'Abrir página do projeto',
-  'Visit GitHub': 'Abrir GitHub',
-  'update available | tap to see': 'atualização disponível | toque para ver',
-  'tap to open update settings': 'toque para abrir ajustes de atualização',
-  'Conversion log': 'Log de conversões',
-  'Log length': 'Tamanho do log',
-  'Xiaomi HyperIsland': 'Xiaomi HyperIsland',
-  'Length': 'Tamanho',
-  'OTP dedup': 'Deduplicação de OTP',
-  'Smart conversion dedup': 'Deduplicação da conversão inteligente',
-  'Animated Island': 'Ilha animada',
-  'Update frequency': 'Frequência de atualização',
-  'Copy debug JSON': 'Copiar JSON de debug',
-  'Open GitHub page': 'Abrir página do GitHub',
-  'Auto-copy debug JSON': 'Copiar JSON de debug automaticamente',
-  'Title': 'Título',
-  'Payload JSON': 'Payload JSON',
-  'loading apps...': 'carregando apps...',
-  'Search for apps...': 'Buscar apps...',
-  'Report a bug': 'Reportar um bug',
-  'Diagnostics copied to clipboard. Paste it into the issue.':
-      'Diagnóstico copiado para a área de transferência. Cole no issue.',
-  'Failed to copy diagnostics.': 'Falha ao copiar diagnóstico.',
-  'Permissions': 'Permissões',
-  'Notification Listener access': 'Acesso ao Notification Listener',
-  'Post notifications permission': 'Permissão para enviar notificações',
-  'Live Updates promotion': 'Permissão para Live Updates',
-  'Alt background mode': 'Modo alternativo em segundo plano',
-  'Network speed': 'Velocidade da rede',
-  'Always show': 'Sempre mostrar',
-  'Sync DnD': 'Sincronizar Não Perturbe',
-  'Prevent dismissing': 'Impedir dispensa',
-  'Update checking': 'Verificação de atualizações',
-  'Experimental': 'Experimental',
-  'AOSP cutting': 'Recorte AOSP',
-  'Per-app behavior': 'Comportamento por app',
-  'Unable to load per-app settings.':
-      'Não foi possível carregar configurações por app.',
-  'Unable to save per-app settings.':
-      'Não foi possível salvar configurações por app.',
-  'Failed to save settings JSON.': 'Falha ao salvar JSON de configurações.',
-  'Settings saved to Downloads.': 'Configurações salvas em Downloads.',
-  'Per-app settings imported.': 'Configurações por app importadas.',
-  'Failed to import settings JSON.': 'Falha ao importar JSON de configurações.',
-  'Invalid per-app settings JSON.': 'JSON de configurações por app inválido.',
-  'Download settings': 'Baixar configurações',
-  'Upload settings': 'Enviar configurações',
-  'Save': 'Salvar',
-  'Unable to load installed apps list.':
-      'Não foi possível carregar a lista de apps instalados.',
-  'App list access': 'Acesso à lista de apps',
-  'Allow LiveBridge to read installed apps so you can pick apps for rules?':
-      'Permitir que o LiveBridge leia os apps instalados para que você possa escolher apps para as regras?',
-  'Unable to save access preference.':
-      'Não foi possível salvar a preferência de acesso.',
-  'Cancel': 'Cancelar',
-  'Allow': 'Permitir',
-  'Text progress': 'Progresso por texto',
-};
