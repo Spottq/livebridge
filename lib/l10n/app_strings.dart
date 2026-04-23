@@ -53,237 +53,237 @@ class AppStrings {
 
   String get refresh => tr(
     en: 'Refresh',
-    ru: 'РћР±РЅРѕРІРёС‚СЊ',
+    ru: 'Обновить',
     tr: 'Yenile',
-    zhHans: 'е€·ж–°',
-    zhHant: 'й‡Ќж–°ж•ґзђ†',
+    zhHans: '刷新',
+    zhHant: '重新整理',
   );
 
   String get permissionGranted => tr(
     en: 'Notification permission granted.',
-    ru: 'Р Р°Р·СЂРµС€РµРЅРёРµ РЅР° СѓРІРµРґРѕРјР»РµРЅРёСЏ РІС‹РґР°РЅРѕ.',
+    ru: 'Разрешение на уведомления выдано.',
     tr: 'Bildirim izni verildi.',
-    zhHans: 'йЂљзџҐжќѓй™ђе·ІжЋ€дє€гЂ‚',
-    zhHant: 'йЂљзџҐж¬Љй™ђе·ІжЋ€дє€гЂ‚',
+    zhHans: '通知权限已授予。',
+    zhHant: '通知權限已授予。',
   );
 
   String get permissionDenied => tr(
     en: 'Notification permission was not granted.',
-    ru: 'Р Р°Р·СЂРµС€РµРЅРёРµ РЅР° СѓРІРµРґРѕРјР»РµРЅРёСЏ РЅРµ РІС‹РґР°РЅРѕ.',
+    ru: 'Разрешение на уведомления не выдано.',
     tr: 'Bildirim izni verilmedi.',
-    zhHans: 'жњЄжЋ€дє€йЂљзџҐжќѓй™ђгЂ‚',
-    zhHant: 'жњЄжЋ€дє€йЂљзџҐж¬Љй™ђгЂ‚',
+    zhHans: '未授予通知权限。',
+    zhHant: '未授予通知權限。',
   );
 
   String get listenerUnavailable => tr(
     en: 'Unable to open Listener settings on this device.',
-    ru: 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ РЅР°СЃС‚СЂРѕР№РєРё Listener.',
-    tr: 'Bu cihazda Listener ayarlarД± aГ§Д±lamД±yor.',
-    zhHans: 'ж­¤и®ѕе¤‡ж— жі•ж‰“ејЂз›‘еђ¬е™Ёи®ѕзЅ®гЂ‚',
-    zhHant: 'ж­¤иЈќзЅ®з„Ўжі•й–‹е•џз›ЈиЃЅе™ЁиЁ­е®љгЂ‚',
+    ru: 'Не удалось открыть настройки Listener.',
+    tr: 'Bu cihazda Listener ayarları açılamıyor.',
+    zhHans: '此设备无法打开监听器设置。',
+    zhHant: '此裝置無法開啟監聽器設定。',
   );
 
   String get notificationsUnavailable => tr(
     en: 'Unable to open app notification settings.',
-    ru: 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ РЅР°СЃС‚СЂРѕР№РєРё СѓРІРµРґРѕРјР»РµРЅРёР№.',
-    tr: 'Uygulama bildirim ayarlarД± aГ§Д±lamД±yor.',
-    zhHans: 'ж— жі•ж‰“ејЂеє”з”ЁйЂљзџҐи®ѕзЅ®гЂ‚',
-    zhHant: 'з„Ўжі•й–‹е•џж‡‰з”ЁйЂљзџҐиЁ­е®љгЂ‚',
+    ru: 'Не удалось открыть настройки уведомлений.',
+    tr: 'Uygulama bildirim ayarları açılamıyor.',
+    zhHans: '无法打开应用通知设置。',
+    zhHant: '無法開啟應用通知設定。',
   );
 
   String get liveUpdatesUnavailable => tr(
     en: 'Unable to open Live Updates settings on this device.',
-    ru: 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ РЅР°СЃС‚СЂРѕР№РєРё Live Updates.',
-    tr: 'Bu cihazda Live Updates ayarlarД± aГ§Д±lamД±yor.',
-    zhHans: 'ж­¤и®ѕе¤‡ж— жі•ж‰“ејЂ Live Updates и®ѕзЅ®гЂ‚',
-    zhHant: 'ж­¤иЈќзЅ®з„Ўжі•й–‹е•џ Live Updates иЁ­е®љгЂ‚',
+    ru: 'Не удалось открыть настройки Live Updates.',
+    tr: 'Bu cihazda Live Updates ayarları açılamıyor.',
+    zhHans: '此设备无法打开 Live Updates 设置。',
+    zhHant: '此裝置無法開啟 Live Updates 設定。',
   );
 
   String get githubOpenFailed => tr(
     en: 'Unable to open GitHub link.',
-    ru: 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ СЃСЃС‹Р»РєСѓ GitHub.',
-    tr: 'GitHub baДџlantД±sД± aГ§Д±lamД±yor.',
-    zhHans: 'ж— жі•ж‰“ејЂ GitHub й“ѕжЋҐгЂ‚',
-    zhHant: 'з„Ўжі•й–‹е•џ GitHub йЂЈзµђгЂ‚',
+    ru: 'Не удалось открыть ссылку GitHub.',
+    tr: 'GitHub bağlantısı açılamıyor.',
+    zhHans: '无法打开 GitHub 链接。',
+    zhHant: '無法開啟 GitHub 連結。',
   );
 
   String get linkOpenFailed => tr(
     en: 'Unable to open link.',
-    ru: 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РєСЂС‹С‚СЊ СЃСЃС‹Р»РєСѓ.',
-    tr: 'BaДџlantД± aГ§Д±lamД±yor.',
-    zhHans: 'ж— жі•ж‰“ејЂй“ѕжЋҐгЂ‚',
-    zhHant: 'з„Ўжі•й–‹е•џйЂЈзµђгЂ‚',
+    ru: 'Не удалось открыть ссылку.',
+    tr: 'Bağlantı açılamıyor.',
+    zhHans: '无法打开链接。',
+    zhHant: '無法開啟連結。',
   );
 
   String get updateCheckFailed => tr(
     en: 'Unable to check updates. Try disabling VPN.',
-    ru: 'РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕРІРµСЂРёС‚СЊ РѕР±РЅРѕРІР»РµРЅРёСЏ. РџРѕРїСЂРѕР±СѓР№С‚Рµ РѕС‚РєР»СЋС‡РёС‚СЊ VPN.',
-    tr: 'GГјncellemeler denetlenemiyor. VPN\'i kapatmayД± deneyin.',
-    zhHans: 'ж— жі•жЈЂжџҐж›ґж–°гЂ‚иЇ·е°ќиЇ•е…ій—­ VPNгЂ‚',
-    zhHant: 'з„Ўжі•жЄўжџҐж›ґж–°гЂ‚и«‹е—и©¦й—њй–‰ VPNгЂ‚',
+    ru: 'Не удалось проверить обновления. Попробуйте отключить VPN.',
+    tr: 'Güncellemeler denetlenemiyor. VPN\'i kapatmayı deneyin.',
+    zhHans: '无法检查更新。请尝试关闭 VPN。',
+    zhHant: '無法檢查更新。請嘗試關閉 VPN。',
   );
 
   String get dictionaryEmpty => tr(
     en: 'Dictionary is empty or invalid.',
-    ru: 'РЎР»РѕРІР°СЂСЊ РїСѓСЃС‚РѕР№ РёР»Рё РїРѕРІСЂРµР¶РґРµРЅ.',
-    tr: 'SГ¶zlГјk boЕџ veya geГ§ersiz.',
-    zhHans: 'иЇЌе…ёдёєз©єж€–ж— ж•€гЂ‚',
-    zhHant: 'е­—е…ёз‚єз©єж€–з„Ўж•€гЂ‚',
+    ru: 'Словарь пустой или поврежден.',
+    tr: 'Sözlük boş veya geçersiz.',
+    zhHans: '词典为空或无效。',
+    zhHant: '字典為空或無效。',
   );
 
   String get dictionaryUpdateDone => tr(
     en: 'Dictionary updated from GitHub.',
-    ru: 'РЎР»РѕРІР°СЂСЊ РѕР±РЅРѕРІР»РµРЅ РёР· GitHub.',
-    tr: 'SГ¶zlГјk GitHub\'dan gГјncellendi.',
-    zhHans: 'иЇЌе…ёе·Ід»Ћ GitHub ж›ґж–°гЂ‚',
-    zhHant: 'е­—е…ёе·Іеѕћ GitHub ж›ґж–°гЂ‚',
+    ru: 'Словарь обновлен из GitHub.',
+    tr: 'Sözlük GitHub\'dan güncellendi.',
+    zhHans: '词典已从 GitHub 更新。',
+    zhHant: '字典已從 GitHub 更新。',
   );
 
   String get dictionaryInvalid => tr(
     en: 'Invalid dictionary JSON.',
-    ru: 'РќРµРІР°Р»РёРґРЅС‹Р№ JSON СЃР»РѕРІР°СЂСЏ.',
-    tr: 'GeГ§ersiz sГ¶zlГјk JSON\'u.',
-    zhHans: 'иЇЌе…ё JSON ж— ж•€гЂ‚',
-    zhHant: 'е­—е…ё JSON з„Ўж•€гЂ‚',
+    ru: 'Невалидный JSON словаря.',
+    tr: 'Geçersiz sözlük JSON\'u.',
+    zhHans: '词典 JSON 无效。',
+    zhHant: '字典 JSON 無效。',
   );
 
   String get dictionaryUpdateFailed => tr(
     en: 'Failed to update dictionary from GitHub.',
-    ru: 'РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СЃР»РѕРІР°СЂСЊ РёР· GitHub.',
-    tr: 'SГ¶zlГјk GitHub\'dan gГјncellenemedi.',
-    zhHans: 'д»Ћ GitHub ж›ґж–°иЇЌе…ёе¤±иґҐгЂ‚',
-    zhHant: 'еѕћ GitHub ж›ґж–°е­—е…ёе¤±ж•—гЂ‚',
+    ru: 'Не удалось обновить словарь из GitHub.',
+    tr: 'Sözlük GitHub\'dan güncellenemedi.',
+    zhHans: '从 GitHub 更新词典失败。',
+    zhHant: '從 GitHub 更新字典失敗。',
   );
 
   String get dictionaryTitle => tr(
     en: 'Dictionary',
-    ru: 'РЎР»РѕРІР°СЂСЊ',
-    tr: 'SГ¶zlГјk',
-    zhHans: 'иЇЌе…ё',
-    zhHant: 'е­—е…ё',
+    ru: 'Словарь',
+    tr: 'Sözlük',
+    zhHans: '词典',
+    zhHant: '字典',
   );
 
   String get dictionaryManageSubtitle => tr(
     en: 'tap to manage',
-    ru: 'РЅР°Р¶РјРёС‚Рµ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ',
-    tr: 'yГ¶netmek iГ§in dokunun',
-    zhHans: 'з‚№жЊ‰д»Ґз®Ўзђ†',
-    zhHant: 'й»ћжЊ‰д»Ґз®Ўзђ†',
+    ru: 'нажмите для управления',
+    tr: 'yönetmek için dokunun',
+    zhHans: '点按以管理',
+    zhHant: '點按以管理',
   );
 
   String get dictionaryLanguagesTitle => tr(
     en: 'Dictionary languages',
-    ru: 'РЇР·С‹РєРё СЃР»РѕРІР°СЂСЏ',
-    tr: 'SГ¶zlГјk dilleri',
-    zhHans: 'иЇЌе…ёиЇ­иЁЂ',
-    zhHant: 'е­—е…ёиЄћиЁЂ',
+    ru: 'Языки словаря',
+    tr: 'Sözlük dilleri',
+    zhHans: '词典语言',
+    zhHant: '字典語言',
   );
 
   String get dictionaryLanguagesSubtitle => tr(
     en: 'tap to choose',
-    ru: 'РЅР°Р¶РјРёС‚Рµ РґР»СЏ РІС‹Р±РѕСЂР°',
-    tr: 'seГ§mek iГ§in dokunun',
-    zhHans: 'з‚№жЊ‰д»ҐйЂ‰ж‹©',
-    zhHant: 'й»ћжЊ‰д»ҐйЃёж“‡',
+    ru: 'нажмите для выбора',
+    tr: 'seçmek için dokunun',
+    zhHans: '点按以选择',
+    zhHant: '點按以選擇',
   );
 
   String get dictionaryLanguagesPickerTitle => tr(
     en: 'Select languages for conversion',
-    ru: 'Р’С‹Р±РµСЂРёС‚Рµ СЏР·С‹РєРё РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†РёРё',
-    tr: 'DГ¶nГјЕџtГјrme iГ§in dilleri seГ§in',
-    zhHans: 'йЂ‰ж‹©з”ЁдєЋиЅ¬жЌўзљ„иЇ­иЁЂ',
-    zhHant: 'йЃёж“‡з”Ёж–јиЅ‰жЏ›зљ„иЄћиЁЂ',
+    ru: 'Выберите языки для конвертации',
+    tr: 'Dönüştürme için dilleri seçin',
+    zhHans: '选择用于转换的语言',
+    zhHant: '選擇用於轉換的語言',
   );
 
   String get dictionaryUpdateAction => tr(
     en: 'Update dictionaries',
-    ru: 'РћР±РЅРѕРІРёС‚СЊ СЃР»РѕРІР°СЂРё',
-    tr: 'SГ¶zlГјkleri gГјncelle',
-    zhHans: 'ж›ґж–°иЇЌе…ё',
-    zhHant: 'ж›ґж–°е­—е…ё',
+    ru: 'Обновить словари',
+    tr: 'Sözlükleri güncelle',
+    zhHans: '更新词典',
+    zhHant: '更新字典',
   );
 
   String get dictionaryEditorTitle => tr(
     en: 'Dictionary editor',
-    ru: 'Р РµРґР°РєС‚РѕСЂ СЃР»РѕРІР°СЂСЏ',
-    tr: 'SГ¶zlГјk dГјzenleyici',
-    zhHans: 'иЇЌе…ёзј–иѕ‘е™Ё',
-    zhHant: 'е­—е…ёз·ЁијЇе™Ё',
+    ru: 'Редактор словаря',
+    tr: 'Sözlük düzenleyici',
+    zhHans: '词典编辑器',
+    zhHant: '字典編輯器',
   );
 
   String get dictionaryComingSoon => tr(
     en: '(coming soon)',
-    ru: '(СЃРєРѕСЂРѕ)',
-    tr: '(yakД±nda)',
-    zhHans: 'пј€еЌіе°†жЋЁе‡єпј‰',
-    zhHant: 'пј€еЌіе°‡жЋЁе‡єпј‰',
+    ru: '(скоро)',
+    tr: '(yakında)',
+    zhHans: '（即将推出）',
+    zhHant: '（即將推出）',
   );
 
   String get navHome =>
-      tr(en: 'Home', ru: 'Р”РѕРјРѕР№', tr: 'Ana sayfa', zhHans: 'дё»йЎµ', zhHant: 'й¦–й Ѓ');
+      tr(en: 'Home', ru: 'Домой', tr: 'Ana sayfa', zhHans: '主页', zhHant: '首頁');
 
   String get navRules => tr(
     en: 'Rules',
-    ru: 'РџСЂР°РІРёР»Р°',
+    ru: 'Правила',
     tr: 'Kurallar',
-    zhHans: 'и§„е€™',
-    zhHant: 'и¦Џе‰‡',
+    zhHans: '规则',
+    zhHant: '規則',
   );
 
   String get navSettings => tr(
     en: 'Settings',
-    ru: 'РќР°СЃС‚СЂРѕР№РєРё',
+    ru: 'Настройки',
     tr: 'Ayarlar',
-    zhHans: 'и®ѕзЅ®',
-    zhHant: 'иЁ­е®љ',
+    zhHans: '设置',
+    zhHant: '設定',
   );
 
   String get redesignRulesTitle => tr(
     en: 'Rules',
-    ru: 'РџСЂР°РІРёР»Р°',
+    ru: 'Правила',
     tr: 'Kurallar',
-    zhHans: 'и§„е€™',
-    zhHant: 'и¦Џе‰‡',
+    zhHans: '规则',
+    zhHant: '規則',
   );
 
   String get appConfigTitle => tr(
     en: 'App config',
-    ru: 'РќР°СЃС‚СЂРѕР№РєРё РїСЂРёР»РѕР¶РµРЅРёСЏ',
-    tr: 'Uygulama yapД±landД±rmasД±',
-    zhHans: 'еє”з”Ёй…ЌзЅ®',
-    zhHant: 'ж‡‰з”Ёй…ЌзЅ®',
+    ru: 'Настройки приложения',
+    tr: 'Uygulama yapılandırması',
+    zhHans: '应用配置',
+    zhHant: '應用配置',
   );
 
   String get brandSpecificTitle => tr(
     en: 'Brand-specific',
     ru: 'Brand-specific',
-    tr: 'Markaya Г¶zel',
-    zhHans: 'е“Ѓз‰Њз‰№е®љ',
-    zhHant: 'е“Ѓз‰Њз‰№е®љ',
+    tr: 'Markaya özel',
+    zhHans: '品牌特定',
+    zhHant: '品牌特定',
   );
 
   String get appUpdatesTitle => tr(
     en: 'App updates',
-    ru: 'РћР±РЅРѕРІР»РµРЅРёСЏ РїСЂРёР»РѕР¶РµРЅРёСЏ',
-    tr: 'Uygulama gГјncellemeleri',
-    zhHans: 'еє”з”Ёж›ґж–°',
-    zhHant: 'ж‡‰з”Ёж›ґж–°',
+    ru: 'Обновления приложения',
+    tr: 'Uygulama güncellemeleri',
+    zhHans: '应用更新',
+    zhHant: '應用更新',
   );
 
   String get statusRunning => tr(
     en: 'LiveBridge is running',
-    ru: 'LiveBridge Р·Р°РїСѓС‰РµРЅ',
-    tr: 'LiveBridge Г§alД±ЕџД±yor',
-    zhHans: 'LiveBridge ж­ЈењЁиїђиЎЊ',
-    zhHant: 'LiveBridge ж­ЈењЁеџ·иЎЊ',
+    ru: 'LiveBridge запущен',
+    tr: 'LiveBridge çalışıyor',
+    zhHans: 'LiveBridge 正在运行',
+    zhHant: 'LiveBridge 正在執行',
   );
 
   String get statusDisabled => tr(
     en: 'LiveBridge is disabled',
-    ru: 'LiveBridge РІС‹РєР»СЋС‡РµРЅ',
-    tr: 'LiveBridge devre dД±ЕџД±',
-    zhHans: 'LiveBridge е·Іе…ій—­',
-    zhHant: 'LiveBridge е·Ій—њй–‰',
+    ru: 'LiveBridge выключен',
+    tr: 'LiveBridge devre dışı',
+    zhHans: 'LiveBridge 已关闭',
+    zhHant: 'LiveBridge 已關閉',
   );
 
   String get statusByPrefix =>
@@ -292,244 +292,244 @@ class AppStrings {
   String get discussTitle => tr(
     en: 'Discuss',
     ru: 'Discuss',
-    tr: 'TartД±Еџ',
-    zhHans: 'и®Ёи®є',
-    zhHant: 'иЁЋи«–',
+    tr: 'Tartış',
+    zhHans: '讨论',
+    zhHant: '討論',
   );
 
   String get discussSubtitle => tr(
     en: 'telegram topics',
     ru: 'telegram topics',
-    tr: 'telegram konularД±',
-    zhHans: 'telegram иЇќйў',
-    zhHant: 'telegram и©±йЎЊ',
+    tr: 'telegram konuları',
+    zhHans: 'telegram 话题',
+    zhHant: 'telegram 話題',
   );
 
   String get rulesModeAllApps => tr(
     en: 'all apps',
-    ru: 'РІСЃРµ РїСЂРёР»РѕР¶РµРЅРёСЏ',
-    tr: 'tГјm uygulamalar',
-    zhHans: 'ж‰Ђжњ‰еє”з”Ё',
-    zhHant: 'ж‰Ђжњ‰ж‡‰з”ЁзЁ‹ејЏ',
+    ru: 'все приложения',
+    tr: 'tüm uygulamalar',
+    zhHans: '所有应用',
+    zhHant: '所有應用程式',
   );
 
   String get rulesModeOnlySelected => tr(
     en: 'only selected',
-    ru: 'С‚РѕР»СЊРєРѕ РІС‹Р±СЂР°РЅРЅС‹Рµ',
-    tr: 'yalnД±zca seГ§ilenler',
-    zhHans: 'д»…е·ІйЂ‰ж‹©',
-    zhHant: 'еѓ…е·ІйЃёеЏ–',
+    ru: 'только выбранные',
+    tr: 'yalnızca seçilenler',
+    zhHans: '仅已选择',
+    zhHant: '僅已選取',
   );
 
   String get rulesModeExcludeSelected => tr(
     en: 'exclude selected',
-    ru: 'РёСЃРєР»СЋС‡Р°СЏ РІС‹Р±СЂР°РЅРЅС‹Рµ',
-    tr: 'seГ§ilenleri hariГ§ tut',
-    zhHans: 'жЋ’й™¤е·ІйЂ‰ж‹©',
-    zhHant: 'жЋ’й™¤е·ІйЃёеЏ–',
+    ru: 'исключая выбранные',
+    tr: 'seçilenleri hariç tut',
+    zhHans: '排除已选择',
+    zhHant: '排除已選取',
   );
 
   String get permissionCheckRequired => tr(
     en: 'check required',
-    ru: 'С‚СЂРµР±СѓРµС‚СЃСЏ РїСЂРѕРІРµСЂРєР°',
+    ru: 'требуется проверка',
     tr: 'kontrol gerekli',
-    zhHans: 'йњЂи¦ЃжЈЂжџҐ',
-    zhHant: 'йњЂи¦ЃжЄўжџҐ',
+    zhHans: '需要检查',
+    zhHant: '需要檢查',
   );
 
   String get permissionsAllSet => tr(
     en: 'all set',
-    ru: 'РІСЃС‘ С…РѕСЂРѕС€Рѕ',
-    tr: 'hazД±r',
-    zhHans: 'е·Іе°±з»Є',
-    zhHant: 'е·Іе°±з·’',
+    ru: 'всё хорошо',
+    tr: 'hazır',
+    zhHans: '已就绪',
+    zhHant: '已就緒',
   );
 
   String get versionTapToUpdate => tr(
     en: 'tap to update',
-    ru: 'РЅР°Р¶РјРёС‚Рµ РґР»СЏ РѕР±РЅРѕРІР»РµРЅРёСЏ',
-    tr: 'gГјncellemek iГ§in dokunun',
-    zhHans: 'з‚№жЊ‰ж›ґж–°',
-    zhHant: 'й»ћжЊ‰ж›ґж–°',
+    ru: 'нажмите для обновления',
+    tr: 'güncellemek için dokunun',
+    zhHans: '点按更新',
+    zhHant: '點按更新',
   );
 
   String get versionLatestVersion => tr(
     en: 'latest version',
-    ru: 'РїРѕСЃР»РµРґРЅСЏСЏ РІРµСЂСЃРёСЏ',
-    tr: 'son sГјrГјm',
-    zhHans: 'жњЂж–°з‰€жњ¬',
-    zhHant: 'жњЂж–°з‰€жњ¬',
+    ru: 'последняя версия',
+    tr: 'son sürüm',
+    zhHans: '最新版本',
+    zhHant: '最新版本',
   );
 
   String get recentConversions => tr(
     en: 'Recent conversions',
-    ru: 'РџРѕСЃР»РµРґРЅРёРµ РєРѕРЅРІРµСЂС‚Р°С†РёРё',
-    tr: 'Son dГ¶nГјЕџtГјrmeler',
-    zhHans: 'жњЂиї‘иЅ¬жЌў',
-    zhHant: 'жњЂиї‘иЅ‰жЏ›',
+    ru: 'Последние конвертации',
+    tr: 'Son dönüştürmeler',
+    zhHans: '最近转换',
+    zhHant: '最近轉換',
   );
 
   String get noConversionsYet => tr(
     en: 'no conversions yet',
-    ru: 'РєРѕРЅРІРµСЂС‚Р°С†РёР№ РїРѕРєР° РЅРµС‚',
-    tr: 'henГјz dГ¶nГјЕџtГјrme yok',
-    zhHans: 'жљ‚ж— иЅ¬жЌў',
-    zhHant: 'жљ«з„ЎиЅ‰жЏ›',
+    ru: 'конвертаций пока нет',
+    tr: 'henüz dönüştürme yok',
+    zhHans: '暂无转换',
+    zhHant: '暫無轉換',
   );
 
   String get conversionLogDisabled => tr(
     en: 'conversion log is disabled',
-    ru: 'Р»РѕРі РєРѕРЅРІРµСЂС‚Р°С†РёР№ РІС‹РєР»СЋС‡РµРЅ',
-    tr: 'dГ¶nГјЕџtГјrme gГјnlГјДџГј kapalД±',
-    zhHans: 'иЅ¬жЌўж—Ґеї—е·Іе…ій—­',
-    zhHant: 'иЅ‰жЏ›иЁйЊ„е·Ій—њй–‰',
+    ru: 'лог конвертаций выключен',
+    tr: 'dönüştürme günlüğü kapalı',
+    zhHans: '转换日志已关闭',
+    zhHant: '轉換記錄已關閉',
   );
 
   String get enable => tr(
     en: 'enable',
-    ru: 'РІРєР»СЋС‡РёС‚СЊ',
-    tr: 'etkinleЕџtir',
-    zhHans: 'еђЇз”Ё',
-    zhHant: 'е•џз”Ё',
+    ru: 'включить',
+    tr: 'etkinleştir',
+    zhHans: '启用',
+    zhHant: '啟用',
   );
 
   String get payloadCopied => tr(
     en: 'Payload copied',
-    ru: 'Payload СЃРєРѕРїРёСЂРѕРІР°РЅ',
-    tr: 'Payload kopyalandД±',
-    zhHans: 'Payload е·Іе¤Ќе€¶',
-    zhHant: 'Payload е·Іи¤‡иЈЅ',
+    ru: 'Payload скопирован',
+    tr: 'Payload kopyalandı',
+    zhHans: 'Payload 已复制',
+    zhHant: 'Payload 已複製',
   );
 
   String get progressTitle => tr(
     en: 'Progress',
-    ru: 'РџСЂРѕРіСЂРµСЃСЃ',
-    tr: 'Д°lerleme',
-    zhHans: 'иї›еє¦',
-    zhHant: 'йЂІеє¦',
+    ru: 'Прогресс',
+    tr: 'İlerleme',
+    zhHans: '进度',
+    zhHant: '進度',
   );
 
   String get nativeProgressTitle => tr(
     en: 'Native progress',
-    ru: 'РќР°С‚РёРІРЅС‹Р№ РїСЂРѕРіСЂРµСЃСЃ',
+    ru: 'Нативный прогресс',
     tr: 'Yerel ilerleme',
-    zhHans: 'еЋџз”џиї›еє¦',
-    zhHant: 'еЋџз”џйЂІеє¦',
+    zhHans: '原生进度',
+    zhHant: '原生進度',
   );
 
   String get otpCodesTitle => tr(
     en: 'OTP codes',
-    ru: 'OTP-РєРѕРґС‹',
-    tr: 'OTP kodlarД±',
-    zhHans: 'OTP йЄЊиЇЃз Ѓ',
-    zhHant: 'OTP й©—и­‰зўј',
+    ru: 'OTP-коды',
+    tr: 'OTP kodları',
+    zhHans: 'OTP 验证码',
+    zhHant: 'OTP 驗證碼',
   );
 
   String get autoCopyCodeTitle => tr(
     en: 'Auto-copy code',
-    ru: 'РђРІС‚РѕРєРѕРїРёСЂРѕРІР°РЅРёРµ РєРѕРґР°',
+    ru: 'Автокопирование кода',
     tr: 'Kodu otomatik kopyala',
-    zhHans: 'и‡ЄеЉЁе¤Ќе€¶йЄЊиЇЃз Ѓ',
-    zhHant: 'и‡Єе‹•и¤‡иЈЅй©—и­‰зўј',
+    zhHans: '自动复制验证码',
+    zhHant: '自動複製驗證碼',
   );
 
   String get smartConversionTitle => tr(
     en: 'Smart conversion',
-    ru: 'РЈРјРЅР°СЏ РєРѕРЅРІРµСЂС‚Р°С†РёСЏ',
-    tr: 'AkД±llД± dГ¶nГјЕџtГјrme',
-    zhHans: 'ж™єиѓЅиЅ¬жЌў',
-    zhHant: 'ж™єж…§иЅ‰жЏ›',
+    ru: 'Умная конвертация',
+    tr: 'Akıllı dönüştürme',
+    zhHans: '智能转换',
+    zhHant: '智慧轉換',
   );
 
   String get taxiTitle =>
-      tr(en: 'Taxi', ru: 'РўР°РєСЃРё', tr: 'Taksi', zhHans: 'ж‰“иЅ¦', zhHant: 'еЏ«и»Љ');
+      tr(en: 'Taxi', ru: 'Такси', tr: 'Taksi', zhHans: '打车', zhHant: '叫車');
 
   String get deliveriesTitle => tr(
     en: 'Deliveries',
-    ru: 'Р”РѕСЃС‚Р°РІРєРё',
+    ru: 'Доставки',
     tr: 'Teslimatlar',
-    zhHans: 'е¤–еЌ–',
-    zhHant: 'е¤–йЂЃ',
+    zhHans: '外卖',
+    zhHant: '外送',
   );
 
   String get removeOriginalMessageTitle => tr(
     en: 'Remove original message',
-    ru: 'РЈРґР°Р»СЏС‚СЊ РёСЃС…РѕРґРЅРѕРµ СѓРІРµРґРѕРјР»РµРЅРёРµ',
-    tr: 'Orijinal bildirimi kaldД±r',
-    zhHans: 'з§»й™¤еЋџе§‹йЂљзџҐ',
-    zhHant: 'з§»й™¤еЋџе§‹йЂљзџҐ',
+    ru: 'Удалять исходное уведомление',
+    tr: 'Orijinal bildirimi kaldır',
+    zhHans: '移除原始通知',
+    zhHant: '移除原始通知',
   );
 
   String get experimentalSuffix => tr(
     en: '(exp)',
     ru: '(exp)',
     tr: '(deneysel)',
-    zhHans: 'пј€е®ћйЄЊпј‰',
-    zhHant: 'пј€еЇ¦й©—пј‰',
+    zhHans: '（实验）',
+    zhHant: '（實驗）',
   );
 
   String get allAppsTitle => tr(
     en: 'All apps',
-    ru: 'Р’СЃРµ РїСЂРёР»РѕР¶РµРЅРёСЏ',
-    tr: 'TГјm uygulamalar',
-    zhHans: 'ж‰Ђжњ‰еє”з”Ё',
-    zhHant: 'ж‰Ђжњ‰ж‡‰з”ЁзЁ‹ејЏ',
+    ru: 'Все приложения',
+    tr: 'Tüm uygulamalar',
+    zhHans: '所有应用',
+    zhHant: '所有應用程式',
   );
 
   String get onlySelectedTitle => tr(
     en: 'Only selected',
-    ru: 'РўРѕР»СЊРєРѕ РІС‹Р±СЂР°РЅРЅС‹Рµ',
-    tr: 'YalnД±zca seГ§ilenler',
-    zhHans: 'д»…е·ІйЂ‰ж‹©',
-    zhHant: 'еѓ…е·ІйЃёеЏ–',
+    ru: 'Только выбранные',
+    tr: 'Yalnızca seçilenler',
+    zhHans: '仅已选择',
+    zhHant: '僅已選取',
   );
 
   String get excludeSelectedTitle => tr(
     en: 'Exclude selected',
-    ru: 'РСЃРєР»СЋС‡РёС‚СЊ РІС‹Р±СЂР°РЅРЅС‹Рµ',
-    tr: 'SeГ§ilenleri hariГ§ tut',
-    zhHans: 'жЋ’й™¤е·ІйЂ‰ж‹©',
-    zhHant: 'жЋ’й™¤е·ІйЃёеЏ–',
+    ru: 'Исключить выбранные',
+    tr: 'Seçilenleri hariç tut',
+    zhHans: '排除已选择',
+    zhHant: '排除已選取',
   );
 
   String get conversionModeTitle => tr(
     en: 'Conversion mode',
-    ru: 'Р РµР¶РёРј РєРѕРЅРІРµСЂС‚Р°С†РёРё',
-    tr: 'DГ¶nГјЕџtГјrme modu',
-    zhHans: 'иЅ¬жЌўжЁЎејЏ',
-    zhHant: 'иЅ‰жЏ›жЁЎејЏ',
+    ru: 'Режим конвертации',
+    tr: 'Dönüştürme modu',
+    zhHans: '转换模式',
+    zhHant: '轉換模式',
   );
 
   String get selectedAppsTitle => tr(
     en: 'Selected apps',
-    ru: 'РџСЂРёР»РѕР¶РµРЅРёСЏ',
-    tr: 'SeГ§ili uygulamalar',
-    zhHans: 'е·ІйЂ‰ж‹©еє”з”Ё',
-    zhHant: 'е·ІйЃёеЏ–ж‡‰з”ЁзЁ‹ејЏ',
+    ru: 'Приложения',
+    tr: 'Seçili uygulamalar',
+    zhHans: '已选择应用',
+    zhHant: '已選取應用程式',
   );
 
   String get showSystem => tr(
     en: 'show system',
-    ru: 'РїРѕРєР°Р·Р°С‚СЊ СЃРёСЃС‚РµРјРЅС‹Рµ',
-    tr: 'sistem uygulamalarД±nД± gГ¶ster',
-    zhHans: 'жѕз¤єзі»з»џ',
-    zhHant: 'йЎЇз¤єзі»зµ±',
+    ru: 'показать системные',
+    tr: 'sistem uygulamalarını göster',
+    zhHans: '显示系统',
+    zhHant: '顯示系統',
   );
 
   String get hideSystem => tr(
     en: 'hide system',
-    ru: 'СЃРєСЂС‹С‚СЊ СЃРёСЃС‚РµРјРЅС‹Рµ',
-    tr: 'sistem uygulamalarД±nД± gizle',
-    zhHans: 'йљђи—Џзі»з»џ',
-    zhHant: 'йљ±и—Џзі»зµ±',
+    ru: 'скрыть системные',
+    tr: 'sistem uygulamalarını gizle',
+    zhHans: '隐藏系统',
+    zhHant: '隱藏系統',
   );
 
   String get networkConnectionsTitle => tr(
     en: 'Network & Connections',
-    ru: 'РЎРµС‚СЊ Рё РїРѕРґРєР»СЋС‡РµРЅРёСЏ',
-    tr: 'AДџ ve BaДџlantД±lar',
-    zhHans: 'зЅ‘з»њдёЋиїћжЋҐ',
-    zhHant: 'з¶Іи·Їи€‡йЂЈз·љ',
+    ru: 'Сеть и подключения',
+    tr: 'Ağ ve Bağlantılar',
+    zhHans: '网络与连接',
+    zhHant: '網路與連線',
   );
 
   String get vpnsTitle =>
@@ -537,355 +537,355 @@ class AppStrings {
 
   String get externalDevicesTitle => tr(
     en: 'External devices',
-    ru: 'Р’РЅРµС€РЅРёРµ СѓСЃС‚СЂРѕР№СЃС‚РІР°',
+    ru: 'Внешние устройства',
     tr: 'Harici cihazlar',
-    zhHans: 'е¤–жЋҐи®ѕе¤‡',
-    zhHant: 'е¤–жЋҐиЈќзЅ®',
+    zhHans: '外接设备',
+    zhHant: '外接裝置',
   );
 
   String get ignoreDebuggingDevicesTitle => tr(
     en: 'Ignore debugging devices',
-    ru: 'РРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ РѕС‚Р»Р°РґРѕС‡РЅС‹Рµ СѓСЃС‚СЂРѕР№СЃС‚РІР°',
-    tr: 'Hata ayД±klama cihazlarД±nД± yok say',
-    zhHans: 'еїЅз•Ґи°ѓиЇ•и®ѕе¤‡',
-    zhHant: 'еїЅз•ҐеЃµйЊЇиЈќзЅ®',
+    ru: 'Игнорировать отладочные устройства',
+    tr: 'Hata ayıklama cihazlarını yok say',
+    zhHans: '忽略调试设备',
+    zhHant: '忽略偵錯裝置',
   );
 
   String get networkSpeedThresholdRedesignTitle => tr(
     en: 'Network speed threshold',
-    ru: 'РџРѕСЂРѕРі СЃРєРѕСЂРѕСЃС‚Рё СЃРµС‚Рё',
-    tr: 'AДџ hД±zД± eЕџiДџi',
-    zhHans: 'зЅ‘йЂџй€еЂј',
-    zhHant: 'з¶ІйЂџй–ЂжЄ»',
+    ru: 'Порог скорости сети',
+    tr: 'Ağ hızı eşiği',
+    zhHans: '网速阈值',
+    zhHant: '網速門檻',
   );
 
   String get miscellaneousTitle => tr(
     en: 'Miscellaneous',
-    ru: 'Р Р°Р·РЅРѕРµ',
-    tr: 'DiДџer',
-    zhHans: 'е…¶д»–',
-    zhHant: 'е…¶д»–',
+    ru: 'Разное',
+    tr: 'Diğer',
+    zhHans: '其他',
+    zhHant: '其他',
   );
 
   String get navigationMapsTitle => tr(
     en: 'Navigation (maps)',
-    ru: 'РќР°РІРёРіР°С†РёСЏ (РєР°СЂС‚С‹)',
+    ru: 'Навигация (карты)',
     tr: 'Navigasyon (haritalar)',
-    zhHans: 'еЇји€Єпј€ењ°е›ѕпј‰',
-    zhHant: 'е°Ћи€Єпј€ењ°ењ–пј‰',
+    zhHans: '导航（地图）',
+    zhHant: '導航（地圖）',
   );
 
   String get mediaPlaybackRedesignTitle => tr(
     en: 'Media playback',
-    ru: 'РњРµРґРёР°',
+    ru: 'Медиа',
     tr: 'Medya oynatma',
-    zhHans: 'еЄ’дЅ“ж’­ж”ѕ',
-    zhHant: 'еЄ’й«”ж’­ж”ѕ',
+    zhHans: '媒体播放',
+    zhHant: '媒體播放',
   );
 
   String get weatherBroadcastsTitle => tr(
     en: 'Weather broadcasts',
-    ru: 'РџРѕРіРѕРґРЅС‹Рµ СѓРІРµРґРѕРјР»РµРЅРёСЏ',
+    ru: 'Погодные уведомления',
     tr: 'Hava durumu bildirimleri',
-    zhHans: 'е¤©ж°”ж’­жЉҐ',
-    zhHant: 'е¤©ж°Јж’­е ±',
+    zhHans: '天气播报',
+    zhHant: '天氣播報',
   );
 
   String get bypassTitle =>
-      tr(en: 'Bypass', ru: 'Bypass', tr: 'Bypass', zhHans: 'з»•иї‡', zhHant: 'з№ћйЃЋ');
+      tr(en: 'Bypass', ru: 'Bypass', tr: 'Bypass', zhHans: '绕过', zhHant: '繞過');
 
   String get perAppSettingsTitle => tr(
     en: 'Per-app settings',
-    ru: 'РќР°СЃС‚СЂРѕР№РєРё РїСЂРёР»РѕР¶РµРЅРёР№',
-    tr: 'Uygulama bazlД± ayarlar',
-    zhHans: 'жЊ‰еє”з”Ёи®ѕзЅ®',
-    zhHant: 'еђ„ж‡‰з”ЁиЁ­е®љ',
+    ru: 'Настройки приложений',
+    tr: 'Uygulama bazlı ayarlar',
+    zhHans: '按应用设置',
+    zhHant: '各應用設定',
   );
 
   String get defaultsTitle => tr(
     en: 'Defaults',
-    ru: 'РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ',
-    tr: 'VarsayД±lanlar',
-    zhHans: 'й»и®¤еЂј',
-    zhHant: 'й ђиЁ­еЂј',
+    ru: 'По умолчанию',
+    tr: 'Varsayılanlar',
+    zhHans: '默认值',
+    zhHant: '預設值',
   );
 
   String get defaultsSubtitle => tr(
     en: 'tap to change default behavior',
-    ru: 'РЅР°Р¶РјРёС‚Рµ, С‡С‚РѕР±С‹ РёР·РјРµРЅРёС‚СЊ РїРѕРІРµРґРµРЅРёРµ',
-    tr: 'varsayД±lan davranД±ЕџД± deДџiЕџtirmek iГ§in dokunun',
-    zhHans: 'з‚№жЊ‰ж›ґж”№й»и®¤иЎЊдёє',
-    zhHant: 'й»ћжЊ‰и®Љж›ґй ђиЁ­иЎЊз‚є',
+    ru: 'нажмите, чтобы изменить поведение',
+    tr: 'varsayılan davranışı değiştirmek için dokunun',
+    zhHans: '点按更改默认行为',
+    zhHant: '點按變更預設行為',
   );
 
   String get appsListTitle => tr(
     en: 'Apps list',
-    ru: 'РЎРїРёСЃРѕРє РїСЂРёР»РѕР¶РµРЅРёР№',
+    ru: 'Список приложений',
     tr: 'Uygulama listesi',
-    zhHans: 'еє”з”Ёе€—иЎЁ',
-    zhHant: 'ж‡‰з”ЁзЁ‹ејЏжё…е–®',
+    zhHans: '应用列表',
+    zhHant: '應用程式清單',
   );
 
   String get exportLabel => tr(
     en: 'Export',
-    ru: 'Р­РєСЃРїРѕСЂС‚',
-    tr: 'DД±Еџa aktar',
-    zhHans: 'еЇје‡є',
-    zhHant: 'еЊЇе‡є',
+    ru: 'Экспорт',
+    tr: 'Dışa aktar',
+    zhHans: '导出',
+    zhHant: '匯出',
   );
 
   String get importLabel => tr(
     en: 'Import',
-    ru: 'РРјРїРѕСЂС‚',
-    tr: 'Д°Г§e aktar',
-    zhHans: 'еЇје…Ґ',
-    zhHant: 'еЊЇе…Ґ',
+    ru: 'Импорт',
+    tr: 'İçe aktar',
+    zhHans: '导入',
+    zhHant: '匯入',
   );
 
   String get titleSourceTitle => tr(
     en: 'Title source',
-    ru: 'РСЃС‚РѕС‡РЅРёРє Р·Р°РіРѕР»РѕРІРєР°',
-    tr: 'BaЕџlД±k kaynaДџД±',
-    zhHans: 'ж ‡йўжќҐжєђ',
-    zhHant: 'жЁ™йЎЊдѕ†жєђ',
+    ru: 'Источник заголовка',
+    tr: 'Başlık kaynağı',
+    zhHans: '标题来源',
+    zhHant: '標題來源',
   );
 
   String get contentSourceTitle => tr(
     en: 'Content source',
-    ru: 'РСЃС‚РѕС‡РЅРёРє РєРѕРЅС‚РµРЅС‚Р°',
-    tr: 'Д°Г§erik kaynaДџД±',
-    zhHans: 'е†…е®№жќҐжєђ',
-    zhHant: 'е…§е®№дѕ†жєђ',
+    ru: 'Источник контента',
+    tr: 'İçerik kaynağı',
+    zhHans: '内容来源',
+    zhHant: '內容來源',
   );
 
   String get notificationTitleOption => tr(
     en: 'Notification title',
-    ru: 'Р—Р°РіРѕР»РѕРІРѕРє СѓРІРµРґРѕРјР»РµРЅРёСЏ',
-    tr: 'Bildirim baЕџlД±ДџД±',
-    zhHans: 'йЂљзџҐж ‡йў',
-    zhHant: 'йЂљзџҐжЁ™йЎЊ',
+    ru: 'Заголовок уведомления',
+    tr: 'Bildirim başlığı',
+    zhHans: '通知标题',
+    zhHant: '通知標題',
   );
 
   String get appTitleOption => tr(
     en: 'App title',
-    ru: 'РќР°Р·РІР°РЅРёРµ РїСЂРёР»РѕР¶РµРЅРёСЏ',
-    tr: 'Uygulama baЕџlД±ДџД±',
-    zhHans: 'еє”з”Ёж ‡йў',
-    zhHant: 'ж‡‰з”ЁжЁ™йЎЊ',
+    ru: 'Название приложения',
+    tr: 'Uygulama başlığı',
+    zhHans: '应用标题',
+    zhHant: '應用標題',
   );
 
   String get notificationTextOption => tr(
     en: 'Notification text',
-    ru: 'РўРµРєСЃС‚ СѓРІРµРґРѕРјР»РµРЅРёСЏ',
+    ru: 'Текст уведомления',
     tr: 'Bildirim metni',
-    zhHans: 'йЂљзџҐж–‡жњ¬',
-    zhHant: 'йЂљзџҐж–‡е­—',
+    zhHans: '通知文本',
+    zhHant: '通知文字',
   );
 
   String get appUpdateNewVersionTitle => tr(
     en: 'New version available',
-    ru: 'Р”РѕСЃС‚СѓРїРЅР° РЅРѕРІР°СЏ РІРµСЂСЃРёСЏ',
-    tr: 'Yeni sГјrГјm mevcut',
-    zhHans: 'жњ‰ж–°з‰€жњ¬еЏЇз”Ё',
-    zhHant: 'жњ‰ж–°з‰€жњ¬еЏЇз”Ё',
+    ru: 'Доступна новая версия',
+    tr: 'Yeni sürüm mevcut',
+    zhHans: '有新版本可用',
+    zhHant: '有新版本可用',
   );
 
   String get appUpdateCheckingTitle => tr(
     en: 'Checking for updates',
-    ru: 'РџСЂРѕРІРµСЂСЏРµРј РѕР±РЅРѕРІР»РµРЅРёСЏ',
-    tr: 'GГјncellemeler denetleniyor',
-    zhHans: 'ж­ЈењЁжЈЂжџҐж›ґж–°',
-    zhHant: 'ж­ЈењЁжЄўжџҐж›ґж–°',
+    ru: 'Проверяем обновления',
+    tr: 'Güncellemeler denetleniyor',
+    zhHans: '正在检查更新',
+    zhHant: '正在檢查更新',
   );
 
   String get appUpdateAllSetTitle => tr(
-    en: 'YouвЂ™re all set',
-    ru: 'Р’СЃС‘ С…РѕСЂРѕС€Рѕ',
-    tr: 'Her Еџey hazД±r',
-    zhHans: 'е·ІжЇжњЂж–°',
-    zhHant: 'е·ІжЇжњЂж–°',
+    en: 'You’re all set',
+    ru: 'Всё хорошо',
+    tr: 'Her şey hazır',
+    zhHans: '已是最新',
+    zhHant: '已是最新',
   );
 
   String get appUpdateDownloadsSubtitle => tr(
     en: 'tap to go to downloads',
-    ru: 'РїРµСЂРµР№С‚Рё Рє Р·Р°РіСЂСѓР·РєРµ',
-    tr: 'indirmelere gitmek iГ§in dokunun',
-    zhHans: 'з‚№жЊ‰е‰ЌеѕЂдё‹иЅЅ',
-    zhHant: 'й»ћжЊ‰е‰ЌеѕЂдё‹иј‰',
+    ru: 'перейти к загрузке',
+    tr: 'indirmelere gitmek için dokunun',
+    zhHans: '点按前往下载',
+    zhHant: '點按前往下載',
   );
 
   String get appUpdatePleaseWaitSubtitle => tr(
     en: 'please wait a moment',
-    ru: 'РїРѕРґРѕР¶РґРёС‚Рµ РЅРµРјРЅРѕРіРѕ',
-    tr: 'lГјtfen biraz bekleyin',
-    zhHans: 'иЇ·зЁЌз­‰',
-    zhHant: 'и«‹зЁЌеЂ™',
+    ru: 'подождите немного',
+    tr: 'lütfen biraz bekleyin',
+    zhHans: '请稍等',
+    zhHant: '請稍候',
   );
 
   String get appUpdateLatestSubtitle => tr(
     en: 'latest version already',
-    ru: 'СѓСЃС‚Р°РЅРѕРІР»РµРЅР° РїРѕСЃР»РµРґРЅСЏСЏ РІРµСЂСЃРёСЏ',
-    tr: 'zaten son sГјrГјm',
-    zhHans: 'е·Із»ЏжЇжњЂж–°з‰€жњ¬',
-    zhHant: 'е·ІжЇжњЂж–°з‰€жњ¬',
+    ru: 'установлена последняя версия',
+    tr: 'zaten son sürüm',
+    zhHans: '已经是最新版本',
+    zhHant: '已是最新版本',
   );
 
   String get visitProjectPageTitle => tr(
     en: 'Visit project page',
-    ru: 'РћС‚РєСЂС‹С‚СЊ СЃС‚СЂР°РЅРёС†Сѓ РїСЂРѕРµРєС‚Р°',
-    tr: 'Proje sayfasД±nД± aГ§',
-    zhHans: 'и®їй—®йЎ№з›®йЎµйќў',
-    zhHant: 'е‰ЌеѕЂе°€жЎ€й Ѓйќў',
+    ru: 'Открыть страницу проекта',
+    tr: 'Proje sayfasını aç',
+    zhHans: '访问项目页面',
+    zhHant: '前往專案頁面',
   );
 
   String get visitGithubTitle => tr(
     en: 'Visit GitHub',
-    ru: 'РћС‚РєСЂС‹С‚СЊ GitHub',
-    tr: 'GitHub\'Д± aГ§',
-    zhHans: 'и®їй—® GitHub',
-    zhHant: 'е‰ЌеѕЂ GitHub',
+    ru: 'Открыть GitHub',
+    tr: 'GitHub\'ı aç',
+    zhHans: '访问 GitHub',
+    zhHant: '前往 GitHub',
   );
 
   String get updateProfileNewVersionTitle => tr(
     en: 'New version available',
-    ru: 'Р”РѕСЃС‚СѓРїРЅР° РЅРѕРІР°СЏ РІРµСЂСЃРёСЏ',
-    tr: 'Yeni sГјrГјm mevcut',
-    zhHans: 'жњ‰ж–°з‰€жњ¬еЏЇз”Ё',
-    zhHant: 'жњ‰ж–°з‰€жњ¬еЏЇз”Ё',
+    ru: 'Доступна новая версия',
+    tr: 'Yeni sürüm mevcut',
+    zhHans: '有新版本可用',
+    zhHant: '有新版本可用',
   );
 
   String updateProfileVersionSubtitle(String current, String latest) => tr(
     en: '$current -> $latest | tap to see',
-    ru: '$current -> $latest | РїРѕСЃРјРѕС‚СЂРµС‚СЊ',
-    tr: '$current -> $latest | gГ¶rmek iГ§in dokunun',
+    ru: '$current -> $latest | посмотреть',
+    tr: '$current -> $latest | görmek için dokunun',
     ptBr: '$current -> $latest | toque para ver',
-    zhHans: '$current -> $latest | з‚№жЊ‰жџҐзњ‹',
-    zhHant: '$current -> $latest | й»ћжЊ‰жџҐзњ‹',
+    zhHans: '$current -> $latest | 点按查看',
+    zhHant: '$current -> $latest | 點按查看',
   );
 
   String get updateProfileAvailableSubtitle => tr(
     en: 'update available | tap to see',
-    ru: 'РґРѕСЃС‚СѓРїРЅРѕ РѕР±РЅРѕРІР»РµРЅРёРµ | РїРѕСЃРјРѕС‚СЂРµС‚СЊ',
-    tr: 'gГјncelleme mevcut | gГ¶rmek iГ§in dokunun',
-    zhHans: 'жњ‰еЏЇз”Ёж›ґж–° | з‚№жЊ‰жџҐзњ‹',
-    zhHant: 'жњ‰еЏЇз”Ёж›ґж–° | й»ћжЊ‰жџҐзњ‹',
+    ru: 'доступно обновление | посмотреть',
+    tr: 'güncelleme mevcut | görmek için dokunun',
+    zhHans: '有可用更新 | 点按查看',
+    zhHant: '有可用更新 | 點按查看',
   );
 
   String get updateProfileOpenSubtitle => tr(
     en: 'tap to open update settings',
-    ru: 'РЅР°Р¶РјРёС‚Рµ РґР»СЏ РЅР°СЃС‚СЂРѕР№РєРё',
-    tr: 'gГјncelleme ayarlarД±nД± aГ§mak iГ§in dokunun',
-    zhHans: 'з‚№жЊ‰ж‰“ејЂж›ґж–°и®ѕзЅ®',
-    zhHant: 'й»ћжЊ‰й–‹е•џж›ґж–°иЁ­е®љ',
+    ru: 'нажмите для настройки',
+    tr: 'güncelleme ayarlarını açmak için dokunun',
+    zhHans: '点按打开更新设置',
+    zhHant: '點按開啟更新設定',
   );
 
   String get conversionLogTitle => tr(
     en: 'Conversion log',
-    ru: 'Р›РѕРі РєРѕРЅРІРµСЂС‚Р°С†РёР№',
-    tr: 'DГ¶nГјЕџtГјrme gГјnlГјДџГј',
-    zhHans: 'иЅ¬жЌўж—Ґеї—',
-    zhHant: 'иЅ‰жЏ›иЁйЊ„',
+    ru: 'Лог конвертаций',
+    tr: 'Dönüştürme günlüğü',
+    zhHans: '转换日志',
+    zhHant: '轉換記錄',
   );
 
   String get logLengthTitle => tr(
     en: 'Log length',
-    ru: 'Р Р°Р·РјРµСЂ Р»РѕРіР°',
-    tr: 'GГјnlГјk boyutu',
-    zhHans: 'ж—Ґеї—е¤§е°Џ',
-    zhHant: 'иЁйЊ„е¤§е°Џ',
+    ru: 'Размер лога',
+    tr: 'Günlük boyutu',
+    zhHans: '日志大小',
+    zhHant: '記錄大小',
   );
 
   String get xiaomiHyperIslandTitle => tr(
     en: 'Xiaomi HyperIsland',
     ru: 'Xiaomi HyperIsland',
     tr: 'Xiaomi HyperIsland',
-    zhHans: 'е°Џз±і HyperIsland',
-    zhHant: 'е°Џз±і HyperIsland',
+    zhHans: '小米 HyperIsland',
+    zhHant: '小米 HyperIsland',
   );
 
   String get lengthTitle =>
-      tr(en: 'Length', ru: 'Р”Р»РёРЅР°', tr: 'Uzunluk', zhHans: 'й•їеє¦', zhHant: 'й•·еє¦');
+      tr(en: 'Length', ru: 'Длина', tr: 'Uzunluk', zhHans: '长度', zhHant: '長度');
 
   String get otpDedupTitle => tr(
     en: 'OTP dedup',
     ru: 'OTP dedup',
-    tr: 'OTP tekilleЕџtirme',
-    zhHans: 'OTP еЋ»й‡Ќ',
-    zhHant: 'OTP еЋ»й‡Ќ',
+    tr: 'OTP tekilleştirme',
+    zhHans: 'OTP 去重',
+    zhHant: 'OTP 去重',
   );
 
   String get smartConversionDedupTitle => tr(
     en: 'Smart conversion dedup',
     ru: 'Smart conversion dedup',
-    tr: 'AkД±llД± dГ¶nГјЕџtГјrme tekilleЕџtirme',
-    zhHans: 'ж™єиѓЅиЅ¬жЌўеЋ»й‡Ќ',
-    zhHant: 'ж™єж…§иЅ‰жЏ›еЋ»й‡Ќ',
+    tr: 'Akıllı dönüştürme tekilleştirme',
+    zhHans: '智能转换去重',
+    zhHant: '智慧轉換去重',
   );
 
   String get animatedIslandRedesignTitle => tr(
     en: 'Animated Island',
-    ru: 'РђРЅРёРјРёСЂРѕРІР°РЅРЅС‹Р№ РѕСЃС‚СЂРѕРІ',
+    ru: 'Анимированный остров',
     tr: 'Animasyonlu ada',
-    zhHans: 'еЉЁжЂЃеІ›еЉЁз”»',
-    zhHant: 'е‹•ж…‹еі¶е‹•з•«',
+    zhHans: '动态岛动画',
+    zhHant: '動態島動畫',
   );
 
   String get updateFrequencyTitle => tr(
     en: 'Update frequency',
-    ru: 'Р§Р°СЃС‚РѕС‚Р° РѕР±РЅРѕРІР»РµРЅРёСЏ',
-    tr: 'GГјncelleme sД±klД±ДџД±',
-    zhHans: 'ж›ґж–°йў‘зЋ‡',
-    zhHant: 'ж›ґж–°й »зЋ‡',
+    ru: 'Частота обновления',
+    tr: 'Güncelleme sıklığı',
+    zhHans: '更新频率',
+    zhHant: '更新頻率',
   );
 
   String get copyDebugJsonTitle => tr(
     en: 'Copy debug JSON',
-    ru: 'РЎРєРѕРїРёСЂРѕРІР°С‚СЊ debug JSON',
+    ru: 'Скопировать debug JSON',
     tr: 'Debug JSON\'unu kopyala',
-    zhHans: 'е¤Ќе€¶и°ѓиЇ• JSON',
-    zhHant: 'и¤‡иЈЅеЃµйЊЇ JSON',
+    zhHans: '复制调试 JSON',
+    zhHant: '複製偵錯 JSON',
   );
 
   String get openGithubPageTitle => tr(
     en: 'Open GitHub page',
-    ru: 'РћС‚РєСЂС‹С‚СЊ GitHub',
-    tr: 'GitHub sayfasД±nД± aГ§',
-    zhHans: 'ж‰“ејЂ GitHub йЎµйќў',
-    zhHant: 'й–‹е•џ GitHub й Ѓйќў',
+    ru: 'Открыть GitHub',
+    tr: 'GitHub sayfasını aç',
+    zhHans: '打开 GitHub 页面',
+    zhHant: '開啟 GitHub 頁面',
   );
 
   String get autoCopyDebugJsonTitle => tr(
     en: 'Auto-copy debug JSON',
-    ru: 'РђРІС‚РѕРєРѕРїРёСЂРѕРІР°РЅРёРµ debug JSON',
+    ru: 'Автокопирование debug JSON',
     tr: 'Debug JSON\'unu otomatik kopyala',
-    zhHans: 'и‡ЄеЉЁе¤Ќе€¶и°ѓиЇ• JSON',
-    zhHant: 'и‡Єе‹•и¤‡иЈЅеЃµйЊЇ JSON',
+    zhHans: '自动复制调试 JSON',
+    zhHant: '自動複製偵錯 JSON',
   );
 
   String conversionLogFrom(String appLabel) => tr(
     en: 'from $appLabel',
-    ru: 'РѕС‚ $appLabel',
-    tr: '$appLabel uygulamasД±ndan',
+    ru: 'от $appLabel',
+    tr: '$appLabel uygulamasından',
     ptBr: 'de $appLabel',
-    zhHans: 'жќҐи‡Є $appLabel',
-    zhHant: 'дѕ†и‡Є $appLabel',
+    zhHans: '来自 $appLabel',
+    zhHant: '來自 $appLabel',
   );
 
   String conversionLogAt(String time) => tr(
     en: 'at $time',
-    ru: 'РІ $time',
+    ru: 'в $time',
     tr: time,
-    ptBr: 'Г s $time',
+    ptBr: 'às $time',
     zhHans: time,
     zhHant: time,
   );
 
   String get conversionLogEntryTitleLabel => tr(
     en: 'Title',
-    ru: 'Р—Р°РіРѕР»РѕРІРѕРє',
-    tr: 'BaЕџlД±k',
-    zhHans: 'ж ‡йў',
-    zhHant: 'жЁ™йЎЊ',
+    ru: 'Заголовок',
+    tr: 'Başlık',
+    zhHans: '标题',
+    zhHant: '標題',
   );
 
   String get payloadJsonTitle => tr(
@@ -898,558 +898,688 @@ class AppStrings {
 
   String get loadingApps => tr(
     en: 'loading apps...',
-    ru: 'Р·Р°РіСЂСѓР·РєР° РїСЂРёР»РѕР¶РµРЅРёР№...',
-    tr: 'uygulamalar yГјkleniyor...',
-    zhHans: 'ж­ЈењЁеЉ иЅЅеє”з”Ё...',
-    zhHant: 'ж­ЈењЁиј‰е…Ґж‡‰з”ЁзЁ‹ејЏ...',
+    ru: 'загрузка приложений...',
+    tr: 'uygulamalar yükleniyor...',
+    zhHans: '正在加载应用...',
+    zhHant: '正在載入應用程式...',
   );
 
   String get searchForApps => tr(
     en: 'Search for apps...',
-    ru: 'РџРѕРёСЃРє РїСЂРёР»РѕР¶РµРЅРёР№...',
+    ru: 'Поиск приложений...',
     tr: 'Uygulama ara...',
-    zhHans: 'жђњзґўеє”з”Ё...',
-    zhHant: 'жђње°‹ж‡‰з”ЁзЁ‹ејЏ...',
+    zhHans: '搜索应用...',
+    zhHant: '搜尋應用程式...',
   );
 
   String get heroTitle => 'LiveBridge';
-  String get masterToggleLockedHint => isRu
-      ? 'РЎРЅР°С‡Р°Р»Р° РІС‹РґР°Р№С‚Рµ РґРѕСЃС‚СѓРї Рє СѓРІРµРґРѕРјР»РµРЅРёСЏРј Рё СЂР°Р·СЂРµС€РµРЅРёРµ РЅР° СѓРІРµРґРѕРјР»РµРЅРёСЏ.'
-      : 'Grant notification listener access and notifications permission first.';
-  String get githubUrl => 'github.com/appsfolder/livebridge';
-  String get githubReleasesUrl => 'github.com/appsfolder/livebridge/releases';
-  String get downloadPageUrl => 'appsfolder.github.io/livebridge';
-  String get smartExternalDevicesIgnoreDebuggingTitle =>
-      isRu ? 'РРіРЅРѕСЂРёСЂРѕРІР°С‚СЊ РѕС‚Р»Р°РґРєСѓ' : 'Ignore debugging';
-  String get smartExternalDevicesIgnoreDebuggingSubtitle => isRu
-      ? 'РќРµ РїРѕРєР°Р·С‹РІР°С‚СЊ Live РґР»СЏ USB debugging, wireless debugging, ADB Рё РїРѕС…РѕР¶РёС… СЃРёСЃС‚РµРјРЅС‹С… СѓРІРµРґРѕРјР»РµРЅРёР№.'
-      : 'Skip Live updates for USB debugging, wireless debugging, ADB, and similar system notifications.';
-  String get reportBug => isRu ? 'РЎРѕРѕР±С‰РёС‚СЊ Рѕ Р±Р°РіРµ' : 'Report a bug';
-  String get bugReportCopied => isRu
-      ? 'Р”РёР°РіРЅРѕСЃС‚РёРєР° СЃРєРѕРїРёСЂРѕРІР°РЅР° РІ Р±СѓС„РµСЂ. Р’СЃС‚Р°РІСЊС‚Рµ РІ issue.'
-      : 'Diagnostics copied to clipboard. Paste it into the issue.';
-  String get bugReportCopyFailed => isRu
-      ? 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРєРѕРїРёСЂРѕРІР°С‚СЊ РґРёР°РіРЅРѕСЃС‚РёРєСѓ.'
-      : 'Failed to copy diagnostics.';
-  String get hideWarningBanner => isRu ? 'РЎРєСЂС‹С‚СЊ' : 'Hide';
-  String get backgroundWarningTitle =>
-      isRu ? 'Р’Р°Р¶РЅРѕ РґР»СЏ С„РѕРЅРѕРІРѕР№ СЂР°Р±РѕС‚С‹' : 'Background mode warning';
-  String backgroundWarningBody(String deviceLabel) => isRu
-      ? 'Р”Р»СЏ $deviceLabel РЅСѓР¶РЅРѕ РІСЂСѓС‡РЅСѓСЋ СЂР°Р·СЂРµС€РёС‚СЊ Р°РІС‚РѕР·Р°РїСѓСЃРє Рё СЂР°Р±РѕС‚Сѓ Р±РµР· РѕРіСЂР°РЅРёС‡РµРЅРёР№ РІ С„РѕРЅРµ, РёРЅР°С‡Рµ Live Updates РјРѕРіСѓС‚ РЅРµ РїРѕСЏРІР»СЏС‚СЊСЃСЏ РёР»Рё Р·Р°РІРёСЃР°С‚СЊ.'
-      : 'On $deviceLabel, allow autostart and unrestricted background activity, otherwise Live Updates may stop appearing or freeze.';
-  String get accessTitle => isRu ? 'Р Р°Р·СЂРµС€РµРЅРёСЏ' : 'Permissions';
-  String get accessSubtitle => isRu
-      ? 'Р‘РµР· СЌС‚РёС… С‚СЂС‘С… СЂР°Р·СЂРµС€РµРЅРёР№ РєРѕРЅРІРµСЂС‚Р°С†РёСЏ Р±СѓРґРµС‚ СЂР°Р±РѕС‚Р°С‚СЊ РЅРµСЃС‚Р°Р±РёР»СЊРЅРѕ.'
-      : 'Conversion reliability depends on these three permissions.';
-  String get listenerAccess =>
-      isRu ? 'Р”РѕСЃС‚СѓРї Рє СѓРІРµРґРѕРјР»РµРЅРёСЏРј' : 'Notification Listener access';
-  String get postNotifications =>
-      isRu ? 'РћС‚РїСЂР°РІРєР° СѓРІРµРґРѕРјР»РµРЅРёР№' : 'Post notifications permission';
-  String get liveUpdatesAccess =>
-      isRu ? 'РџСЂРѕРґРІРёР¶РµРЅРёРµ Live Updates' : 'Live Updates promotion';
-  String get open => isRu ? 'РћС‚РєСЂС‹С‚СЊ' : 'Open';
-  String get request => isRu ? 'Р—Р°РїСЂРѕСЃРёС‚СЊ' : 'Request';
-  String get grant => isRu ? 'Р’С‹РґР°С‚СЊ' : 'Grant';
-  String get manage => isRu ? 'РЈРїСЂР°РІР»СЏС‚СЊ' : 'Manage';
-  String get settingsTitle => isRu ? 'РќР°СЃС‚СЂРѕР№РєРё' : 'Settings';
-  String get keepAliveForegroundTitle =>
-      isRu ? 'РђР»СЊС‚РµСЂРЅР°С‚РёРІРЅС‹Р№ С„РѕРЅРѕРІС‹Р№ СЂРµР¶РёРј' : 'Alt background mode';
-  String get keepAliveForegroundSubtitle => isRu
-      ? 'Р”РµСЂР¶РёС‚ foreground-СЃРµСЂРІРёСЃ РґР»СЏ Р±РѕР»РµРµ СЃС‚Р°Р±РёР»СЊРЅРѕР№ СЂР°Р±РѕС‚С‹ РІ С„РѕРЅРµ.'
-      : 'Runs a persistent foreground service for better background stability.';
-  String get keepAliveForegroundInactiveSubtitle => isRu
-      ? 'Р’РєР»СЋС‡РёС‚Рµ LiveBridge, С‡С‚РѕР±С‹ СЂРµР¶РёРј РЅР°С‡Р°Р» СЂР°Р±РѕС‚Р°С‚СЊ.'
-      : 'Enable the LiveBridge for this mode to take effect.';
-  String get syncDndTitle => isRu ? 'РЎРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°С‚СЊ DnD' : 'Sync DnD';
-  String get syncDndSubtitle => isRu
-      ? 'Р•СЃР»Рё РЅР° СЃРјР°СЂС‚С„РѕРЅРµ РІРєР»СЋС‡РµРЅ СЂРµР¶РёРј РќРµ Р±РµСЃРїРѕРєРѕРёС‚СЊ, СѓРІРµРґРѕРјР»РµРЅРёСЏ LiveBridge РЅРµ РїРѕРєР°Р·С‹РІР°СЋС‚СЃСЏ.'
-      : 'When Do Not Disturb is enabled on the phone, LiveBridge notifications are hidden.';
-  String get updateChecksTitle =>
-      isRu ? 'РџСЂРѕРІРµСЂРєР° РѕР±РЅРѕРІР»РµРЅРёР№' : 'Update checking';
-  String get updateChecksSubtitle => isRu
-      ? 'РџСЂРѕРІРµСЂСЏС‚СЊ РѕР±РЅРѕРІР»РµРЅРёСЏ РїСЂРё РІС…РѕРґРµ Рё РЅРµ С‡Р°С‰Рµ РѕРґРЅРѕРіРѕ СЂР°Р·Р° РІ 6 С‡Р°СЃРѕРІ.'
-      : 'Check updates on app start, and no more than once every 6 hours.';
-  String get samsungRemoteParserTitle =>
-      isRu ? 'Samsung RemoteViews СЂРµРїР°СЂСЃРµСЂ' : 'Samsung RemoteViews reparser';
-  String get samsungRemoteParserSubtitle => isRu
-      ? 'РСЃРїРѕР»СЊР·СѓРµС‚ Samsung ongoingActivity extras Рё RemoteViews РґР»СЏ Р±РѕР»РµРµ С‚РѕС‡РЅРѕРіРѕ РїР°СЂСЃРёРЅРіР° СѓРІРµРґРѕРјР»РµРЅРёР№.'
-      : 'Uses Samsung ongoingActivity extras and RemoteViews for improved parsing on One UI.';
-  String updateAvailableBanner(String version) => isRu
-      ? 'Р”РѕСЃС‚СѓРїРЅРѕ РѕР±РЅРѕРІР»РµРЅРёРµ${version.isNotEmpty ? ': $version' : ''}'
-      : 'Update available${version.isNotEmpty ? ': $version' : ''}';
-  String get samsungUpdateInstallToast => isRu
-      ? 'РџРѕР¶Р°Р»СѓР№СЃС‚Р°, СѓСЃС‚Р°РЅРѕРІРёС‚Рµ РІРµСЂСЃРёСЋ РґР»СЏ Samsung, Р° РЅРµ СѓРЅРёРІРµСЂСЃР°Р»СЊРЅСѓСЋ.'
-      : 'Please install the Samsung build instead of the universal one.';
-  String get experimentalTitle => isRu ? 'Р­РєСЃРїРµСЂРёРјРµРЅС‚Р°Р»СЊРЅРѕРµ' : 'Experimental';
-  String get notificationDedupTitle =>
-      isRu ? 'РЈРґР°Р»РµРЅРёРµ РґСѓР±Р»РµР№ СѓРІРµРґРѕРјР»РµРЅРёР№' : 'Notification dedup';
-  String get notificationDedupSubtitle => isRu
-      ? 'РЈР±РёСЂР°РµС‚ РёСЃС…РѕРґРЅС‹Рµ СЃРјР°С…РёРІР°РµРјС‹Рµ СѓРІРµРґРѕРјР»РµРЅРёСЏ, РµСЃР»Рё LiveBridge СѓР¶Рµ РїРѕРєР°Р·Р°Р» СЃРІРѕР№ OTP РёР»Рё СЃС‚Р°С‚СѓСЃ.'
-      : 'Dismisses original clearable notifications after LiveBridge mirrors an OTP or status update.';
-  String get notificationDedupModeLabel =>
-      isRu ? 'Р РµР¶РёРј СѓРґР°Р»РµРЅРёСЏ РґСѓР±Р»РµР№' : 'Dedup mode';
-  String get notificationDedupModeOtpStatus =>
-      isRu ? 'OTP Рё СЃС‚Р°С‚СѓСЃС‹' : 'OTP and statuses';
-  String get notificationDedupModeOtpOnly => isRu ? 'РўРѕР»СЊРєРѕ OTP' : 'OTP only';
-  String get notificationDedupStatusesTitle =>
-      isRu ? 'РўР°РєР¶Рµ РґР»СЏ СЃС‚Р°С‚СѓСЃРѕРІ' : 'Also dedup statuses';
-  String get notificationDedupStatusesSubtitle => isRu
-      ? 'Р•СЃР»Рё РІС‹РєР»СЋС‡РµРЅРѕ, СѓРґР°Р»РµРЅРёРµ РґСѓР±Р»РµР№ РїСЂРёРјРµРЅСЏРµС‚СЃСЏ С‚РѕР»СЊРєРѕ Рє OTP-РєРѕРґР°Рј.'
-      : 'When disabled, dedup is applied only to OTP notifications.';
-  String get animatedIslandTitle =>
-      isRu ? 'РђРЅРёРјРёСЂРѕРІР°РЅРЅС‹Р№ РѕСЃС‚СЂРѕРІ' : 'Animated island';
-  String get animatedIslandSubtitle => isRu
-      ? 'РњРµРЅСЏРµС‚ РєРѕСЂРѕС‚РєРёР№ С‚РµРєСЃС‚ РѕСЃС‚СЂРѕРІР° РєР°Р¶РґС‹Рµ 2-3 СЃРµРєСѓРЅРґС‹ РґР»СЏ smart-СѓРІРµРґРѕРјР»РµРЅРёР№ (РјРѕР¶РµС‚ СЂР°Р±РѕС‚Р°С‚СЊ РЅРµСЃС‚Р°Р±РёР»СЊРЅРѕ).'
-      : 'Rotates compact island text every 2-3 seconds for smart notifications (may be unstable).';
-  String get hyperBridgeTitle => 'Xiaomi Hyper Island';
-  String get hyperBridgeSubtitle => isRu
-      ? 'Р”Р»СЏ Xiaomi Hyper OS 3.1 Р“Р»РѕР±Р°Р»СЊРЅРѕР№: РґРѕР±Р°РІР»СЏРµС‚ HyperOS Focus-РїР°СЂР°РјРµС‚СЂС‹ РґР»СЏ РЅР°С‚РёРІРЅРѕРіРѕ РѕСЃС‚СЂРѕРІР°.'
-      : 'For Xiaomi Hyper OS 3.1 Global: injects HyperOS Focus parameters for native island behavior.';
-  String get aospCuttingTitle => isRu ? 'РћР±СЂРµР·РєР° AOSP' : 'AOSP cutting';
-  String get aospCuttingSubtitle => isRu
-      ? 'РћР±СЂРµР·Р°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ РІ РѕСЃС‚СЂРѕРІРµ РґРѕ 7 СЃРёРјРІРѕР»РѕРІ РґР»СЏ РєСЂР°СЃРёРІРѕРіРѕ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ РІ AOSP-РїСЂРѕС€РёРІРєР°С….'
-      : 'Trim island text to 7 characters for cleaner rendering on AOSP ROMs.';
-  String get appPresentationSettings =>
-      isRu ? 'РџРѕРІРµРґРµРЅРёРµ РїСЂРёР»РѕР¶РµРЅРёР№' : 'Per-app behavior';
-  String get appPresentationSubtitle => isRu
-      ? 'РќР°СЃС‚СЂРѕР№С‚Рµ РёСЃС‚РѕС‡РЅРёРє С‚РµРєСЃС‚Р° Рё РёРєРѕРЅРєРё РѕС‚РґРµР»СЊРЅРѕ РґР»СЏ СЂР°Р·РЅС‹С… РїСЂРёР»РѕР¶РµРЅРёР№.'
-      : 'Choose text and icon behavior separately for different applications.';
-  String get appPresentationScreenTitle =>
-      isRu ? 'РџРѕРІРµРґРµРЅРёРµ РїСЂРёР»РѕР¶РµРЅРёР№' : 'Per-app behavior';
-  String get appPresentationLoadFailed => isRu
-      ? 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё РїСЂРёР»РѕР¶РµРЅРёР№.'
-      : 'Unable to load per-app settings.';
-  String get appPresentationSaveFailed => isRu
-      ? 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё РїСЂРёР»РѕР¶РµРЅРёР№.'
-      : 'Unable to save per-app settings.';
-  String get appPresentationDownloadFailed => isRu
-      ? 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ JSON РЅР°СЃС‚СЂРѕРµРє.'
-      : 'Failed to save settings JSON.';
-  String get appPresentationSaved =>
-      isRu ? 'РќР°СЃС‚СЂРѕР№РєРё СЃРѕС…СЂР°РЅРµРЅС‹ РІ Р—Р°РіСЂСѓР·РєРё.' : 'Settings saved to Downloads.';
-  String get appPresentationUploadDone =>
-      isRu ? 'РќР°СЃС‚СЂРѕР№РєРё РїСЂРёР»РѕР¶РµРЅРёР№ Р·Р°РіСЂСѓР¶РµРЅС‹.' : 'Per-app settings imported.';
-  String get appPresentationUploadFailed => isRu
-      ? 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ JSON РЅР°СЃС‚СЂРѕРµРє.'
-      : 'Failed to import settings JSON.';
-  String get appPresentationInvalidJson => isRu
-      ? 'РќРµРІР°Р»РёРґРЅС‹Р№ JSON РЅР°СЃС‚СЂРѕРµРє РїСЂРёР»РѕР¶РµРЅРёР№.'
-      : 'Invalid per-app settings JSON.';
-  String get appPresentationDefaultSummary =>
-      isRu ? 'РЎС‚Р°РЅРґР°СЂС‚РЅРѕРµ РїРѕРІРµРґРµРЅРёРµ' : 'Default behavior';
-  String get appPresentationTextSourceLabel =>
-      isRu ? 'РСЃС‚РѕС‡РЅРёРє С‚РµРєСЃС‚Р° РґР»СЏ РѕСЃС‚СЂРѕРІР°' : 'Island text source';
-  String get appPresentationIconSourceLabel =>
-      isRu ? 'РСЃС‚РѕС‡РЅРёРє РёРєРѕРЅРєРё' : 'Icon source';
-  String get appPresentationTextTitle =>
-      isRu ? 'Р—Р°РіРѕР»РѕРІРѕРє СѓРІРµРґРѕРјР»РµРЅРёСЏ' : 'Notification title';
-  String get appPresentationTextNotification =>
-      isRu ? 'РўРµРєСЃС‚ СѓРІРµРґРѕРјР»РµРЅРёСЏ' : 'Notification text';
-  String get appPresentationIconNotification =>
-      isRu ? 'РРєРѕРЅРєР° СѓРІРµРґРѕРјР»РµРЅРёСЏ' : 'Notification icon';
-  String get appPresentationIconApp =>
-      isRu ? 'РРєРѕРЅРєР° РїСЂРёР»РѕР¶РµРЅРёСЏ' : 'Application icon';
-  String get downloadSettings =>
-      isRu ? 'РЎРєР°С‡Р°С‚СЊ РЅР°СЃС‚СЂРѕР№РєРё' : 'Download settings';
-  String get uploadSettings => isRu ? 'Р—Р°РіСЂСѓР·РёС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё' : 'Upload settings';
-  String get defaultLabel => isRu ? 'РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ' : 'Default';
-  String get resetToDefault =>
-      isRu ? 'РЎР±СЂРѕСЃРёС‚СЊ Рє СЃС‚Р°РЅРґР°СЂС‚Сѓ' : 'Reset to default';
-  String get save => isRu ? 'РЎРѕС…СЂР°РЅРёС‚СЊ' : 'Save';
-  String get downloadDictionary =>
-      isRu ? 'РЎРєР°С‡Р°С‚СЊ СЃР»РѕРІР°СЂСЊ' : 'Download dictionary';
-  String get updateDictionary =>
-      isRu ? 'РћР±РЅРѕРІРёС‚СЊ СЃР»РѕРІР°СЂСЊ' : 'Update dictionary';
-  String get uploadDictionary =>
-      isRu ? 'Р—Р°РіСЂСѓР·РёС‚СЊ СЃР»РѕРІР°СЂСЊ' : 'Upload dictionary';
-  String get resetDictionary => isRu ? 'РЎР±СЂРѕСЃРёС‚СЊ СЃР»РѕРІР°СЂСЊ' : 'Reset dictionary';
-  String get pickApps => isRu ? 'Р’С‹Р±СЂР°С‚СЊ РїСЂРёР»РѕР¶РµРЅРёСЏ' : 'Pick applications';
-  String get pickerTitle =>
-      isRu ? 'РџСЂРёР»РѕР¶РµРЅРёСЏ РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†РёРё' : 'Choose apps for conversion';
-  String get otpPickerTitle =>
-      isRu ? 'РџСЂРёР»РѕР¶РµРЅРёСЏ РґР»СЏ РєРѕРґРѕРІ' : 'Choose apps for code detection';
-  String get bypassPickerTitle =>
-      isRu ? 'РџСЂРёР»РѕР¶РµРЅРёСЏ РѕР±С…РѕРґР°' : 'Choose apps for bypass';
-  String get notificationDedupPickerTitle => isRu
-      ? 'РџСЂРёР»РѕР¶РµРЅРёСЏ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ РґСѓР±Р»РµР№'
-      : 'Choose apps for notification dedup';
-  String get applySelection => isRu ? 'РџСЂРёРјРµРЅРёС‚СЊ РІС‹Р±РѕСЂ' : 'Apply selection';
-  String get searchAppHint =>
-      isRu ? 'РџРѕРёСЃРє РїРѕ РЅР°Р·РІР°РЅРёСЋ РёР»Рё РїР°РєРµС‚Сѓ' : 'Search by app or package';
-  String get showSystemApps =>
-      isRu ? 'РџРѕРєР°Р·Р°С‚СЊ СЃРёСЃС‚РµРјРЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёСЏ' : 'Show system applications';
-  String get hideSystemApps =>
-      isRu ? 'РЎРєСЂС‹С‚СЊ СЃРёСЃС‚РµРјРЅС‹Рµ РїСЂРёР»РѕР¶РµРЅРёСЏ' : 'Hide system applications';
-  String get appsLoadFailed => isRu
-      ? 'РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ СЃРїРёСЃРѕРє РїСЂРёР»РѕР¶РµРЅРёР№.'
-      : 'Unable to load installed apps list.';
-  String get appsAccessTitle =>
-      isRu ? 'Р”РѕСЃС‚СѓРї Рє СЃРїРёСЃРєСѓ РїСЂРёР»РѕР¶РµРЅРёР№' : 'App list access';
-  String get appsAccessMessage => isRu
-      ? 'Р Р°Р·СЂРµС€РёС‚СЊ LiveBridge С‡РёС‚Р°С‚СЊ СЃРїРёСЃРѕРє СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅС‹С… РїСЂРёР»РѕР¶РµРЅРёР№ РґР»СЏ РІС‹Р±РѕСЂР° РїСЂР°РІРёР»?'
-      : 'Allow LiveBridge to read installed apps so you can pick apps for rules?';
-  String get appsAccessSaveFailed => isRu
-      ? 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РІС‹Р±РѕСЂ РґРѕСЃС‚СѓРїР°.'
-      : 'Unable to save access preference.';
-  String get cancel => isRu ? 'РћС‚РјРµРЅР°' : 'Cancel';
-  String get allow => isRu ? 'Р Р°Р·СЂРµС€РёС‚СЊ' : 'Allow';
-  String selectedAppsCount(int value) =>
-      isRu ? 'Р’С‹Р±СЂР°РЅРѕ РїСЂРёР»РѕР¶РµРЅРёР№: $value' : 'Selected apps: $value';
-  String get noAppsSelected =>
-      isRu ? 'РџСЂРёР»РѕР¶РµРЅРёСЏ РЅРµ РІС‹Р±СЂР°РЅС‹' : 'No applications selected';
 
-  String get rulesTitle => isRu ? 'Р РµР¶РёРј РєРѕРЅРІРµСЂС‚Р°С†РёРё' : 'Conversion behavior';
-  String get rulesSubtitle => isRu
-      ? 'РќР°СЃС‚СЂРѕР№С‚Рµ, С‡С‚Рѕ РёРјРµРЅРЅРѕ РїСЂРµРІСЂР°С‰Р°С‚СЊ РІ Live Updates.'
-      : 'Define what should be converted into Live Updates.';
-  String get modeLabel => isRu ? 'Р РµР¶РёРј СЂР°Р±РѕС‚С‹' : 'Application mode';
-  String get modeAll => isRu ? 'Р’СЃРµ РїСЂРёР»РѕР¶РµРЅРёСЏ' : 'All applications';
-  String get modeInclude =>
-      isRu ? 'РўРѕР»СЊРєРѕ СѓРєР°Р·Р°РЅРЅС‹Рµ' : 'Only listed applications';
-  String get modeExclude =>
-      isRu ? 'РСЃРєР»СЋС‡РёС‚СЊ СѓРєР°Р·Р°РЅРЅС‹Рµ' : 'Exclude listed applications';
-  String get pickAppsHint => isRu
-      ? 'РЎРїРёСЃРѕРє РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РІ СЂРµР¶РёРјР°С… "РўРѕР»СЊРєРѕ СѓРєР°Р·Р°РЅРЅС‹Рµ" РёР»Рё "РСЃРєР»СЋС‡РёС‚СЊ".'
-      : 'Selected app list is used only for include/exclude modes.';
-  String get bypassRulesTitle => isRu ? 'РџСЂРёР»РѕР¶РµРЅРёСЏ РѕР±С…РѕРґР°' : 'Bypass apps';
-  String get bypassRulesSubtitle => isRu
-      ? 'РџСЂРёР»РѕР¶РµРЅРёСЏ РёР· СЃРїРёСЃРєР° РІСЃРµРіРґР° РєРѕРЅРІРµСЂС‚РёСЂСѓСЋС‚СЃСЏ РІ Live РЅРµР·Р°РІРёСЃРёРјРѕ РѕС‚ РѕСЃС‚Р°Р»СЊРЅС‹С… РЅР°СЃС‚СЂРѕРµРє.'
-      : 'Listed apps are always converted to Live independently of settings.';
-  String get saveRules => isRu ? 'РЎРѕС…СЂР°РЅРёС‚СЊ' : 'Save';
+  String get reportBug => tr(
+    en: 'Report a bug',
+    ru: 'Сообщить о баге',
+    tr: 'Hata bildir',
+    zhHans: '报告问题',
+    zhHant: '回報問題',
+  );
 
-  String get smartDetectionTitle =>
-      isRu ? 'РЈРјРЅРѕРµ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёРµ' : 'Smart status detection';
-  String get smartCardTitle =>
-      isRu ? 'РЈРјРЅРѕРµ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ' : 'Smart conversion';
-  String get smartCardSubtitle => isRu
-      ? 'РџСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёРµ С‚РµРєСЃС‚РѕРІС‹С… СЌС‚Р°РїРѕРІ РІ РѕРґРёРЅ Live-РїСЂРѕРіСЂРµСЃСЃ.'
-      : 'Converts text-only stage updates into one Live progress flow.';
-  String get smartDetectionSubtitle => isRu
-      ? 'РџСЂРµРѕР±СЂР°Р·СѓРµС‚ С‚РµРєСЃС‚РѕРІС‹Рµ СЃС‚Р°С‚СѓСЃС‹ РµРґС‹, С‚Р°РєСЃРё Рё РЅР°РІРёРіР°С†РёРё РІ РµРґРёРЅС‹Р№ Live-РїСЂРѕРіСЂРµСЃСЃ.'
-      : 'Converts text-only food/taxi/navigation status notifications into a single Live.';
-  String get smartMediaPlaybackTitle =>
-      isRu ? 'Р’РѕСЃРїСЂРѕРёР·РІРµРґРµРЅРёРµ РјРµРґРёР°' : 'Media Playback';
-  String get smartMediaPlaybackSubtitle => isRu
-      ? 'РџСЂРµРѕР±СЂР°Р·СѓРµС‚ СѓРІРµРґРѕРјР»РµРЅРёСЏ РјРµРґРёР°РїР»РµРµСЂР° РІ Live. РќР° РЅРµРєРѕС‚РѕСЂС‹С… OEM РјРѕР¶РµС‚ РґСѓР±Р»РёСЂРѕРІР°С‚СЊ РЅР°С‚РёРІРЅС‹Р№ РїР»РµРµСЂ.'
-      : 'Converts media playback notifications into Live. On some OEMs this may duplicate native media UI.';
-  String get smartNavigationTitle =>
-      isRu ? 'РќР°РІРёРіР°С†РёСЏ (РєР°СЂС‚С‹)' : 'Navigation (maps)';
-  String get smartNavigationSubtitle => isRu
-      ? 'Р Р°СЃРїРѕР·РЅР°РІР°РЅРёРµ СѓРІРµРґРѕРјР»РµРЅРёР№ РЅР°РІРёРіР°С†РёРё.'
-      : 'Navigation notification detection.';
-  String get smartWeatherTitle => isRu ? 'РџРѕРіРѕРґР°' : 'Weather';
-  String get smartWeatherSubtitle => isRu
-      ? 'Р Р°СЃРїРѕР·РЅР°РІР°РЅРёРµ РїРѕРіРѕРґРЅС‹С… СѓРІРµРґРѕРјР»РµРЅРёР№ (С‚РµРјРїРµСЂР°С‚СѓСЂР° РІ РѕСЃС‚СЂРѕРІРµ).'
-      : 'Weather notification detection (temperature in island).';
-  String get smartWeatherLockscreenOnlyTitle => isRu
-      ? 'РџРѕРєР°Р·С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ РЅР° СЌРєСЂР°РЅРµ Р±Р»РѕРєРёСЂРѕРІРєРё'
-      : 'Display only on lock screen';
-  String get smartWeatherLockscreenOnlySubtitle => '';
-  String get smartExternalDevicesTitle =>
-      isRu ? 'Р’РЅРµС€РЅРёРµ СѓСЃС‚СЂРѕР№СЃС‚РІР°' : 'External devices';
-  String get smartExternalDevicesSubtitle => isRu
-      ? 'РџРѕРєР°Р·С‹РІР°РµС‚ СЃС‚Р°С‚СѓСЃ РїРѕРґРєР»СЋС‡РµРЅРёСЏ Рё РёРјСЏ СѓСЃС‚СЂРѕР№СЃС‚РІР° РІ РѕСЃС‚СЂРѕРІРµ.'
-      : 'Shows connected/connecting status and device name in island.';
-  String get smartVpnTitle => isRu ? 'VPN-СЃРµСЂРІРёСЃС‹' : 'VPN services';
-  String get smartVpnSubtitle => isRu
-      ? 'РџРѕРєР°Р·С‹РІР°РµС‚ РІС…РѕРґСЏС‰РёР№/РёСЃС…РѕРґСЏС‰РёР№ С‚СЂР°С„РёРє РІ С„РѕСЂРјР°С‚Рµ *b/s.'
-      : 'Shows incoming/outgoing traffic speed in *b/s format.';
-  String get smartFlashlightTitle => isRu ? 'Р¤РѕРЅР°СЂРёРє' : 'Flashlight';
-  String get smartFlashlightSubtitle => isRu
-      ? 'РЎРѕР·РґР°С‘С‚ С‚РµСЃС‚РѕРІРѕРµ СѓРІРµРґРѕРјР»РµРЅРёРµ Now Bar СЃ 5-С‚РѕС‡РµС‡РЅС‹Рј СѓРїСЂР°РІР»РµРЅРёРµРј СЏСЂРєРѕСЃС‚СЊСЋ С„РѕРЅР°СЂРёРєР°.'
-      : 'Creates a test Now Bar notification with a 5-point flashlight brightness control.';
-  String get smartFlashlightUnsupportedSubtitle => isRu
-      ? 'РЈСЃС‚СЂРѕР№СЃС‚РІРѕ РІРєР»СЋС‡Р°РµС‚ С„РѕРЅР°СЂРёРє, РЅРѕ РЅРµ РґР°С‘С‚ 5 РѕС‚РґРµР»СЊРЅС‹С… СѓСЂРѕРІРЅРµР№ СЏСЂРєРѕСЃС‚Рё.'
-      : 'This device can enable the flashlight, but it does not expose 5 separate brightness levels.';
-  String get smartFlashlightUnavailableSubtitle => isRu
-      ? 'РќР° СЌС‚РѕРј СѓСЃС‚СЂРѕР№СЃС‚РІРµ РЅРµС‚ РґРѕСЃС‚СѓРїРЅРѕРіРѕ С„РѕРЅР°СЂРёРєР°.'
-      : 'This device does not expose a usable flashlight.';
-  String smartFlashlightBrightnessLabel(int level) => isRu
-      ? 'РЇСЂРєРѕСЃС‚СЊ ${level.clamp(1, 5)}/5'
-      : 'Brightness ${level.clamp(1, 5)}/5';
-  String get smartFlashlightLevelSelectorHint => isRu
-      ? 'РџСЂР°РІР°СЏ С‚РѕС‡РєР° = РјР°РєСЃРёРјР°Р»СЊРЅР°СЏ СЏСЂРєРѕСЃС‚СЊ.'
-      : 'The rightmost point is maximum brightness.';
-  String get smartFlashlightFallbackWarning => isRu
-      ? 'РџРѕРєР°Р·Р°РЅ fallback: С‚РѕС‡РєРё РѕС‚РєР»СЋС‡РµРЅС‹, РїРѕС‚РѕРјСѓ С‡С‚Рѕ СѓСЃС‚СЂРѕР№СЃС‚РІРѕ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚ 5 СѓСЂРѕРІРЅРµР№ СЏСЂРєРѕСЃС‚Рё С„РѕРЅР°СЂРёРєР°.'
-      : 'Fallback mode: the dots are disabled because this device does not support 5 flashlight brightness levels.';
-  String get networkSpeedCardTitle =>
-      isRu ? 'РЎРєРѕСЂРѕСЃС‚СЊ РёРЅС‚РµСЂРЅРµС‚Р°' : 'Network speed';
-  String get networkSpeedEnabledTitle => isRu
-      ? 'РџРѕРєР°Р·С‹РІР°С‚СЊ СЃРєРѕСЂРѕСЃС‚СЊ РёРЅС‚РµСЂРЅРµС‚Р° РІ Now Bar'
-      : 'Show network speed in Now Bar';
-  String get networkSpeedEnabledSubtitle => isRu
-      ? 'Р—Р°РїСѓСЃРєР°РµС‚ РѕС‚РґРµР»СЊРЅРѕРµ СѓРІРµРґРѕРјР»РµРЅРёРµ СЃ С‚РµРєСѓС‰РµР№ СЃРєРѕСЂРѕСЃС‚СЊСЋ СЃРµС‚Рё Рё РІС‹РІРѕРґРёС‚ РµРіРѕ РІ Now Bar.'
-      : 'Runs a dedicated ongoing notification with current network speed and surfaces it in the Now Bar.';
-  String get networkSpeedThresholdTitle =>
-      isRu ? 'РњРёРЅРёРјР°Р»СЊРЅР°СЏ СЃРєРѕСЂРѕСЃС‚СЊ РґР»СЏ РїРѕРєР°Р·Р°' : 'Minimum speed to show';
-  String get networkSpeedThresholdSubtitle => isRu
-      ? 'Live-РёРЅРґРёРєР°С‚РѕСЂ РїРѕСЏРІРёС‚СЃСЏ, РєРѕРіРґР° СЃСѓРјРјР°СЂРЅР°СЏ СЃРєРѕСЂРѕСЃС‚СЊ Р·Р°РіСЂСѓР·РєРё Рё РѕС‚РґР°С‡Рё РґРѕСЃС‚РёРіРЅРµС‚ СЌС‚РѕРіРѕ РїРѕСЂРѕРіР°.'
-      : 'The live element appears when combined download and upload reach this threshold.';
-  String get networkSpeedThresholdAlways =>
-      isRu ? 'РџРѕРєР°Р·С‹РІР°С‚СЊ РІСЃРµРіРґР°' : 'Always show';
-  String get networkSpeedDisplayContentTitle =>
-      isRu ? 'РћС‚РѕР±СЂР°Р¶Р°РµРјС‹Р№ РєРѕРЅС‚РµРЅС‚' : 'Display content';
-  String get networkSpeedDisplayModeTotal =>
-      isRu ? 'РћР±С‰Р°СЏ СЃРєРѕСЂРѕСЃС‚СЊ' : 'Total speed';
-  String get networkSpeedDisplayModeUpload =>
-      isRu ? 'РўРѕР»СЊРєРѕ РѕС‚РґР°С‡Р°' : 'Upload only';
-  String get networkSpeedDisplayModeDownload =>
-      isRu ? 'РўРѕР»СЊРєРѕ Р·Р°РіСЂСѓР·РєР°' : 'Download only';
-  String get networkSpeedUploadPrefixTitle =>
-      isRu ? 'РџСЂРµС„РёРєСЃ РѕС‚РґР°С‡Рё' : 'Upload prefix';
-  String get networkSpeedDownloadPrefixTitle =>
-      isRu ? 'РџСЂРµС„РёРєСЃ Р·Р°РіСЂСѓР·РєРё' : 'Download prefix';
-  String get networkSpeedUnitTitle => isRu ? 'Р•РґРёРЅРёС†Р° СЃРєРѕСЂРѕСЃС‚Рё' : 'Speed unit';
-  String get networkSpeedUnitAuto => isRu ? 'РђРІС‚Рѕ' : 'Auto';
-  String get networkSpeedUnitBytes => isRu ? 'B/s' : 'B/s';
-  String get networkSpeedUnitKilobytes => isRu ? 'KB/s' : 'KB/s';
-  String get networkSpeedUnitMegabytes => isRu ? 'MB/s' : 'MB/s';
-  String get networkSpeedUnitGigabytes => isRu ? 'GB/s' : 'GB/s';
-  String networkSpeedCurrentValue(String value) =>
-      isRu ? 'РЎРµР№С‡Р°СЃ: "$value"' : 'Current: "$value"';
-  String get networkSpeedPrioritizeUploadTitle =>
-      isRu ? 'РЎРЅР°С‡Р°Р»Р° РїРѕРєР°Р·С‹РІР°С‚СЊ РѕС‚РґР°С‡Сѓ' : 'Prioritize upload speed';
-  String get networkSpeedPrioritizeUploadSubtitle => isRu
-      ? 'Р’ СЂРµР¶РёРјРµ РѕР±С‰РµР№ СЃРєРѕСЂРѕСЃС‚Рё РѕС‚РґР°С‡Р° Р±СѓРґРµС‚ СЃС‚РѕСЏС‚СЊ РїРµСЂРµРґ Р·Р°РіСЂСѓР·РєРѕР№.'
-      : 'In total mode, upload speed is shown before download.';
-  String get networkSpeedLockscreenOnlyTitle => isRu
-      ? 'РџРѕРєР°Р·С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ РЅР° СЌРєСЂР°РЅРµ Р±Р»РѕРєРёСЂРѕРІРєРё'
-      : 'Display only on lock screen';
-  String get networkSpeedLockscreenOnlySubtitle => isRu
-      ? 'РџСЂРё СЂР°Р·Р±Р»РѕРєРёСЂРѕРІР°РЅРЅРѕРј СЌРєСЂР°РЅРµ РёРЅРґРёРєР°С‚РѕСЂ СЃРєРѕСЂРѕСЃС‚Рё РїРѕР»РЅРѕСЃС‚СЊСЋ СЃРєСЂС‹РІР°РµС‚СЃСЏ Рё РІРѕР·РІСЂР°С‰Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РЅР° СЌРєСЂР°РЅРµ Р±Р»РѕРєРёСЂРѕРІРєРё.'
-      : 'When the device is unlocked, network speed is hidden completely and returns only on the lock screen.';
-  String get networkSpeedDisableChipBackgroundTitle =>
-      isRu ? 'РћС‚РєР»СЋС‡РёС‚СЊ С„РѕРЅ С‡РёРїРѕРІ' : 'Disable chip background';
-  String get networkSpeedDisableChipBackgroundSubtitle => isRu
-      ? 'РЈР±РёСЂР°РµС‚ РїР»Р°С€РєСѓ Сѓ С‡РёРїРѕРІ СЃРєРѕСЂРѕСЃС‚Рё РІ Now Bar, РЅРѕ РѕСЃС‚Р°РІР»СЏРµС‚ СЃС‚Р°С‚РёС‡РЅС‹Р№ С†РІРµС‚ Сѓ РёРєРѕРЅРєРё РІ СЂР°Р·РІРµСЂРЅСѓС‚РѕРј СѓРІРµРґРѕРјР»РµРЅРёРё.'
-      : 'Removes the pill background from the network speed chips in Now Bar while keeping a fixed accent behind the icon in the expanded notification.';
-  String get smartNavigationDisabledSubtitle => isRu
-      ? 'РЎРЅР°С‡Р°Р»Р° РІРєР»СЋС‡РёС‚Рµ СѓРјРЅРѕРµ СЂР°СЃРїРѕР·РЅР°РІР°РЅРёРµ.'
-      : 'Enable smart status detection first.';
-  String get smartDetectionDisabledSubtitle => isRu
-      ? 'РћС‚РєР»СЋС‡РµРЅРѕ РІ СЂРµР¶РёРјРµ "РќР°С‚РёРІРЅС‹Р№ РїСЂРѕРіСЂРµСЃСЃ".'
-      : 'Disabled while "Native progress" mode is enabled.';
-  String get conflictingModesHint => isRu
-      ? 'Р§С‚РѕР±С‹ СЂР°Р±РѕС‚Р°Р»Рё С‚РµРєСЃС‚РѕРІС‹Рµ СЃС‚Р°С‚СѓСЃС‹, РѕС‚РєР»СЋС‡РёС‚Рµ СЂРµР¶РёРј "РќР°С‚РёРІРЅС‹Р№ РїСЂРѕРіСЂРµСЃСЃ".'
-      : 'Turn off "Native progress" mode to enable food/taxi/navigation text status recognition.';
-  String get onlyProgressTitle =>
-      isRu ? 'РќР°С‚РёРІРЅС‹Р№ РїСЂРѕРіСЂРµСЃСЃ' : 'Native progress';
-  String get onlyProgressSubtitle => isRu
-      ? 'Р•СЃР»Рё РІРєР»СЋС‡РµРЅРѕ, РєРѕРЅРІРµСЂС‚РёСЂСѓСЋС‚СЃСЏ С‚РѕР»СЊРєРѕ СѓРІРµРґРѕРјР»РµРЅРёСЏ СЃ СЃРёСЃС‚РµРјРЅС‹Рј РїСЂРѕРіСЂРµСЃСЃР±Р°СЂРѕРј.'
-      : 'When enabled, only notifications with a system progress bar are converted.';
-  String get textProgressTitle =>
-      isRu ? 'РўРµРєСЃС‚РѕРІС‹Рµ РїСЂРѕРіСЂРµСЃСЃС‹' : 'Text progress';
-  String get textProgressSubtitle => isRu
-      ? 'Р•СЃР»Рё РІ С‚РµРєСЃС‚Рµ РµСЃС‚СЊ %, Рё СЌС‚Рѕ РЅРµ СЃРєРёРґРєР°/Р°РєС†РёСЏ, СЃС‡РёС‚Р°С‚СЊ РєР°Рє РїСЂРѕРіСЂРµСЃСЃ Рё РѕР±РЅРѕРІР»СЏС‚СЊ РѕСЃС‚СЂРѕРІ.'
-      : 'If text contains % and it is not discount-related, treat it as progress and update island.';
+  String get bugReportCopied => tr(
+    en: 'Diagnostics copied to clipboard. Paste it into the issue.',
+    ru: 'Диагностика скопирована в буфер. Вставьте в issue.',
+    tr: 'Tanılama panoya kopyalandı. Issue içine yapıştırın.',
+    zhHans: '诊断信息已复制到剪贴板，请粘贴到 issue 中。',
+    zhHant: '診斷資訊已複製到剪貼簿，請貼到 issue。',
+  );
 
-  String get blockedTitle =>
-      isRu ? 'AOSP РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ С‡Р°СЃС‚РёС‡РЅРѕ' : 'AOSP is partially supported';
-  String get blockedSubtitle => isRu
-      ? 'LiveBridge РїР»РѕС…Рѕ СЂР°Р±РѕС‚Р°РµС‚ РЅР° СѓСЃС‚СЂРѕР№СЃС‚РІР°С… СЃ AOSP. РњРѕР¶РµС‚Рµ РїСЂРѕРґРѕР»Р¶РёС‚СЊ, РЅРѕ Р·Р° РїРѕСЃР»РµРґСЃС‚РІРёСЏ СЏ РЅРµ РѕС‚РІРµС‡Р°СЋ.'
-      : 'LiveBridge is not designed for AOSP. You can continue, but i am not responsible for any bugs.';
-  String get blockedBypassAction =>
-      isRu ? 'Р’СЃРµ СЂР°РІРЅРѕ РїСЂРѕРґРѕР»Р¶РёС‚СЊ' : 'Continue anyway';
-  String get blockedBypassSaveFailed =>
-      isRu ? 'РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РІС‹Р±РѕСЂ.' : 'Unable to save your choice.';
+  String get bugReportCopyFailed => tr(
+    en: 'Failed to copy diagnostics.',
+    ru: 'Не удалось скопировать диагностику.',
+    tr: 'Tanılama kopyalanamadı.',
+    zhHans: '复制诊断信息失败。',
+    zhHant: '複製診斷資訊失敗。',
+  );
 
+  String get accessTitle => tr(
+    en: 'Permissions',
+    ru: 'Разрешения',
+    tr: 'İzinler',
+    zhHans: '权限',
+    zhHant: '權限',
+  );
 
+  String get listenerAccess => tr(
+    en: 'Notification Listener access',
+    ru: 'Доступ к уведомлениям',
+    tr: 'Bildirim dinleyicisi erişimi',
+    zhHans: '通知监听访问',
+    zhHant: '通知監聽存取',
+  );
 
+  String get postNotifications => tr(
+    en: 'Post notifications permission',
+    ru: 'Отправка уведомлений',
+    tr: 'Bildirim gönderme izni',
+    zhHans: '发送通知权限',
+    zhHant: '發送通知權限',
+  );
 
+  String get liveUpdatesAccess => tr(
+    en: 'Live Updates promotion',
+    ru: 'Разрешение на Live Updates',
+    tr: 'Live Updates tanıtımı',
+    zhHans: 'Live Updates 推送权限',
+    zhHant: 'Live Updates 推送權限',
+  );
 
+  String get settingsTitle => tr(
+    en: 'Settings',
+    ru: 'Настройки',
+    tr: 'Ayarlar',
+    zhHans: '设置',
+    zhHant: '設定',
+  );
+
+  String get keepAliveForegroundTitle => tr(
+    en: 'Alt background mode',
+    ru: 'Альтернативный фоновый режим',
+    tr: 'Alternatif arka plan modu',
+    zhHans: '替代后台模式',
+    zhHant: '替代背景模式',
+  );
 
   String get networkSpeedTitle => tr(
     en: 'Network speed',
-    ru: 'РЎРєРѕСЂРѕСЃС‚СЊ СЃРµС‚Рё',
-    tr: 'AДџ hД±zД±',
-    zhHans: 'зЅ‘йЂџ',
-    zhHant: 'з¶ІйЂџ',
+    ru: 'Скорость сети',
+    tr: 'Ağ hızı',
+    zhHans: '网速',
+    zhHant: '網速',
   );
 
+  String get networkSpeedThresholdAlways => tr(
+    en: 'Always show',
+    ru: 'Показывать всегда',
+    tr: 'Her zaman göster',
+    zhHans: '始终显示',
+    zhHant: '永遠顯示',
+  );
 
+  String get syncDndTitle => tr(
+    en: 'Sync DnD',
+    ru: 'Синхронизировать DnD',
+    tr: 'DnD eşitle',
+    zhHans: '同步勿扰',
+    zhHant: '同步勿擾',
+  );
 
   String get preventDismissingTitle => tr(
     en: 'Prevent dismissing',
-    ru: 'Р—Р°РїСЂРµС‚РёС‚СЊ СЃРєСЂС‹С‚РёРµ',
-    tr: 'KapatmayД± engelle',
-    zhHans: 'йІж­ўиў«е…ій—­',
-    zhHant: 'йІж­ўиў«й—њй–‰',
+    ru: 'Запретить скрытие',
+    tr: 'Kapatmayı engelle',
+    zhHans: '防止被关闭',
+    zhHant: '防止被關閉',
   );
 
+  String get updateChecksTitle => tr(
+    en: 'Update checking',
+    ru: 'Проверка обновлений',
+    tr: 'Güncelleme denetimi',
+    zhHans: '检查更新',
+    zhHant: '檢查更新',
+  );
 
+  String get experimentalTitle => tr(
+    en: 'Experimental',
+    ru: 'Экспериментальное',
+    tr: 'Deneysel',
+    zhHans: '实验功能',
+    zhHant: '實驗功能',
+  );
 
+  String get aospCuttingTitle => tr(
+    en: 'AOSP cutting',
+    ru: 'Обрезка AOSP',
+    tr: 'AOSP kırpma',
+    zhHans: 'AOSP 裁剪',
+    zhHant: 'AOSP 裁切',
+  );
 
+  String get appPresentationSettings => tr(
+    en: 'Per-app behavior',
+    ru: 'Поведение приложений',
+    tr: 'Uygulama bazlı davranış',
+    zhHans: '按应用行为',
+    zhHant: '各應用行為',
+  );
 
+  String get appPresentationLoadFailed => tr(
+    en: 'Unable to load per-app settings.',
+    ru: 'Не удалось загрузить настройки приложений.',
+    tr: 'Uygulama bazlı ayarlar yüklenemiyor.',
+    zhHans: '无法加载按应用设置。',
+    zhHant: '無法載入各應用設定。',
+  );
 
+  String get appPresentationSaveFailed => tr(
+    en: 'Unable to save per-app settings.',
+    ru: 'Не удалось сохранить настройки приложений.',
+    tr: 'Uygulama bazlı ayarlar kaydedilemiyor.',
+    zhHans: '无法保存按应用设置。',
+    zhHant: '無法儲存各應用設定。',
+  );
 
+  String get appPresentationDownloadFailed => tr(
+    en: 'Failed to save settings JSON.',
+    ru: 'Не удалось сохранить JSON настроек.',
+    tr: 'Ayarlar JSON\'u kaydedilemedi.',
+    zhHans: '保存设置 JSON 失败。',
+    zhHant: '儲存設定 JSON 失敗。',
+  );
 
+  String get appPresentationSaved => tr(
+    en: 'Settings saved to Downloads.',
+    ru: 'Настройки сохранены в Загрузки.',
+    tr: 'Ayarlar İndirilenler klasörüne kaydedildi.',
+    zhHans: '设置已保存到下载目录。',
+    zhHant: '設定已儲存到下載資料夾。',
+  );
 
+  String get appPresentationUploadDone => tr(
+    en: 'Per-app settings imported.',
+    ru: 'Настройки приложений загружены.',
+    tr: 'Uygulama bazlı ayarlar içe aktarıldı.',
+    zhHans: '已导入按应用设置。',
+    zhHant: '已匯入各應用設定。',
+  );
 
+  String get appPresentationUploadFailed => tr(
+    en: 'Failed to import settings JSON.',
+    ru: 'Не удалось загрузить JSON настроек.',
+    tr: 'Ayarlar JSON\'u içe aktarılamadı.',
+    zhHans: '导入设置 JSON 失败。',
+    zhHant: '匯入設定 JSON 失敗。',
+  );
 
+  String get appPresentationInvalidJson => tr(
+    en: 'Invalid per-app settings JSON.',
+    ru: 'Невалидный JSON настроек приложений.',
+    tr: 'Geçersiz uygulama bazlı ayarlar JSON\'u.',
+    zhHans: '按应用设置 JSON 无效。',
+    zhHant: '各應用設定 JSON 無效。',
+  );
 
+  String get downloadSettings => tr(
+    en: 'Download settings',
+    ru: 'Скачать настройки',
+    tr: 'Ayarları indir',
+    zhHans: '下载设置',
+    zhHant: '下載設定',
+  );
 
+  String get uploadSettings => tr(
+    en: 'Upload settings',
+    ru: 'Загрузить настройки',
+    tr: 'Ayarları yükle',
+    zhHans: '上传设置',
+    zhHant: '上傳設定',
+  );
 
+  String get save =>
+      tr(en: 'Save', ru: 'Сохранить', tr: 'Kaydet', zhHans: '保存', zhHant: '儲存');
 
+  String get appsLoadFailed => tr(
+    en: 'Unable to load installed apps list.',
+    ru: 'Не удалось загрузить список приложений.',
+    tr: 'Yüklü uygulama listesi yüklenemiyor.',
+    zhHans: '无法加载已安装应用列表。',
+    zhHant: '無法載入已安裝應用清單。',
+  );
 
+  String get appsAccessTitle => tr(
+    en: 'App list access',
+    ru: 'Доступ к списку приложений',
+    tr: 'Uygulama listesi erişimi',
+    zhHans: '应用列表访问',
+    zhHant: '應用清單存取',
+  );
 
+  String get appsAccessMessage => tr(
+    en: 'Allow LiveBridge to read installed apps so you can pick apps for rules?',
+    ru: 'Разрешить LiveBridge читать список установленных приложений для выбора правил?',
+    tr: 'Kurallar için uygulama seçebilmeniz adına LiveBridge yüklü uygulamaları okuyabilsin mi?',
+    zhHans: '允许 LiveBridge 读取已安装应用列表，以便为规则选择应用吗？',
+    zhHant: '允許 LiveBridge 讀取已安裝應用清單，以便為規則選擇應用程式嗎？',
+  );
 
+  String get appsAccessSaveFailed => tr(
+    en: 'Unable to save access preference.',
+    ru: 'Не удалось сохранить выбор доступа.',
+    tr: 'Erişim tercihi kaydedilemiyor.',
+    zhHans: '无法保存访问偏好。',
+    zhHant: '無法儲存存取偏好。',
+  );
 
+  String get cancel =>
+      tr(en: 'Cancel', ru: 'Отмена', tr: 'İptal', zhHans: '取消', zhHant: '取消');
 
+  String get allow => tr(
+    en: 'Allow',
+    ru: 'Разрешить',
+    tr: 'İzin ver',
+    zhHans: '允许',
+    zhHant: '允許',
+  );
 
+  String get appPresentationDefaultSummary => tr(
+    en: 'Default behavior',
+    ru: 'Стандартное поведение',
+  );
+
+  String get appPresentationTextSourceLabel => tr(
+    en: 'Island text source',
+    ru: 'Источник текста для острова',
+  );
+
+  String get appPresentationIconSourceLabel => tr(
+    en: 'Icon source',
+    ru: 'Источник иконки',
+  );
+
+  String get appPresentationTextTitle => tr(
+    en: 'Notification title',
+    ru: 'Заголовок уведомления',
+  );
+
+  String get appPresentationTextNotification => tr(
+    en: 'Notification text',
+    ru: 'Текст уведомления',
+  );
+
+  String get appPresentationIconNotification => tr(
+    en: 'Notification icon',
+    ru: 'Иконка уведомления',
+  );
+
+  String get appPresentationIconApp => tr(
+    en: 'Application icon',
+    ru: 'Иконка приложения',
+  );
+
+  String get searchAppHint => tr(
+    en: 'Search by app or package',
+    ru: 'Поиск по названию или пакету',
+  );
+
+  String get showSystemApps => tr(
+    en: 'Show system applications',
+    ru: 'Показать системные приложения',
+  );
+
+  String get hideSystemApps => tr(
+    en: 'Hide system applications',
+    ru: 'Скрыть системные приложения',
+  );
+
+  String get resetToDefault => tr(
+    en: 'Reset to default',
+    ru: 'Сбросить к стандарту',
+  );
+
+  String get notificationDedupTitle => tr(
+    en: 'Notification dedup',
+    ru: 'Удаление дублей уведомлений',
+  );
+
+  String get notificationDedupSubtitle => tr(
+    en: 'Dismisses original clearable notifications after LiveBridge mirrors an OTP or status update.',
+    ru: 'Убирает исходные смахиваемые уведомления, если LiveBridge уже показал свой OTP или статус.',
+  );
+
+  String get notificationDedupModeLabel => tr(
+    en: 'Dedup mode',
+    ru: 'Режим удаления дублей',
+  );
+
+  String get notificationDedupModeOtpOnly => tr(
+    en: 'OTP only',
+    ru: 'Только OTP',
+  );
+
+  String get notificationDedupModeOtpStatus => tr(
+    en: 'OTP and statuses',
+    ru: 'OTP и статусы',
+  );
+
+  String get samsungRemoteParserTitle => tr(
+    en: 'Samsung RemoteViews reparser',
+    ru: 'Samsung RemoteViews репарсер',
+  );
+
+  String get samsungRemoteParserSubtitle => tr(
+    en: 'Uses Samsung ongoingActivity extras and RemoteViews for improved parsing on One UI.',
+    ru: 'Использует Samsung ongoingActivity extras и RemoteViews для более точного парсинга уведомлений.',
+  );
+
+  String get smartNavigationSubtitle => tr(
+    en: 'Navigation notification detection.',
+    ru: 'Распознавание уведомлений навигации.',
+  );
+
+  String get smartMediaPlaybackSubtitle => tr(
+    en: 'Converts media playback notifications into Live. On some OEMs this may duplicate native media UI.',
+    ru: 'Преобразует уведомления медиаплеера в Live. На некоторых OEM может дублировать нативный плеер.',
+  );
+
+  String get smartWeatherSubtitle => tr(
+    en: 'Weather notification detection (temperature in island).',
+    ru: 'Распознавание погодных уведомлений (температура в острове).',
+  );
+
+  String get smartWeatherLockscreenOnlyTitle => tr(
+    en: 'Display only on lock screen',
+    ru: 'Показывать только на экране блокировки',
+  );
+
+  String get smartWeatherLockscreenOnlySubtitle => tr(
+    en: 'Hide weather while the device is unlocked.',
+    ru: 'Скрывать погоду при разблокированном устройстве.',
+  );
+
+  String get smartFlashlightTitle => tr(
+    en: 'Flashlight',
+    ru: 'Фонарик',
+  );
+
+  String get smartFlashlightSubtitle => tr(
+    en: 'Creates a LiveBridge flashlight notification and mirrors the system flashlight state into Now Bar.',
+    ru: 'Создаёт уведомление фонарика LiveBridge и отражает системное состояние фонарика в Now Bar.',
+  );
+
+  String get smartFlashlightUnsupportedSubtitle => tr(
+    en: 'This device can enable the flashlight, but it does not expose 5 separate brightness levels.',
+    ru: 'Устройство включает фонарик, но не даёт 5 отдельных уровней яркости.',
+  );
+
+  String get smartFlashlightUnavailableSubtitle => tr(
+    en: 'This device does not expose a usable flashlight.',
+    ru: 'На этом устройстве нет доступного фонарика.',
+  );
+
+  String get smartVpnSubtitle => tr(
+    en: 'Shows incoming/outgoing traffic speed in *b/s format.',
+    ru: 'Показывает входящий/исходящий трафик в формате *b/s.',
+  );
+
+  String get smartExternalDevicesSubtitle => tr(
+    en: 'Shows connected/connecting status and device name in island.',
+    ru: 'Показывает статус подключения и имя устройства в острове.',
+  );
+
+  String get smartExternalDevicesIgnoreDebuggingSubtitle => tr(
+    en: 'Skip Live updates for USB debugging, wireless debugging, ADB, and similar system notifications.',
+    ru: 'Не показывать Live для USB debugging, wireless debugging, ADB и похожих системных уведомлений.',
+  );
+
+  String get networkSpeedEnabledTitle => tr(
+    en: 'Show network speed in Now Bar',
+    ru: 'Показывать скорость интернета в Now Bar',
+  );
+
+  String get networkSpeedEnabledSubtitle => tr(
+    en: 'Runs a dedicated ongoing notification with current network speed and surfaces it in the Now Bar.',
+    ru: 'Запускает отдельное уведомление с текущей скоростью сети и выводит его в Now Bar.',
+  );
+
+  String get networkSpeedThresholdTitle => tr(
+    en: 'Minimum speed to show',
+    ru: 'Минимальная скорость для показа',
+  );
+
+  String get networkSpeedThresholdSubtitle => tr(
+    en: 'The live element appears when combined download and upload reach this threshold.',
+    ru: 'Live-индикатор появится, когда суммарная скорость загрузки и отдачи достигнет этого порога.',
+  );
+
+  String get networkSpeedDisplayContentTitle => tr(
+    en: 'Display content',
+    ru: 'Отображаемый контент',
+  );
+
+  String get networkSpeedDisplayModeTotal => tr(
+    en: 'Total speed',
+    ru: 'Общая скорость',
+  );
+
+  String get networkSpeedDisplayModeUpload => tr(
+    en: 'Upload only',
+    ru: 'Только отдача',
+  );
+
+  String get networkSpeedDisplayModeDownload => tr(
+    en: 'Download only',
+    ru: 'Только загрузка',
+  );
+
+  String get networkSpeedUploadPrefixTitle => tr(
+    en: 'Upload prefix',
+    ru: 'Префикс отдачи',
+  );
+
+  String get networkSpeedDownloadPrefixTitle => tr(
+    en: 'Download prefix',
+    ru: 'Префикс загрузки',
+  );
+
+  String get networkSpeedUnitTitle => tr(
+    en: 'Speed unit',
+    ru: 'Единица скорости',
+  );
+
+  String get networkSpeedUnitAuto => tr(
+    en: 'Auto',
+    ru: 'Авто',
+  );
+
+  String get networkSpeedUnitBytes => 'B/s';
+
+  String get networkSpeedUnitKilobytes => 'KB/s';
+
+  String get networkSpeedUnitMegabytes => 'MB/s';
+
+  String get networkSpeedUnitGigabytes => 'GB/s';
+
+  String networkSpeedCurrentValue(String value) => tr(
+    en: 'Current: "$value"',
+    ru: 'Сейчас: "$value"',
+  );
+
+  String get networkSpeedPrioritizeUploadTitle => tr(
+    en: 'Prioritize upload speed',
+    ru: 'Сначала показывать отдачу',
+  );
+
+  String get networkSpeedPrioritizeUploadSubtitle => tr(
+    en: 'In total mode, upload speed is shown before download.',
+    ru: 'В режиме общей скорости отдача будет стоять перед загрузкой.',
+  );
+
+  String get networkSpeedLockscreenOnlyTitle => tr(
+    en: 'Display only on lock screen',
+    ru: 'Показывать только на экране блокировки',
+  );
+
+  String get networkSpeedLockscreenOnlySubtitle => tr(
+    en: 'Hide the network speed chip while the device is unlocked.',
+    ru: 'Скрывать индикатор скорости при разблокированном устройстве.',
+  );
+
+  String get networkSpeedDisableChipBackgroundTitle => tr(
+    en: 'Disable chip background',
+    ru: 'Отключить фон чипов',
+  );
+
+  String get networkSpeedDisableChipBackgroundSubtitle => tr(
+    en: 'Removes the pill background from network speed chips in Now Bar.',
+    ru: 'Убирает плашку у чипов скорости в Now Bar.',
+  );
+
+  String get textProgressTitle => tr(
+    en: 'Text progress',
+    ru: 'Текстовые прогрессы',
+    tr: 'Metin ilerlemesi',
+    zhHans: '文本进度',
+    zhHant: '文字進度',
+  );
 }
 
 const Map<String, String> _ptBrTranslations = <String, String>{
   'Refresh': 'Atualizar',
-  'Notification permission granted.': 'PermissГЈo de notificaГ§Гµes concedida.',
+  'Notification permission granted.': 'Permissão de notificações concedida.',
   'Notification permission was not granted.':
-      'PermissГЈo de notificaГ§Гµes nГЈo concedida.',
+      'Permissão de notificações não concedida.',
   'Unable to open Listener settings on this device.':
-      'NГЈo foi possГ­vel abrir as configuraГ§Гµes do Listener neste dispositivo.',
+      'Não foi possível abrir as configurações do Listener neste dispositivo.',
   'Unable to open app notification settings.':
-      'NГЈo foi possГ­vel abrir as configuraГ§Гµes de notificaГ§ГЈo do app.',
+      'Não foi possível abrir as configurações de notificação do app.',
   'Unable to open Live Updates settings on this device.':
-      'NГЈo foi possГ­vel abrir as configuraГ§Гµes de Live Updates neste dispositivo.',
-  'Unable to open GitHub link.': 'NГЈo foi possГ­vel abrir o link do GitHub.',
-  'Unable to open link.': 'NГЈo foi possГ­vel abrir o link.',
+      'Não foi possível abrir as configurações de Live Updates neste dispositivo.',
+  'Unable to open GitHub link.': 'Não foi possível abrir o link do GitHub.',
+  'Unable to open link.': 'Não foi possível abrir o link.',
   'Unable to check updates. Try disabling VPN.':
-      'NГЈo foi possГ­vel verificar atualizaГ§Гµes. Tente desativar a VPN.',
-  'Dictionary is empty or invalid.': 'O dicionГЎrio estГЎ vazio ou invГЎlido.',
-  'Dictionary updated from GitHub.': 'DicionГЎrio atualizado pelo GitHub.',
-  'Invalid dictionary JSON.': 'JSON do dicionГЎrio invГЎlido.',
+      'Não foi possível verificar atualizações. Tente desativar a VPN.',
+  'Dictionary is empty or invalid.': 'O dicionário está vazio ou inválido.',
+  'Dictionary updated from GitHub.': 'Dicionário atualizado pelo GitHub.',
+  'Invalid dictionary JSON.': 'JSON do dicionário inválido.',
   'Failed to update dictionary from GitHub.':
-      'Falha ao atualizar o dicionГЎrio pelo GitHub.',
-  'Dictionary': 'DicionГЎrio',
+      'Falha ao atualizar o dicionário pelo GitHub.',
+  'Dictionary': 'Dicionário',
   'tap to manage': 'toque para gerenciar',
-  'Dictionary languages': 'Idiomas do dicionГЎrio',
+  'Dictionary languages': 'Idiomas do dicionário',
   'tap to choose': 'toque para escolher',
-  'Select languages for conversion': 'Selecione idiomas para conversГЈo',
-  'Update dictionaries': 'Atualizar dicionГЎrios',
-  'Dictionary editor': 'Editor de dicionГЎrio',
+  'Select languages for conversion': 'Selecione idiomas para conversão',
+  'Update dictionaries': 'Atualizar dicionários',
+  'Dictionary editor': 'Editor de dicionário',
   '(coming soon)': '(em breve)',
-  'Home': 'InГ­cio',
+  'Home': 'Início',
   'Rules': 'Regras',
-  'Settings': 'ConfiguraГ§Гµes',
-  'App config': 'ConfiguraГ§ГЈo do app',
-  'Brand-specific': 'EspecГ­fico da marca',
-  'App updates': 'AtualizaГ§Гµes do app',
-  'LiveBridge is running': 'LiveBridge estГЎ em execuГ§ГЈo',
-  'LiveBridge is disabled': 'LiveBridge estГЎ desativado',
+  'Settings': 'Configurações',
+  'App config': 'Configuração do app',
+  'Brand-specific': 'Específico da marca',
+  'App updates': 'Atualizações do app',
+  'LiveBridge is running': 'LiveBridge está em execução',
+  'LiveBridge is disabled': 'LiveBridge está desativado',
   'by ': 'por ',
   'Discuss': 'Discutir',
-  'telegram topics': 'tГіpicos no Telegram',
+  'telegram topics': 'tópicos no Telegram',
   'all apps': 'todos os apps',
   'only selected': 'somente selecionados',
   'exclude selected': 'excluir selecionados',
-  'check required': 'verificaГ§ГЈo necessГЎria',
+  'check required': 'verificação necessária',
   'all set': 'tudo certo',
   'tap to update': 'toque para atualizar',
-  'latest version': 'versГЈo mais recente',
-  'Recent conversions': 'ConversГµes recentes',
-  'no conversions yet': 'nenhuma conversГЈo ainda',
-  'conversion log is disabled': 'o log de conversГµes estГЎ desativado',
+  'latest version': 'versão mais recente',
+  'Recent conversions': 'Conversões recentes',
+  'no conversions yet': 'nenhuma conversão ainda',
+  'conversion log is disabled': 'o log de conversões está desativado',
   'enable': 'ativar',
   'Payload copied': 'Payload copiado',
   'Progress': 'Progresso',
   'Native progress': 'Progresso nativo',
-  'OTP codes': 'CГіdigos OTP',
-  'Auto-copy code': 'Copiar cГіdigo automaticamente',
-  'Smart conversion': 'ConversГЈo inteligente',
-  'Taxi': 'TГЎxi',
+  'OTP codes': 'Códigos OTP',
+  'Auto-copy code': 'Copiar código automaticamente',
+  'Smart conversion': 'Conversão inteligente',
+  'Taxi': 'Táxi',
   'Deliveries': 'Entregas',
   'Remove original message': 'Remover mensagem original',
   '(exp)': '(exp)',
   'All apps': 'Todos os apps',
   'Only selected': 'Somente selecionados',
   'Exclude selected': 'Excluir selecionados',
-  'Conversion mode': 'Modo de conversГЈo',
+  'Conversion mode': 'Modo de conversão',
   'Selected apps': 'Apps selecionados',
   'show system': 'mostrar sistema',
   'hide system': 'ocultar sistema',
-  'Network & Connections': 'Rede e conexГµes',
+  'Network & Connections': 'Rede e conexões',
   'VPNs': 'VPNs',
   'External devices': 'Dispositivos externos',
-  'Ignore debugging devices': 'Ignorar dispositivos de depuraГ§ГЈo',
+  'Ignore debugging devices': 'Ignorar dispositivos de depuração',
   'Network speed threshold': 'Limite de velocidade de rede',
   'Miscellaneous': 'Diversos',
-  'Navigation (maps)': 'NavegaГ§ГЈo (mapas)',
-  'Media playback': 'ReproduГ§ГЈo de mГ­dia',
+  'Navigation (maps)': 'Navegação (mapas)',
+  'Media playback': 'Reprodução de mídia',
   'Weather broadcasts': 'Alertas de clima',
   'Bypass': 'Bypass',
-  'Per-app settings': 'ConfiguraГ§Гµes por app',
-  'Defaults': 'PadrГµes',
-  'tap to change default behavior': 'toque para alterar o comportamento padrГЈo',
+  'Per-app settings': 'Configurações por app',
+  'Defaults': 'Padrões',
+  'tap to change default behavior': 'toque para alterar o comportamento padrão',
   'Apps list': 'Lista de apps',
   'Export': 'Exportar',
   'Import': 'Importar',
-  'Title source': 'Origem do tГ­tulo',
-  'Content source': 'Origem do conteГєdo',
-  'Notification title': 'TГ­tulo da notificaГ§ГЈo',
-  'App title': 'TГ­tulo do app',
-  'Notification text': 'Texto da notificaГ§ГЈo',
-  'New version available': 'Nova versГЈo disponГ­vel',
-  'Checking for updates': 'Verificando atualizaГ§Гµes',
-  'YouвЂ™re all set': 'Tudo certo',
+  'Title source': 'Origem do título',
+  'Content source': 'Origem do conteúdo',
+  'Notification title': 'Título da notificação',
+  'App title': 'Título do app',
+  'Notification text': 'Texto da notificação',
+  'New version available': 'Nova versão disponível',
+  'Checking for updates': 'Verificando atualizações',
+  'You’re all set': 'Tudo certo',
   'tap to go to downloads': 'toque para ir aos downloads',
   'please wait a moment': 'aguarde um momento',
-  'latest version already': 'jГЎ estГЎ na versГЈo mais recente',
-  'Visit project page': 'Abrir pГЎgina do projeto',
+  'latest version already': 'já está na versão mais recente',
+  'Visit project page': 'Abrir página do projeto',
   'Visit GitHub': 'Abrir GitHub',
-  'update available | tap to see': 'atualizaГ§ГЈo disponГ­vel | toque para ver',
-  'tap to open update settings': 'toque para abrir ajustes de atualizaГ§ГЈo',
-  'Conversion log': 'Log de conversГµes',
+  'update available | tap to see': 'atualização disponível | toque para ver',
+  'tap to open update settings': 'toque para abrir ajustes de atualização',
+  'Conversion log': 'Log de conversões',
   'Log length': 'Tamanho do log',
   'Xiaomi HyperIsland': 'Xiaomi HyperIsland',
   'Length': 'Tamanho',
-  'OTP dedup': 'DeduplicaГ§ГЈo de OTP',
-  'Smart conversion dedup': 'DeduplicaГ§ГЈo da conversГЈo inteligente',
+  'OTP dedup': 'Deduplicação de OTP',
+  'Smart conversion dedup': 'Deduplicação da conversão inteligente',
   'Animated Island': 'Ilha animada',
-  'Update frequency': 'FrequГЄncia de atualizaГ§ГЈo',
+  'Update frequency': 'Frequência de atualização',
   'Copy debug JSON': 'Copiar JSON de debug',
-  'Open GitHub page': 'Abrir pГЎgina do GitHub',
+  'Open GitHub page': 'Abrir página do GitHub',
   'Auto-copy debug JSON': 'Copiar JSON de debug automaticamente',
-  'Title': 'TГ­tulo',
+  'Title': 'Título',
   'Payload JSON': 'Payload JSON',
   'loading apps...': 'carregando apps...',
   'Search for apps...': 'Buscar apps...',
   'Report a bug': 'Reportar um bug',
   'Diagnostics copied to clipboard. Paste it into the issue.':
-      'DiagnГіstico copiado para a ГЎrea de transferГЄncia. Cole no issue.',
-  'Failed to copy diagnostics.': 'Falha ao copiar diagnГіstico.',
-  'Permissions': 'PermissГµes',
+      'Diagnóstico copiado para a área de transferência. Cole no issue.',
+  'Failed to copy diagnostics.': 'Falha ao copiar diagnóstico.',
+  'Permissions': 'Permissões',
   'Notification Listener access': 'Acesso ao Notification Listener',
-  'Post notifications permission': 'PermissГЈo para enviar notificaГ§Гµes',
-  'Live Updates promotion': 'PermissГЈo para Live Updates',
+  'Post notifications permission': 'Permissão para enviar notificações',
+  'Live Updates promotion': 'Permissão para Live Updates',
   'Alt background mode': 'Modo alternativo em segundo plano',
   'Network speed': 'Velocidade da rede',
   'Always show': 'Sempre mostrar',
-  'Sync DnD': 'Sincronizar NГЈo Perturbe',
+  'Sync DnD': 'Sincronizar Não Perturbe',
   'Prevent dismissing': 'Impedir dispensa',
-  'Update checking': 'VerificaГ§ГЈo de atualizaГ§Гµes',
+  'Update checking': 'Verificação de atualizações',
   'Experimental': 'Experimental',
   'AOSP cutting': 'Recorte AOSP',
   'Per-app behavior': 'Comportamento por app',
   'Unable to load per-app settings.':
-      'NГЈo foi possГ­vel carregar configuraГ§Гµes por app.',
+      'Não foi possível carregar configurações por app.',
   'Unable to save per-app settings.':
-      'NГЈo foi possГ­vel salvar configuraГ§Гµes por app.',
-  'Failed to save settings JSON.': 'Falha ao salvar JSON de configuraГ§Гµes.',
-  'Settings saved to Downloads.': 'ConfiguraГ§Гµes salvas em Downloads.',
-  'Per-app settings imported.': 'ConfiguraГ§Гµes por app importadas.',
-  'Failed to import settings JSON.': 'Falha ao importar JSON de configuraГ§Гµes.',
-  'Invalid per-app settings JSON.': 'JSON de configuraГ§Гµes por app invГЎlido.',
-  'Download settings': 'Baixar configuraГ§Гµes',
-  'Upload settings': 'Enviar configuraГ§Гµes',
+      'Não foi possível salvar configurações por app.',
+  'Failed to save settings JSON.': 'Falha ao salvar JSON de configurações.',
+  'Settings saved to Downloads.': 'Configurações salvas em Downloads.',
+  'Per-app settings imported.': 'Configurações por app importadas.',
+  'Failed to import settings JSON.': 'Falha ao importar JSON de configurações.',
+  'Invalid per-app settings JSON.': 'JSON de configurações por app inválido.',
+  'Download settings': 'Baixar configurações',
+  'Upload settings': 'Enviar configurações',
   'Save': 'Salvar',
   'Unable to load installed apps list.':
-      'NГЈo foi possГ­vel carregar a lista de apps instalados.',
-  'App list access': 'Acesso Г  lista de apps',
+      'Não foi possível carregar a lista de apps instalados.',
+  'App list access': 'Acesso à lista de apps',
   'Allow LiveBridge to read installed apps so you can pick apps for rules?':
-      'Permitir que o LiveBridge leia os apps instalados para que vocГЄ possa escolher apps para as regras?',
+      'Permitir que o LiveBridge leia os apps instalados para que você possa escolher apps para as regras?',
   'Unable to save access preference.':
-      'NГЈo foi possГ­vel salvar a preferГЄncia de acesso.',
+      'Não foi possível salvar a preferência de acesso.',
   'Cancel': 'Cancelar',
   'Allow': 'Permitir',
   'Text progress': 'Progresso por texto',
 };
-
