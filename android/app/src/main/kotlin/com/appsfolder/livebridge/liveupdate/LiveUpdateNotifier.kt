@@ -874,7 +874,18 @@ object LiveUpdateNotifier {
             else ->
                 samsungLargeIcon ?: sourceLargeIcon
         }
-        val nowBarAppIcon = appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
+        val preferredPrimaryIcon = when (appPresentationOverride.iconSource) {
+            NotificationIconSource.NOTIFICATION -> when {
+                shouldTryNavigationArrowIcon ->
+                    navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+                samsungBridge.hasCustomRemoteCard ->
+                    samsungSmallIcon ?: sourceSmallIcon ?: appSmallIcon
+                else ->
+                    sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+            }
+            NotificationIconSource.APP ->
+                appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
+        }
         val nowBarRightIcon = if (samsungBridge.hasCustomRemoteCard && !isSamsungTwoGis) {
             null
         } else {
@@ -1069,26 +1080,7 @@ object LiveUpdateNotifier {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
-        val preferredSmallIcon = when (appPresentationOverride.iconSource) {
-            NotificationIconSource.NOTIFICATION -> when {
-                shouldTryNavigationArrowIcon ->
-                    appSmallIcon ?: navigationDrawable?.icon ?: samsungSmallIcon ?: sourceSmallIcon
-                samsungBridge.hasCustomRemoteCard ->
-                    appSmallIcon ?: samsungSmallIcon ?: sourceSmallIcon
-                else ->
-                    appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
-            }
-            NotificationIconSource.APP -> appSmallIcon ?: sourceSmallIcon
-        }
-        val preferredChipIcon = when {
-            shouldTryNavigationArrowIcon ->
-                navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
-            samsungBridge.hasCustomRemoteCard ->
-                samsungSmallIcon ?: sourceSmallIcon ?: appSmallIcon
-            else ->
-                sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
-        }
-        applySmallIcon(context, builder, preferredSmallIcon)
+        applySmallIcon(context, builder, preferredPrimaryIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
 
         if (requestPromoted) {
@@ -1225,8 +1217,8 @@ object LiveUpdateNotifier {
                 sourcePackageName = sbn.packageName,
                 primaryText = samsungTexts.nowBarPrimaryText,
                 texts = samsungTexts,
-                chipIcon = preferredChipIcon,
-                nowBarIcon = nowBarAppIcon,
+                chipIcon = preferredPrimaryIcon,
+                nowBarIcon = preferredPrimaryIcon,
                 rightIcon = nowBarRightIcon,
                 lockscreenOnly = weatherLockscreenOnly,
                 hasProgress = hasProgress,
@@ -1252,7 +1244,7 @@ object LiveUpdateNotifier {
                 ticker = hyperTicker,
                 progressPercent = determinateProgressPercent,
                 largeIcon = preferredLargeIcon,
-                fallbackSmallIcon = preferredSmallIcon,
+                fallbackSmallIcon = preferredPrimaryIcon,
                 sourceActions = source.actions
             )
         }

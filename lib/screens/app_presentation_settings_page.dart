@@ -915,12 +915,12 @@ class _AppPresentationEditorSheetState
               value: _iconSource,
               options: <SelectorOption<AppNotificationIconSource>>[
                 SelectorOption<AppNotificationIconSource>(
-                  value: AppNotificationIconSource.notification,
-                  title: s.appPresentationIconNotification,
-                ),
-                SelectorOption<AppNotificationIconSource>(
                   value: AppNotificationIconSource.app,
                   title: s.appPresentationIconApp,
+                ),
+                SelectorOption<AppNotificationIconSource>(
+                  value: AppNotificationIconSource.notification,
+                  title: s.appPresentationIconNotification,
                 ),
               ],
               onChanged: (AppNotificationIconSource next) {

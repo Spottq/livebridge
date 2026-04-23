@@ -313,10 +313,10 @@ extension AppNotificationIconSourceId on AppNotificationIconSource {
 
   static AppNotificationIconSource from(String? value) {
     switch (value) {
-      case 'app':
-        return AppNotificationIconSource.app;
-      default:
+      case 'notification':
         return AppNotificationIconSource.notification;
+      default:
+        return AppNotificationIconSource.app;
     }
   }
 }
@@ -324,7 +324,7 @@ extension AppNotificationIconSourceId on AppNotificationIconSource {
 class AppPresentationOverride {
   const AppPresentationOverride({
     this.compactTextSource = AppCompactTextSource.title,
-    this.iconSource = AppNotificationIconSource.notification,
+    this.iconSource = AppNotificationIconSource.app,
   });
 
   final AppCompactTextSource compactTextSource;
@@ -332,7 +332,7 @@ class AppPresentationOverride {
 
   bool get isDefault =>
       compactTextSource == AppCompactTextSource.title &&
-      iconSource == AppNotificationIconSource.notification;
+      iconSource == AppNotificationIconSource.app;
 
   Map<String, String> toJsonEntry() {
     return <String, String>{

@@ -22,18 +22,18 @@ internal enum class NotificationIconSource(val id: String) {
     companion object {
         fun from(raw: String?): NotificationIconSource {
             val normalized = raw?.trim()?.lowercase(Locale.ROOT).orEmpty()
-            return entries.firstOrNull { it.id == normalized } ?: NOTIFICATION
+            return entries.firstOrNull { it.id == normalized } ?: APP
         }
     }
 }
 
 internal data class AppPresentationOverride(
     val compactTextSource: CompactTextSource = CompactTextSource.TITLE,
-    val iconSource: NotificationIconSource = NotificationIconSource.NOTIFICATION
+    val iconSource: NotificationIconSource = NotificationIconSource.APP
 ) {
     fun isDefault(): Boolean {
         return compactTextSource == CompactTextSource.TITLE &&
-                iconSource == NotificationIconSource.NOTIFICATION
+                iconSource == NotificationIconSource.APP
     }
 }
 
