@@ -105,7 +105,10 @@ bool _isSameStandaloneAppPresentationOverride(
   AppPresentationOverride b,
 ) {
   return a.compactTextSource == b.compactTextSource &&
-      a.iconSource == b.iconSource;
+      a.iconSource == b.iconSource &&
+      a.effectiveTitleSource == b.effectiveTitleSource &&
+      a.effectiveContentSource == b.effectiveContentSource &&
+      a.removeOriginalMessage == b.removeOriginalMessage;
 }
 
 _ParsedAppPresentationOverrides _parseStandaloneAppPresentationOverrides(
@@ -224,7 +227,10 @@ class _AppPresentationSettingsPageState
 
   bool _isSameOverride(AppPresentationOverride a, AppPresentationOverride b) {
     return a.compactTextSource == b.compactTextSource &&
-        a.iconSource == b.iconSource;
+        a.iconSource == b.iconSource &&
+        a.effectiveTitleSource == b.effectiveTitleSource &&
+        a.effectiveContentSource == b.effectiveContentSource &&
+        a.removeOriginalMessage == b.removeOriginalMessage;
   }
 
   _ParsedAppPresentationOverrides _parseOverrides(String raw) {

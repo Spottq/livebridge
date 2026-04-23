@@ -46,6 +46,7 @@ object LiveUpdateNotifier {
     const val CHANNEL_ID = "livebridge_promoted_updates"
     private const val TWO_GIS_PACKAGE = "ru.dublgis.dgismobile"
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
+    private const val SAMSUNG_TRAY_ICON_SIZE = 48
 
     private const val CHANNEL_NAME = "LiveBridge Updates"
     private const val TAG = "LiveUpdateNotifier"
@@ -3206,6 +3207,10 @@ object LiveUpdateNotifier {
                 null
             } else {
                 val packageContext = context.createPackageContext(normalizedPackage, 0)
+                val samsungTrayBitmap = resolveSamsungTrayIconBitmap(
+                    context = context,
+                    packageName = normalizedPackage
+                )
                 val resourceIcon = runCatching {
                     IconCompat.createWithResource(
                         packageContext.resources,
@@ -3218,15 +3223,18 @@ object LiveUpdateNotifier {
                         drawableToBitmap(drawable, clipAdaptiveIcon = true)
                     }
                 }.getOrNull()
-                val smallIcon = resourceIcon
+                val smallIcon = samsungTrayBitmap
+                    ?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
+                    ?: resourceIcon
                     ?: bitmap?.let { runCatching { IconCompat.createWithBitmap(it) }.getOrNull() }
+                val largeIconBitmap = bitmap ?: samsungTrayBitmap
 
-                if (smallIcon == null && bitmap == null) {
+                if (smallIcon == null && largeIconBitmap == null) {
                     null
                 } else {
                     AppIconAssets(
                         smallIcon = smallIcon,
-                        largeIconBitmap = bitmap
+                        largeIconBitmap = largeIconBitmap
                     )
                 }
             }
@@ -3243,6 +3251,26 @@ object LiveUpdateNotifier {
         }
 
         return resolved
+    }
+
+    // Follow nowbar-sdk on Samsung and prefer the icon-tray variant for small app icons.
+    private fun resolveSamsungTrayIconBitmap(
+        context: Context,
+        packageName: String
+    ): Bitmap? {
+        return runCatching {
+            val method = context.packageManager.javaClass.getMethod(
+                "semGetApplicationIconForIconTray",
+                String::class.java,
+                Int::class.javaPrimitiveType
+            )
+            val drawable = method.invoke(
+                context.packageManager,
+                packageName,
+                SAMSUNG_TRAY_ICON_SIZE
+            ) as? Drawable
+            drawable?.let(::drawableToBitmap)
+        }.getOrNull()
     }
 
     private fun resolveSourceLargeIconBitmap(context: Context, notification: Notification): Bitmap? {

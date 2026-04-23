@@ -32,6 +32,7 @@ class LbAppPresentationEditorSheet extends StatefulWidget {
 
 class _LbAppPresentationEditorSheetState
     extends State<LbAppPresentationEditorSheet> {
+  late AppNotificationIconSource _iconSource = widget.value.iconSource;
   late AppPresentationTitleSource _titleSource =
       widget.value.effectiveTitleSource;
   late AppPresentationContentSource _contentSource =
@@ -39,10 +40,20 @@ class _LbAppPresentationEditorSheetState
   late bool _removeOriginalMessage = widget.value.removeOriginalMessage;
 
   AppPresentationOverride get _currentValue => widget.value.copyWith(
+    iconSource: _iconSource,
     titleSource: _titleSource,
     contentSource: _contentSource,
     removeOriginalMessage: _removeOriginalMessage,
   );
+
+  Future<void> _setIconSource(AppNotificationIconSource value) async {
+    if (value == _iconSource) {
+      return;
+    }
+    setState(() => _iconSource = value);
+    unawaited(LiveBridgeHaptics.selection());
+    widget.onChanged(_currentValue);
+  }
 
   Future<void> _setTitleSource(AppPresentationTitleSource value) async {
     if (value == _titleSource) {
@@ -151,6 +162,41 @@ class _LbAppPresentationEditorSheetState
           extendDividersToEnd: true,
         ),
         const SizedBox(height: LbSpacing.xl),
+        Text(
+          strings.appPresentationIconSourceLabel,
+          style: LbTextStyles.title.copyWith(color: palette.textSecondary),
+        ),
+        const SizedBox(height: LbSpacing.sm),
+        LbListComponent(
+          items: <LbListItemData>[
+            LbListItemData(
+              title: strings.appPresentationIconApp,
+              showChevron: false,
+              trailingWidget: LbSelectionIndicator(
+                selected: _iconSource == AppNotificationIconSource.app,
+              ),
+              onTap: () {
+                unawaited(_setIconSource(AppNotificationIconSource.app));
+              },
+            ),
+            LbListItemData(
+              title: strings.appPresentationIconNotification,
+              showChevron: false,
+              trailingWidget: LbSelectionIndicator(
+                selected: _iconSource == AppNotificationIconSource.notification,
+              ),
+              onTap: () {
+                unawaited(
+                  _setIconSource(AppNotificationIconSource.notification),
+                );
+              },
+            ),
+          ],
+          backgroundColor: groupedBackground,
+          rowHeight: LbSpacing.recentRowHeight,
+          extendDividersToEnd: true,
+        ),
+        const SizedBox(height: LbSpacing.detailSectionGap),
         Text(
           strings.titleSourceTitle,
           style: LbTextStyles.title.copyWith(color: palette.textSecondary),

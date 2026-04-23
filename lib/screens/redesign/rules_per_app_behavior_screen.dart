@@ -102,32 +102,27 @@ class _RulesPerAppBehaviorScreenState extends State<RulesPerAppBehaviorScreen> {
       final String raw = await LiveBridgePlatform.getAppPresentationOverrides();
       final LbAppPresentationOverridesState parsed =
           lbParseAppPresentationOverrides(raw);
-      final AppPresentationOverride normalizedDefault =
-          parsed.defaultOverride.removeOriginalMessage
-          ? parsed.defaultOverride.copyWith(removeOriginalMessage: false)
-          : parsed.defaultOverride;
       final Map<String, AppPresentationOverride> normalizedOverrides =
           <String, AppPresentationOverride>{};
       for (final MapEntry<String, AppPresentationOverride> entry
           in parsed.packageOverrides.entries) {
-        if (!_isSameOverride(entry.value, normalizedDefault)) {
+        if (!_isSameOverride(entry.value, parsed.defaultOverride)) {
           normalizedOverrides[entry.key] = entry.value;
         }
       }
       final bool shouldPersistNormalizedState =
-          !_isSameOverride(parsed.defaultOverride, normalizedDefault) ||
           normalizedOverrides.length != parsed.packageOverrides.length;
       if (!mounted) {
         return;
       }
       setState(() {
-        _defaultOverride = normalizedDefault;
+        _defaultOverride = parsed.defaultOverride;
         _overrides = normalizedOverrides;
       });
       if (shouldPersistNormalizedState) {
         unawaited(
           _persistOverrides(
-            defaultOverride: normalizedDefault,
+            defaultOverride: parsed.defaultOverride,
             overrides: normalizedOverrides,
           ),
         );

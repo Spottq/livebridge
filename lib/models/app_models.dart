@@ -431,15 +431,13 @@ class AppPresentationOverride {
       contentSource ?? AppPresentationContentSource.notificationText;
 
   bool get isDefault =>
-      compactTextSource == AppCompactTextSource.title &&
-      iconSource == AppNotificationIconSource.app;
-
-  bool get isEffectiveDefault =>
       iconSource == AppNotificationIconSource.app &&
       compactTextSource == AppCompactTextSource.title &&
       effectiveTitleSource == AppPresentationTitleSource.notificationTitle &&
       effectiveContentSource == AppPresentationContentSource.notificationText &&
       !removeOriginalMessage;
+
+  bool get isEffectiveDefault => isDefault;
 
   AppPresentationOverride copyWith({
     AppCompactTextSource? compactTextSource,
