@@ -306,12 +306,12 @@ class AppStrings {
   );
 
   String get statusRunning => tr(
-    en: 'LiveBridge is running',
-    ru: 'LiveBridge запущен',
-    tr: 'LiveBridge çalışıyor',
-    ptBr: 'LiveBridge está em execução',
-    zhHans: 'LiveBridge 正在运行',
-    zhHant: 'LiveBridge 正在執行',
+    en: 'Running',
+    ru: 'Запущен',
+    tr: 'Çalışıyor',
+    ptBr: 'Em execução',
+    zhHans: '正在运行',
+    zhHant: '正在執行',
   );
 
   String get statusDisabled => tr(
