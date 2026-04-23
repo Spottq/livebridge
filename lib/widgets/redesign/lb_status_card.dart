@@ -11,6 +11,9 @@ class LbStatusCard extends StatelessWidget {
     this.secondaryText,
     this.secondaryAccentText,
     this.secondaryAccentOnTap,
+    this.secondaryTrailingText,
+    this.secondaryTrailingAccentText,
+    this.secondaryTrailingAccentOnTap,
     this.onToggle,
     this.toggleOffset,
     this.toggleHapticsEnabled = true,
@@ -21,6 +24,9 @@ class LbStatusCard extends StatelessWidget {
   final String? secondaryText;
   final String? secondaryAccentText;
   final VoidCallback? secondaryAccentOnTap;
+  final String? secondaryTrailingText;
+  final String? secondaryTrailingAccentText;
+  final VoidCallback? secondaryTrailingAccentOnTap;
   final ValueChanged<bool>? onToggle;
   final double? toggleOffset;
   final bool toggleHapticsEnabled;
@@ -72,7 +78,10 @@ class LbStatusCard extends StatelessWidget {
               ],
             ),
             const Spacer(),
-            if (secondaryText != null || secondaryAccentText != null)
+            if (secondaryText != null ||
+                secondaryAccentText != null ||
+                secondaryTrailingText != null ||
+                secondaryTrailingAccentText != null)
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: <Widget>[
@@ -84,6 +93,17 @@ class LbStatusCard extends StatelessWidget {
                       behavior: HitTestBehavior.opaque,
                       child: Text(
                         secondaryAccentText!,
+                        style: secondaryStyle.copyWith(color: palette.link),
+                      ),
+                    ),
+                  if (secondaryTrailingText != null)
+                    Text(secondaryTrailingText!, style: secondaryStyle),
+                  if (secondaryTrailingAccentText != null)
+                    GestureDetector(
+                      onTap: secondaryTrailingAccentOnTap,
+                      behavior: HitTestBehavior.opaque,
+                      child: Text(
+                        secondaryTrailingAccentText!,
                         style: secondaryStyle.copyWith(color: palette.link),
                       ),
                     ),

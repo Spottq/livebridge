@@ -8,9 +8,7 @@ import '../../platform/livebridge_platform.dart';
 import '../../theme/livebridge_tokens.dart';
 import '../../utils/livebridge_haptics.dart';
 import '../../widgets/redesign/lb_detail_screen.dart';
-import '../../widgets/redesign/lb_icon.dart';
 import '../../widgets/redesign/lb_list_component.dart';
-import '../../widgets/redesign/lb_slider.dart';
 
 class RulesMiscellaneousScreen extends StatefulWidget {
   const RulesMiscellaneousScreen({super.key});
@@ -26,7 +24,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
   bool _weatherEnabled = false;
   bool _weatherLockscreenOnly = false;
   bool _smartFlashlightEnabled = false;
-  int _smartFlashlightLevel = 4;
   FlashlightCapability _flashlightCapability = const FlashlightCapability();
 
   @override
@@ -49,8 +46,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
           LiveBridgePlatform.getSmartWeatherLockscreenOnly();
       final Future<bool> flashlightEnabledFuture =
           LiveBridgePlatform.getSmartFlashlightEnabled();
-      final Future<int> flashlightLevelFuture =
-          LiveBridgePlatform.getSmartFlashlightLevel();
       final Future<FlashlightCapability> flashlightCapabilityFuture =
           LiveBridgePlatform.getFlashlightCapability();
 
@@ -59,7 +54,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
       final bool weatherEnabled = await weatherFuture;
       final bool weatherLockscreenOnly = await weatherLockscreenOnlyFuture;
       final bool flashlightEnabled = await flashlightEnabledFuture;
-      final int flashlightLevel = await flashlightLevelFuture;
       final FlashlightCapability flashlightCapability =
           await flashlightCapabilityFuture;
 
@@ -73,7 +67,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
         _weatherEnabled = weatherEnabled;
         _weatherLockscreenOnly = weatherLockscreenOnly;
         _smartFlashlightEnabled = flashlightEnabled;
-        _smartFlashlightLevel = flashlightLevel.clamp(0, 4);
         _flashlightCapability = flashlightCapability;
       });
     } catch (_) {}
@@ -131,15 +124,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
     });
   }
 
-  Future<void> _setSmartFlashlightLevel(int value) async {
-    final int normalized = value.clamp(0, 4);
-    if (_smartFlashlightLevel == normalized) {
-      return;
-    }
-    setState(() => _smartFlashlightLevel = normalized);
-    await LiveBridgePlatform.setSmartFlashlightLevel(normalized);
-  }
-
   String _flashlightSubtitle(AppStrings strings) {
     if (!_flashlightCapability.available) {
       return strings.smartFlashlightUnavailableSubtitle;
@@ -153,7 +137,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
-    final LbPalette palette = LbPalette.of(context);
     final List<LbListItemData> items = <LbListItemData>[
       LbListItemData(
         title: strings.navigationMapsTitle,
@@ -247,101 +230,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
           ],
           extendDividersToEnd: true,
         ),
-        if (_flashlightCapability.available) ...<Widget>[
-          const SizedBox(height: LbSpacing.detailSectionGap),
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: palette.surface,
-              borderRadius: BorderRadius.circular(LbRadius.card),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                LbSpacing.md + LbSpacing.listTextOnlyInset,
-                LbSpacing.md,
-                LbSpacing.md,
-                LbSpacing.md,
-              ),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 180),
-                opacity: _smartFlashlightEnabled ? 1 : 0.45,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Expanded(
-                          child: Text(
-                            strings.smartFlashlightBrightnessLabel(
-                              _smartFlashlightLevel + 1,
-                            ),
-                            style: LbTextStyles.body.copyWith(
-                              color: palette.textPrimary,
-                            ),
-                          ),
-                        ),
-                        if (_flashlightCapability.supportsInteractiveLevels)
-                          Text(
-                            '${_smartFlashlightLevel + 1}/5',
-                            style: LbTextStyles.body.copyWith(
-                              color: palette.textSecondary,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: LbSpacing.sliderSectionGap),
-                    if (_flashlightCapability
-                        .supportsInteractiveLevels) ...<Widget>[
-                      Row(
-                        children: <Widget>[
-                          LbIcon(
-                            symbol: LbIconSymbol.magic,
-                            size: 28,
-                            color: palette.textPrimary,
-                          ),
-                          const SizedBox(width: LbSpacing.md),
-                          Expanded(
-                            child: LbSlider(
-                              value: _smartFlashlightLevel.toDouble(),
-                              min: 0,
-                              max: 4,
-                              enabled: _smartFlashlightEnabled,
-                              onChanged: (double value) {
-                                setState(
-                                  () => _smartFlashlightLevel = value.round(),
-                                );
-                              },
-                              onChangeEnd: (double value) {
-                                unawaited(
-                                  _setSmartFlashlightLevel(value.round()),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: LbSpacing.sm),
-                      Text(
-                        strings.smartFlashlightLevelSelectorHint,
-                        style: LbTextStyles.caption.copyWith(
-                          color: palette.textSecondary,
-                        ),
-                      ),
-                    ] else
-                      Text(
-                        _smartFlashlightEnabled
-                            ? strings.smartFlashlightFallbackWarning
-                            : strings.smartFlashlightUnsupportedSubtitle,
-                        style: LbTextStyles.caption.copyWith(
-                          color: palette.textSecondary,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }

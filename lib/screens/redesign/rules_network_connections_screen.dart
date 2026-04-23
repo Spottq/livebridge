@@ -733,53 +733,51 @@ class _SingleSelectSheet<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final LbPalette palette = LbPalette.of(context);
 
-    return LbModalBottomSheetSurface(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            title,
-            style: LbTextStyles.title.copyWith(color: palette.textPrimary),
-          ),
-          const SizedBox(height: LbSpacing.lg),
-          for (int index = 0; index < options.length; index += 1) ...<Widget>[
-            InkWell(
-              borderRadius: BorderRadius.circular(LbRadius.card),
-              onTap: () {
-                Navigator.of(context).pop<T>(options[index].value);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: LbSpacing.xs,
-                  vertical: LbSpacing.sm,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        options[index].label,
-                        style: LbTextStyles.body.copyWith(
-                          color: palette.textPrimary,
-                        ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          title,
+          style: LbTextStyles.title.copyWith(color: palette.textPrimary),
+        ),
+        const SizedBox(height: LbSpacing.lg),
+        for (int index = 0; index < options.length; index += 1) ...<Widget>[
+          InkWell(
+            borderRadius: BorderRadius.circular(LbRadius.card),
+            onTap: () {
+              Navigator.of(context).pop<T>(options[index].value);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: LbSpacing.xs,
+                vertical: LbSpacing.sm,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      options[index].label,
+                      style: LbTextStyles.body.copyWith(
+                        color: palette.textPrimary,
                       ),
                     ),
-                    LbSelectionIndicator(
-                      selected: options[index].value == selectedValue,
-                    ),
-                  ],
-                ),
+                  ),
+                  LbSelectionIndicator(
+                    selected: options[index].value == selectedValue,
+                  ),
+                ],
               ),
             ),
-            if (index != options.length - 1)
-              Divider(
-                height: LbSpacing.recentSeparatorThickness * 2,
-                thickness: LbSpacing.recentSeparatorThickness,
-                color: palette.recentSeparator,
-              ),
-          ],
+          ),
+          if (index != options.length - 1)
+            Divider(
+              height: LbSpacing.recentSeparatorThickness * 2,
+              thickness: LbSpacing.recentSeparatorThickness,
+              color: palette.recentSeparator,
+            ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -829,74 +827,70 @@ class _NetworkSpeedUnitSheetState extends State<_NetworkSpeedUnitSheet> {
   Widget build(BuildContext context) {
     final LbPalette palette = LbPalette.of(context);
 
-    return LbModalBottomSheetSurface(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            widget.title,
-            style: LbTextStyles.title.copyWith(color: palette.textPrimary),
-          ),
-          const SizedBox(height: LbSpacing.lg),
-          for (
-            int index = 0;
-            index < kNetworkSpeedUnitValues.length;
-            index += 1
-          ) ...<Widget>[
-            InkWell(
-              borderRadius: BorderRadius.circular(LbRadius.card),
-              onTap: () {
-                unawaited(LiveBridgeHaptics.selection());
-                _toggleUnit(kNetworkSpeedUnitValues[index]);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: LbSpacing.xs,
-                  vertical: LbSpacing.sm,
-                ),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        widget.optionLabelBuilder(
-                          kNetworkSpeedUnitValues[index],
-                        ),
-                        style: LbTextStyles.body.copyWith(
-                          color: palette.textPrimary,
-                        ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Text(
+          widget.title,
+          style: LbTextStyles.title.copyWith(color: palette.textPrimary),
+        ),
+        const SizedBox(height: LbSpacing.lg),
+        for (
+          int index = 0;
+          index < kNetworkSpeedUnitValues.length;
+          index += 1
+        ) ...<Widget>[
+          InkWell(
+            borderRadius: BorderRadius.circular(LbRadius.card),
+            onTap: () {
+              unawaited(LiveBridgeHaptics.selection());
+              _toggleUnit(kNetworkSpeedUnitValues[index]);
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: LbSpacing.xs,
+                vertical: LbSpacing.sm,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      widget.optionLabelBuilder(kNetworkSpeedUnitValues[index]),
+                      style: LbTextStyles.body.copyWith(
+                        color: palette.textPrimary,
                       ),
                     ),
-                    LbSelectionIndicator(
-                      selected: _selectedValues.contains(
-                        kNetworkSpeedUnitValues[index],
-                      ),
+                  ),
+                  LbSelectionIndicator(
+                    selected: _selectedValues.contains(
+                      kNetworkSpeedUnitValues[index],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-            if (index != kNetworkSpeedUnitValues.length - 1)
-              Divider(
-                height: LbSpacing.recentSeparatorThickness * 2,
-                thickness: LbSpacing.recentSeparatorThickness,
-                color: palette.recentSeparator,
-              ),
-          ],
-          const SizedBox(height: LbSpacing.lg),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop<Set<NetworkSpeedUnit>>(
-                  Set<NetworkSpeedUnit>.from(_selectedValues),
-                );
-              },
-              child: Text(widget.confirmLabel),
             ),
           ),
+          if (index != kNetworkSpeedUnitValues.length - 1)
+            Divider(
+              height: LbSpacing.recentSeparatorThickness * 2,
+              thickness: LbSpacing.recentSeparatorThickness,
+              color: palette.recentSeparator,
+            ),
         ],
-      ),
+        const SizedBox(height: LbSpacing.lg),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop<Set<NetworkSpeedUnit>>(
+                Set<NetworkSpeedUnit>.from(_selectedValues),
+              );
+            },
+            child: Text(widget.confirmLabel),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -936,61 +930,57 @@ class _NetworkSpeedPrefixSheetState extends State<_NetworkSpeedPrefixSheet> {
   Widget build(BuildContext context) {
     final LbPalette palette = LbPalette.of(context);
 
-    return LbModalBottomSheetSurface(
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(context).bottom,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              widget.title,
-              style: LbTextStyles.title.copyWith(color: palette.textPrimary),
-            ),
-            const SizedBox(height: LbSpacing.lg),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              style: LbTextStyles.body.copyWith(color: palette.textPrimary),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: palette.surface,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(LbRadius.card),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(LbRadius.card),
-                  borderSide: BorderSide(color: palette.recentSeparator),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(LbRadius.card),
-                  borderSide: BorderSide(color: palette.accent),
-                ),
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            widget.title,
+            style: LbTextStyles.title.copyWith(color: palette.textPrimary),
+          ),
+          const SizedBox(height: LbSpacing.lg),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            style: LbTextStyles.body.copyWith(color: palette.textPrimary),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: palette.surface,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(LbRadius.card),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(LbRadius.card),
+                borderSide: BorderSide(color: palette.recentSeparator),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(LbRadius.card),
+                borderSide: BorderSide(color: palette.accent),
               ),
             ),
-            const SizedBox(height: LbSpacing.lg),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop<String>(widget.defaultValue);
-                  },
-                  child: Text(widget.resetLabel),
-                ),
-                const SizedBox(width: LbSpacing.sm),
-                FilledButton(
-                  onPressed: () {
-                    Navigator.of(context).pop<String>(_controller.text);
-                  },
-                  child: Text(widget.saveLabel),
-                ),
-              ],
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: LbSpacing.lg),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop<String>(widget.defaultValue);
+                },
+                child: Text(widget.resetLabel),
+              ),
+              const SizedBox(width: LbSpacing.sm),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(context).pop<String>(_controller.text);
+                },
+                child: Text(widget.saveLabel),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

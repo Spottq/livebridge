@@ -54,6 +54,15 @@ class LbDefaultsCard extends StatelessWidget {
                             : palette.textSecondary,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: LbTextStyles.body.copyWith(
+                        color: enabled
+                            ? palette.textSecondary
+                            : palette.textMuted,
+                      ),
+                    ),
                   ],
                 ),
               ),

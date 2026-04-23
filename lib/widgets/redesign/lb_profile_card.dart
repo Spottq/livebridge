@@ -77,6 +77,13 @@ class LbProfileCard extends StatelessWidget {
                           color: titleColor ?? palette.textPrimary,
                         ),
                       ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: LbTextStyles.body.copyWith(
+                          color: subtitleColor ?? palette.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),

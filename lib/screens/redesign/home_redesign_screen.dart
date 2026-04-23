@@ -374,7 +374,17 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
     return launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
-  Future<void> _openGithub() async {
+  Future<void> _openUpstreamGithub() async {
+    unawaited(LiveBridgeHaptics.openSurface());
+    final bool opened = await _launchExternalUrl(
+      Uri.parse('https://github.com/appsfolder/livebridge'),
+    );
+    if (!opened && mounted) {
+      showLbToast(context, message: AppStrings.of(context).githubOpenFailed);
+    }
+  }
+
+  Future<void> _openForkGithub() async {
     unawaited(LiveBridgeHaptics.openSurface());
     final bool opened = await _launchExternalUrl(
       Uri.parse('https://github.com/Spottq/livebridge'),
@@ -641,10 +651,15 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
             return LbStatusCard(
               title: _statusCardTitle(strings),
               isActive: _displayMasterSwitchValue,
-              secondaryText: 'by appsfolder & spotty | ',
-              secondaryAccentText: 'Spottq/livebridge',
+              secondaryText: strings.statusByPrefix,
+              secondaryAccentText: 'appsfolder',
               secondaryAccentOnTap: () {
-                unawaited(_openGithub());
+                unawaited(_openUpstreamGithub());
+              },
+              secondaryTrailingText: ' & ',
+              secondaryTrailingAccentText: 'spotty',
+              secondaryTrailingAccentOnTap: () {
+                unawaited(_openForkGithub());
               },
               toggleOffset: _masterToggleWobbleOffset.value,
               toggleHapticsEnabled: false,

@@ -23,6 +23,9 @@ class LbStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final LbPalette palette = LbPalette.of(context);
     final Color iconColor = isWarning ? palette.warning : palette.accent;
+    final Color subtitleColor = isWarning
+        ? palette.warning
+        : palette.textSecondary;
 
     return Semantics(
       button: onTap != null,
@@ -52,6 +55,16 @@ class LbStatCard extends StatelessWidget {
                     text: title,
                     style: LbTextStyles.statTitle.copyWith(
                       color: palette.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Transform.translate(
+                    offset: const Offset(0, -2),
+                    child: _LbStatCardText(
+                      text: subtitle,
+                      style: LbTextStyles.statCaption.copyWith(
+                        color: subtitleColor,
+                      ),
                     ),
                   ),
                 ],
