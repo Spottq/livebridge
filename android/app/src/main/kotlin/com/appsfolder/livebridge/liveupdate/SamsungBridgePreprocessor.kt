@@ -10,8 +10,7 @@ internal object SamsungBridgePreprocessor {
         sbn: StatusBarNotification,
         sourceHasNativeProgress: Boolean
     ): SamsungBridgeContext {
-        val enabled =
-            prefs.getSamsungRemoteReparserEnabled() && SamsungLiveUpdateReparser.isSamsungDevice()
+        val enabled = SamsungLiveUpdateReparser.isSamsungDevice()
         if (!enabled) {
             return SamsungBridgeContext.disabled(sourceHasNativeProgress)
         }

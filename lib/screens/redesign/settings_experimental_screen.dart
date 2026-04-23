@@ -28,7 +28,6 @@ class _SettingsExperimentalScreenState
 
   bool _otpDedupEnabled = false;
   bool _smartDedupEnabled = false;
-  bool _samsungRemoteReparserEnabled = true;
   bool _animatedIslandEnabled = false;
   int _animatedIslandUpdateFrequencyMs = 2250;
   double _animatedIslandSliderValue = 150;
@@ -47,8 +46,6 @@ class _SettingsExperimentalScreenState
           LiveBridgePlatform.getOtpRemoveOriginalMessageEnabled();
       final Future<bool> smartDedupFuture =
           LiveBridgePlatform.getSmartRemoveOriginalMessageEnabled();
-      final Future<bool> samsungRemoteReparserEnabledFuture =
-          LiveBridgePlatform.getSamsungRemoteReparserEnabled();
       final Future<bool> animatedIslandEnabledFuture =
           LiveBridgePlatform.getAnimatedIslandEnabled();
       final Future<int> animatedIslandUpdateFrequencyFuture =
@@ -56,8 +53,6 @@ class _SettingsExperimentalScreenState
 
       final bool otpDedupEnabled = await otpDedupFuture;
       final bool smartDedupEnabled = await smartDedupFuture;
-      final bool samsungRemoteReparserEnabled =
-          await samsungRemoteReparserEnabledFuture;
       final bool animatedIslandEnabled = await animatedIslandEnabledFuture;
       final int animatedIslandUpdateFrequencyMs =
           await animatedIslandUpdateFrequencyFuture;
@@ -74,7 +69,6 @@ class _SettingsExperimentalScreenState
       setState(() {
         _otpDedupEnabled = otpDedupEnabled;
         _smartDedupEnabled = smartDedupEnabled;
-        _samsungRemoteReparserEnabled = samsungRemoteReparserEnabled;
         _animatedIslandEnabled = animatedIslandEnabled;
         _animatedIslandUpdateFrequencyMs = normalizedFrequencyMs;
         _animatedIslandSliderValue = _sliderPositionForMs(
@@ -98,14 +92,6 @@ class _SettingsExperimentalScreenState
     }
     setState(() => _smartDedupEnabled = value);
     await LiveBridgePlatform.setSmartRemoveOriginalMessageEnabled(value);
-  }
-
-  Future<void> _setSamsungRemoteReparserEnabled(bool value) async {
-    if (value == _samsungRemoteReparserEnabled) {
-      return;
-    }
-    setState(() => _samsungRemoteReparserEnabled = value);
-    await LiveBridgePlatform.setSamsungRemoteReparserEnabled(value);
   }
 
   Future<void> _setAnimatedIslandEnabled(bool value) async {
@@ -181,21 +167,6 @@ class _SettingsExperimentalScreenState
           final bool nextValue = !_smartDedupEnabled;
           unawaited(LiveBridgeHaptics.toggle(nextValue));
           unawaited(_setSmartDedupEnabled(nextValue));
-        },
-      ),
-      LbListItemData(
-        title: strings.samsungRemoteParserTitle,
-        subtitle: strings.samsungRemoteParserSubtitle,
-        titleSuffix: strings.experimentalSuffix,
-        showChevron: false,
-        toggleValue: _samsungRemoteReparserEnabled,
-        onToggle: (bool value) {
-          unawaited(_setSamsungRemoteReparserEnabled(value));
-        },
-        onTap: () {
-          final bool nextValue = !_samsungRemoteReparserEnabled;
-          unawaited(LiveBridgeHaptics.toggle(nextValue));
-          unawaited(_setSamsungRemoteReparserEnabled(nextValue));
         },
       ),
     ];

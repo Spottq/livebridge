@@ -908,6 +908,7 @@ object LiveUpdateNotifier {
         val remoteDrawableAssets = resolveRemoteDrawableAssets(context, sbn)
         val sourcePackageNameLower = sbn.packageName.lowercase(Locale.ROOT)
         val isTwoGisPackage = sourcePackageNameLower == TWO_GIS_PACKAGE
+        val isYandexMapsPackage = sourcePackageNameLower == YANDEX_MAPS_PACKAGE
         val isSamsungTwoGis =
             samsungBridge.enabled &&
                     samsungBridge.hasCustomRemoteCard &&
@@ -946,6 +947,8 @@ object LiveUpdateNotifier {
                 appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
         }
         val preferredChipIcon = when {
+            isYandexMapsPackage ->
+                appSmallIcon ?: preferredPrimaryIcon
             shouldTryNavigationArrowIcon ->
                 navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
             samsungBridge.hasCustomRemoteCard ->

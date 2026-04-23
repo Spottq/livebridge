@@ -628,11 +628,11 @@ class ConverterPrefs(context: Context) {
     }
 
     fun getSamsungRemoteReparserEnabled(): Boolean {
-        return prefs.getBoolean(KEY_SAMSUNG_REMOTE_REPARSER_ENABLED, true)
+        return true
     }
 
     fun setSamsungRemoteReparserEnabled(value: Boolean) {
-        prefs.edit().putBoolean(KEY_SAMSUNG_REMOTE_REPARSER_ENABLED, value).apply()
+        prefs.edit().remove(KEY_SAMSUNG_REMOTE_REPARSER_ENABLED).apply()
     }
 
     fun hasExpandedSectionsState(): Boolean {

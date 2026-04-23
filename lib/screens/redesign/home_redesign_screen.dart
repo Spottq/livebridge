@@ -34,7 +34,6 @@ import 'rules_progress_screen.dart';
 import 'rules_runtime.dart';
 import 'rules_smart_conversion_screen.dart';
 import 'settings_report_bug_screen.dart';
-import 'settings_brand_specific_screen.dart';
 import 'settings_experimental_screen.dart';
 import 'settings_permissions_screen.dart';
 import 'settings_update_screen.dart';
@@ -441,10 +440,6 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
 
   Future<void> _openExperimentalScreen() {
     return _pushRulesDetailScreen(const SettingsExperimentalScreen());
-  }
-
-  Future<void> _openBrandSpecificScreen() {
-    return _pushRulesDetailScreen(const SettingsBrandSpecificScreen());
   }
 
   Future<void> _openAppConfigScreen() {
@@ -857,13 +852,6 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
         onTap: () {
           unawaited(LiveBridgeHaptics.selection());
           unawaited(_openExperimentalScreen());
-        },
-      ),
-      LbListItemData(
-        title: strings.brandSpecificTitle,
-        onTap: () {
-          unawaited(LiveBridgeHaptics.selection());
-          unawaited(_openBrandSpecificScreen());
         },
       ),
       LbListItemData(
