@@ -886,6 +886,14 @@ object LiveUpdateNotifier {
             NotificationIconSource.APP ->
                 appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
         }
+        val preferredChipIcon = when {
+            shouldTryNavigationArrowIcon ->
+                navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+            samsungBridge.hasCustomRemoteCard ->
+                samsungSmallIcon ?: sourceSmallIcon ?: appSmallIcon
+            else ->
+                sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
+        }
         val nowBarRightIcon = if (samsungBridge.hasCustomRemoteCard && !isSamsungTwoGis) {
             null
         } else {
@@ -1217,7 +1225,7 @@ object LiveUpdateNotifier {
                 sourcePackageName = sbn.packageName,
                 primaryText = samsungTexts.nowBarPrimaryText,
                 texts = samsungTexts,
-                chipIcon = preferredPrimaryIcon,
+                chipIcon = preferredChipIcon,
                 nowBarIcon = preferredPrimaryIcon,
                 rightIcon = nowBarRightIcon,
                 lockscreenOnly = weatherLockscreenOnly,
