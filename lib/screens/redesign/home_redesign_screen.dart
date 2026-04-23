@@ -29,7 +29,6 @@ import 'rules_otp_codes_screen.dart';
 import 'rules_network_connections_screen.dart';
 import 'rules_miscellaneous_screen.dart';
 import 'rules_bypass_screen.dart';
-import 'rules_notification_dedup_screen.dart';
 import 'rules_per_app_behavior_screen.dart';
 import 'rules_progress_screen.dart';
 import 'rules_runtime.dart';
@@ -436,10 +435,6 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
     return _pushRulesDetailScreen(const RulesBypassScreen());
   }
 
-  Future<void> _openRulesNotificationDedupScreen() {
-    return _pushRulesDetailScreen(const RulesNotificationDedupScreen());
-  }
-
   Future<void> _openPermissionsScreen() {
     return _pushRulesDetailScreen(const SettingsPermissionsScreen());
   }
@@ -816,13 +811,6 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
         onTap: () {
           unawaited(LiveBridgeHaptics.selection());
           unawaited(_openRulesBypassScreen());
-        },
-      ),
-      LbListItemData(
-        title: strings.notificationDedupTitle,
-        onTap: () {
-          unawaited(LiveBridgeHaptics.selection());
-          unawaited(_openRulesNotificationDedupScreen());
         },
       ),
     ];
