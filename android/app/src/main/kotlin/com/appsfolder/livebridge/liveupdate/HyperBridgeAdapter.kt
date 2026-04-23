@@ -65,6 +65,8 @@ internal object HyperBridgeAdapter {
                 businessName = businessName,
                 ticker = normalizedTicker
             )
+                .setIslandFirstFloat(false)
+                .setEnableFloat(false)
             val hyperActions = buildHyperActions(sourceActions)
             hyperActions.forEach(hyperBuilder::addAction)
             hyperPicture?.let(hyperBuilder::addPicture)

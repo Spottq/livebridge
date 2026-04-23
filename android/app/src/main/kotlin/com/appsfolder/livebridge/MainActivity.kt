@@ -27,6 +27,7 @@ import androidx.core.content.pm.ShortcutManagerCompat
 import com.kakao.taxi.liveupdate.AppPresentationOverridesCodec
 import com.kakao.taxi.liveupdate.AppPresentationOverridesLoader
 import com.kakao.taxi.liveupdate.ConverterPrefs
+import com.kakao.taxi.liveupdate.ConversionLogStore
 import com.kakao.taxi.liveupdate.DeviceBlocker
 import com.kakao.taxi.liveupdate.DeviceProps
 import com.kakao.taxi.liveupdate.FlashlightController
@@ -221,6 +222,33 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getParserDictionaryEnabledLanguages" -> {
+                res.success(prefs.getParserDictionaryEnabledLanguageIds().toList())
+            }
+
+            "setParserDictionaryEnabledLanguages" -> {
+                val values = call.argument<List<String>>("value").orEmpty().toSet()
+                prefs.setParserDictionaryEnabledLanguageIds(values)
+                LiveParserDictionaryLoader.invalidate()
+                res.success(true)
+            }
+
+            "setParserDictionaryLanguageOverride" -> {
+                val languageId = call.argument<String>("languageId")?.trim().orEmpty()
+                if (languageId.isBlank()) {
+                    res.error("invalid_language", "Language id is required", null)
+                    return
+                }
+                val raw = call.argument<String>("value")?.trim().orEmpty()
+                if (raw.isNotBlank() && !isValidJsonObject(raw)) {
+                    res.error("invalid_dictionary", "Dictionary JSON is invalid", null)
+                    return
+                }
+                prefs.setParserDictionaryLanguageOverrideRaw(languageId, raw)
+                LiveParserDictionaryLoader.invalidate()
+                res.success(true)
+            }
+
             "getPackageRules" -> res.success(prefs.getPackageRulesRaw())
             "setPackageRules" -> {
                 prefs.setPackageRulesRaw(call.argument<String>("value"))
@@ -339,6 +367,40 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getSpringTransitionsEnabled" -> res.success(prefs.getSpringTransitionsEnabled())
+            "setSpringTransitionsEnabled" -> {
+                prefs.setSpringTransitionsEnabled(call.argument<Boolean>("value") ?: true)
+                res.success(true)
+            }
+
+            "getPreventMirrorDismissEnabled" -> res.success(prefs.getPreventMirrorDismissEnabled())
+            "setPreventMirrorDismissEnabled" -> {
+                prefs.setPreventMirrorDismissEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+
+            "getConversionLogEnabled" -> res.success(prefs.getConversionLogEnabled())
+            "setConversionLogEnabled" -> {
+                prefs.setConversionLogEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+
+            "getBugReportAutoCopyEnabled" -> res.success(prefs.getBugReportAutoCopyEnabled())
+            "setBugReportAutoCopyEnabled" -> {
+                prefs.setBugReportAutoCopyEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+
+            "getConversionLogMaxBytes" -> res.success(prefs.getConversionLogMaxBytes())
+            "setConversionLogMaxBytes" -> {
+                prefs.setConversionLogMaxBytes(call.argument<Number>("value")?.toInt() ?: 0)
+                ConversionLogStore.trimToPrefs(applicationContext, prefs)
+                res.success(true)
+            }
+
+            "getConversionLogEntries" -> {
+                res.success(ConversionLogStore.getEntriesRaw(applicationContext))
+            }
             "getSyncDndEnabled" -> res.success(prefs.getSyncDndEnabled())
             "setSyncDndEnabled" -> {
                 prefs.setSyncDndEnabled(call.argument<Boolean>("value") ?: false)
@@ -402,10 +464,26 @@ class MainActivity : FlutterActivity() {
                 prefs.setAospCuttingEnabled(call.argument<Boolean>("value") ?: false)
                 res.success(true)
             }
+            "getAospCuttingLength" ->
+                res.success(prefs.getAospCuttingLength())
+            "setAospCuttingLength" -> {
+                prefs.setAospCuttingLength(
+                    call.argument<Number>("value")?.toInt() ?: 7
+                )
+                res.success(true)
+            }
 
             "getAnimatedIslandEnabled" -> res.success(prefs.getAnimatedIslandEnabled())
             "setAnimatedIslandEnabled" -> {
                 prefs.setAnimatedIslandEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+            "getAnimatedIslandUpdateFrequencyMs" ->
+                res.success(prefs.getAnimatedIslandUpdateFrequencyMs())
+            "setAnimatedIslandUpdateFrequencyMs" -> {
+                prefs.setAnimatedIslandUpdateFrequencyMs(
+                    call.argument<Number>("value")?.toInt() ?: 2250
+                )
                 res.success(true)
             }
 
@@ -443,9 +521,48 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getOtpRemoveOriginalMessageEnabled" -> {
+                res.success(prefs.getOtpRemoveOriginalMessageEnabled())
+            }
+            "setOtpRemoveOriginalMessageEnabled" -> {
+                prefs.setOtpRemoveOriginalMessageEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+
+            "getSmartRemoveOriginalMessageEnabled" -> {
+                res.success(prefs.getSmartRemoveOriginalMessageEnabled())
+            }
+            "setSmartRemoveOriginalMessageEnabled" -> {
+                prefs.setSmartRemoveOriginalMessageEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
             "getSmartStatusDetectionEnabled" -> res.success(prefs.getSmartStatusDetectionEnabled())
             "setSmartStatusDetectionEnabled" -> {
                 prefs.setSmartStatusDetectionEnabled(call.argument<Boolean>("value") ?: true)
+                res.success(true)
+            }
+
+            "getSmartPackageRules" -> res.success(prefs.getSmartPackageRulesRaw())
+            "setSmartPackageRules" -> {
+                prefs.setSmartPackageRulesRaw(call.argument<String>("value"))
+                res.success(true)
+            }
+
+            "getSmartPackageMode" -> res.success(prefs.getSmartPackageMode())
+            "setSmartPackageMode" -> {
+                prefs.setSmartPackageMode(call.argument<String>("value"))
+                res.success(true)
+            }
+
+            "getSmartTaxiEnabled" -> res.success(prefs.getSmartTaxiEnabled())
+            "setSmartTaxiEnabled" -> {
+                prefs.setSmartTaxiEnabled(call.argument<Boolean>("value") ?: true)
+                res.success(true)
+            }
+
+            "getSmartDeliveryEnabled" -> res.success(prefs.getSmartDeliveryEnabled())
+            "setSmartDeliveryEnabled" -> {
+                prefs.setSmartDeliveryEnabled(call.argument<Boolean>("value") ?: true)
                 res.success(true)
             }
 
@@ -909,6 +1026,15 @@ class MainActivity : FlutterActivity() {
             "marketName" to mn,
             "rawModel" to (Build.MODEL ?: ""),
             "product" to (Build.PRODUCT ?: ""),
+            "device" to (Build.DEVICE ?: ""),
+            "board" to (Build.BOARD ?: ""),
+            "hardware" to (Build.HARDWARE ?: ""),
+            "bootloader" to (Build.BOOTLOADER ?: ""),
+            "host" to (Build.HOST ?: ""),
+            "id" to (Build.ID ?: ""),
+            "tags" to (Build.TAGS ?: ""),
+            "type" to (Build.TYPE ?: ""),
+            "user" to (Build.USER ?: ""),
             "fingerprint" to (Build.FINGERPRINT ?: ""),
             "display" to (Build.DISPLAY ?: "")
         )

@@ -9,7 +9,9 @@ body:
     attributes:
       value: |
         Thanks for suggesting an improvement.
-        Please describe the feature as concretely as possible.
+        Please describe the feature as concretely as possible. If the idea is
+        related to notification parsing, OTP codes, or conversion behavior,
+        include a real anonymized example when possible.
 
   - type: textarea
     id: summary
@@ -59,10 +61,11 @@ body:
     id: example_flow
     attributes:
       label: Example scenario
-      description: Give a concrete example with app names, notifications, or user steps if possible.
+      description: Give a concrete example with app names, notifications, user steps, or conversion log payload JSON if possible.
       placeholder: |
         App package:
         Example notification:
+        Optional conversion log payload JSON:
         Expected LiveBridge behavior:
     validations:
       required: false

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -276,7 +276,7 @@
       }
 
       .feature-list li::before {
-        content: "✓";
+        content: "вњ“";
         display: flex;
         align-items: center;
         justify-content: center;
@@ -505,7 +505,7 @@
       }
 
       details[open] summary::after {
-        content: '−';
+        content: 'в€’';
       }
 
       details p {
@@ -864,6 +864,7 @@
             <div class="hero-cta">
               <a class="btn btn-filled" href="#download">Get the Latest Version</a>
               <a class="btn btn-outlined" href="https://github.com/appsfolder/livebridge/releases/latest" target="_blank">View on GitHub</a>
+              <a class="btn btn-outlined" href="https://t.me/livebridge_dev" target="_blank" rel="noreferrer">Discuss</a>
             </div>
             <section class="stats">
               <div class="stat-card">
@@ -965,7 +966,7 @@
 
           <div class="download-banner">
             <div class="banner-info">
-              <strong id="release-banner-title">Latest release: loading…</strong>
+              <strong id="release-banner-title">Latest release: loadingвЂ¦</strong>
               <span id="release-banner-copy">Fetching release files from GitHub.</span>
             </div>
             <a class="btn btn-outlined" href="https://github.com/appsfolder/livebridge/releases/latest" target="_blank">Browse all assets</a>
@@ -1066,18 +1067,72 @@
             <h2>FAQ</h2>
           </div>
 
-          <details open>
-            <summary>Which APK should most people download?</summary>
-            <p>The ARMv8-A build is the default choice for nearly every recent Android phone. If your device is from the last several years, start there.</p>
-          </details>
-          <details>
-            <summary>Why is there a separate Samsung build?</summary>
-            <p>The Samsung build is meant for the Samsung-specific package-name replacement flow, which helps with the vendor-specific Now Bar setup.</p>
-          </details>
-          <details>
-            <summary>Will this work on older Android versions?</summary>
-            <p>No. LiveBridge targets Android 16 and newer because the app is built around native Android Live Updates support.</p>
-          </details>
+          <div class="faq-item is-open" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="true" aria-controls="faq-most-people">
+              <span>Which APK should most people download?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-most-people" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>The ARMv8-A build is the default choice for nearly every recent Android phone. If your device is from the last several years, start there.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-samsung-build">
+              <span>Why is there a separate Samsung build?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-samsung-build" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>The Samsung build is meant for the Samsung-specific package-name replacement flow, which helps with the vendor-specific Now Bar setup.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-internet-access">
+              <span>Why does the app need internet access?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-internet-access" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>LiveBridge uses internet access for things like checking for new releases and dictionary updates. Its core job of turning notifications into Live Updates happens locally on your device.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-safety">
+              <span>Is the app safe?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-safety" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>LiveBridge is open source and does not require an account. You can inspect the code, review the permissions it asks for, and verify what it does before installing it. Notification processing stays on-device.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-contact">
+              <span>How can I contact the developer?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-contact" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>You can reach the developer on Telegram: <a href="https://t.me/appsfolder" target="_blank" rel="noreferrer">@appsfolder</a>. For feature discussions, testing notes, and development topics, use the LiveBridge topics: <a href="https://t.me/livebridge_dev" target="_blank" rel="noreferrer">@livebridge_dev</a>.</p>
+              </div>
+            </div>
+          </div>
+          <div class="faq-item" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-older-android">
+              <span>Will this work on older Android versions?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel" id="faq-older-android" data-faq-panel>
+              <div class="faq-panel-inner">
+                <p>No. LiveBridge targets Android 16 and newer because the app is built around native Android Live Updates support.</p>
+              </div>
+            </div>
+          </div>
         </section>
       </main>
 
@@ -1285,3 +1340,4 @@
     </script>
   </body>
 </html>
+

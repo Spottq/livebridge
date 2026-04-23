@@ -60,6 +60,56 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_TEXT_PROGRESS_ENABLED, value).apply()
     }
 
+    fun getSpringTransitionsEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SPRING_TRANSITIONS_ENABLED, true)
+    }
+
+    fun setSpringTransitionsEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SPRING_TRANSITIONS_ENABLED, value).apply()
+    }
+
+    fun getPreventMirrorDismissEnabled(): Boolean {
+        return prefs.getBoolean(KEY_PREVENT_MIRROR_DISMISS_ENABLED, false)
+    }
+
+    fun setPreventMirrorDismissEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_PREVENT_MIRROR_DISMISS_ENABLED, value).apply()
+    }
+
+    fun getConversionLogEnabled(): Boolean {
+        return prefs.getBoolean(KEY_CONVERSION_LOG_ENABLED, false)
+    }
+
+    fun setConversionLogEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_CONVERSION_LOG_ENABLED, value).apply()
+    }
+
+    fun getBugReportAutoCopyEnabled(): Boolean {
+        return prefs.getBoolean(KEY_BUG_REPORT_AUTO_COPY_ENABLED, false)
+    }
+
+    fun setBugReportAutoCopyEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_BUG_REPORT_AUTO_COPY_ENABLED, value).apply()
+    }
+
+    fun getConversionLogMaxBytes(): Int {
+        return prefs.getInt(
+            KEY_CONVERSION_LOG_MAX_BYTES,
+            DEFAULT_CONVERSION_LOG_MAX_BYTES
+        ).coerceIn(MIN_CONVERSION_LOG_MAX_BYTES, MAX_CONVERSION_LOG_MAX_BYTES)
+    }
+
+    fun setConversionLogMaxBytes(value: Int) {
+        prefs.edit()
+            .putInt(
+                KEY_CONVERSION_LOG_MAX_BYTES,
+                value.coerceIn(
+                    MIN_CONVERSION_LOG_MAX_BYTES,
+                    MAX_CONVERSION_LOG_MAX_BYTES
+                )
+            )
+            .apply()
+    }
     fun getNetworkSpeedEnabled(): Boolean {
         return prefs.getBoolean(KEY_NETWORK_SPEED_ENABLED, false)
     }
@@ -239,12 +289,56 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_AOSP_CUTTING_ENABLED, value).apply()
     }
 
+    fun getAospCuttingLength(): Int {
+        return prefs.getInt(
+            KEY_AOSP_CUTTING_LENGTH,
+            DEFAULT_AOSP_CUTTING_LENGTH
+        ).coerceIn(
+            MIN_AOSP_CUTTING_LENGTH,
+            MAX_AOSP_CUTTING_LENGTH
+        )
+    }
+
+    fun setAospCuttingLength(value: Int) {
+        prefs.edit()
+            .putInt(
+                KEY_AOSP_CUTTING_LENGTH,
+                value.coerceIn(
+                    MIN_AOSP_CUTTING_LENGTH,
+                    MAX_AOSP_CUTTING_LENGTH
+                )
+            )
+            .apply()
+    }
+
     fun getAnimatedIslandEnabled(): Boolean {
         return prefs.getBoolean(KEY_ANIMATED_ISLAND_ENABLED, false)
     }
 
     fun setAnimatedIslandEnabled(value: Boolean) {
         prefs.edit().putBoolean(KEY_ANIMATED_ISLAND_ENABLED, value).apply()
+    }
+
+    fun getAnimatedIslandUpdateFrequencyMs(): Int {
+        return prefs.getInt(
+            KEY_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS,
+            DEFAULT_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS
+        ).coerceIn(
+            MIN_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS,
+            MAX_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS
+        )
+    }
+
+    fun setAnimatedIslandUpdateFrequencyMs(value: Int) {
+        prefs.edit()
+            .putInt(
+                KEY_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS,
+                value.coerceIn(
+                    MIN_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS,
+                    MAX_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS
+                )
+            )
+            .apply()
     }
 
     fun getHyperBridgeEnabled(): Boolean {
@@ -300,12 +394,93 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putString(KEY_NOTIFICATION_DEDUP_PACKAGE_MODE, mode.id).apply()
     }
 
+    fun getOtpRemoveOriginalMessageEnabled(): Boolean {
+        return if (prefs.contains(KEY_OTP_REMOVE_ORIGINAL_MESSAGE_ENABLED)) {
+            prefs.getBoolean(KEY_OTP_REMOVE_ORIGINAL_MESSAGE_ENABLED, false)
+        } else {
+            getLegacyNotificationDedupEnabled()
+        }
+    }
+
+    fun setOtpRemoveOriginalMessageEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_OTP_REMOVE_ORIGINAL_MESSAGE_ENABLED, value).apply()
+    }
+
+    fun getSmartRemoveOriginalMessageEnabled(): Boolean {
+        return if (prefs.contains(KEY_SMART_REMOVE_ORIGINAL_MESSAGE_ENABLED)) {
+            prefs.getBoolean(KEY_SMART_REMOVE_ORIGINAL_MESSAGE_ENABLED, false)
+        } else {
+            getLegacyNotificationDedupEnabled() &&
+                getLegacyNotificationDedupMode() == NotificationDedupMode.OTP_STATUS.id
+        }
+    }
+
+    fun setSmartRemoveOriginalMessageEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_REMOVE_ORIGINAL_MESSAGE_ENABLED, value).apply()
+    }
+
+    fun getSmartPackageRulesRaw(): String {
+        if (prefs.contains(KEY_SMART_PACKAGE_RULES)) {
+            return prefs.getString(KEY_SMART_PACKAGE_RULES, "") ?: ""
+        }
+        return getLegacyNotificationDedupPackageRulesRaw()
+    }
+
+    fun setSmartPackageRulesRaw(value: String?) {
+        val normalized = value?.trim().orEmpty()
+        prefs.edit()
+            .putString(KEY_SMART_PACKAGE_RULES, normalized)
+            .apply()
+    }
+
+    fun getSmartPackageMode(): String {
+        val raw = if (prefs.contains(KEY_SMART_PACKAGE_MODE)) {
+            prefs.getString(KEY_SMART_PACKAGE_MODE, PackageMode.ALL.id)
+        } else {
+            getLegacyNotificationDedupPackageMode()
+        } ?: PackageMode.ALL.id
+        return PackageMode.from(raw).id
+    }
+
+    fun setSmartPackageMode(value: String?) {
+        val mode = PackageMode.from(value)
+        prefs.edit().putString(KEY_SMART_PACKAGE_MODE, mode.id).apply()
+    }
     fun getSmartStatusDetectionEnabled(): Boolean {
-        return prefs.getBoolean(KEY_SMART_STATUS_ENABLED, true)
+        return getSmartTaxiEnabled() ||
+            getSmartDeliveryEnabled() ||
+            getSmartNavigationEnabled() ||
+            getSmartWeatherEnabled() ||
+            getSmartExternalDevicesEnabled() ||
+            getSmartVpnEnabled()
     }
 
     fun setSmartStatusDetectionEnabled(value: Boolean) {
-        prefs.edit().putBoolean(KEY_SMART_STATUS_ENABLED, value).apply()
+        prefs.edit()
+            .putBoolean(KEY_SMART_STATUS_ENABLED, value)
+            .putBoolean(KEY_SMART_TAXI_ENABLED, value)
+            .putBoolean(KEY_SMART_DELIVERY_ENABLED, value)
+            .putBoolean(KEY_SMART_NAVIGATION_ENABLED, value)
+            .putBoolean(KEY_SMART_WEATHER_ENABLED, value)
+            .putBoolean(KEY_SMART_EXTERNAL_DEVICES_ENABLED, value)
+            .putBoolean(KEY_SMART_VPN_ENABLED, value)
+            .apply()
+    }
+
+    fun getSmartTaxiEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SMART_TAXI_ENABLED, getLegacySmartStatusDefault())
+    }
+
+    fun setSmartTaxiEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_TAXI_ENABLED, value).apply()
+    }
+
+    fun getSmartDeliveryEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SMART_DELIVERY_ENABLED, getLegacySmartStatusDefault())
+    }
+
+    fun setSmartDeliveryEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_DELIVERY_ENABLED, value).apply()
     }
 
     fun getSmartMediaPlaybackEnabled(): Boolean {
@@ -498,6 +673,48 @@ class ConverterPrefs(context: Context) {
         prefs.edit()
             .putString(KEY_USER_PARSER_DICTIONARY, normalized.ifBlank { null })
             .remove(KEY_CUSTOM_PARSER_DICTIONARY_LEGACY)
+            .remove(KEY_PARSER_DICTIONARY_EN_OVERRIDE)
+            .remove(KEY_PARSER_DICTIONARY_RU_OVERRIDE)
+            .remove(KEY_PARSER_DICTIONARY_ZH_OVERRIDE)
+            .apply()
+    }
+
+    fun getParserDictionaryEnabledLanguageIds(): Set<String> {
+        val stored = prefs.getString(KEY_PARSER_DICTIONARY_ENABLED_LANGUAGES, null)
+            ?: return DEFAULT_PARSER_DICTIONARY_LANGUAGE_IDS.toSet()
+        return stored
+            .split(',', ';', '\n', '\r', '\t', ' ')
+            .map { it.trim().lowercase(Locale.ROOT) }
+            .filter { it in SUPPORTED_PARSER_DICTIONARY_LANGUAGE_IDS }
+            .toCollection(linkedSetOf())
+    }
+
+    fun setParserDictionaryEnabledLanguageIds(values: Set<String>) {
+        val normalized = values
+            .asSequence()
+            .map { it.trim().lowercase(Locale.ROOT) }
+            .filter { it in SUPPORTED_PARSER_DICTIONARY_LANGUAGE_IDS }
+            .distinct()
+            .sorted()
+            .joinToString(",")
+        prefs.edit()
+            .putString(KEY_PARSER_DICTIONARY_ENABLED_LANGUAGES, normalized)
+            .apply()
+    }
+
+    fun getParserDictionaryLanguageOverrideRaw(languageId: String): String? {
+        val key = parserDictionaryOverrideKey(languageId) ?: return null
+        val value = prefs.getString(key, null)?.trim().orEmpty()
+        return value.ifBlank { null }
+    }
+
+    fun setParserDictionaryLanguageOverrideRaw(languageId: String, value: String?) {
+        val key = parserDictionaryOverrideKey(languageId) ?: return
+        val normalized = value?.trim().orEmpty()
+        prefs.edit()
+            .putString(key, normalized.ifBlank { null })
+            .remove(KEY_USER_PARSER_DICTIONARY)
+            .remove(KEY_CUSTOM_PARSER_DICTIONARY_LEGACY)
             .apply()
     }
 
@@ -505,57 +722,119 @@ class ConverterPrefs(context: Context) {
         prefs.edit()
             .remove(KEY_USER_PARSER_DICTIONARY)
             .remove(KEY_CUSTOM_PARSER_DICTIONARY_LEGACY)
+            .remove(KEY_PARSER_DICTIONARY_EN_OVERRIDE)
+            .remove(KEY_PARSER_DICTIONARY_RU_OVERRIDE)
+            .remove(KEY_PARSER_DICTIONARY_ZH_OVERRIDE)
             .apply()
     }
 
     fun hasCustomParserDictionary(): Boolean {
-        return !getCustomParserDictionaryRaw().isNullOrBlank()
+        return !getCustomParserDictionaryRaw().isNullOrBlank() ||
+            SUPPORTED_PARSER_DICTIONARY_LANGUAGE_IDS.any { languageId ->
+                !getParserDictionaryLanguageOverrideRaw(languageId).isNullOrBlank()
+            }
     }
 
     fun isPackageAllowed(packageName: String): Boolean {
         val mode = PackageMode.from(getPackageMode())
         val packages = parsePackageRules(getPackageRulesRaw())
+        val normalizedPackageName = normalizePackageName(packageName)
 
         return when (mode) {
             PackageMode.ALL -> true
-            PackageMode.INCLUDE -> packages.isNotEmpty() && packageName in packages
-            PackageMode.EXCLUDE -> packageName !in packages
+            PackageMode.INCLUDE -> packages.isNotEmpty() && normalizedPackageName in packages
+            PackageMode.EXCLUDE -> normalizedPackageName !in packages
         }
     }
 
     fun isOtpPackageAllowed(packageName: String): Boolean {
         val mode = PackageMode.from(getOtpPackageMode())
         val packages = parsePackageRules(getOtpPackageRulesRaw())
+        val normalizedPackageName = normalizePackageName(packageName)
 
         return when (mode) {
             PackageMode.ALL -> true
-            PackageMode.INCLUDE -> packages.isNotEmpty() && packageName in packages
-            PackageMode.EXCLUDE -> packageName !in packages
+            PackageMode.INCLUDE -> packages.isNotEmpty() && normalizedPackageName in packages
+            PackageMode.EXCLUDE -> normalizedPackageName !in packages
         }
     }
 
     fun shouldBypassAllRulesForPackage(packageName: String): Boolean {
         val packages = parsePackageRules(getBypassPackageRulesRaw())
-        return packageName.lowercase(Locale.ROOT) in packages
+        return normalizePackageName(packageName) in packages
     }
 
     fun isNotificationDedupPackageAllowed(packageName: String): Boolean {
         val mode = PackageMode.from(getNotificationDedupPackageMode())
         val packages = parsePackageRules(getNotificationDedupPackageRulesRaw())
+        val normalizedPackageName = normalizePackageName(packageName)
 
         return when (mode) {
             PackageMode.ALL -> true
-            PackageMode.INCLUDE -> packages.isNotEmpty() && packageName in packages
-            PackageMode.EXCLUDE -> packageName !in packages
+            PackageMode.INCLUDE -> packages.isNotEmpty() && normalizedPackageName in packages
+            PackageMode.EXCLUDE -> normalizedPackageName !in packages
         }
+    }
+
+    fun isSmartPackageAllowed(packageName: String): Boolean {
+        val mode = PackageMode.from(getSmartPackageMode())
+        val packages = parsePackageRules(getSmartPackageRulesRaw())
+        val normalizedPackageName = normalizePackageName(packageName)
+
+        return when (mode) {
+            PackageMode.ALL -> true
+            PackageMode.INCLUDE -> packages.isNotEmpty() && normalizedPackageName in packages
+            PackageMode.EXCLUDE -> normalizedPackageName !in packages
+        }
+    }
+
+    private fun normalizePackageName(value: String): String {
+        return value.trim().lowercase(Locale.ROOT)
     }
 
     private fun parsePackageRules(raw: String): Set<String> {
         return raw
             .split(',', ';', '\n', '\r', '\t', ' ')
-            .map { it.trim().lowercase(Locale.ROOT) }
+            .map(::normalizePackageName)
             .filter { it.isNotBlank() }
             .toSet()
+    }
+
+    private fun getLegacySmartStatusDefault(): Boolean {
+        return prefs.getBoolean(KEY_SMART_STATUS_ENABLED, true)
+    }
+
+    private fun getLegacyNotificationDedupEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NOTIFICATION_DEDUP_ENABLED, false)
+    }
+
+    private fun getLegacyNotificationDedupMode(): String {
+        val raw = prefs.getString(
+            KEY_NOTIFICATION_DEDUP_MODE,
+            NotificationDedupMode.OTP_STATUS.id
+        ) ?: NotificationDedupMode.OTP_STATUS.id
+        return NotificationDedupMode.from(raw).id
+    }
+
+    private fun getLegacyNotificationDedupPackageRulesRaw(): String {
+        return prefs.getString(KEY_NOTIFICATION_DEDUP_PACKAGE_RULES, "") ?: ""
+    }
+
+    private fun getLegacyNotificationDedupPackageMode(): String {
+        val raw = prefs.getString(
+            KEY_NOTIFICATION_DEDUP_PACKAGE_MODE,
+            PackageMode.ALL.id
+        ) ?: PackageMode.ALL.id
+        return PackageMode.from(raw).id
+    }
+
+    private fun parserDictionaryOverrideKey(languageId: String): String? {
+        return when (languageId.trim().lowercase(Locale.ROOT)) {
+            "en" -> KEY_PARSER_DICTIONARY_EN_OVERRIDE
+            "ru" -> KEY_PARSER_DICTIONARY_RU_OVERRIDE
+            "zh" -> KEY_PARSER_DICTIONARY_ZH_OVERRIDE
+            else -> null
+        }
     }
 
     private enum class PackageMode(val id: String) {
@@ -602,6 +881,12 @@ class ConverterPrefs(context: Context) {
             "network_speed_disable_chip_background"
         private const val KEY_CONVERTER_ENABLED = "converter_enabled"
         private const val KEY_KEEP_ALIVE_FOREGROUND_ENABLED = "keep_alive_foreground_enabled"
+        private const val KEY_SPRING_TRANSITIONS_ENABLED = "spring_transitions_enabled"
+        private const val KEY_PREVENT_MIRROR_DISMISS_ENABLED =
+            "prevent_mirror_dismiss_enabled"
+        private const val KEY_CONVERSION_LOG_ENABLED = "conversion_log_enabled"
+        private const val KEY_BUG_REPORT_AUTO_COPY_ENABLED = "bug_report_auto_copy_enabled"
+        private const val KEY_CONVERSION_LOG_MAX_BYTES = "conversion_log_max_bytes"
         private const val KEY_SYNC_DND_ENABLED = "sync_dnd_enabled"
         private const val KEY_UPDATE_CHECKS_ENABLED = "update_checks_enabled"
         private const val KEY_UPDATE_LAST_CHECK_AT_MS = "update_last_check_at_ms"
@@ -609,13 +894,20 @@ class ConverterPrefs(context: Context) {
         private const val KEY_UPDATE_CACHED_AVAILABLE = "update_cached_available"
         private const val KEY_UPDATE_LAST_NOTIFIED_VERSION = "update_last_notified_version"
         private const val KEY_AOSP_CUTTING_ENABLED = "aosp_cutting_enabled"
+        private const val KEY_AOSP_CUTTING_LENGTH = "aosp_cutting_length"
         private const val KEY_ANIMATED_ISLAND_ENABLED = "animated_island_enabled"
+        private const val KEY_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS =
+            "animated_island_update_frequency_ms"
         private const val KEY_HYPERBRIDGE_ENABLED = "hyperbridge_enabled"
         private const val KEY_NOTIFICATION_DEDUP_ENABLED = "notification_dedup_enabled"
         private const val KEY_NOTIFICATION_DEDUP_MODE = "notification_dedup_mode"
         private const val KEY_NOTIFICATION_DEDUP_PACKAGE_RULES = "notification_dedup_package_rules"
         private const val KEY_NOTIFICATION_DEDUP_PACKAGE_MODE = "notification_dedup_package_mode"
         private const val KEY_SMART_STATUS_ENABLED = "smart_status_enabled"
+        private const val KEY_SMART_PACKAGE_RULES = "smart_package_rules"
+        private const val KEY_SMART_PACKAGE_MODE = "smart_package_mode"
+        private const val KEY_SMART_TAXI_ENABLED = "smart_taxi_enabled"
+        private const val KEY_SMART_DELIVERY_ENABLED = "smart_delivery_enabled"
         private const val KEY_SMART_MEDIA_PLAYBACK_ENABLED = "smart_media_playback_enabled"
         private const val KEY_SMART_NAVIGATION_ENABLED = "smart_navigation_enabled"
         private const val KEY_SMART_WEATHER_ENABLED = "smart_weather_enabled"
@@ -626,8 +918,12 @@ class ConverterPrefs(context: Context) {
         private const val KEY_SMART_VPN_ENABLED = "smart_vpn_enabled"
         private const val KEY_SMART_FLASHLIGHT_ENABLED = "smart_flashlight_enabled"
         private const val KEY_SMART_FLASHLIGHT_LEVEL = "smart_flashlight_level"
+        private const val KEY_SMART_REMOVE_ORIGINAL_MESSAGE_ENABLED =
+            "smart_remove_original_message_enabled"
         private const val KEY_OTP_DETECTION_ENABLED = "otp_detection_enabled"
         private const val KEY_OTP_AUTO_COPY_ENABLED = "otp_auto_copy_enabled"
+        private const val KEY_OTP_REMOVE_ORIGINAL_MESSAGE_ENABLED =
+            "otp_remove_original_message_enabled"
         private const val KEY_OTP_PACKAGE_RULES = "otp_package_rules"
         private const val KEY_OTP_PACKAGE_MODE = "otp_package_mode"
         private const val KEY_PIXEL_JOKE_BYPASS_ENABLED = "pixel_joke_bypass_enabled"
@@ -640,10 +936,30 @@ class ConverterPrefs(context: Context) {
         private const val KEY_APP_PRESENTATION_OVERRIDES = "app_presentation_overrides"
         private const val KEY_USER_PARSER_DICTIONARY = "user_parser_dictionary"
         private const val KEY_CUSTOM_PARSER_DICTIONARY_LEGACY = "custom_parser_dictionary"
+        private const val KEY_PARSER_DICTIONARY_ENABLED_LANGUAGES =
+            "parser_dictionary_enabled_languages"
+        private const val KEY_PARSER_DICTIONARY_EN_OVERRIDE =
+            "parser_dictionary_en_override"
+        private const val KEY_PARSER_DICTIONARY_RU_OVERRIDE =
+            "parser_dictionary_ru_override"
+        private const val KEY_PARSER_DICTIONARY_ZH_OVERRIDE =
+            "parser_dictionary_zh_override"
 
         private const val KEY_PACKAGE_FILTER_LEGACY = "package_filter"
-        private const val DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX = "▲ "
-        private const val DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX = "▼ "
+        private const val DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX = "\u25B2 "
+        private const val DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX = "\u25BC "
         private const val DEFAULT_SMART_FLASHLIGHT_LEVEL = 4
+        private const val MIN_AOSP_CUTTING_LENGTH = 7
+        private const val MAX_AOSP_CUTTING_LENGTH = 12
+        private const val DEFAULT_AOSP_CUTTING_LENGTH = 7
+        private const val MIN_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS = 750
+        private const val MAX_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS = 3000
+        private const val DEFAULT_ANIMATED_ISLAND_UPDATE_FREQUENCY_MS = 2250
+        private const val MIN_CONVERSION_LOG_MAX_BYTES = 1 * 1024 * 1024
+        private const val MAX_CONVERSION_LOG_MAX_BYTES = 25 * 1024 * 1024
+        private const val DEFAULT_CONVERSION_LOG_MAX_BYTES = 5 * 1024 * 1024
+        private val SUPPORTED_PARSER_DICTIONARY_LANGUAGE_IDS =
+            setOf("en", "ru", "zh")
+        private val DEFAULT_PARSER_DICTIONARY_LANGUAGE_IDS = setOf("en", "ru", "zh")
     }
 }

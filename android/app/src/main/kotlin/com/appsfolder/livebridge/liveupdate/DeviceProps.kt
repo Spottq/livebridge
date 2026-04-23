@@ -7,10 +7,8 @@ object DeviceProps {
     private const val DEBUG_FORCE_NON_SAMSUNG_PROP = "debug.livebridge.force_non_samsung"
     private val marketNameKeys = listOf(
         "ro.product.marketname",
-        "ro.vendor.product.marketname",
         "ro.config.marketing_name",
         "ro.product.odm.marketname",
-        "ro.vendor.product.display",
         "ro.product.vendor.marketname"
     )
 

@@ -6,6 +6,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Locale
 
+private const val EMPTY_REGEX_PATTERN = "(?!)"
+
 internal data class LiveParserDictionary(
     val smartRules: List<SmartRuleEntry>,
     val blockedSourcePackages: Set<String>,
@@ -44,14 +46,106 @@ internal data class LiveParserDictionary(
     val entityTokenPatterns: List<Regex>,
     val statusLabels: Map<String, StageLabelsByLocale>
 ) {
-    fun resolveStatusText(ruleId: String, stageValue: Int, isRussianLocale: Boolean): String? {
+    fun resolveStatusText(ruleId: String, stageValue: Int, locale: Locale?): String? {
         val labels = statusLabels[ruleId.lowercase(Locale.ROOT)] ?: return null
-        return labels.resolve(stageValue, isRussianLocale)
+        return labels.resolve(stageValue, locale)
+    }
+
+    fun mergedWith(other: LiveParserDictionary): LiveParserDictionary {
+        return LiveParserDictionary(
+            smartRules = mergeSmartRules(smartRules, other.smartRules),
+            blockedSourcePackages = blockedSourcePackages + other.blockedSourcePackages,
+            knownNavigationPackages = knownNavigationPackages + other.knownNavigationPackages,
+            navigationPackageMarkers = navigationPackageMarkers + other.navigationPackageMarkers,
+            navigationDistancePattern = mergeRegex(
+                navigationDistancePattern,
+                other.navigationDistancePattern
+            ),
+            otpStrongTriggers = otpStrongTriggers + other.otpStrongTriggers,
+            otpLooseTriggerPattern = mergeRegex(
+                otpLooseTriggerPattern,
+                other.otpLooseTriggerPattern
+            ),
+            moneyContextPattern = mergeRegex(moneyContextPattern, other.moneyContextPattern),
+            textProgressPercentPattern = mergeRegex(
+                textProgressPercentPattern,
+                other.textProgressPercentPattern
+            ),
+            textProgressIncludeContextPattern = mergeRegex(
+                textProgressIncludeContextPattern,
+                other.textProgressIncludeContextPattern
+            ),
+            textProgressExcludeContextPattern = mergeRegex(
+                textProgressExcludeContextPattern,
+                other.textProgressExcludeContextPattern
+            ),
+            textProgressContextWindow = maxOf(
+                textProgressContextWindow,
+                other.textProgressContextWindow
+            ),
+            weatherPackageHints = weatherPackageHints + other.weatherPackageHints,
+            weatherContextPattern = mergeRegex(weatherContextPattern, other.weatherContextPattern),
+            weatherTemperaturePattern = mergeRegex(
+                weatherTemperaturePattern,
+                other.weatherTemperaturePattern
+            ),
+            weatherDayPattern = mergeRegex(weatherDayPattern, other.weatherDayPattern),
+            weatherConditionPattern = mergeRegex(
+                weatherConditionPattern,
+                other.weatherConditionPattern
+            ),
+            weatherConditionThunderPattern = mergeRegex(
+                weatherConditionThunderPattern,
+                other.weatherConditionThunderPattern
+            ),
+            weatherConditionRainPattern = mergeRegex(
+                weatherConditionRainPattern,
+                other.weatherConditionRainPattern
+            ),
+            weatherConditionSnowPattern = mergeRegex(
+                weatherConditionSnowPattern,
+                other.weatherConditionSnowPattern
+            ),
+            weatherConditionFogPattern = mergeRegex(
+                weatherConditionFogPattern,
+                other.weatherConditionFogPattern
+            ),
+            weatherConditionWindPattern = mergeRegex(
+                weatherConditionWindPattern,
+                other.weatherConditionWindPattern
+            ),
+            weatherConditionSunPattern = mergeRegex(
+                weatherConditionSunPattern,
+                other.weatherConditionSunPattern
+            ),
+            weatherConditionCloudPattern = mergeRegex(
+                weatherConditionCloudPattern,
+                other.weatherConditionCloudPattern
+            ),
+            vpnSpeedPattern = mergeRegex(vpnSpeedPattern, other.vpnSpeedPattern),
+            vpnContextPattern = mergeRegex(vpnContextPattern, other.vpnContextPattern),
+            vpnPackageMarkers = vpnPackageMarkers + other.vpnPackageMarkers,
+            vpnDownloadMarkers = vpnDownloadMarkers + other.vpnDownloadMarkers,
+            vpnUploadMarkers = vpnUploadMarkers + other.vpnUploadMarkers,
+            externalDeviceNamePatterns = mergeRegexLists(
+                externalDeviceNamePatterns,
+                other.externalDeviceNamePatterns
+            ),
+            externalDeviceGenericNames = externalDeviceGenericNames + other.externalDeviceGenericNames,
+            navigationInstructionPattern = mergeRegex(
+                navigationInstructionPattern,
+                other.navigationInstructionPattern
+            ),
+            otpCodePatterns = mergeRegexLists(otpCodePatterns, other.otpCodePatterns),
+            orderContextHints = orderContextHints + other.orderContextHints,
+            entityTokenPatterns = mergeRegexLists(entityTokenPatterns, other.entityTokenPatterns),
+            statusLabels = mergeStatusLabels(statusLabels, other.statusLabels)
+        )
     }
 
     companion object {
         fun default(): LiveParserDictionary {
-            val emptyRegex = Regex("(?!)")
+            val emptyRegex = Regex(EMPTY_REGEX_PATTERN)
             return LiveParserDictionary(
                 smartRules = emptyList(),
                 blockedSourcePackages = emptySet(),
@@ -360,12 +454,23 @@ internal data class LiveParserDictionary(
                     continue
                 }
                 val entry = raw.optJSONObject(ruleId) ?: continue
-                val ru = parseStageLabelMap(entry.optJSONObject("ru"))
-                val en = parseStageLabelMap(entry.optJSONObject("en"))
-                if (ru.isEmpty() && en.isEmpty()) {
+                val localizedLabels = mutableMapOf<String, Map<Int, String>>()
+                val localeKeys = entry.keys()
+                while (localeKeys.hasNext()) {
+                    val rawLocaleKey = localeKeys.next()
+                    val localeKey = normalizeLocaleTag(rawLocaleKey)
+                    if (localeKey.isEmpty()) {
+                        continue
+                    }
+                    val labels = parseStageLabelMap(entry.optJSONObject(rawLocaleKey))
+                    if (labels.isNotEmpty()) {
+                        localizedLabels[localeKey] = labels
+                    }
+                }
+                if (localizedLabels.isEmpty()) {
                     continue
                 }
-                values[ruleId] = StageLabelsByLocale(ru = ru, en = en)
+                values[ruleId] = StageLabelsByLocale(localizedLabels.toMap())
             }
             return values
         }
@@ -387,10 +492,7 @@ internal data class LiveParserDictionary(
                 merged[ruleId] = if (baseLabels == null) {
                     overrideLabels
                 } else {
-                    StageLabelsByLocale(
-                        ru = baseLabels.ru + overrideLabels.ru,
-                        en = baseLabels.en + overrideLabels.en
-                    )
+                    baseLabels.mergedWith(overrideLabels)
                 }
             }
             return merged
@@ -444,6 +546,17 @@ internal data class SmartRuleEntry(
     fun isExcluded(textLower: String): Boolean {
         return excludePatterns.any { it.containsMatchIn(textLower) }
     }
+
+    fun mergedWith(other: SmartRuleEntry): SmartRuleEntry {
+        return SmartRuleEntry(
+            id = id,
+            maxStage = maxOf(maxStage, other.maxStage),
+            packageHints = packageHints + other.packageHints,
+            textTriggers = textTriggers + other.textTriggers,
+            excludePatterns = mergeRegexLists(excludePatterns, other.excludePatterns),
+            signals = mergeSmartSignals(signals, other.signals)
+        )
+    }
 }
 
 internal data class SmartSignalEntry(
@@ -452,29 +565,59 @@ internal data class SmartSignalEntry(
 )
 
 internal data class StageLabelsByLocale(
-    val ru: Map<Int, String>,
-    val en: Map<Int, String>
+    val values: Map<String, Map<Int, String>>
 ) {
-    fun resolve(stageValue: Int, isRussianLocale: Boolean): String? {
-        val source = if (isRussianLocale) {
-            if (ru.isNotEmpty()) ru else en
-        } else {
-            if (en.isNotEmpty()) en else ru
+    fun mergedWith(other: StageLabelsByLocale): StageLabelsByLocale {
+        val merged = LinkedHashMap<String, Map<Int, String>>()
+        values.forEach { (localeKey, stageLabels) ->
+            merged[localeKey] = LinkedHashMap(stageLabels)
         }
-        if (source.isEmpty()) {
-            return null
+        other.values.forEach { (localeKey, stageLabels) ->
+            val existing = merged[localeKey].orEmpty()
+            merged[localeKey] = (existing + stageLabels).toSortedMap()
+        }
+        return StageLabelsByLocale(merged)
+    }
+
+    fun resolve(stageValue: Int, locale: Locale?): String? {
+        val source = pickStageLabelsForLocale(locale) ?: return null
+        source[stageValue]?.let { return it }
+        val fallbackStage = source.keys.filter { it <= stageValue }.maxOrNull()
+            ?: source.keys.minOrNull()
+        return fallbackStage?.let(source::get)
+    }
+
+    private fun pickStageLabelsForLocale(locale: Locale?): Map<Int, String>? {
+        for (candidate in localeCandidates(locale)) {
+            val value = values[candidate]
+            if (!value.isNullOrEmpty()) {
+                return value
+            }
         }
 
-        source[stageValue]?.let { return it }
-        val fallbackStage = source.keys.filter { it <= stageValue }.maxOrNull() ?: source.keys.minOrNull()
-        return fallbackStage?.let(source::get)
+        return values["en"]
+            ?: values["ru"]
+            ?: values["zh-cn"]
+            ?: values["zh-tw"]
+            ?: values.values.firstOrNull { it.isNotEmpty() }
     }
 }
 
 internal object LiveParserDictionaryLoader {
     private const val TAG = "LiveParserDictionary"
-    private const val ASSET_FILE_NAME = "liveupdate_dictionary.json"
     private const val ASSET_CACHE_KEY = "__asset__"
+    private const val LEGACY_CUSTOM_CACHE_KEY = "__legacy_custom__"
+
+    private data class DictionaryLanguagePack(
+        val id: String,
+        val assetFileName: String,
+    )
+
+    private val languagePacks = listOf(
+        DictionaryLanguagePack("en", "liveupdate_dictionary_en.json"),
+        DictionaryLanguagePack("ru", "liveupdate_dictionary_ru.json"),
+        DictionaryLanguagePack("zh", "liveupdate_dictionary_zh.json")
+    )
 
     @Volatile
     private var cachedSourceKey: String? = null
@@ -483,8 +626,30 @@ internal object LiveParserDictionaryLoader {
     private var cachedDictionary: LiveParserDictionary? = null
 
     fun get(context: Context, prefs: ConverterPrefs): LiveParserDictionary {
-        val customRaw = prefs.getCustomParserDictionaryRaw()
-        val sourceKey = customRaw ?: ASSET_CACHE_KEY
+        val enabledLanguageIds = prefs.getParserDictionaryEnabledLanguageIds()
+            .filter { languageId -> languagePacks.any { it.id == languageId } }
+            .sorted()
+        val legacyCustomRaw = prefs.getCustomParserDictionaryRaw()
+        val overridePairs = languagePacks.mapNotNull { pack ->
+            prefs.getParserDictionaryLanguageOverrideRaw(pack.id)?.let { raw ->
+                "${pack.id}:$raw"
+            }
+        }
+        val sourceKey = buildString {
+            append(ASSET_CACHE_KEY)
+            append('|')
+            append(enabledLanguageIds.joinToString(","))
+            if (!legacyCustomRaw.isNullOrBlank()) {
+                append('|')
+                append(LEGACY_CUSTOM_CACHE_KEY)
+                append(':')
+                append(legacyCustomRaw)
+            }
+            if (overridePairs.isNotEmpty()) {
+                append('|')
+                append(overridePairs.joinToString("|"))
+            }
+        }
         cachedDictionary?.let { existing ->
             if (cachedSourceKey == sourceKey) {
                 return existing
@@ -497,12 +662,36 @@ internal object LiveParserDictionaryLoader {
                 }
             }
 
-            val bundledDictionary = loadFromAssets(context) ?: LiveParserDictionary.default()
-            val loaded = if (!customRaw.isNullOrBlank()) {
-                LiveParserDictionary.fromJson(customRaw, defaults = bundledDictionary)
-                    ?: bundledDictionary
-            } else {
-                bundledDictionary
+            var bundledDictionary = LiveParserDictionary.default()
+            for (pack in languagePacks) {
+                if (pack.id !in enabledLanguageIds) {
+                    continue
+                }
+                val loadedFromAssets = loadFromAssets(
+                    context = context,
+                    assetFileName = pack.assetFileName
+                ) ?: continue
+                bundledDictionary = bundledDictionary.mergedWith(loadedFromAssets)
+            }
+
+            val loaded = languagePacks.fold(bundledDictionary) { current, pack ->
+                if (pack.id !in enabledLanguageIds) {
+                    return@fold current
+                }
+                val overrideRaw = prefs.getParserDictionaryLanguageOverrideRaw(pack.id)
+                if (overrideRaw.isNullOrBlank()) {
+                    return@fold current
+                }
+                LiveParserDictionary.fromJson(overrideRaw)
+                    ?.let(current::mergedWith)
+                    ?: current
+            }.let { merged ->
+                if (legacyCustomRaw.isNullOrBlank()) {
+                    merged
+                } else {
+                    LiveParserDictionary.fromJson(legacyCustomRaw, defaults = merged)
+                        ?: merged
+                }
             }
 
             cachedSourceKey = sourceKey
@@ -518,13 +707,147 @@ internal object LiveParserDictionaryLoader {
         }
     }
 
-    private fun loadFromAssets(context: Context): LiveParserDictionary? {
+    private fun loadFromAssets(
+        context: Context,
+        assetFileName: String
+    ): LiveParserDictionary? {
         return try {
-            val raw = context.assets.open(ASSET_FILE_NAME).bufferedReader(Charsets.UTF_8).use { it.readText() }
+            val raw = context.assets.open(assetFileName)
+                .bufferedReader(Charsets.UTF_8)
+                .use { it.readText() }
             LiveParserDictionary.fromJson(raw)
         } catch (error: Throwable) {
-            Log.w(TAG, "Failed to load parser dictionary from assets: ${error.message}")
+            Log.w(
+                TAG,
+                "Failed to load parser dictionary from assets $assetFileName: ${error.message}"
+            )
             null
         }
     }
+}
+
+private fun mergeSmartRules(
+    primary: List<SmartRuleEntry>,
+    secondary: List<SmartRuleEntry>
+): List<SmartRuleEntry> {
+    if (primary.isEmpty()) {
+        return secondary
+    }
+    if (secondary.isEmpty()) {
+        return primary
+    }
+    val merged = LinkedHashMap<String, SmartRuleEntry>()
+    primary.forEach { rule -> merged[rule.id] = rule }
+    secondary.forEach { rule ->
+        merged[rule.id] = merged[rule.id]?.mergedWith(rule) ?: rule
+    }
+    return merged.values.toList()
+}
+
+private fun mergeSmartSignals(
+    primary: List<SmartSignalEntry>,
+    secondary: List<SmartSignalEntry>
+): List<SmartSignalEntry> {
+    if (primary.isEmpty()) {
+        return secondary.sortedWith(compareBy<SmartSignalEntry> { it.stage }.thenBy { it.pattern.pattern })
+    }
+    if (secondary.isEmpty()) {
+        return primary.sortedWith(compareBy<SmartSignalEntry> { it.stage }.thenBy { it.pattern.pattern })
+    }
+    val merged = LinkedHashMap<String, SmartSignalEntry>()
+    (primary + secondary).forEach { signal ->
+        val key = "${signal.stage}:${regexSignature(signal.pattern)}"
+        merged.putIfAbsent(key, signal)
+    }
+    return merged.values.sortedWith(compareBy<SmartSignalEntry> { it.stage }.thenBy { it.pattern.pattern })
+}
+
+private fun mergeStatusLabels(
+    primary: Map<String, StageLabelsByLocale>,
+    secondary: Map<String, StageLabelsByLocale>
+): Map<String, StageLabelsByLocale> {
+    if (primary.isEmpty()) {
+        return secondary
+    }
+    if (secondary.isEmpty()) {
+        return primary
+    }
+    val merged = LinkedHashMap<String, StageLabelsByLocale>()
+    primary.forEach { (ruleId, labels) -> merged[ruleId] = labels }
+    secondary.forEach { (ruleId, labels) ->
+        merged[ruleId] = merged[ruleId]?.mergedWith(labels) ?: labels
+    }
+    return merged
+}
+
+private fun mergeRegexLists(primary: List<Regex>, secondary: List<Regex>): List<Regex> {
+    if (primary.isEmpty()) {
+        return secondary
+    }
+    if (secondary.isEmpty()) {
+        return primary
+    }
+    val merged = LinkedHashMap<String, Regex>()
+    (primary + secondary).forEach { regex ->
+        merged.putIfAbsent(regexSignature(regex), regex)
+    }
+    return merged.values.toList()
+}
+
+private fun mergeRegex(primary: Regex, secondary: Regex): Regex {
+    if (isEmptyRegex(primary)) {
+        return secondary
+    }
+    if (isEmptyRegex(secondary)) {
+        return primary
+    }
+    if (regexSignature(primary) == regexSignature(secondary)) {
+        return primary
+    }
+    return Regex(
+        pattern = "(?:${primary.pattern})|(?:${secondary.pattern})",
+        options = primary.options + secondary.options
+    )
+}
+
+private fun regexSignature(regex: Regex): String {
+    val options = regex.options
+        .map { it.name }
+        .sorted()
+        .joinToString(",")
+    return "$options:${regex.pattern}"
+}
+
+private fun isEmptyRegex(regex: Regex): Boolean {
+    return regex.pattern == EMPTY_REGEX_PATTERN
+}
+
+private fun normalizeLocaleTag(raw: String?): String {
+    return raw
+        ?.trim()
+        ?.replace('_', '-')
+        ?.lowercase(Locale.ROOT)
+        .orEmpty()
+}
+
+private fun localeCandidates(locale: Locale?): List<String> {
+    if (locale == null) {
+        return listOf("en")
+    }
+    val language = locale.language.lowercase(Locale.ROOT)
+    val country = locale.country.lowercase(Locale.ROOT)
+    val script = locale.script.lowercase(Locale.ROOT)
+
+    if (language == "zh") {
+        return when {
+            script == "hant" || country in setOf("tw", "hk", "mo") ->
+                listOf("zh-tw", "zh")
+            script == "hans" || country in setOf("cn", "sg") ->
+                listOf("zh-cn", "zh")
+            else -> listOf("zh-cn", "zh-tw", "zh")
+        }
+    }
+
+    val exact = if (country.isNotEmpty()) "$language-$country" else null
+    return listOfNotNull(exact, language)
 }

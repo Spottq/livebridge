@@ -1,5 +1,6 @@
 package com.kakao.taxi.liveupdate
 
+import android.app.Notification
 import android.content.ComponentName
 import android.content.Context
 import android.hardware.camera2.CameraManager
@@ -190,6 +191,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
         if (sbn.packageName == packageName) {
+            LiveUpdateNotifier.handleMirroredRemoved(applicationContext, sbn)
+            return
+        }
+        if (consumeSelfDismissedSourceKey(sbn.key)) {
             return
         }
         if (isFlashlightSourceNotification(sbn)) {
@@ -201,10 +206,6 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             FlashlightForegroundService.stop(applicationContext)
             return
         }
-        if (consumeSelfDismissedSourceKey(sbn.key)) {
-            return
-        }
-
         try {
             LiveUpdateNotifier.cancelMirrored(applicationContext, sbn)
         } catch (error: Throwable) {
@@ -229,7 +230,45 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     private fun processIncomingNotification(sbn: StatusBarNotification) {
         val result = LiveUpdateNotifier.maybeMirror(applicationContext, prefs, sbn)
+        if (result.mirrored) {
+            ConversionLogStore.upsertMirroredNotification(
+                context = applicationContext,
+                prefs = prefs,
+                sbn = sbn,
+                title = extractLogTitle(sbn),
+                text = extractLogText(sbn.notification)
+            )
+        }
         maybeDismissOriginalSource(sbn, result)
+    }
+
+    private fun extractLogTitle(sbn: StatusBarNotification): String {
+        val extras = sbn.notification.extras
+        return extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: extras.getCharSequence(Notification.EXTRA_TITLE_BIG)?.toString()?.trim()
+                ?.takeIf { it.isNotEmpty() }
+            ?: runCatching {
+                val appInfo = packageManager.getApplicationInfo(sbn.packageName, 0)
+                packageManager.getApplicationLabel(appInfo)?.toString()?.trim()
+            }.getOrNull().takeUnless { it.isNullOrBlank() }
+            ?: sbn.packageName
+    }
+
+    private fun extractLogText(notification: Notification): String {
+        val extras = notification.extras
+        return extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: extras.getCharSequence(Notification.EXTRA_TEXT)?.toString()?.trim()
+                ?.takeIf { it.isNotEmpty() }
+            ?: extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()?.trim()
+                ?.takeIf { it.isNotEmpty() }
+            ?: extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString()?.trim()
+                ?.takeIf { it.isNotEmpty() }
+            ?: extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+                ?.mapNotNull { it?.toString()?.trim()?.takeIf(String::isNotEmpty) }
+                ?.joinToString("\n")
+                .orEmpty()
     }
 
     private fun syncTorchMonitoring() {
@@ -440,22 +479,38 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         if (!result.mirrored) {
             return
         }
-        if (!prefs.getNotificationDedupEnabled()) {
-            return
-        }
         if (!sbn.isClearable) {
             return
         }
-        if (!prefs.isNotificationDedupPackageAllowed(sbn.packageName)) {
-            return
-        }
-        val shouldDismiss = when (prefs.getNotificationDedupMode()) {
-            "otp_only" -> result.dedupKind == LiveUpdateNotifier.MirrorDedupKind.OTP
-            else -> {
-                result.dedupKind == LiveUpdateNotifier.MirrorDedupKind.OTP ||
-                        result.dedupKind == LiveUpdateNotifier.MirrorDedupKind.STATUS
+        val appPresentationRemoveOriginal = AppPresentationOverridesLoader
+            .get(prefs)
+            .resolve(sbn.packageName.lowercase())
+            .removeOriginalMessage
+        val legacyDedup =
+            prefs.getNotificationDedupEnabled() &&
+                prefs.isNotificationDedupPackageAllowed(sbn.packageName) &&
+                when (prefs.getNotificationDedupMode()) {
+                    "otp_only" -> result.dedupKind == LiveUpdateNotifier.MirrorDedupKind.OTP
+                    else -> {
+                        result.dedupKind == LiveUpdateNotifier.MirrorDedupKind.OTP ||
+                            result.dedupKind == LiveUpdateNotifier.MirrorDedupKind.STATUS
+                    }
+                }
+        val upstreamDismiss = when (result.dedupKind) {
+            LiveUpdateNotifier.MirrorDedupKind.OTP -> {
+                prefs.getOtpRemoveOriginalMessageEnabled() &&
+                    prefs.isOtpPackageAllowed(sbn.packageName)
             }
+            LiveUpdateNotifier.MirrorDedupKind.STATUS -> {
+                prefs.getSmartRemoveOriginalMessageEnabled() &&
+                    prefs.isSmartPackageAllowed(sbn.packageName)
+            }
+            else -> false
         }
+        val shouldDismiss =
+            appPresentationRemoveOriginal ||
+                legacyDedup ||
+                upstreamDismiss
         if (!shouldDismiss) {
             return
         }
@@ -526,7 +581,6 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             selfDismissedFlashlightSourceKeys.remove(sbnKey)
         }
     }
-
     private fun scheduleRebind(reason: String) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
             return

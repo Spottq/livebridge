@@ -9,7 +9,15 @@ body:
     attributes:
       value: |
         Thanks for reporting a bug.
-        Please fill the fields below.
+        Please fill the fields below. For conversion, parser, or OTP issues,
+        attach a notification sample or paste the payload JSON copied from
+        LiveBridge conversion log if you have it.
+
+        Issues or questions about Android installer errors like "There is a
+        problem when parsing the software package" / "There was a problem
+        parsing the package" are not accepted and may be closed automatically.
+        Before installing the APK, use Android 16+ and disable Play Protect for
+        the installation.
 
   - type: textarea
     id: summary
@@ -24,7 +32,7 @@ body:
     id: diagnostics_json
     attributes:
       label: Diagnostics JSON
-      description: In LiveBridge app, open Settings -> tap Report a bug. The app copies diagnostics to clipboard automatically. Paste it here.
+      description: In LiveBridge, open Settings -> Report a bug -> Copy debug JSON. Paste it here. Remove personal data if needed.
       render: json
       placeholder: |
         {
@@ -43,6 +51,8 @@ body:
         - False negative conversion (should become Live Update, but does not)
         - Wrong stage/progress/status
         - OTP/code detection issue
+        - App selection / package rules issue
+        - Conversion log issue
         - UI/UX issue
         - Other
     validations:
@@ -78,11 +88,23 @@ body:
   - type: textarea
     id: notification_sample
     attributes:
-      label: Notification sample
-      description: Paste anonymized notification content if possible.
+      label: Notification sample / conversion log JSON (optional)
+      description: For parser, conversion, or OTP bugs, paste anonymized notification content. You can also paste payload JSON copied from Home -> Recent conversions -> tap the app -> copy Payload JSON.
       render: text
       placeholder: |
+        Option A - payload JSON from LiveBridge conversion log:
+        {
+          "package": "com.example.app",
+          "title": "...",
+          "text": "...",
+          "payload": {
+            "..."
+          }
+        }
+
+        Option B - plain notification sample:
         App package: com.example.app
+        App name:
         Notification title:
         Notification text:
     validations:

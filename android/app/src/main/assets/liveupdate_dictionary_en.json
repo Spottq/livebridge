@@ -1,0 +1,425 @@
+{
+  "smart_rules": [
+    {
+      "id": "food",
+      "max_stage": 4,
+      "package_hints": [
+        "kfc",
+        "ubereats",
+        "doordash",
+        "grubhub",
+        "delivery",
+        "food",
+        "meituan",
+        "eleme",
+        "foodpanda",
+        "zepto",
+        "zomato",
+        "swiggy",
+        "blinkit",
+        "instamart",
+        "bigbasket"
+      ],
+      "text_triggers": [
+        "order",
+        "courier",
+        "food",
+        "restaurant"
+      ],
+      "exclude_patterns": [
+        "(happy birthday|birthday)",
+        "(discount|\\d+%\\s*off|promo\\s*code|coupon|cash\\s*back|cashback|sale)",
+        "(payment\\s*(?:failure|failed|declined|unsuccessful))",
+        "(order\\s+from\\s*\\d)",
+        "(tracking|shipment|parcel|pickup\\s*point)"
+      ],
+      "signals": [
+        {
+          "stage": 4,
+          "pattern": "(delivery completed|order delivered|delivered|completed|enjoy(?: your meal)?)"
+        },
+        {
+          "stage": 3,
+          "pattern": "(out for delivery|on the way|heading to you|courier[^\\n]*(picked up|heading|on the way|nearby))"
+        },
+        {
+          "stage": 2,
+          "pattern": "(order[^\\n]{0,40}(ready(?:\\s+for\\s+(?:pickup|delivery))?)|ready for pickup|ready for delivery|packed|almost ready)"
+        },
+        {
+          "stage": 1,
+          "pattern": "(order[^\\n]{0,40}(preparing|in kitchen|being prepared|being cooked|cooking|assembling)|preparing|in kitchen|is being prepared|is being cooked|being cooked|cooking|assembling)"
+        },
+        {
+          "stage": 0,
+          "pattern": "(order[^\\n]*(received|accepted|confirmed|created|placed|paid)|payment[^\\n]*(successful|confirmed|received|accepted))"
+        }
+      ]
+    },
+    {
+      "id": "taxi",
+      "max_stage": 4,
+      "package_hints": [
+        "taxi",
+        "uber",
+        "lyft",
+        "bolt",
+        "yango",
+        "yandex",
+        "didi",
+        "grab"
+      ],
+      "text_triggers": [
+        "taxi",
+        "ride",
+        "driver"
+      ],
+      "signals": [
+        {
+          "stage": 4,
+          "pattern": "(trip completed|arrived at destination|you'?ve arrived)"
+        },
+        {
+          "stage": 3,
+          "pattern": "(trip started|ride started|enjoy your ride)"
+        },
+        {
+          "stage": 2,
+          "pattern": "(driver[^\\n]*arriving|arriving in|on the way)"
+        },
+        {
+          "stage": 1,
+          "pattern": "(driver found|driver assigned|matched with driver)"
+        },
+        {
+          "stage": 0,
+          "pattern": "(searching for (a )?driver|finding driver)"
+        }
+      ]
+    },
+    {
+      "id": "navigation",
+      "max_stage": 4,
+      "package_hints": [
+        "ru.dublgis.dgismobile",
+        "dublgis",
+        "ru.yandex.yandexmaps",
+        "google.android.apps.maps",
+        "waze",
+        "here",
+        "tomtom",
+        "maps",
+        "map",
+        "navigator",
+        "navigation",
+        "navi",
+        "amap",
+        "baidu.BaiduMap",
+        "citymapper"
+      ],
+      "text_triggers": [
+        "route",
+        "turn left",
+        "turn right",
+        "keep left",
+        "keep right",
+        "take exit",
+        "u-turn",
+        "roundabout",
+        "destination"
+      ],
+      "exclude_patterns": [
+        "(happy birthday|birthday)",
+        "(discount|\\d+%\\s*off|promo\\s*code|coupon|cash\\s*back|cashback|sale)",
+        "(unsubscribe|newsletter|follow us|download app)"
+      ],
+      "signals": [
+        {
+          "stage": 4,
+          "pattern": "(finish the route|arrived|destination reached|you'?ve arrived)"
+        },
+        {
+          "stage": 3,
+          "pattern": "(destination (is )?on (your )?(right|left)|almost there)"
+        },
+        {
+          "stage": 2,
+          "pattern": "(\\b\\d+\\s*(m|km|ft|mi)\\b|turn (left|right)|keep (left|right)|continue|head\\s|take\\s+the|exit|merge|roundabout|u-?turn)"
+        },
+        {
+          "stage": 1,
+          "pattern": "(navigation started|starting route|follow the route|route started)"
+        }
+      ]
+    },
+    {
+      "id": "external_device",
+      "max_stage": 2,
+      "package_hints": [
+        "camera",
+        "bluetooth",
+        "accessory",
+        "usb",
+        "gopro",
+        "dji",
+        "wearable",
+        "galaxywearable",
+        "miui"
+      ],
+      "text_triggers": [
+        "camera",
+        "bluetooth",
+        "accessory",
+        "usb",
+        "gopro",
+        "dji",
+        "pair",
+        "connected",
+        "connecting",
+        "is connected"
+      ],
+      "exclude_patterns": [
+        "(happy birthday|birthday)",
+        "(discount|\\d+%\\s*off|promo\\s*code|coupon|cash\\s*back|cashback|sale)",
+        "(hotspot|personal\\s+hotspot|tether(?:ing)?|wifi\\s+hotspot|\\b\\d+\\s+devices?\\b)"
+      ],
+      "signals": [
+        {
+          "stage": 2,
+          "pattern": "(connected\\b|pair(?:ed)?\\b)"
+        },
+        {
+          "stage": 1,
+          "pattern": "(connecting\\b|pair(?:ing)?\\b)"
+        }
+      ]
+    },
+    {
+      "id": "vpn",
+      "max_stage": 1,
+      "package_hints": [
+        "vpn",
+        "wireguard",
+        "openvpn",
+        "nordvpn",
+        "protonvpn",
+        "surfshark",
+        "expressvpn",
+        "outline",
+        "amnezia",
+        "clash",
+        "v2ray",
+        "hiddify",
+        "tailscale",
+        "zerotier",
+        "shadowsocks"
+      ],
+      "text_triggers": [
+        "vpn",
+        "wireguard",
+        "openvpn",
+        "tunnel",
+        "secure connection"
+      ],
+      "signals": [
+        {
+          "stage": 1,
+          "pattern": "(?<!\\d)\\d{1,4}(?:[.,]\\d{1,2})?\\s*(?:[kmg]?i?b)\\s*(?:(?:/\\s*s)|(?:/\\s*sec)|ps)\\b|connected"
+        }
+      ]
+    }
+  ],
+  "blocked_source_packages": [],
+  "known_navigation_packages": [
+    "ru.dublgis.dgismobile",
+    "ru.yandex.yandexmaps",
+    "com.google.android.apps.maps",
+    "com.waze",
+    "com.autonavi.minimap",
+    "com.baidu.BaiduMap"
+  ],
+  "navigation_package_markers": [
+    "navigation",
+    "navigator",
+    ".maps",
+    "navi"
+  ],
+  "navigation_distance_pattern": "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:km|m|mi|ft)\\b",
+  "navigation_instruction_pattern": "(turn\\s+(?:left|right)|keep\\s+(?:left|right)|take\\s+exit|u-?turn|roundabout)",
+  "otp_strong_triggers": [
+    "otp",
+    "one-time password",
+    "one time password",
+    "verification",
+    "verification code",
+    "verify code",
+    "code verification",
+    "confirmation code",
+    "confirm code",
+    "authentication code",
+    "authorization code",
+    "security code",
+    "sign in code",
+    "signin code",
+    "login verification code",
+    "login code",
+    "account code",
+    "payment code",
+    "passcode",
+    "2fa",
+    "auth code",
+    "sms code"
+  ],
+  "otp_loose_trigger_pattern": "(?:(?:\\bcode\\b|\\botp\\b|\\bpasscode\\b)\\s*[:#-]?[\\s]*\\d(?:[\\s-]?\\d){3,7})",
+  "money_context_pattern": "(₽|\\$|€|￥|¥|rub|usd|eur|kzt|price|total|amount|sum|twd|nt\\$|rmb|cny|hkd)",
+  "text_progress_percent_pattern": "(?<!\\d)(\\d{1,3})\\s*%",
+  "text_progress_context_window": 80,
+  "text_progress_include_context_pattern": "(remaining|progress|completed|completing|downloading|uploading|updating|installing|sync(?:ing)?|processing|processed|render(?:ing)?|encoding|decoding)",
+  "text_progress_exclude_context_pattern": "(discount|promo|coupon|sale|cashback|off\\b|bonus|save|deal|special\\s+offer|limited\\s+time|minimum\\s+order|order\\s+from|\\d{2,7}\\s*(?:usd|eur|\\$|€|kzt)|humidity|weather|temperature|pressure|precip|commission|fee\\b|tax\\b|apr\\b)",
+  "weather_package_hints": [
+    "weather",
+    "sec.android.daemonapp",
+    "meteo",
+    "accuweather",
+    "weatherchannel",
+    "gismeteo",
+    "yandex.weather",
+    "pogoda",
+    "clime",
+    "1weather",
+    "todayweather"
+  ],
+  "weather_context_pattern": "(weather|temperature|feels like|humidity|wind|precip|pressure|forecast|uv|aqi|today|tomorrow|highs?|lows?|sunny|clear|cloudy|overcast|rain(?:y)?|snow(?:y)?|fog(?:gy)?|mist|haze|wind(?:y)?|gust(?:y)?|thunder(?:storm)?|storm(?:y)?)",
+  "weather_temperature_pattern": "(?<!\\d)([+\\-−]?\\d{1,3})\\s*(?:°\\s*(?:c|f)?|℃|℉)",
+  "weather_day_pattern": "(today|tomorrow|morning|afternoon|evening|night)",
+  "weather_condition_pattern": "(sunny|cloudy|overcast|rain|snow|fog|windy|clear)",
+  "weather_condition_thunder_pattern": "(thunder|storm)",
+  "weather_condition_rain_pattern": "(rain|shower)",
+  "weather_condition_snow_pattern": "(snow|sleet|blizzard)",
+  "weather_condition_fog_pattern": "(mist|fog|haze)",
+  "weather_condition_wind_pattern": "(wind|windy|gust)",
+  "weather_condition_sun_pattern": "(sunny|clear)",
+  "weather_condition_cloud_pattern": "(cloud|overcast)",
+  "external_device_name_patterns": [
+    "(?:connected|connecting|pair(?:ed|ing))\\s*(?:to)?\\s*[\"«]?([\\p{L}\\p{N}][\\p{L}\\p{N} ._#\\-]{1,40})[\"»]?(?=\\s|$|[,.!])",
+    "[\"«]?([\\p{L}\\p{N}][\\p{L}\\p{N} ._#\\-]{1,40})[\"»]?\\s*(?:is\\s+)?(?:connected|connecting|pair(?:ed|ing))\\b"
+  ],
+  "external_device_generic_names": [
+    "device",
+    "devices",
+    "1 device",
+    "2 devices",
+    "3 devices",
+    "4 devices",
+    "5 devices",
+    "camera",
+    "accessory",
+    "bluetooth",
+    "usb",
+    "wifi",
+    "hotspot",
+    "your hotspot",
+    "wifi hotspot",
+    "personal hotspot"
+  ],
+  "vpn_speed_pattern": "(?<!\\d)\\d{1,4}(?:[.,]\\d{1,2})?\\s*(?:[kmg]?i?b)\\s*(?:(?:/\\s*s)|(?:/\\s*sec)|ps)\\b",
+  "vpn_context_pattern": "(\\bvpn\\b|wireguard|openvpn|hiddify|clash|v2ray|singbox|outline|amnezia|tailscale|zerotier|proxy)",
+  "vpn_package_markers": [
+    "hiddify",
+    "wireguard",
+    "openvpn",
+    "nordvpn",
+    "protonvpn",
+    "surfshark",
+    "expressvpn",
+    "outline",
+    "amnezia",
+    "clash",
+    "v2ray",
+    "hysteria",
+    "singbox",
+    "tailscale",
+    "zerotier",
+    "shadowsocks",
+    "vpn"
+  ],
+  "vpn_download_markers": [
+    "↓",
+    "dl",
+    "downlink",
+    "download",
+    "down",
+    "rx",
+    "recv",
+    "receive",
+    "incoming",
+    "inbound",
+    "ingress"
+  ],
+  "vpn_upload_markers": [
+    "↑",
+    "ul",
+    "uplink",
+    "upload",
+    "up",
+    "tx",
+    "send",
+    "outgoing",
+    "outbound",
+    "egress"
+  ],
+  "otp_code_patterns": [
+    "(?<!\\S)(\\d{4,8})(?!\\d)",
+    "(?<!\\S)(\\d(?:[\\s-]?\\d){3,7})(?!\\d)",
+    "(?<!\\S)([A-Z0-9]{4,8})(?!\\w)"
+  ],
+  "order_context_hints": [
+    "order",
+    "delivery"
+  ],
+  "entity_token_patterns": [
+    "(?:order|trip|ride)\\s*(?:#|id|no\\.?|number)\\s*([a-zA-Z0-9-]{2,16})",
+    "(?:order|trip|ride)\\s+([a-zA-Z0-9-]*\\d[a-zA-Z0-9-]{1,15})",
+    "(?:#|№)\\s*([a-zA-Z0-9-]{2,16})",
+    "\\b(\\d{4,12})\\b"
+  ],
+  "status_labels": {
+    "food": {
+      "en": {
+        "0": "Paid",
+        "1": "Cooking",
+        "2": "Ready",
+        "3": "On the way",
+        "4": "Delivered"
+      }
+    },
+    "taxi": {
+      "en": {
+        "0": "Searching",
+        "1": "Driver",
+        "2": "Arriving",
+        "3": "On trip",
+        "4": "Done"
+      }
+    },
+    "navigation": {
+      "en": {
+        "1": "Route",
+        "2": "Navigation",
+        "3": "Almost there",
+        "4": "Arrived"
+      }
+    },
+    "external_device": {
+      "en": {
+        "1": "Connecting",
+        "2": "Connected"
+      }
+    },
+    "vpn": {
+      "en": {
+        "1": "VPN"
+      }
+    }
+  }
+}

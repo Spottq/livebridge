@@ -15,6 +15,30 @@ internal enum class CompactTextSource(val id: String) {
     }
 }
 
+internal enum class NotificationTitleSource(val id: String) {
+    NOTIFICATION_TITLE("notification_title"),
+    APP_TITLE("app_title");
+
+    companion object {
+        fun from(raw: String?): NotificationTitleSource? {
+            val normalized = raw?.trim()?.lowercase(Locale.ROOT).orEmpty()
+            return entries.firstOrNull { it.id == normalized }
+        }
+    }
+}
+
+internal enum class NotificationContentSource(val id: String) {
+    NOTIFICATION_TEXT("notification_text"),
+    NOTIFICATION_TITLE("notification_title");
+
+    companion object {
+        fun from(raw: String?): NotificationContentSource? {
+            val normalized = raw?.trim()?.lowercase(Locale.ROOT).orEmpty()
+            return entries.firstOrNull { it.id == normalized }
+        }
+    }
+}
+
 internal enum class NotificationIconSource(val id: String) {
     NOTIFICATION("notification"),
     APP("app");
@@ -29,11 +53,29 @@ internal enum class NotificationIconSource(val id: String) {
 
 internal data class AppPresentationOverride(
     val compactTextSource: CompactTextSource = CompactTextSource.TITLE,
-    val iconSource: NotificationIconSource = NotificationIconSource.APP
+    val iconSource: NotificationIconSource = NotificationIconSource.APP,
+    val titleSource: NotificationTitleSource? = null,
+    val contentSource: NotificationContentSource? = null,
+    val removeOriginalMessage: Boolean = false
 ) {
+    fun usesExplicitSources(): Boolean {
+        return titleSource != null || contentSource != null
+    }
+
+    fun resolvedTitleSource(): NotificationTitleSource {
+        return titleSource ?: NotificationTitleSource.NOTIFICATION_TITLE
+    }
+
+    fun resolvedContentSource(): NotificationContentSource {
+        return contentSource ?: NotificationContentSource.NOTIFICATION_TEXT
+    }
+
     fun isDefault(): Boolean {
         return compactTextSource == CompactTextSource.TITLE &&
-                iconSource == NotificationIconSource.APP
+                iconSource == NotificationIconSource.APP &&
+                resolvedTitleSource() == NotificationTitleSource.NOTIFICATION_TITLE &&
+                resolvedContentSource() == NotificationContentSource.NOTIFICATION_TEXT &&
+                !removeOriginalMessage
     }
 }
 
@@ -53,6 +95,9 @@ internal data class AppPresentationOverridesState(
 internal object AppPresentationOverridesCodec {
     private const val KEY_COMPACT_TEXT = "compact_text"
     private const val KEY_ICON_SOURCE = "icon_source"
+    private const val KEY_TITLE_SOURCE = "title_source"
+    private const val KEY_CONTENT_SOURCE = "content_source"
+    private const val KEY_REMOVE_ORIGINAL_MESSAGE = "remove_original_message"
     private const val KEY_DEFAULT_OVERRIDE = "__default__"
 
     fun parse(raw: String?): AppPresentationOverridesState? {
@@ -118,16 +163,33 @@ internal object AppPresentationOverridesCodec {
 
     private fun parseEntry(item: JSONObject?): AppPresentationOverride? {
         item ?: return null
+        val titleSource = NotificationTitleSource.from(item.optString(KEY_TITLE_SOURCE))
+        val contentSource = NotificationContentSource.from(item.optString(KEY_CONTENT_SOURCE))
         return AppPresentationOverride(
-            compactTextSource = CompactTextSource.from(item.optString(KEY_COMPACT_TEXT)),
-            iconSource = NotificationIconSource.from(item.optString(KEY_ICON_SOURCE))
+            compactTextSource = if (titleSource != null || contentSource != null) {
+                CompactTextSource.TITLE
+            } else {
+                CompactTextSource.from(item.optString(KEY_COMPACT_TEXT))
+            },
+            iconSource = NotificationIconSource.from(item.optString(KEY_ICON_SOURCE)),
+            titleSource = titleSource,
+            contentSource = contentSource,
+            removeOriginalMessage = item.optBoolean(KEY_REMOVE_ORIGINAL_MESSAGE, false)
         )
     }
 
     private fun encodeEntry(entry: AppPresentationOverride): JSONObject {
         return JSONObject().apply {
-            put(KEY_COMPACT_TEXT, entry.compactTextSource.id)
             put(KEY_ICON_SOURCE, entry.iconSource.id)
+            if (entry.removeOriginalMessage) {
+                put(KEY_REMOVE_ORIGINAL_MESSAGE, true)
+            }
+            if (entry.usesExplicitSources()) {
+                put(KEY_TITLE_SOURCE, entry.resolvedTitleSource().id)
+                put(KEY_CONTENT_SOURCE, entry.resolvedContentSource().id)
+            } else {
+                put(KEY_COMPACT_TEXT, entry.compactTextSource.id)
+            }
         }
     }
 }

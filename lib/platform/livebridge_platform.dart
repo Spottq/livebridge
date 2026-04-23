@@ -67,6 +67,35 @@ class LiveBridgePlatform {
       _askBool('getTextProgressEnabled');
   static Future<bool> setTextProgressEnabled(bool value) =>
       _askBool('setTextProgressEnabled', {'value': value});
+  static Future<bool> getConverterEnabled() => _askBool('getConverterEnabled');
+  static Future<bool> setConverterEnabled(bool value) =>
+      _askBool('setConverterEnabled', {'value': value});
+  static Future<bool> getKeepAliveForegroundEnabled() =>
+      _askBool('getKeepAliveForegroundEnabled');
+  static Future<bool> setKeepAliveForegroundEnabled(bool value) =>
+      _askBool('setKeepAliveForegroundEnabled', {'value': value});
+  static Future<bool> getSpringTransitionsEnabled() =>
+      _askBool('getSpringTransitionsEnabled');
+  static Future<bool> setSpringTransitionsEnabled(bool value) =>
+      _askBool('setSpringTransitionsEnabled', {'value': value});
+  static Future<bool> getPreventMirrorDismissEnabled() =>
+      _askBool('getPreventMirrorDismissEnabled');
+  static Future<bool> setPreventMirrorDismissEnabled(bool value) =>
+      _askBool('setPreventMirrorDismissEnabled', {'value': value});
+  static Future<bool> getConversionLogEnabled() =>
+      _askBool('getConversionLogEnabled');
+  static Future<bool> setConversionLogEnabled(bool value) =>
+      _askBool('setConversionLogEnabled', {'value': value});
+  static Future<bool> getBugReportAutoCopyEnabled() =>
+      _askBool('getBugReportAutoCopyEnabled');
+  static Future<bool> setBugReportAutoCopyEnabled(bool value) =>
+      _askBool('setBugReportAutoCopyEnabled', {'value': value});
+  static Future<int> getConversionLogMaxBytes() =>
+      _askInt('getConversionLogMaxBytes');
+  static Future<bool> setConversionLogMaxBytes(int value) =>
+      _askBool('setConversionLogMaxBytes', {'value': value});
+  static Future<String> getConversionLogEntries() =>
+      _askStr('getConversionLogEntries');
   static Future<bool> getNetworkSpeedEnabled() =>
       _askBool('getNetworkSpeedEnabled');
   static Future<bool> setNetworkSpeedEnabled(bool value) =>
@@ -102,13 +131,6 @@ class LiveBridgePlatform {
       _askBool('getNetworkSpeedChipBackgroundDisabled');
   static Future<bool> setNetworkSpeedChipBackgroundDisabled(bool value) =>
       _askBool('setNetworkSpeedChipBackgroundDisabled', {'value': value});
-  static Future<bool> getConverterEnabled() => _askBool('getConverterEnabled');
-  static Future<bool> setConverterEnabled(bool value) =>
-      _askBool('setConverterEnabled', {'value': value});
-  static Future<bool> getKeepAliveForegroundEnabled() =>
-      _askBool('getKeepAliveForegroundEnabled');
-  static Future<bool> setKeepAliveForegroundEnabled(bool value) =>
-      _askBool('setKeepAliveForegroundEnabled', {'value': value});
   static Future<bool> getSyncDndEnabled() => _askBool('getSyncDndEnabled');
   static Future<bool> setSyncDndEnabled(bool value) =>
       _askBool('setSyncDndEnabled', {'value': value});
@@ -151,10 +173,17 @@ class LiveBridgePlatform {
       _askBool('getAospCuttingEnabled');
   static Future<bool> setAospCuttingEnabled(bool value) =>
       _askBool('setAospCuttingEnabled', {'value': value});
+  static Future<int> getAospCuttingLength() => _askInt('getAospCuttingLength');
+  static Future<bool> setAospCuttingLength(int value) =>
+      _askBool('setAospCuttingLength', {'value': value});
   static Future<bool> getAnimatedIslandEnabled() =>
       _askBool('getAnimatedIslandEnabled');
   static Future<bool> setAnimatedIslandEnabled(bool value) =>
       _askBool('setAnimatedIslandEnabled', {'value': value});
+  static Future<int> getAnimatedIslandUpdateFrequencyMs() =>
+      _askInt('getAnimatedIslandUpdateFrequencyMs');
+  static Future<bool> setAnimatedIslandUpdateFrequencyMs(int value) =>
+      _askBool('setAnimatedIslandUpdateFrequencyMs', {'value': value});
   static Future<bool> getHyperBridgeEnabled() =>
       _askBool('getHyperBridgeEnabled');
   static Future<bool> setHyperBridgeEnabled(bool value) =>
@@ -175,10 +204,32 @@ class LiveBridgePlatform {
       _askStr('getNotificationDedupPackageMode');
   static Future<bool> setNotificationDedupPackageMode(String value) =>
       _askBool('setNotificationDedupPackageMode', {'value': value});
+  static Future<bool> getOtpRemoveOriginalMessageEnabled() =>
+      _askBool('getOtpRemoveOriginalMessageEnabled');
+  static Future<bool> setOtpRemoveOriginalMessageEnabled(bool value) =>
+      _askBool('setOtpRemoveOriginalMessageEnabled', {'value': value});
+  static Future<bool> getSmartRemoveOriginalMessageEnabled() =>
+      _askBool('getSmartRemoveOriginalMessageEnabled');
+  static Future<bool> setSmartRemoveOriginalMessageEnabled(bool value) =>
+      _askBool('setSmartRemoveOriginalMessageEnabled', {'value': value});
+  static Future<String> getSmartPackageRules() =>
+      _askStr('getSmartPackageRules');
+  static Future<bool> setSmartPackageRules(String value) =>
+      _askBool('setSmartPackageRules', {'value': value});
+  static Future<String> getSmartPackageMode() => _askStr('getSmartPackageMode');
+  static Future<bool> setSmartPackageMode(String value) =>
+      _askBool('setSmartPackageMode', {'value': value});
   static Future<bool> getSmartStatusDetectionEnabled() =>
       _askBool('getSmartStatusDetectionEnabled');
   static Future<bool> setSmartStatusDetectionEnabled(bool value) =>
       _askBool('setSmartStatusDetectionEnabled', {'value': value});
+  static Future<bool> getSmartTaxiEnabled() => _askBool('getSmartTaxiEnabled');
+  static Future<bool> setSmartTaxiEnabled(bool value) =>
+      _askBool('setSmartTaxiEnabled', {'value': value});
+  static Future<bool> getSmartDeliveryEnabled() =>
+      _askBool('getSmartDeliveryEnabled');
+  static Future<bool> setSmartDeliveryEnabled(bool value) =>
+      _askBool('setSmartDeliveryEnabled', {'value': value});
   static Future<bool> getSmartMediaPlaybackEnabled() =>
       _askBool('getSmartMediaPlaybackEnabled');
   static Future<bool> setSmartMediaPlaybackEnabled(bool value) =>
@@ -312,6 +363,29 @@ class LiveBridgePlatform {
       _askBool('setCustomParserDictionary', {'value': value});
   static Future<bool> clearCustomParserDictionary() =>
       _askBool('clearCustomParserDictionary');
+  static Future<List<String>> getParserDictionaryEnabledLanguages() async {
+    final List<dynamic>? res = await _channel.invokeMethod<List<dynamic>>(
+      'getParserDictionaryEnabledLanguages',
+    );
+    return res
+            ?.whereType<String>()
+            .map((String value) => value.trim().toLowerCase())
+            .where((String value) => value.isNotEmpty)
+            .toList() ??
+        const <String>[];
+  }
+
+  static Future<bool> setParserDictionaryEnabledLanguages(
+    List<String> value,
+  ) => _askBool('setParserDictionaryEnabledLanguages', {'value': value});
+
+  static Future<bool> setParserDictionaryLanguageOverride({
+    required String languageId,
+    required String value,
+  }) => _askBool('setParserDictionaryLanguageOverride', {
+    'languageId': languageId,
+    'value': value,
+  });
 
   static Future<DeviceInfo> getDeviceInfo() async {
     final Map<dynamic, dynamic>? res = await _channel
@@ -327,6 +401,15 @@ class LiveBridgePlatform {
       model: (m['model'] as String?) ?? '',
       rawModel: (m['rawModel'] as String?) ?? '',
       product: (m['product'] as String?) ?? '',
+      device: (m['device'] as String?) ?? '',
+      board: (m['board'] as String?) ?? '',
+      hardware: (m['hardware'] as String?) ?? '',
+      bootloader: (m['bootloader'] as String?) ?? '',
+      host: (m['host'] as String?) ?? '',
+      id: (m['id'] as String?) ?? '',
+      tags: (m['tags'] as String?) ?? '',
+      type: (m['type'] as String?) ?? '',
+      user: (m['user'] as String?) ?? '',
       fingerprint: (m['fingerprint'] as String?) ?? '',
       display: (m['display'] as String?) ?? '',
     );
