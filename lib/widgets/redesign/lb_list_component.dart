@@ -220,9 +220,7 @@ class _LbListRowState extends State<_LbListRow> {
                 : const Duration(milliseconds: 140),
             curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
-              color: _isPressed
-                  ? palette.pressedOverlay
-                  : Colors.transparent,
+              color: _isPressed ? palette.pressedOverlay : Colors.transparent,
               borderRadius: BorderRadius.only(
                 topLeft: widget.isFirst ? cardRadius : Radius.zero,
                 topRight: widget.isFirst ? cardRadius : Radius.zero,
@@ -249,7 +247,9 @@ class _LbListRowState extends State<_LbListRow> {
                           child: Row(
                             children: <Widget>[
                               if (!hasLeading)
-                                const SizedBox(width: LbSpacing.listTextOnlyInset),
+                                const SizedBox(
+                                  width: LbSpacing.listTextOnlyInset,
+                                ),
                               Expanded(
                                 child: _LbTextBlock(
                                   title: widget.item.title,
@@ -270,12 +270,13 @@ class _LbListRowState extends State<_LbListRow> {
                                       LbIcon(
                                         symbol: widget.item.trailingIcon!,
                                         size: LbSpacing.listTrailingIconSize,
-                                        color: widget.item.trailingIconColor ??
+                                        color:
+                                            widget.item.trailingIconColor ??
                                             palette.warning,
                                       ),
                                       const SizedBox(
-                                        width:
-                                            LbSpacing.listTrailingChevronIconGap,
+                                        width: LbSpacing
+                                            .listTrailingChevronIconGap,
                                       ),
                                       LbIcon(
                                         symbol: LbIconSymbol.chevronRight,
@@ -290,14 +291,16 @@ class _LbListRowState extends State<_LbListRow> {
                                 LbIcon(
                                   symbol: widget.item.trailingIcon!,
                                   size: LbSpacing.listTrailingIconSize,
-                                  color: widget.item.trailingIconColor ??
+                                  color:
+                                      widget.item.trailingIconColor ??
                                       palette.warning,
                                 ),
                                 const SizedBox(
                                   width: LbSpacing.listTrailingStatusGap,
                                 ),
                               ],
-                              if (widget.item.trailingWidget != null) ...<Widget>[
+                              if (widget.item.trailingWidget !=
+                                  null) ...<Widget>[
                                 SizedBox(
                                   width:
                                       widget.item.trailingWidgetWidth ??
@@ -308,7 +311,8 @@ class _LbListRowState extends State<_LbListRow> {
                                   ),
                                 ),
                               ],
-                              if (!hasCompactTrailingPair && hasTrailing) ...<Widget>[
+                              if (!hasCompactTrailingPair &&
+                                  hasTrailing) ...<Widget>[
                                 SizedBox(
                                   width: LbSpacing.listAccessoryWidth,
                                   child: Align(
@@ -318,8 +322,9 @@ class _LbListRowState extends State<_LbListRow> {
                                             value: widget.item.toggleValue!,
                                             onChanged: widget.item.onToggle,
                                             enabled: isEnabled,
-                                            triggerHaptics:
-                                                widget.item.toggleTriggerHaptics,
+                                            triggerHaptics: widget
+                                                .item
+                                                .toggleTriggerHaptics,
                                           )
                                         : widget.item.showChevron
                                         ? LbIcon(
@@ -378,55 +383,36 @@ class _LbTextBlock extends StatelessWidget {
     final Color titleColor = enabled
         ? palette.textPrimary
         : palette.textSecondary;
-    final Color subtitleColor = enabled
+    final Color suffixColor = enabled
         ? palette.textSecondary
         : palette.textMuted;
-
-    if (subtitle == null) {
-      return Align(
-        alignment: Alignment.centerLeft,
-        child: Text.rich(
-          TextSpan(
-            text: title,
-            style: LbTextStyles.body.copyWith(color: titleColor),
-            children: titleSuffix == null
-                ? const <InlineSpan>[]
-                : <InlineSpan>[
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.middle,
-                      child: Transform.translate(
-                        offset: const Offset(0, -LbSpacing.inlineSuffixLift),
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 6),
-                          child: Text(
-                            titleSuffix!,
-                            style: LbTextStyles.inlineSuffix.copyWith(
-                              color: subtitleColor,
-                            ),
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text.rich(
+        TextSpan(
+          text: title,
+          style: LbTextStyles.body.copyWith(color: titleColor),
+          children: titleSuffix == null
+              ? const <InlineSpan>[]
+              : <InlineSpan>[
+                  WidgetSpan(
+                    alignment: PlaceholderAlignment.middle,
+                    child: Transform.translate(
+                      offset: const Offset(0, -LbSpacing.inlineSuffixLift),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Text(
+                          titleSuffix!,
+                          style: LbTextStyles.inlineSuffix.copyWith(
+                            color: suffixColor,
                           ),
                         ),
                       ),
                     ),
-                  ],
-          ),
+                  ),
+                ],
         ),
-      );
-    }
-
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          title,
-          style: LbTextStyles.body.copyWith(color: titleColor),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          subtitle!,
-          style: LbTextStyles.caption.copyWith(color: subtitleColor),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -456,10 +442,7 @@ class _LbLeadingCircle extends StatelessWidget {
       width: size,
       height: size,
       decoration: item.leadingChild == null
-          ? BoxDecoration(
-              color: backgroundColor,
-              shape: BoxShape.circle,
-            )
+          ? BoxDecoration(color: backgroundColor, shape: BoxShape.circle)
           : null,
       child: item.leadingChild != null
           ? Center(child: item.leadingChild!)

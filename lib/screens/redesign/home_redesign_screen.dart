@@ -377,7 +377,7 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
   Future<void> _openGithub() async {
     unawaited(LiveBridgeHaptics.openSurface());
     final bool opened = await _launchExternalUrl(
-      Uri.parse('https://github.com/appsfolder/livebridge'),
+      Uri.parse('https://github.com/Spottq/livebridge'),
     );
     if (!opened && mounted) {
       showLbToast(context, message: AppStrings.of(context).githubOpenFailed);
@@ -641,8 +641,8 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
             return LbStatusCard(
               title: _statusCardTitle(strings),
               isActive: _displayMasterSwitchValue,
-              secondaryText: strings.statusByPrefix,
-              secondaryAccentText: 'appsfolder',
+              secondaryText: 'by appsfolder & spotty | ',
+              secondaryAccentText: 'Spottq/livebridge',
               secondaryAccentOnTap: () {
                 unawaited(_openGithub());
               },

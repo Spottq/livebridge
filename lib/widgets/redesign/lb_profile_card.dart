@@ -54,7 +54,8 @@ class LbProfileCard extends StatelessWidget {
                       width: LbSpacing.profileCardAvatarSize,
                       height: LbSpacing.profileCardAvatarSize,
                       child: Center(
-                        child: avatarChild ??
+                        child:
+                            avatarChild ??
                             LbIcon(
                               symbol: icon!,
                               size: LbSpacing.profileCardIconSize,
@@ -74,13 +75,6 @@ class LbProfileCard extends StatelessWidget {
                         title,
                         style: LbTextStyles.cardTitle.copyWith(
                           color: titleColor ?? palette.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: LbTextStyles.body.copyWith(
-                          color: subtitleColor ?? palette.textSecondary,
                         ),
                       ),
                     ],
