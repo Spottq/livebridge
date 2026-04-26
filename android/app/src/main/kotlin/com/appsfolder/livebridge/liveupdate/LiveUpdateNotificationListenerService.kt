@@ -430,6 +430,12 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         mainHandler.post(snapshotSyncRunnable)
     }
 
+    fun requestImmediateSnapshotSync() {
+        mainHandler.removeCallbacks(snapshotSyncRunnable)
+        snapshotSyncScheduled = true
+        mainHandler.post(snapshotSyncRunnable)
+    }
+
     private fun requestTrackedFlashlightSourceDismissal() {
         if (!prefs.getSmartFlashlightEnabled()) {
             resetFlashlightSourceDismissState()
@@ -915,6 +921,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
         fun requestFlashlightSnapshotSync() {
             activeInstance?.requestImmediateFlashlightSnapshotSync()
+        }
+
+        fun requestSnapshotSync() {
+            activeInstance?.requestImmediateSnapshotSync()
         }
 
         fun requestFlashlightSourceDismissal() {

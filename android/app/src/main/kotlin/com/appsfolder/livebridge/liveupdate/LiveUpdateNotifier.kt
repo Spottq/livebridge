@@ -113,6 +113,7 @@ object LiveUpdateNotifier {
     private val smartAnimationGenerations = mutableMapOf<String, Long>()
     private val smartAnimationStates = mutableMapOf<String, SmartAnimationState>()
     private val mirrorKeysByNotificationId = mutableMapOf<Int, String>()
+    private val sourceSnapshotsByMirrorKey = mutableMapOf<String, StatusBarNotification>()
     private val userDismissedMirrorKeys = mutableSetOf<String>()
     private val programmaticMirrorCancelDeadlines = mutableMapOf<Int, Long>()
 
@@ -165,6 +166,7 @@ object LiveUpdateNotifier {
             smartAnimationGenerations.clear()
             smartAnimationStates.clear()
             mirrorKeysByNotificationId.clear()
+            sourceSnapshotsByMirrorKey.clear()
             userDismissedMirrorKeys.clear()
             programmaticMirrorCancelDeadlines.clear()
         }
@@ -185,6 +187,55 @@ object LiveUpdateNotifier {
                 manager.cancel(statusBarNotification.id)
             }
     }
+
+    fun refreshWeatherMirrors(context: Context, prefs: ConverterPrefs): Int {
+        val candidates = synchronized(stateLock) {
+            val weatherSources = aggregateStates
+                .filterKeys { smartRuleIdFromAggregateKey(it) == "weather" }
+                .values
+                .flatMap { state -> state.sourcesBySbnKey.values.map { it.sbn } }
+            (weatherSources + sourceSnapshotsByMirrorKey.values)
+                .distinctBy { it.key }
+        }
+        var refreshed = 0
+        candidates.forEach { sbn ->
+            if (maybeMirror(context, prefs, sbn).mirrored) {
+                refreshed += 1
+            }
+        }
+        return refreshed
+    }
+
+    fun cancelWeatherMirrors(context: Context): Int {
+        val manager = NotificationManagerCompat.from(context)
+        val aggregateKeys = synchronized(stateLock) {
+            aggregateStates.keys
+                .filter { smartRuleIdFromAggregateKey(it) == "weather" }
+                .toList()
+        }
+        if (aggregateKeys.isEmpty()) {
+            return 0
+        }
+
+        val notificationIds = synchronized(stateLock) {
+            aggregateKeys.map { aggregateKey ->
+                val state = aggregateStates.remove(aggregateKey)
+                state?.activeSbnKeys?.forEach { sbnKey ->
+                    if (sbnToAggregateKey[sbnKey] == aggregateKey) {
+                        sbnToAggregateKey.remove(sbnKey)
+                    }
+                }
+                smartAnimationGenerations.remove(aggregateKey)
+                smartAnimationStates.remove(aggregateKey)
+                userDismissedMirrorKeys.remove(aggregateKey)
+                sourceSnapshotsByMirrorKey.remove(aggregateKey)
+                mirrorIdForKey(aggregateKey)
+            }
+        }
+        notificationIds.forEach { cancelMirroredNotification(manager, it) }
+        return notificationIds.size
+    }
+
     fun maybeMirror(context: Context, prefs: ConverterPrefs, sbn: StatusBarNotification): MirrorResult {
         ensureChannel(context)
 
@@ -803,6 +854,7 @@ object LiveUpdateNotifier {
             val staleAggregateIds = synchronized(stateLock) {
                 val directMirrorId = mirrorIdForKey(sbn.key)
                 userDismissedMirrorKeys.remove(sbn.key)
+                sourceSnapshotsByMirrorKey.remove(sbn.key)
                 mirrorKeysByNotificationId.remove(directMirrorId)
                 clearAggregateTrackingForSbnKeyLocked(sbn.key)
             }
@@ -831,6 +883,7 @@ object LiveUpdateNotifier {
             }
 
             val mirrorKey = mirrorKeysByNotificationId.remove(sbn.id) ?: return
+            sourceSnapshotsByMirrorKey.remove(mirrorKey)
             userDismissedMirrorKeys.add(mirrorKey)
             smartAnimationGenerations.remove(mirrorKey)
             smartAnimationStates.remove(mirrorKey)
@@ -1404,7 +1457,8 @@ object LiveUpdateNotifier {
                 manager = manager,
                 notificationId = notificationId,
                 notification = promotedNotification,
-                mirrorKey = mirrorKey
+                mirrorKey = mirrorKey,
+                sourceSbn = sbn
             )
         } catch (error: Throwable) {
             val fallback = buildMirroredNotification(
@@ -1430,7 +1484,8 @@ object LiveUpdateNotifier {
                 manager = manager,
                 notificationId = notificationId,
                 notification = fallback,
-                mirrorKey = mirrorKey
+                mirrorKey = mirrorKey,
+                sourceSbn = sbn
             )
         }
     }
@@ -4244,12 +4299,14 @@ object LiveUpdateNotifier {
         manager: NotificationManagerCompat,
         notificationId: Int,
         notification: Notification,
-        mirrorKey: String
+        mirrorKey: String,
+        sourceSbn: StatusBarNotification
     ) {
         manager.notify(notificationId, notification)
         synchronized(stateLock) {
             pruneProgrammaticMirrorCancelsLocked(SystemClock.elapsedRealtime())
             mirrorKeysByNotificationId[notificationId] = mirrorKey
+            sourceSnapshotsByMirrorKey[mirrorKey] = sourceSbn
         }
     }
 
@@ -4260,7 +4317,10 @@ object LiveUpdateNotifier {
         synchronized(stateLock) {
             programmaticMirrorCancelDeadlines[notificationId] =
                 SystemClock.elapsedRealtime() + PROGRAMMATIC_MIRROR_CANCEL_GRACE_MS
-            mirrorKeysByNotificationId.remove(notificationId)
+            val mirrorKey = mirrorKeysByNotificationId.remove(notificationId)
+            if (mirrorKey != null) {
+                sourceSnapshotsByMirrorKey.remove(mirrorKey)
+            }
         }
         manager.cancel(notificationId)
     }
@@ -4341,6 +4401,7 @@ object LiveUpdateNotifier {
                     smartAnimationGenerations.remove(smartAggregateKey)
                     smartAnimationStates.remove(smartAggregateKey)
                     userDismissedMirrorKeys.remove(smartAggregateKey)
+                    sourceSnapshotsByMirrorKey.remove(smartAggregateKey)
                     mirrorKeysByNotificationId.remove(mirrorIdForKey(smartAggregateKey))
                     idsToCancel.add(mirrorIdForKey(smartAggregateKey))
                 }
@@ -4348,6 +4409,7 @@ object LiveUpdateNotifier {
                 smartAnimationGenerations.remove(smartAggregateKey)
                 smartAnimationStates.remove(smartAggregateKey)
                 userDismissedMirrorKeys.remove(smartAggregateKey)
+                sourceSnapshotsByMirrorKey.remove(smartAggregateKey)
                 mirrorKeysByNotificationId.remove(mirrorIdForKey(smartAggregateKey))
                 idsToCancel.add(mirrorIdForKey(smartAggregateKey))
             }
@@ -4399,12 +4461,14 @@ object LiveUpdateNotifier {
                     otpAggregateStates.remove(otpAggregateKey)
                     otpAnimationGenerations.remove(otpAggregateKey)
                     userDismissedMirrorKeys.remove(otpAggregateKey)
+                    sourceSnapshotsByMirrorKey.remove(otpAggregateKey)
                     mirrorKeysByNotificationId.remove(mirrorIdForKey(otpAggregateKey))
                     idsToCancel.add(mirrorIdForKey(otpAggregateKey))
                 }
             } else {
                 otpAnimationGenerations.remove(otpAggregateKey)
                 userDismissedMirrorKeys.remove(otpAggregateKey)
+                sourceSnapshotsByMirrorKey.remove(otpAggregateKey)
                 mirrorKeysByNotificationId.remove(mirrorIdForKey(otpAggregateKey))
                 idsToCancel.add(mirrorIdForKey(otpAggregateKey))
             }

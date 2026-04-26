@@ -580,12 +580,15 @@ class MainActivity : FlutterActivity() {
 
             "getSmartWeatherEnabled" -> res.success(prefs.getSmartWeatherEnabled())
             "setSmartWeatherEnabled" -> {
-                prefs.setSmartWeatherEnabled(call.argument<Boolean>("value") ?: true)
+                val value = call.argument<Boolean>("value") ?: true
+                prefs.setSmartWeatherEnabled(value)
+                syncWeatherMirrors(prefs, enabled = value)
                 res.success(true)
             }
             "getSmartWeatherLockscreenOnly" -> res.success(prefs.getSmartWeatherLockscreenOnly())
             "setSmartWeatherLockscreenOnly" -> {
                 prefs.setSmartWeatherLockscreenOnly(call.argument<Boolean>("value") ?: false)
+                syncWeatherMirrors(prefs, enabled = prefs.getSmartWeatherEnabled())
                 res.success(true)
             }
 
@@ -729,6 +732,18 @@ class MainActivity : FlutterActivity() {
         } else {
             FlashlightForegroundService.stop(applicationContext)
             LiveUpdateNotificationListenerService.requestFlashlightSnapshotSync()
+        }
+    }
+
+    private fun syncWeatherMirrors(prefs: ConverterPrefs, enabled: Boolean) {
+        if (enabled && prefs.getConverterEnabled() && !DeviceBlocker.isBlockedDevice()) {
+            val refreshed = LiveUpdateNotifier.refreshWeatherMirrors(applicationContext, prefs)
+            LiveUpdateNotificationListenerService.requestSnapshotSync()
+            if (refreshed == 0) {
+                requestNotificationListenerRebind()
+            }
+        } else {
+            LiveUpdateNotifier.cancelWeatherMirrors(applicationContext)
         }
     }
 
