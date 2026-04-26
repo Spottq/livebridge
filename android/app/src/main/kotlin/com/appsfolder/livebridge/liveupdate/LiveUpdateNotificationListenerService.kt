@@ -7,8 +7,10 @@ import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
+import android.service.notification.NotificationListenerService.RankingMap
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import kotlin.math.min
@@ -18,13 +20,44 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private val flashlightController by lazy { FlashlightController(applicationContext) }
     private val mainHandler = Handler(Looper.getMainLooper())
     private val selfDismissLock = Any()
-    private val selfDismissedSourceKeys = mutableSetOf<String>()
+    private val selfDismissedSourcesByKey = mutableMapOf<String, ProtectedSourceDismissal>()
+    private val protectedMirrorDismissalsById = mutableMapOf<Int, ProtectedSourceDismissal>()
     private val selfDismissedFlashlightSourceKeys = mutableSetOf<String>()
     private var trackedFlashlightSourceKey: String? = null
     private var isTorchCallbackRegistered = false
     private var rebindAttempts = 0
     private var rebindScheduled = false
     private var snapshotSyncScheduled = false
+
+    private data class ProtectedSourceDismissal(
+        val sourceKey: String,
+        val sourcePackageName: String,
+        val sourceId: Int,
+        val sourceTag: String?,
+        val sourceGroupKey: String?,
+        val sourceSbn: StatusBarNotification,
+        val mirrorNotificationId: Int,
+        val mirrorKey: String?,
+        val expiresAtMs: Long,
+        var sourceRemovalConsumed: Boolean = false,
+        var mirrorRepostAttempts: Int = 0
+    ) {
+        fun matchesSource(sbn: StatusBarNotification): Boolean {
+            if (sourceKey == sbn.key) {
+                return true
+            }
+            if (sourcePackageName == sbn.packageName &&
+                sourceId == sbn.id &&
+                sourceTag == sbn.tag
+            ) {
+                return true
+            }
+            return sourcePackageName == sbn.packageName &&
+                !sourceGroupKey.isNullOrBlank() &&
+                sourceGroupKey == sbn.groupKey &&
+                sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0
+        }
+    }
 
     private val torchCallback = object : CameraManager.TorchCallback() {
         override fun onTorchModeChanged(cameraId: String, enabled: Boolean) {
@@ -186,15 +219,30 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
+        handleNotificationRemoved(sbn, reason = null)
+    }
+
+    override fun onNotificationRemoved(
+        sbn: StatusBarNotification?,
+        rankingMap: RankingMap?,
+        reason: Int
+    ) {
+        handleNotificationRemoved(sbn, reason)
+    }
+
+    private fun handleNotificationRemoved(sbn: StatusBarNotification?, reason: Int?) {
         sbn ?: return
         if (isUnsupportedDevice()) {
             return
         }
         if (sbn.packageName == packageName) {
+            if (handleProtectedMirrorRemoval(sbn, reason)) {
+                return
+            }
             LiveUpdateNotifier.handleMirroredRemoved(applicationContext, sbn)
             return
         }
-        if (consumeSelfDismissedSourceKey(sbn.key)) {
+        if (consumeSelfDismissedSource(sbn)) {
             return
         }
         if (isFlashlightSourceNotification(sbn)) {
@@ -521,22 +569,25 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
         scheduleOriginalSourceDismissal(
-            sourceKey = sbn.key,
+            sourceSbn = sbn,
             mirrorNotificationId = mirrorNotificationId,
+            mirrorKey = result.mirrorKey,
             attempt = 0
         )
     }
 
     private fun scheduleOriginalSourceDismissal(
-        sourceKey: String,
+        sourceSbn: StatusBarNotification,
         mirrorNotificationId: Int,
+        mirrorKey: String?,
         attempt: Int
     ) {
         mainHandler.postDelayed(
             {
                 dismissOriginalSourceWhenMirrorActive(
-                    sourceKey = sourceKey,
+                    sourceSbn = sourceSbn,
                     mirrorNotificationId = mirrorNotificationId,
+                    mirrorKey = mirrorKey,
                     attempt = attempt
                 )
             },
@@ -545,19 +596,21 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     private fun dismissOriginalSourceWhenMirrorActive(
-        sourceKey: String,
+        sourceSbn: StatusBarNotification,
         mirrorNotificationId: Int,
+        mirrorKey: String?,
         attempt: Int
     ) {
+        val sourceKey = sourceSbn.key
         val active = try {
             activeNotifications
         } catch (error: Throwable) {
             Log.w(TAG, "Failed to verify mirror before original dismissal: $sourceKey", error)
-            retryOriginalSourceDismissal(sourceKey, mirrorNotificationId, attempt)
+            retryOriginalSourceDismissal(sourceSbn, mirrorNotificationId, mirrorKey, attempt)
             return
         }
         if (active == null) {
-            retryOriginalSourceDismissal(sourceKey, mirrorNotificationId, attempt)
+            retryOriginalSourceDismissal(sourceSbn, mirrorNotificationId, mirrorKey, attempt)
             return
         }
 
@@ -567,11 +620,11 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
         if (snapshots.none { isExpectedMirrorNotification(it, mirrorNotificationId) }) {
-            retryOriginalSourceDismissal(sourceKey, mirrorNotificationId, attempt)
+            retryOriginalSourceDismissal(sourceSbn, mirrorNotificationId, mirrorKey, attempt)
             return
         }
 
-        rememberSelfDismissedSourceKey(sourceKey)
+        rememberSelfDismissedSource(sourceSbn, mirrorNotificationId, mirrorKey)
         try {
             cancelNotification(sourceKey)
         } catch (error: Throwable) {
@@ -581,17 +634,19 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     private fun retryOriginalSourceDismissal(
-        sourceKey: String,
+        sourceSbn: StatusBarNotification,
         mirrorNotificationId: Int,
+        mirrorKey: String?,
         attempt: Int
     ) {
         if (attempt >= ORIGINAL_DISMISS_MAX_ATTEMPTS) {
-            Log.w(TAG, "Skip original notification dismissal: mirror not active for $sourceKey")
+            Log.w(TAG, "Skip original notification dismissal: mirror not active for ${sourceSbn.key}")
             return
         }
         scheduleOriginalSourceDismissal(
-            sourceKey = sourceKey,
+            sourceSbn = sourceSbn,
             mirrorNotificationId = mirrorNotificationId,
+            mirrorKey = mirrorKey,
             attempt = attempt + 1
         )
     }
@@ -607,21 +662,167 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             sbn.notification.channelId == LiveUpdateNotifier.CHANNEL_ID
     }
 
-    private fun rememberSelfDismissedSourceKey(sbnKey: String) {
+    private fun rememberSelfDismissedSource(
+        sbn: StatusBarNotification,
+        mirrorNotificationId: Int,
+        mirrorKey: String?
+    ) {
         synchronized(selfDismissLock) {
-            selfDismissedSourceKeys.add(sbnKey)
+            val now = SystemClock.elapsedRealtime()
+            pruneProtectedDismissalsLocked(now)
+            val record = ProtectedSourceDismissal(
+                sourceKey = sbn.key,
+                sourcePackageName = sbn.packageName,
+                sourceId = sbn.id,
+                sourceTag = sbn.tag,
+                sourceGroupKey = sbn.groupKey,
+                sourceSbn = sbn,
+                mirrorNotificationId = mirrorNotificationId,
+                mirrorKey = mirrorKey,
+                expiresAtMs = now + SELF_DISMISS_PROTECTION_MS
+            )
+            selfDismissedSourcesByKey[sbn.key]?.let(::removeProtectedDismissalLocked)
+            selfDismissedSourcesByKey[sbn.key] = record
+            protectedMirrorDismissalsById[mirrorNotificationId] = record
         }
     }
 
     private fun forgetSelfDismissedSourceKey(sbnKey: String) {
         synchronized(selfDismissLock) {
-            selfDismissedSourceKeys.remove(sbnKey)
+            val record = selfDismissedSourcesByKey[sbnKey] ?: return
+            removeProtectedDismissalLocked(record)
         }
     }
 
-    private fun consumeSelfDismissedSourceKey(sbnKey: String): Boolean {
-        return synchronized(selfDismissLock) {
-            selfDismissedSourceKeys.remove(sbnKey)
+    private fun consumeSelfDismissedSource(sbn: StatusBarNotification): Boolean {
+        val record = synchronized(selfDismissLock) {
+            val now = SystemClock.elapsedRealtime()
+            pruneProtectedDismissalsLocked(now)
+            val match = selfDismissedSourcesByKey[sbn.key]
+                ?: selfDismissedSourcesByKey.values.firstOrNull { it.matchesSource(sbn) }
+            match?.also { it.sourceRemovalConsumed = true }
+        }
+        if (record != null) {
+            Log.v(
+                TAG,
+                "Skip mirrored cancel for self-dismissed source: ${sbn.key} -> ${record.mirrorKey}"
+            )
+            return true
+        }
+        return false
+    }
+
+    private fun handleProtectedMirrorRemoval(
+        sbn: StatusBarNotification,
+        reason: Int?
+    ): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            sbn.notification.channelId != LiveUpdateNotifier.CHANNEL_ID
+        ) {
+            return false
+        }
+
+        val mirrorId = sbn.id
+        val shouldScheduleRepost = synchronized(selfDismissLock) {
+            val now = SystemClock.elapsedRealtime()
+            pruneProtectedDismissalsLocked(now)
+            val record = protectedMirrorDismissalsById[mirrorId] ?: return false
+            if (isUserDrivenMirrorRemoval(reason)) {
+                removeProtectedDismissalLocked(record)
+                return false
+            }
+            if (record.mirrorRepostAttempts >= PROTECTED_MIRROR_MAX_REPOSTS) {
+                Log.w(
+                    TAG,
+                    "Protected mirror removed again; stop reposting id=$mirrorId reason=${removalReasonName(reason)}"
+                )
+                removeProtectedDismissalLocked(record)
+                return true
+            }
+            record.mirrorRepostAttempts += 1
+            true
+        }
+
+        if (shouldScheduleRepost) {
+            Log.i(
+                TAG,
+                "Mirror removal protected after original dismissal: id=$mirrorId reason=${removalReasonName(reason)}"
+            )
+            scheduleProtectedMirrorRepost(mirrorId)
+        }
+        return true
+    }
+
+    private fun scheduleProtectedMirrorRepost(mirrorNotificationId: Int) {
+        mainHandler.postDelayed(
+            { repostProtectedMirrorIfMissing(mirrorNotificationId) },
+            PROTECTED_MIRROR_REPOST_DELAY_MS
+        )
+    }
+
+    private fun repostProtectedMirrorIfMissing(mirrorNotificationId: Int) {
+        val record = synchronized(selfDismissLock) {
+            val now = SystemClock.elapsedRealtime()
+            pruneProtectedDismissalsLocked(now)
+            protectedMirrorDismissalsById[mirrorNotificationId]
+        } ?: return
+
+        val mirrorStillActive = try {
+            activeNotifications?.any { isExpectedMirrorNotification(it, mirrorNotificationId) } == true
+        } catch (error: Throwable) {
+            Log.w(TAG, "Failed to verify protected mirror before repost: $mirrorNotificationId", error)
+            false
+        }
+        if (mirrorStillActive) {
+            return
+        }
+
+        val result = LiveUpdateNotifier.maybeMirror(applicationContext, prefs, record.sourceSbn)
+        if (!result.mirrored) {
+            Log.w(
+                TAG,
+                "Protected mirror repost skipped: source no longer mirrors ${record.sourceKey}"
+            )
+        }
+    }
+
+    private fun pruneProtectedDismissalsLocked(now: Long) {
+        val expiredRecords = selfDismissedSourcesByKey.values
+            .filter { it.expiresAtMs < now }
+            .toList()
+        expiredRecords.forEach(::removeProtectedDismissalLocked)
+    }
+
+    private fun removeProtectedDismissalLocked(record: ProtectedSourceDismissal) {
+        val sourceKeys = selfDismissedSourcesByKey
+            .filterValues { it === record }
+            .keys
+            .toList()
+        sourceKeys.forEach(selfDismissedSourcesByKey::remove)
+        val mirrorIds = protectedMirrorDismissalsById
+            .filterValues { it === record }
+            .keys
+            .toList()
+        mirrorIds.forEach(protectedMirrorDismissalsById::remove)
+    }
+
+    private fun isUserDrivenMirrorRemoval(reason: Int?): Boolean {
+        return reason == NotificationListenerService.REASON_CANCEL ||
+            reason == NotificationListenerService.REASON_CANCEL_ALL ||
+            reason == NotificationListenerService.REASON_CLICK
+    }
+
+    private fun removalReasonName(reason: Int?): String {
+        return when (reason) {
+            null -> "unknown"
+            NotificationListenerService.REASON_CANCEL -> "cancel"
+            NotificationListenerService.REASON_CANCEL_ALL -> "cancel_all"
+            NotificationListenerService.REASON_CLICK -> "click"
+            NotificationListenerService.REASON_APP_CANCEL -> "app_cancel"
+            NotificationListenerService.REASON_APP_CANCEL_ALL -> "app_cancel_all"
+            NotificationListenerService.REASON_LISTENER_CANCEL -> "listener_cancel"
+            NotificationListenerService.REASON_LISTENER_CANCEL_ALL -> "listener_cancel_all"
+            else -> "reason_$reason"
         }
     }
 
@@ -700,6 +901,9 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val SNAPSHOT_SYNC_INTERVAL_MS = 4_000L
         private const val ORIGINAL_DISMISS_RETRY_DELAY_MS = 250L
         private const val ORIGINAL_DISMISS_MAX_ATTEMPTS = 6
+        private const val SELF_DISMISS_PROTECTION_MS = 10_000L
+        private const val PROTECTED_MIRROR_REPOST_DELAY_MS = 350L
+        private const val PROTECTED_MIRROR_MAX_REPOSTS = 2
         private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 1_500L
         private const val FLASHLIGHT_SOURCE_VERIFY_DELAY_MS = 300L
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
