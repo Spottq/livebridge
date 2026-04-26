@@ -266,7 +266,10 @@ object LiveUpdateNotifier {
                     samsungBridge = bypassSamsungBridge,
                     allowNavigationIconHeuristics = false
                 )
-                return mirroredResult()
+                return mirroredResult(
+                    notificationId = mirrorIdForKey(sbn.key),
+                    mirrorKey = sbn.key
+                )
             }
             val parserDictionary = LiveParserDictionaryLoader.get(context, prefs)
             val mediaPlaybackSmartEnabled = prefs.getSmartMediaPlaybackEnabled()
@@ -424,7 +427,10 @@ object LiveUpdateNotifier {
                         textOverride = mediaText,
                         largeIconOverride = mediaLargeIcon
                     )
-                    mirroredResult()
+                    mirroredResult(
+                        notificationId = mirrorIdForKey(sbn.key),
+                        mirrorKey = sbn.key
+                    )
                 }
 
                 otpMatch != null -> {
@@ -524,7 +530,11 @@ object LiveUpdateNotifier {
                             )
                         }
                     }
-                    mirroredResult(dedupKind = MirrorDedupKind.OTP)
+                    mirroredResult(
+                        notificationId = mirrorIdForKey(otpMatch.aggregateKey),
+                        mirrorKey = otpMatch.aggregateKey,
+                        dedupKind = MirrorDedupKind.OTP
+                    )
                 }
 
                 textProgressMatch != null -> {
@@ -562,7 +572,10 @@ object LiveUpdateNotifier {
                         smartShortTextOverride = textProgressMatch.shortText,
                         samsungBridge = samsungBridge
                     )
-                    mirroredResult()
+                    mirroredResult(
+                        notificationId = mirrorIdForKey(sbn.key),
+                        mirrorKey = sbn.key
+                    )
                 }
 
                 smartMatch != null -> {
@@ -717,7 +730,11 @@ object LiveUpdateNotifier {
                             samsungBridge = samsungBridge
                         )
                     }
-                    mirroredResult(dedupKind = dedupKind)
+                    mirroredResult(
+                        notificationId = mirrorIdForKey(smartMatch.aggregateKey),
+                        mirrorKey = smartMatch.aggregateKey,
+                        dedupKind = dedupKind
+                    )
                 }
 
                 else -> {
@@ -749,7 +766,10 @@ object LiveUpdateNotifier {
                         smartShortTextOverride = null,
                         samsungBridge = samsungBridge
                     )
-                    mirroredResult()
+                    mirroredResult(
+                        notificationId = mirrorIdForKey(sbn.key),
+                        mirrorKey = sbn.key
+                    )
                 }
             }
         } catch (error: Throwable) {
@@ -821,10 +841,16 @@ object LiveUpdateNotifier {
         return MirrorResult(mirrored = false)
     }
 
-    private fun mirroredResult(dedupKind: MirrorDedupKind = MirrorDedupKind.NONE): MirrorResult {
+    private fun mirroredResult(
+        notificationId: Int,
+        mirrorKey: String,
+        dedupKind: MirrorDedupKind = MirrorDedupKind.NONE
+    ): MirrorResult {
         return MirrorResult(
             mirrored = true,
-            dedupKind = dedupKind
+            dedupKind = dedupKind,
+            notificationId = notificationId,
+            mirrorKey = mirrorKey
         )
     }
 
@@ -2045,14 +2071,14 @@ object LiveUpdateNotifier {
         if (speed.isNullOrBlank()) {
             return null
         }
-        return "в†‘$speed"
+        return "\u2191$speed"
     }
 
     private fun formatVpnIncomingToken(speed: String?): String? {
         if (speed.isNullOrBlank()) {
             return null
         }
-        return "в†“$speed"
+        return "\u2193$speed"
     }
 
     private fun extractDirectionalVpnSpeed(
@@ -4458,7 +4484,9 @@ object LiveUpdateNotifier {
 
     data class MirrorResult(
         val mirrored: Boolean,
-        val dedupKind: MirrorDedupKind = MirrorDedupKind.NONE
+        val dedupKind: MirrorDedupKind = MirrorDedupKind.NONE,
+        val notificationId: Int? = null,
+        val mirrorKey: String? = null
     )
 
     enum class MirrorDedupKind {

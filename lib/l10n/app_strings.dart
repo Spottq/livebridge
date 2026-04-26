@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class AppStrings {
   AppStrings({required this.locale});
@@ -1355,211 +1355,388 @@ class AppStrings {
   String get appPresentationDefaultSummary => tr(
     en: 'Default behavior',
     ru: 'Стандартное поведение',
+    tr: 'Varsayılan davranış',
+    ptBr: 'Comportamento padrão',
+    zhHans: '默认行为',
+    zhHant: '預設行為',
   );
 
   String get appPresentationTextSourceLabel => tr(
     en: 'Island text source',
     ru: 'Источник текста для острова',
+    tr: 'Ada metni kaynağı',
+    ptBr: 'Origem do texto da ilha',
+    zhHans: '岛文本来源',
+    zhHant: '島文字來源',
   );
 
   String get appPresentationIconSourceLabel => tr(
     en: 'Icon source',
     ru: 'Источник иконки',
+    tr: 'Simge kaynağı',
+    ptBr: 'Origem do ícone',
+    zhHans: '图标来源',
+    zhHant: '圖示來源',
   );
 
   String get appPresentationTextTitle => tr(
     en: 'Notification title',
     ru: 'Заголовок уведомления',
+    tr: 'Bildirim başlığı',
+    ptBr: 'Título da notificação',
+    zhHans: '通知标题',
+    zhHant: '通知標題',
   );
 
   String get appPresentationTextNotification => tr(
     en: 'Notification text',
     ru: 'Текст уведомления',
+    tr: 'Bildirim metni',
+    ptBr: 'Texto da notificação',
+    zhHans: '通知文本',
+    zhHant: '通知文字',
   );
 
   String get appPresentationIconNotification => tr(
     en: 'Notification icon',
     ru: 'Иконка уведомления',
+    tr: 'Bildirim simgesi',
+    ptBr: 'Ícone da notificação',
+    zhHans: '通知图标',
+    zhHant: '通知圖示',
   );
 
   String get appPresentationIconApp => tr(
     en: 'Application icon',
     ru: 'Иконка приложения',
+    tr: 'Uygulama simgesi',
+    ptBr: 'Ícone do app',
+    zhHans: '应用图标',
+    zhHant: '應用程式圖示',
   );
 
   String get searchAppHint => tr(
     en: 'Search by app or package',
     ru: 'Поиск по названию или пакету',
+    tr: 'Uygulama veya paket ara',
+    ptBr: 'Buscar por app ou pacote',
+    zhHans: '按应用或包名搜索',
+    zhHant: '依應用程式或套件搜尋',
   );
 
   String get showSystemApps => tr(
     en: 'Show system applications',
     ru: 'Показать системные приложения',
+    tr: 'Sistem uygulamalarını göster',
+    ptBr: 'Mostrar apps do sistema',
+    zhHans: '显示系统应用',
+    zhHant: '顯示系統應用程式',
   );
 
   String get hideSystemApps => tr(
     en: 'Hide system applications',
     ru: 'Скрыть системные приложения',
+    tr: 'Sistem uygulamalarını gizle',
+    ptBr: 'Ocultar apps do sistema',
+    zhHans: '隐藏系统应用',
+    zhHant: '隱藏系統應用程式',
   );
 
   String get resetToDefault => tr(
     en: 'Reset to default',
     ru: 'Сбросить к стандарту',
+    tr: 'Varsayılana sıfırla',
+    ptBr: 'Redefinir para o padrão',
+    zhHans: '重置为默认',
+    zhHant: '重設為預設值',
   );
 
   String get notificationDedupTitle => tr(
     en: 'Notification dedup',
     ru: 'Удаление дублей уведомлений',
+    tr: 'Bildirim tekilleştirme',
+    ptBr: 'Deduplicação de notificações',
+    zhHans: '通知去重',
+    zhHant: '通知去重',
   );
 
   String get notificationDedupSubtitle => tr(
     en: 'Dismisses original clearable notifications after LiveBridge mirrors an OTP or status update.',
     ru: 'Убирает исходные смахиваемые уведомления, если LiveBridge уже показал свой OTP или статус.',
+    tr: 'LiveBridge bir OTP veya durum güncellemesini yansıttıktan sonra temizlenebilir orijinal bildirimleri kapatır.',
+    ptBr:
+        'Dispensa notificações originais removíveis depois que o LiveBridge espelha um OTP ou uma atualização de status.',
+    zhHans: 'LiveBridge 镜像 OTP 或状态更新后，关闭可清除的原始通知。',
+    zhHant: 'LiveBridge 鏡像 OTP 或狀態更新後，關閉可清除的原始通知。',
   );
 
   String get notificationDedupModeLabel => tr(
     en: 'Dedup mode',
     ru: 'Режим удаления дублей',
+    tr: 'Tekilleştirme modu',
+    ptBr: 'Modo de deduplicação',
+    zhHans: '去重模式',
+    zhHant: '去重模式',
   );
 
   String get notificationDedupModeOtpOnly => tr(
     en: 'OTP only',
     ru: 'Только OTP',
+    tr: 'Yalnızca OTP',
+    ptBr: 'Somente OTP',
+    zhHans: '仅 OTP',
+    zhHant: '僅 OTP',
   );
 
   String get notificationDedupModeOtpStatus => tr(
     en: 'OTP and statuses',
     ru: 'OTP и статусы',
+    tr: 'OTP ve durumlar',
+    ptBr: 'OTP e status',
+    zhHans: 'OTP 和状态',
+    zhHant: 'OTP 與狀態',
   );
 
   String get samsungRemoteParserTitle => tr(
     en: 'Samsung RemoteViews reparser',
     ru: 'Samsung RemoteViews репарсер',
+    tr: 'Samsung RemoteViews yeniden ayrıştırıcı',
+    ptBr: 'Reanalisador Samsung RemoteViews',
+    zhHans: 'Samsung RemoteViews 重新解析器',
+    zhHant: 'Samsung RemoteViews 重新解析器',
   );
 
   String get samsungRemoteParserSubtitle => tr(
     en: 'Uses Samsung ongoingActivity extras and RemoteViews for improved parsing on One UI.',
     ru: 'Использует Samsung ongoingActivity extras и RemoteViews для более точного парсинга уведомлений.',
+    tr: 'One UI üzerinde daha iyi ayrıştırma için Samsung ongoingActivity extras ve RemoteViews kullanır.',
+    ptBr:
+        'Usa extras ongoingActivity da Samsung e RemoteViews para melhorar a análise no One UI.',
+    zhHans: '使用 Samsung ongoingActivity extras 和 RemoteViews 改进 One UI 上的解析。',
+    zhHant: '使用 Samsung ongoingActivity extras 和 RemoteViews 改進 One UI 上的解析。',
   );
 
   String get smartNavigationSubtitle => tr(
     en: 'Navigation notification detection.',
     ru: 'Распознавание уведомлений навигации.',
+    tr: 'Navigasyon bildirimi algılama.',
+    ptBr: 'Detecção de notificações de navegação.',
+    zhHans: '导航通知检测。',
+    zhHant: '導航通知偵測。',
   );
 
   String get smartMediaPlaybackSubtitle => tr(
     en: 'Converts media playback notifications into Live. On some OEMs this may duplicate native media UI.',
     ru: 'Преобразует уведомления медиаплеера в Live. На некоторых OEM может дублировать нативный плеер.',
+    tr: 'Medya oynatma bildirimlerini Live\'a dönüştürür. Bazı OEM\'lerde yerel medya arayüzünü çoğaltabilir.',
+    ptBr:
+        'Converte notificações de reprodução de mídia em Live. Em alguns OEMs, isso pode duplicar a interface nativa de mídia.',
+    zhHans: '将媒体播放通知转换为 Live。在某些 OEM 上可能会重复原生媒体界面。',
+    zhHant: '將媒體播放通知轉換為 Live。在某些 OEM 上可能會重複原生媒體介面。',
   );
 
   String get smartWeatherSubtitle => tr(
     en: 'Weather notification detection (temperature in island).',
     ru: 'Распознавание погодных уведомлений (температура в острове).',
+    tr: 'Hava durumu bildirimi algılama (adada sıcaklık).',
+    ptBr: 'Detecção de notificações de clima (temperatura na ilha).',
+    zhHans: '天气通知检测（岛中显示温度）。',
+    zhHant: '天氣通知偵測（島中顯示溫度）。',
   );
 
   String get smartWeatherLockscreenOnlyTitle => tr(
     en: 'Display only on lock screen',
     ru: 'Показывать только на экране блокировки',
+    tr: 'Yalnızca kilit ekranında göster',
+    ptBr: 'Exibir somente na tela de bloqueio',
+    zhHans: '仅在锁屏显示',
+    zhHant: '僅在鎖定畫面顯示',
   );
 
   String get smartWeatherLockscreenOnlySubtitle => tr(
     en: 'Hide weather while the device is unlocked.',
     ru: 'Скрывать погоду при разблокированном устройстве.',
+    tr: 'Cihaz kilidi açıkken hava durumunu gizle.',
+    ptBr: 'Ocultar clima quando o dispositivo estiver desbloqueado.',
+    zhHans: '设备解锁时隐藏天气。',
+    zhHant: '裝置解鎖時隱藏天氣。',
   );
 
   String get smartFlashlightTitle => tr(
     en: 'Flashlight',
     ru: 'Фонарик',
+    tr: 'El feneri',
+    ptBr: 'Lanterna',
+    zhHans: '手电筒',
+    zhHant: '手電筒',
   );
 
   String get smartFlashlightSubtitle => tr(
     en: 'Creates a LiveBridge flashlight notification and mirrors the system flashlight state into Now Bar.',
     ru: 'Создаёт уведомление фонарика LiveBridge и отражает системное состояние фонарика в Now Bar.',
+    tr: 'Bir LiveBridge el feneri bildirimi oluşturur ve sistem el feneri durumunu Now Bar\'a yansıtır.',
+    ptBr:
+        'Cria uma notificação de lanterna do LiveBridge e espelha o estado da lanterna do sistema na Now Bar.',
+    zhHans: '创建 LiveBridge 手电筒通知，并将系统手电筒状态镜像到 Now Bar。',
+    zhHant: '建立 LiveBridge 手電筒通知，並將系統手電筒狀態鏡像到 Now Bar。',
   );
 
   String get smartFlashlightUnsupportedSubtitle => tr(
     en: 'This device can enable the flashlight, but it does not expose 5 separate brightness levels.',
     ru: 'Устройство включает фонарик, но не даёт 5 отдельных уровней яркости.',
+    tr: 'Bu cihaz el fenerini açabiliyor, ancak 5 ayrı parlaklık seviyesi sunmuyor.',
+    ptBr:
+        'Este dispositivo consegue ativar a lanterna, mas não expõe 5 níveis separados de brilho.',
+    zhHans: '此设备可以开启手电筒，但不提供 5 个独立亮度级别。',
+    zhHant: '此裝置可以開啟手電筒，但不提供 5 個獨立亮度級別。',
   );
 
   String get smartFlashlightUnavailableSubtitle => tr(
     en: 'This device does not expose a usable flashlight.',
     ru: 'На этом устройстве нет доступного фонарика.',
+    tr: 'Bu cihaz kullanılabilir bir el feneri sunmuyor.',
+    ptBr: 'Este dispositivo não expõe uma lanterna utilizável.',
+    zhHans: '此设备没有可用的手电筒。',
+    zhHant: '此裝置沒有可用的手電筒。',
   );
 
   String get smartVpnSubtitle => tr(
     en: 'Shows incoming/outgoing traffic speed in *b/s format.',
     ru: 'Показывает входящий/исходящий трафик в формате *b/s.',
+    tr: 'Gelen/giden trafik hızını *b/s biçiminde gösterir.',
+    ptBr: 'Mostra a velocidade de tráfego de entrada/saída no formato *b/s.',
+    zhHans: '以 *b/s 格式显示传入/传出流量速度。',
+    zhHant: '以 *b/s 格式顯示傳入/傳出流量速度。',
   );
 
   String get smartExternalDevicesSubtitle => tr(
     en: 'Shows connected/connecting status and device name in island.',
     ru: 'Показывает статус подключения и имя устройства в острове.',
+    tr: 'Adada bağlı/bağlanıyor durumunu ve cihaz adını gösterir.',
+    ptBr:
+        'Mostra o status conectado/conectando e o nome do dispositivo na ilha.',
+    zhHans: '在岛中显示已连接/连接中状态和设备名称。',
+    zhHant: '在島中顯示已連線/連線中狀態和裝置名稱。',
   );
 
   String get smartExternalDevicesIgnoreDebuggingSubtitle => tr(
     en: 'Skip Live updates for USB debugging, wireless debugging, ADB, and similar system notifications.',
     ru: 'Не показывать Live для USB debugging, wireless debugging, ADB и похожих системных уведомлений.',
+    tr: 'USB debugging, wireless debugging, ADB ve benzeri sistem bildirimleri için Live güncellemelerini atla.',
+    ptBr:
+        'Ignora atualizações Live para USB debugging, wireless debugging, ADB e notificações de sistema semelhantes.',
+    zhHans: '跳过 USB debugging、wireless debugging、ADB 及类似系统通知的 Live 更新。',
+    zhHant: '略過 USB debugging、wireless debugging、ADB 及類似系統通知的 Live 更新。',
   );
 
   String get networkSpeedEnabledTitle => tr(
     en: 'Show network speed in Now Bar',
     ru: 'Показывать скорость интернета в Now Bar',
+    tr: 'Ağ hızını Now Bar\'da göster',
+    ptBr: 'Mostrar velocidade da rede na Now Bar',
+    zhHans: '在 Now Bar 显示网速',
+    zhHant: '在 Now Bar 顯示網速',
   );
 
   String get networkSpeedEnabledSubtitle => tr(
     en: 'Runs a dedicated ongoing notification with current network speed and surfaces it in the Now Bar.',
     ru: 'Запускает отдельное уведомление с текущей скоростью сети и выводит его в Now Bar.',
+    tr: 'Geçerli ağ hızını içeren özel bir ongoing bildirim çalıştırır ve bunu Now Bar\'da gösterir.',
+    ptBr:
+        'Executa uma notificação ongoing dedicada com a velocidade atual da rede e a exibe na Now Bar.',
+    zhHans: '运行一个包含当前网速的专用 ongoing 通知，并将其显示在 Now Bar。',
+    zhHant: '執行一個包含目前網速的專用 ongoing 通知，並將其顯示在 Now Bar。',
   );
 
   String get networkSpeedThresholdTitle => tr(
     en: 'Minimum speed to show',
     ru: 'Минимальная скорость для показа',
+    tr: 'Gösterilecek minimum hız',
+    ptBr: 'Velocidade mínima para exibir',
+    zhHans: '显示的最低速度',
+    zhHant: '顯示的最低速度',
   );
 
   String get networkSpeedThresholdSubtitle => tr(
     en: 'The live element appears when combined download and upload reach this threshold.',
     ru: 'Live-индикатор появится, когда суммарная скорость загрузки и отдачи достигнет этого порога.',
+    tr: 'Live öğesi, indirme ve yükleme toplamı bu eşiğe ulaştığında görünür.',
+    ptBr:
+        'O elemento Live aparece quando download e upload combinados atingem este limite.',
+    zhHans: '当下载和上传合计达到此阈值时，Live 元素会出现。',
+    zhHant: '當下載和上傳合計達到此門檻時，Live 元素會出現。',
   );
 
   String get networkSpeedDisplayContentTitle => tr(
     en: 'Display content',
     ru: 'Отображаемый контент',
+    tr: 'Gösterilecek içerik',
+    ptBr: 'Conteúdo exibido',
+    zhHans: '显示内容',
+    zhHant: '顯示內容',
   );
 
   String get networkSpeedDisplayModeTotal => tr(
     en: 'Total speed',
     ru: 'Общая скорость',
+    tr: 'Toplam hız',
+    ptBr: 'Velocidade total',
+    zhHans: '总速度',
+    zhHant: '總速度',
   );
 
   String get networkSpeedDisplayModeUpload => tr(
     en: 'Upload only',
     ru: 'Только отдача',
+    tr: 'Yalnızca yükleme',
+    ptBr: 'Somente upload',
+    zhHans: '仅上传',
+    zhHant: '僅上傳',
   );
 
   String get networkSpeedDisplayModeDownload => tr(
     en: 'Download only',
     ru: 'Только загрузка',
+    tr: 'Yalnızca indirme',
+    ptBr: 'Somente download',
+    zhHans: '仅下载',
+    zhHant: '僅下載',
   );
 
   String get networkSpeedUploadPrefixTitle => tr(
     en: 'Upload prefix',
     ru: 'Префикс отдачи',
+    tr: 'Yükleme ön eki',
+    ptBr: 'Prefixo de upload',
+    zhHans: '上传前缀',
+    zhHant: '上傳前綴',
   );
 
   String get networkSpeedDownloadPrefixTitle => tr(
     en: 'Download prefix',
     ru: 'Префикс загрузки',
+    tr: 'İndirme ön eki',
+    ptBr: 'Prefixo de download',
+    zhHans: '下载前缀',
+    zhHant: '下載前綴',
   );
 
   String get networkSpeedUnitTitle => tr(
     en: 'Speed unit',
     ru: 'Единица скорости',
+    tr: 'Hız birimi',
+    ptBr: 'Unidade de velocidade',
+    zhHans: '速度单位',
+    zhHant: '速度單位',
   );
 
   String get networkSpeedUnitAuto => tr(
     en: 'Auto',
     ru: 'Авто',
+    tr: 'Otomatik',
+    ptBr: 'Automático',
+    zhHans: '自动',
+    zhHant: '自動',
   );
 
   String get networkSpeedUnitBytes => 'B/s';
@@ -1573,36 +1750,66 @@ class AppStrings {
   String networkSpeedCurrentValue(String value) => tr(
     en: 'Current: "$value"',
     ru: 'Сейчас: "$value"',
+    tr: 'Geçerli: "$value"',
+    ptBr: 'Atual: "$value"',
+    zhHans: '当前："$value"',
+    zhHant: '目前："$value"',
   );
 
   String get networkSpeedPrioritizeUploadTitle => tr(
     en: 'Prioritize upload speed',
     ru: 'Сначала показывать отдачу',
+    tr: 'Yükleme hızına öncelik ver',
+    ptBr: 'Priorizar velocidade de upload',
+    zhHans: '优先显示上传速度',
+    zhHant: '優先顯示上傳速度',
   );
 
   String get networkSpeedPrioritizeUploadSubtitle => tr(
     en: 'In total mode, upload speed is shown before download.',
     ru: 'В режиме общей скорости отдача будет стоять перед загрузкой.',
+    tr: 'Toplam modda yükleme hızı indirmeden önce gösterilir.',
+    ptBr: 'No modo total, a velocidade de upload aparece antes do download.',
+    zhHans: '在总速度模式下，上传速度会显示在下载速度之前。',
+    zhHant: '在總速度模式下，上傳速度會顯示在下載速度之前。',
   );
 
   String get networkSpeedLockscreenOnlyTitle => tr(
     en: 'Display only on lock screen',
     ru: 'Показывать только на экране блокировки',
+    tr: 'Yalnızca kilit ekranında göster',
+    ptBr: 'Exibir somente na tela de bloqueio',
+    zhHans: '仅在锁屏显示',
+    zhHant: '僅在鎖定畫面顯示',
   );
 
   String get networkSpeedLockscreenOnlySubtitle => tr(
     en: 'Hide the network speed chip while the device is unlocked.',
     ru: 'Скрывать индикатор скорости при разблокированном устройстве.',
+    tr: 'Cihaz kilidi açıkken ağ hızı çipini gizle.',
+    ptBr:
+        'Ocultar o chip de velocidade da rede quando o dispositivo estiver desbloqueado.',
+    zhHans: '设备解锁时隐藏网速胶囊。',
+    zhHant: '裝置解鎖時隱藏網速膠囊。',
   );
 
   String get networkSpeedDisableChipBackgroundTitle => tr(
     en: 'Disable chip background',
     ru: 'Отключить фон чипов',
+    tr: 'Çip arka planını devre dışı bırak',
+    ptBr: 'Desativar fundo do chip',
+    zhHans: '禁用胶囊背景',
+    zhHant: '停用膠囊背景',
   );
 
   String get networkSpeedDisableChipBackgroundSubtitle => tr(
     en: 'Removes the pill background from network speed chips in Now Bar.',
     ru: 'Убирает плашку у чипов скорости в Now Bar.',
+    tr: 'Now Bar\'daki ağ hızı çiplerinden kapsül arka planını kaldırır.',
+    ptBr:
+        'Remove o fundo em formato de pílula dos chips de velocidade da rede na Now Bar.',
+    zhHans: '移除 Now Bar 中网速胶囊的药丸背景。',
+    zhHant: '移除 Now Bar 中網速膠囊的藥丸背景。',
   );
 
   String get textProgressTitle => tr(

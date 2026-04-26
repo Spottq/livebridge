@@ -515,13 +515,96 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
 
-        rememberSelfDismissedSourceKey(sbn.key)
-        try {
-            cancelNotification(sbn.key)
-        } catch (error: Throwable) {
-            forgetSelfDismissedSourceKey(sbn.key)
-            Log.e(TAG, "Failed to auto-dismiss original notification: ${sbn.key}", error)
+        val mirrorNotificationId = result.notificationId
+        if (mirrorNotificationId == null) {
+            Log.w(TAG, "Skip original notification dismissal: missing mirror id for ${sbn.key}")
+            return
         }
+        scheduleOriginalSourceDismissal(
+            sourceKey = sbn.key,
+            mirrorNotificationId = mirrorNotificationId,
+            attempt = 0
+        )
+    }
+
+    private fun scheduleOriginalSourceDismissal(
+        sourceKey: String,
+        mirrorNotificationId: Int,
+        attempt: Int
+    ) {
+        mainHandler.postDelayed(
+            {
+                dismissOriginalSourceWhenMirrorActive(
+                    sourceKey = sourceKey,
+                    mirrorNotificationId = mirrorNotificationId,
+                    attempt = attempt
+                )
+            },
+            ORIGINAL_DISMISS_RETRY_DELAY_MS
+        )
+    }
+
+    private fun dismissOriginalSourceWhenMirrorActive(
+        sourceKey: String,
+        mirrorNotificationId: Int,
+        attempt: Int
+    ) {
+        val active = try {
+            activeNotifications
+        } catch (error: Throwable) {
+            Log.w(TAG, "Failed to verify mirror before original dismissal: $sourceKey", error)
+            retryOriginalSourceDismissal(sourceKey, mirrorNotificationId, attempt)
+            return
+        }
+        if (active == null) {
+            retryOriginalSourceDismissal(sourceKey, mirrorNotificationId, attempt)
+            return
+        }
+
+        val snapshots = active.toList()
+        if (snapshots.none { it.key == sourceKey }) {
+            Log.v(TAG, "Skip original notification dismissal: source is no longer active: $sourceKey")
+            return
+        }
+        if (snapshots.none { isExpectedMirrorNotification(it, mirrorNotificationId) }) {
+            retryOriginalSourceDismissal(sourceKey, mirrorNotificationId, attempt)
+            return
+        }
+
+        rememberSelfDismissedSourceKey(sourceKey)
+        try {
+            cancelNotification(sourceKey)
+        } catch (error: Throwable) {
+            forgetSelfDismissedSourceKey(sourceKey)
+            Log.e(TAG, "Failed to auto-dismiss original notification: $sourceKey", error)
+        }
+    }
+
+    private fun retryOriginalSourceDismissal(
+        sourceKey: String,
+        mirrorNotificationId: Int,
+        attempt: Int
+    ) {
+        if (attempt >= ORIGINAL_DISMISS_MAX_ATTEMPTS) {
+            Log.w(TAG, "Skip original notification dismissal: mirror not active for $sourceKey")
+            return
+        }
+        scheduleOriginalSourceDismissal(
+            sourceKey = sourceKey,
+            mirrorNotificationId = mirrorNotificationId,
+            attempt = attempt + 1
+        )
+    }
+
+    private fun isExpectedMirrorNotification(
+        sbn: StatusBarNotification,
+        mirrorNotificationId: Int
+    ): Boolean {
+        if (sbn.packageName != packageName || sbn.id != mirrorNotificationId) {
+            return false
+        }
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
+            sbn.notification.channelId == LiveUpdateNotifier.CHANNEL_ID
     }
 
     private fun rememberSelfDismissedSourceKey(sbnKey: String) {
@@ -615,6 +698,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val MAX_REBIND_DELAY_MS = 30_000L
         private const val MAX_REBIND_ATTEMPTS = 6
         private const val SNAPSHOT_SYNC_INTERVAL_MS = 4_000L
+        private const val ORIGINAL_DISMISS_RETRY_DELAY_MS = 250L
+        private const val ORIGINAL_DISMISS_MAX_ATTEMPTS = 6
         private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 1_500L
         private const val FLASHLIGHT_SOURCE_VERIFY_DELAY_MS = 300L
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
