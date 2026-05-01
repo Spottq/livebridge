@@ -61,6 +61,15 @@ object LiveUpdateNotifier {
         "com.google.android.apps.maps",
         "com.waze"
     )
+    private val NATIVE_IN_CALL_PACKAGES = setOf(
+        "com.samsung.android.incallui",
+        "com.samsung.android.dialer",
+        "com.samsung.android.app.telephonyui",
+        "com.android.incallui",
+        "com.android.dialer",
+        "com.google.android.dialer",
+        "com.google.android.apps.dialer"
+    )
     private val NAVIGATION_DISTANCE_PATTERN = Regex(
         "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
         setOf(RegexOption.IGNORE_CASE)
@@ -392,6 +401,17 @@ object LiveUpdateNotifier {
                 null
             }
             if (callMirrorSnapshot != null) {
+                val nativeInCallMirror = isNativeInCallNotification(sbn)
+                val callSamsungBridge = if (nativeInCallMirror) {
+                    SamsungBridgeContext(
+                        enabled = samsungBridge.enabled,
+                        reparsePayload = null,
+                        hasNativeOrSamsungProgress = false,
+                        hasCustomRemoteCard = false
+                    )
+                } else {
+                    samsungBridge
+                }
                 if (!bypassesRules &&
                     !passesBaseFilters(prefs, sbn, parserDictionary, mediaPlaybackSmartEnabled)
                 ) {
@@ -410,7 +430,7 @@ object LiveUpdateNotifier {
                     context = context,
                     sbn = sbn,
                     appPresentationOverride = appPresentationOverride,
-                    samsungBridge = samsungBridge,
+                    samsungBridge = callSamsungBridge,
                     snapshot = callMirrorSnapshot
                 )
                 val notification = buildMirroredNotification(
@@ -422,7 +442,7 @@ object LiveUpdateNotifier {
                     otpOverride = null,
                     smartShortTextOverride = null,
                     requestPromoted = true,
-                    samsungBridge = samsungBridge,
+                    samsungBridge = callSamsungBridge,
                     allowNavigationIconHeuristics = false,
                     callMirrorActive = true,
                     callChronometerStartWallClockMs = callStartedAtWallClockMs
@@ -439,14 +459,15 @@ object LiveUpdateNotifier {
                     progressOverride = null,
                     otpOverride = null,
                     smartShortTextOverride = null,
-                    samsungBridge = samsungBridge,
+                    samsungBridge = callSamsungBridge,
                     allowNavigationIconHeuristics = false,
                     callMirrorActive = true,
                     callChronometerStartWallClockMs = callStartedAtWallClockMs
                 )
                 return mirroredResult(
                     notificationId = mirrorIdForKey(sbn.key),
-                    mirrorKey = sbn.key
+                    mirrorKey = sbn.key,
+                    removeSource = nativeInCallMirror
                 )
             } else if (source.category == Notification.CATEGORY_CALL) {
                 val staleAggregateIds = synchronized(stateLock) {
@@ -1079,6 +1100,11 @@ object LiveUpdateNotifier {
         )
     }
 
+    private fun isNativeInCallNotification(sbn: StatusBarNotification): Boolean {
+        val packageName = sbn.packageName.lowercase(Locale.ROOT)
+        return packageName in NATIVE_IN_CALL_PACKAGES
+    }
+
     private fun upsertCallMirrorState(
         context: Context,
         sbn: StatusBarNotification,
@@ -1390,17 +1416,19 @@ object LiveUpdateNotifier {
     private fun mirroredResult(
         notificationId: Int,
         mirrorKey: String,
-        dedupKind: MirrorDedupKind = MirrorDedupKind.NONE
+        dedupKind: MirrorDedupKind = MirrorDedupKind.NONE,
+        removeSource: Boolean = false
     ): MirrorResult {
         return MirrorResult(
             mirrored = true,
             dedupKind = dedupKind,
             notificationId = notificationId,
-            mirrorKey = mirrorKey
+            mirrorKey = mirrorKey,
+            removeSource = removeSource
         )
     }
 
-    private fun isMirrorNotificationChannel(channelId: String?): Boolean {
+    fun isMirrorNotificationChannel(channelId: String?): Boolean {
         val normalized = channelId?.trim().orEmpty()
         return normalized.isNotEmpty() &&
                 MirrorNotificationChannel.entries.any { it.id == normalized }
@@ -1829,10 +1857,33 @@ object LiveUpdateNotifier {
         } else {
             configuredDisplayText
         }
+        val nativeInCallMirror = callMirrorActive && isNativeInCallNotification(sbn)
+        val callMirrorBodyText = if (callMirrorActive) {
+            resolveCallMirrorBodyText(
+                notification = source,
+                displayTitle = displayTitle,
+                displayText = displayText,
+                includeRemoteViewTexts = !nativeInCallMirror
+            )
+        } else {
+            null
+        }
+        val samsungPolicyDisplayText = if (callMirrorActive) {
+            val bodyText = callMirrorBodyText?.trim().orEmpty()
+            when {
+                bodyText.isNotEmpty() && !isEquivalentText(bodyText, displayTitle) -> bodyText
+                !isGeneratedCallBodyFallback(displayText) -> displayText
+                else -> ""
+            }
+        } else {
+            displayText
+        }
         val otpPresentationText = otpShortTextOverride ?: otpOverride?.code
         val contentTitle = otpPresentationText ?: displayTitle
         val contentText = if (otpOverride != null) {
             appName
+        } else if (callMirrorBodyText != null) {
+            callMirrorBodyText
         } else {
             displayText
         }
@@ -1860,6 +1911,7 @@ object LiveUpdateNotifier {
         val callChronometerStart = callChronometerStartWallClockMs
             ?.takeIf { callMirrorActive && it > 0L }
             ?.coerceAtMost(System.currentTimeMillis())
+        val suppressCallNowBarRemoteView = callChronometerStart != null
 
         val sourceHasProgress = hasEffectiveProgress(sbn.packageName, source)
         val samsungProgressMax = samsungReparse?.progressMax ?: 0
@@ -2087,7 +2139,7 @@ object LiveUpdateNotifier {
                 )
             )
         } else {
-            builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(callMirrorBodyText ?: text))
         }
         if (smartShortTextOverride != null && !hasProgress) {
             if (!preferSmartShortTextAsPrimary) {
@@ -2144,7 +2196,7 @@ object LiveUpdateNotifier {
                 hasProgress = hasProgress,
                 smartRuleId = smartRuleId,
                 smartShortTextOverride = smartShortTextOverride,
-                displayText = displayText,
+                displayText = samsungPolicyDisplayText,
                 compactPrimaryText = compactPrimaryText,
                 resolvedProgressChipText = resolvedProgressChipText,
                 otpShortTextOverride = otpShortTextOverride,
@@ -2156,7 +2208,13 @@ object LiveUpdateNotifier {
                 twoGisEtaDistanceText = samsungTwoGisEtaDistanceText,
                 twoGisVisibleSecondaryText = samsungTwoGisVisibleSecondaryText,
                 preferSmartShortTextAsPrimary = preferSmartShortTextAsPrimary
-            )
+            ).let { texts ->
+                if (callMirrorActive) {
+                    texts.copy(shouldClearContentText = false)
+                } else {
+                    texts
+                }
+            }
             SamsungNowBarApplier.apply(
                 context = context,
                 builder = builder,
@@ -2168,6 +2226,8 @@ object LiveUpdateNotifier {
                 nowBarIcon = preferredPrimaryIcon,
                 rightIcon = nowBarRightIcon,
                 suppressChipExpandedText = callChronometerStart != null,
+                suppressSourceRemoteViews = false,
+                suppressSourceNowBarRemoteView = suppressCallNowBarRemoteView,
                 lockscreenOnly = weatherLockscreenOnly,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
@@ -4789,6 +4849,66 @@ object LiveUpdateNotifier {
         return remoteText ?: "Live update in progress"
     }
 
+    private fun resolveCallMirrorBodyText(
+        notification: Notification,
+        displayTitle: String,
+        displayText: String,
+        includeRemoteViewTexts: Boolean
+    ): String? {
+        val extras = notification.extras
+        val titleTexts = linkedSetOf<String>()
+        val candidates = linkedSetOf<String>()
+
+        fun normalized(value: CharSequence?): String? {
+            return NotificationTextNormalizer.normalize(value)
+        }
+
+        fun addTitle(value: CharSequence?) {
+            normalized(value)?.let(titleTexts::add)
+        }
+
+        fun addCandidate(value: CharSequence?) {
+            val text = normalized(value) ?: return
+            if (!isGeneratedCallBodyFallback(text)) {
+                candidates.add(text)
+            }
+        }
+
+        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE))
+        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE_BIG))
+        addTitle(displayTitle)
+
+        addCandidate(extras.getCharSequence(Notification.EXTRA_BIG_TEXT))
+        addCandidate(extras.getCharSequence(Notification.EXTRA_TEXT))
+        addCandidate(extras.getCharSequence(Notification.EXTRA_SUB_TEXT))
+        addCandidate(extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT))
+        addCandidate(extras.getCharSequence(Notification.EXTRA_INFO_TEXT))
+        extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)?.forEach(::addCandidate)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            @Suppress("DEPRECATION")
+            extras.getParcelableArray(Notification.EXTRA_MESSAGES)
+                ?.let(Notification.MessagingStyle.Message::getMessagesFromBundleArray)
+                ?.asReversed()
+                ?.firstOrNull { message -> !message.text.isNullOrBlank() }
+                ?.let { message -> addCandidate(message.text) }
+        }
+        if (includeRemoteViewTexts) {
+            extractRemoteViewTexts(notification).forEach(::addCandidate)
+        }
+        addCandidate(displayText)
+
+        val nonTitleCandidate = candidates.firstOrNull { candidate ->
+            titleTexts.none { title -> isEquivalentText(candidate, title) }
+        }
+        return nonTitleCandidate
+            ?: candidates.firstOrNull()
+            ?: titleTexts.firstOrNull { !isGeneratedCallBodyFallback(it) }
+    }
+
+    private fun isGeneratedCallBodyFallback(text: String): Boolean {
+        return text.equals("Live update in progress", ignoreCase = true)
+    }
+
     private fun collectNotificationText(
         notification: Notification,
         fallbackTitle: String,
@@ -5401,7 +5521,8 @@ object LiveUpdateNotifier {
         val mirrored: Boolean,
         val dedupKind: MirrorDedupKind = MirrorDedupKind.NONE,
         val notificationId: Int? = null,
-        val mirrorKey: String? = null
+        val mirrorKey: String? = null,
+        val removeSource: Boolean = false
     )
 
     enum class MirrorDedupKind {

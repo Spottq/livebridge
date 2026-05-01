@@ -547,7 +547,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         if (!result.mirrored) {
             return
         }
-        if (!sbn.isClearable) {
+        if (!result.removeSource && !sbn.isClearable) {
             return
         }
         val appPresentationRemoveOriginal = AppPresentationOverridesLoader
@@ -576,7 +576,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             else -> false
         }
         val shouldDismiss =
-            appPresentationRemoveOriginal ||
+            result.removeSource ||
+                appPresentationRemoveOriginal ||
                 legacyDedup ||
                 upstreamDismiss
         if (!shouldDismiss) {
@@ -645,11 +646,12 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
 
         rememberSelfDismissedSource(sourceSbn, mirrorNotificationId, mirrorKey)
-        try {
-            cancelNotification(sourceKey)
-        } catch (error: Throwable) {
+        val dismissRequested = requestDismissOrSnoozeSourceNotification(
+            sourceKey = sourceKey,
+            label = "original notification"
+        )
+        if (!dismissRequested) {
             forgetSelfDismissedSourceKey(sourceKey)
-            Log.e(TAG, "Failed to auto-dismiss original notification: $sourceKey", error)
         }
     }
 
@@ -679,7 +681,42 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return false
         }
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
-            sbn.notification.channelId == LiveUpdateNotifier.CHANNEL_ID
+            LiveUpdateNotifier.isMirrorNotificationChannel(sbn.notification.channelId)
+    }
+
+    private fun requestDismissOrSnoozeSourceNotification(
+        sourceKey: String,
+        label: String
+    ): Boolean {
+        val cancelDirectRequested = runCatching {
+            cancelNotification(sourceKey)
+        }.onSuccess {
+            Log.i(TAG, "Requested $label cancel via cancelNotification: $sourceKey")
+        }.onFailure { error ->
+            Log.w(TAG, "cancelNotification failed for $label: $sourceKey", error)
+        }.isSuccess
+
+        val cancelBatchRequested = runCatching {
+            cancelNotifications(arrayOf(sourceKey))
+        }.onSuccess {
+            Log.i(TAG, "Requested $label cancel via cancelNotifications: $sourceKey")
+        }.onFailure { error ->
+            Log.w(TAG, "cancelNotifications failed for $label: $sourceKey", error)
+        }.isSuccess
+
+        val snoozeRequested = runCatching {
+            snoozeNotification(sourceKey, ORIGINAL_SOURCE_SNOOZE_MS)
+        }.onSuccess {
+            Log.i(TAG, "Requested $label snooze fallback: $sourceKey")
+        }.onFailure { error ->
+            Log.w(TAG, "snoozeNotification failed for $label: $sourceKey", error)
+        }.isSuccess
+
+        if (!cancelDirectRequested && !cancelBatchRequested && !snoozeRequested) {
+            Log.w(TAG, "Unable to dismiss or snooze $label: $sourceKey")
+            return false
+        }
+        return true
     }
 
     private fun rememberSelfDismissedSource(
@@ -921,6 +958,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val SNAPSHOT_SYNC_INTERVAL_MS = 4_000L
         private const val ORIGINAL_DISMISS_RETRY_DELAY_MS = 250L
         private const val ORIGINAL_DISMISS_MAX_ATTEMPTS = 6
+        private const val ORIGINAL_SOURCE_SNOOZE_MS = 60_000L
         private const val SELF_DISMISS_PROTECTION_MS = 10_000L
         private const val PROTECTED_MIRROR_REPOST_DELAY_MS = 350L
         private const val PROTECTED_MIRROR_MAX_REPOSTS = 2
