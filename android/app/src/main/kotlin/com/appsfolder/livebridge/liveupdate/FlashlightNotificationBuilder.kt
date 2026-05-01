@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -19,6 +20,11 @@ import com.kakao.taxi.R
 internal class FlashlightNotificationBuilder(
     private val context: Context
 ) {
+    private data class RemoteViewTextColors(
+        val primary: Int,
+        val warning: Int
+    )
+
     fun build(
         prefs: ConverterPrefs,
         capability: FlashlightCapability
@@ -105,6 +111,7 @@ internal class FlashlightNotificationBuilder(
             setTextViewText(R.id.flashlight_title, title)
             setTextViewText(R.id.flashlight_action_button, disableButtonText())
             setOnClickPendingIntent(R.id.flashlight_action_button, disablePendingIntent())
+            applyRemoteViewTheme(includeWarning = true)
             val warning = warningText(capability)
             if (warning.isNullOrEmpty()) {
                 setViewVisibility(R.id.flashlight_warning, View.GONE)
@@ -130,6 +137,7 @@ internal class FlashlightNotificationBuilder(
             setTextViewText(R.id.flashlight_title, title)
             setTextViewText(R.id.flashlight_action_button, disableButtonText())
             setOnClickPendingIntent(R.id.flashlight_action_button, disablePendingIntent())
+            applyRemoteViewTheme(includeWarning = false)
             applySliderState(
                 remoteViews = this,
                 capability = capability,
@@ -187,6 +195,31 @@ internal class FlashlightNotificationBuilder(
             R.id.flashlight_disabled_overlay,
             if (unsupported) View.VISIBLE else View.GONE
         )
+    }
+
+    private fun RemoteViews.applyRemoteViewTheme(includeWarning: Boolean) {
+        val textColors = remoteViewTextColors()
+        setInt(R.id.flashlight_notification_root, "setLayoutDirection", View.LAYOUT_DIRECTION_LTR)
+        setTextColor(R.id.flashlight_title, textColors.primary)
+        setTextColor(R.id.flashlight_action_button, textColors.primary)
+        if (includeWarning) {
+            setTextColor(R.id.flashlight_warning, textColors.warning)
+        }
+    }
+
+    private fun remoteViewTextColors(): RemoteViewTextColors {
+        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
+            RemoteViewTextColors(
+                primary = DARK_THEME_TEXT_COLOR,
+                warning = DARK_THEME_WARNING_TEXT_COLOR
+            )
+        } else {
+            RemoteViewTextColors(
+                primary = LIGHT_THEME_TEXT_COLOR,
+                warning = LIGHT_THEME_WARNING_TEXT_COLOR
+            )
+        }
     }
 
     private fun buildSamsungExtras(
@@ -347,6 +380,10 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
         private const val STYLE_DEFAULT = 1
         private const val DEFAULT_ICON_ACCENT_COLOR = 0xFF387AFF.toInt()
+        private const val DARK_THEME_TEXT_COLOR = 0xFFF5F7FA.toInt()
+        private const val DARK_THEME_WARNING_TEXT_COLOR = 0xFF9CA3AF.toInt()
+        private const val LIGHT_THEME_TEXT_COLOR = 0xFF111827.toInt()
+        private const val LIGHT_THEME_WARNING_TEXT_COLOR = 0xFF4B5563.toInt()
         private const val REMOTE_VIEW_TAG = "flashlight_segments_remote"
         private const val REQUEST_CODE_DISABLE = 500
     }
