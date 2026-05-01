@@ -11,6 +11,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -20,9 +21,10 @@ import com.kakao.taxi.R
 internal class FlashlightNotificationBuilder(
     private val context: Context
 ) {
-    private data class RemoteViewTextColors(
+    private data class RemoteViewPalette(
         val primary: Int,
-        val warning: Int
+        val warning: Int,
+        val actionButtonBackgroundRes: Int
     )
 
     fun build(
@@ -198,28 +200,50 @@ internal class FlashlightNotificationBuilder(
     }
 
     private fun RemoteViews.applyRemoteViewTheme(includeWarning: Boolean) {
-        val textColors = remoteViewTextColors()
+        val palette = remoteViewPalette()
         setInt(R.id.flashlight_notification_root, "setLayoutDirection", View.LAYOUT_DIRECTION_LTR)
-        setTextColor(R.id.flashlight_title, textColors.primary)
-        setTextColor(R.id.flashlight_action_button, textColors.primary)
+        setTextColor(R.id.flashlight_title, palette.primary)
+        setTextColor(R.id.flashlight_action_button, palette.primary)
+        setInt(
+            R.id.flashlight_action_button,
+            "setBackgroundResource",
+            palette.actionButtonBackgroundRes
+        )
         if (includeWarning) {
-            setTextColor(R.id.flashlight_warning, textColors.warning)
+            setTextColor(R.id.flashlight_warning, palette.warning)
         }
     }
 
-    private fun remoteViewTextColors(): RemoteViewTextColors {
-        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-        return if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
-            RemoteViewTextColors(
-                primary = DARK_THEME_TEXT_COLOR,
-                warning = DARK_THEME_WARNING_TEXT_COLOR
-            )
-        } else {
-            RemoteViewTextColors(
+    private fun remoteViewPalette(): RemoteViewPalette {
+        if (isCrossWindowBlurDisabled()) {
+            return RemoteViewPalette(
                 primary = LIGHT_THEME_TEXT_COLOR,
-                warning = LIGHT_THEME_WARNING_TEXT_COLOR
+                warning = LIGHT_THEME_WARNING_TEXT_COLOR,
+                actionButtonBackgroundRes = R.drawable.bg_flashlight_action_button_no_blur
             )
         }
+
+        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
+            RemoteViewPalette(
+                primary = DARK_THEME_TEXT_COLOR,
+                warning = DARK_THEME_WARNING_TEXT_COLOR,
+                actionButtonBackgroundRes = R.drawable.bg_flashlight_action_button
+            )
+        } else {
+            RemoteViewPalette(
+                primary = LIGHT_THEME_TEXT_COLOR,
+                warning = LIGHT_THEME_WARNING_TEXT_COLOR,
+                actionButtonBackgroundRes = R.drawable.bg_flashlight_action_button_no_blur
+            )
+        }
+    }
+
+    private fun isCrossWindowBlurDisabled(): Boolean {
+        return runCatching {
+            val windowManager = context.getSystemService(WindowManager::class.java)
+            windowManager?.isCrossWindowBlurEnabled == false
+        }.getOrDefault(false)
     }
 
     private fun buildSamsungExtras(
