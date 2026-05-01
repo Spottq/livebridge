@@ -367,6 +367,10 @@ object LiveUpdateNotifier {
                 cancelMirroredNotification(manager, mirrorIdForKey(sbn.key))
                 return notMirroredResult()
             }
+            if (isNativeInCallNotification(sbn)) {
+                cancelMirrorsForIgnoredSource(manager, sbn)
+                return notMirroredResult()
+            }
             val parserDictionary = LiveParserDictionaryLoader.get(context, prefs)
             if (isPrivacyRedactedNotification(sbn.notification, parserDictionary)) {
                 return notMirroredResult()
@@ -466,8 +470,7 @@ object LiveUpdateNotifier {
                 )
                 return mirroredResult(
                     notificationId = mirrorIdForKey(sbn.key),
-                    mirrorKey = sbn.key,
-                    removeSource = nativeInCallMirror
+                    mirrorKey = sbn.key
                 )
             } else if (source.category == Notification.CATEGORY_CALL) {
                 val staleAggregateIds = synchronized(stateLock) {
@@ -1381,6 +1384,22 @@ object LiveUpdateNotifier {
         } catch (error: Throwable) {
             Log.e(TAG, "Failed to cancel mirrored notification: ${sbn.key}", error)
         }
+    }
+
+    private fun cancelMirrorsForIgnoredSource(
+        manager: NotificationManagerCompat,
+        sbn: StatusBarNotification
+    ) {
+        val directMirrorId = mirrorIdForKey(sbn.key)
+        val staleAggregateIds = synchronized(stateLock) {
+            userDismissedMirrorKeys.remove(sbn.key)
+            sourceSnapshotsByMirrorKey.remove(sbn.key)
+            callMirrorStates.remove(sbn.key)
+            mirrorKeysByNotificationId.remove(directMirrorId)
+            clearAggregateTrackingForSbnKeyLocked(sbn.key)
+        }
+        staleAggregateIds.forEach { cancelMirroredNotification(manager, it) }
+        cancelMirroredNotification(manager, directMirrorId)
     }
 
     fun handleMirroredRemoved(context: Context, sbn: StatusBarNotification) {
