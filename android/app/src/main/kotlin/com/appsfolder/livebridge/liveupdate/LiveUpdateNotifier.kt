@@ -70,6 +70,13 @@ object LiveUpdateNotifier {
         "com.google.android.dialer",
         "com.google.android.apps.dialer"
     )
+    private val DISCORD_PACKAGES = setOf(
+        "com.discord",
+        "com.discord.alpha",
+        "com.discord.beta",
+        "com.discord.canary",
+        "com.hammerandchisel.discord"
+    )
     private val NAVIGATION_DISTANCE_PATTERN = Regex(
         "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
         setOf(RegexOption.IGNORE_CASE)
@@ -121,15 +128,19 @@ object LiveUpdateNotifier {
         setOf(RegexOption.IGNORE_CASE)
     )
     private val callEndActionPattern = Regex(
-        """(^|\s)(end|end\s*call|hang\s*up|hangup|disconnect|заверш|отбой|сбросить|挂断|掛斷|结束|結束|encerrar|terminar)(\s|$)""",
+        """(^|\s)(end|end\s*call|hang\s*up|hangup|disconnect|leave|заверш\p{L}*|отбой|сбросить|отключ\p{L}*|покинуть|挂断|掛斷|结束|結束|encerrar|terminar)(\s|$)""",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val callActiveTextPattern = Regex(
-        """((?:ongoing|active).{0,40}\bcall\b|call\s+in\s+progress|on\s+call|in\s+call|разговор|ид[её]т\s+звонок|текущий\s+звонок|通话中|通話中)""",
+        """((?:ongoing|active).{0,40}\bcall\b|call\s+in\s+progress|on\s+call|in\s+call|(?:voice|голосов\p{L}*(?:\s+связ\p{L}*)?).{0,60}(?:connected|подключ\p{L}*)|разговор|ид[её]т\s+звонок|текущий\s+звонок|通话中|通話中)""",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val callContextTextPattern = Regex(
-        """(\bcall\b|звонок|вызов|разговор|通话|通話)""",
+        """(\bcall\b|\bvoice\s+(?:chat|channel|connection|connected)\b|голосов\p{L}*(?:\s+связ\p{L}*)?|звонок|вызов|разговор|通话|通話)""",
+        setOf(RegexOption.IGNORE_CASE)
+    )
+    private val discordVoiceConnectedPattern = Regex(
+        """(\bvoice\s+(?:connected|connection|channel)\b|голосов\p{L}*(?:\s+связ\p{L}*)?\s+подключ\p{L}*)""",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val weatherCelsiusPattern =
@@ -1082,18 +1093,31 @@ object LiveUpdateNotifier {
         }
 
         val timeSeed = resolveCallTimeSeed(source, contentTexts)
+        val isDiscordVoiceConnection = isDiscordVoiceConnectionNotification(
+            sbn = sbn,
+            contentTexts = contentTexts,
+            actionTexts = actionTexts
+        )
         val hasEndCallAction = actionTexts.any(callEndActionPattern::containsMatchIn)
         val hasActiveCallText = contentTexts.any(callActiveTextPattern::containsMatchIn)
         val hasCallContext =
             source.category == Notification.CATEGORY_CALL ||
-                    contentTexts.any(callContextTextPattern::containsMatchIn)
+                    contentTexts.any(callContextTextPattern::containsMatchIn) ||
+                    isDiscordVoiceConnection
         if (!hasCallContext) {
             return null
         }
-        if (source.category != Notification.CATEGORY_CALL && !hasEndCallAction) {
+        if (source.category != Notification.CATEGORY_CALL &&
+            !hasEndCallAction &&
+            !isDiscordVoiceConnection
+        ) {
             return null
         }
-        if (!timeSeed.hasExplicitSource && !hasEndCallAction && !hasActiveCallText) {
+        if (!timeSeed.hasExplicitSource &&
+            !hasEndCallAction &&
+            !hasActiveCallText &&
+            !isDiscordVoiceConnection
+        ) {
             return null
         }
 
@@ -1106,6 +1130,27 @@ object LiveUpdateNotifier {
     private fun isNativeInCallNotification(sbn: StatusBarNotification): Boolean {
         val packageName = sbn.packageName.lowercase(Locale.ROOT)
         return packageName in NATIVE_IN_CALL_PACKAGES
+    }
+
+    private fun isDiscordVoiceConnectionNotification(
+        sbn: StatusBarNotification,
+        contentTexts: List<String>,
+        actionTexts: List<String>
+    ): Boolean {
+        val packageName = sbn.packageName.lowercase(Locale.ROOT)
+        if (packageName !in DISCORD_PACKAGES) {
+            return false
+        }
+        val source = sbn.notification
+        val channelId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            source.channelId?.trim().orEmpty()
+        } else {
+            ""
+        }
+        val hasVoiceChannel = channelId.equals("mediaConnections", ignoreCase = true)
+        val hasVoiceText = contentTexts.any(discordVoiceConnectedPattern::containsMatchIn)
+        val hasDisconnectAction = actionTexts.any(callEndActionPattern::containsMatchIn)
+        return (hasVoiceChannel || hasVoiceText) && (hasVoiceText || hasDisconnectAction)
     }
 
     private fun upsertCallMirrorState(
