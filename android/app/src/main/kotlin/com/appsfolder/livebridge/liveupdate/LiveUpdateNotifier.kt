@@ -328,7 +328,6 @@ object LiveUpdateNotifier {
                     clearAggregateTrackingForSbnKeyLocked(sbn.key)
                 }
                 staleAggregateIds.forEach { cancelMirroredNotification(manager, it) }
-                val bypassAnimatedIslandEnabled = prefs.getAnimatedIslandEnabled()
                 val bypassSamsungBridge = SamsungBridgePreprocessor.build(
                     context = context,
                     prefs = prefs,
@@ -366,20 +365,6 @@ object LiveUpdateNotifier {
                     samsungBridge = bypassSamsungBridge,
                     allowNavigationIconHeuristics = false
                 )
-                if (bypassAnimatedIslandEnabled) {
-                    startMirroredIslandAnimation(
-                        context = context,
-                        manager = manager,
-                        mirrorKey = sbn.key,
-                        sbn = sbn,
-                        appPresentationOverride = appPresentationOverride,
-                        mirrorChannel = MirrorNotificationChannel.BYPASS,
-                        progressOverride = null,
-                        samsungBridge = bypassSamsungBridge,
-                        allowRemoteViewFallback = false,
-                        allowNavigationIconHeuristics = false
-                    )
-                }
                 return mirroredResult(
                     notificationId = mirrorIdForKey(sbn.key),
                     mirrorKey = sbn.key
@@ -695,22 +680,6 @@ object LiveUpdateNotifier {
                         smartShortTextOverride = textProgressMatch.shortText,
                         samsungBridge = samsungBridge
                     )
-                    if (animatedIslandEnabled) {
-                        startMirroredIslandAnimation(
-                            context = context,
-                            manager = manager,
-                            mirrorKey = sbn.key,
-                            sbn = sbn,
-                            appPresentationOverride = appPresentationOverride,
-                            mirrorChannel = MirrorNotificationChannel.PROGRESS_NOTIFICATIONS,
-                            progressOverride = ProgressOverride(
-                                value = textProgressMatch.percent,
-                                max = 100
-                            ),
-                            initialToken = textProgressMatch.shortText,
-                            samsungBridge = samsungBridge
-                        )
-                    }
                     mirroredResult(
                         notificationId = mirrorIdForKey(sbn.key),
                         mirrorKey = sbn.key
@@ -919,18 +888,6 @@ object LiveUpdateNotifier {
                         smartShortTextOverride = null,
                         samsungBridge = samsungBridge
                     )
-                    if (animatedIslandEnabled) {
-                        startMirroredIslandAnimation(
-                            context = context,
-                            manager = manager,
-                            mirrorKey = sbn.key,
-                            sbn = sbn,
-                            appPresentationOverride = appPresentationOverride,
-                            mirrorChannel = mirrorChannel,
-                            progressOverride = null,
-                            samsungBridge = samsungBridge
-                        )
-                    }
                     mirroredResult(
                         notificationId = mirrorIdForKey(sbn.key),
                         mirrorKey = sbn.key
@@ -2920,71 +2877,6 @@ object LiveUpdateNotifier {
         }
     }
 
-    private fun buildMirroredAnimatedIslandTokens(
-        context: Context,
-        sbn: StatusBarNotification,
-        allowRemoteViewFallback: Boolean
-    ): List<String?> {
-        val source = sbn.notification
-        val appName = resolveAppName(context, sbn.packageName)
-        val tokens = mutableListOf<String?>()
-        tokens.add(extractTitle(source, appName, allowRemoteViewFallback))
-        tokens.add(
-            extractText(source, allowRemoteViewFallback)
-                .takeUnless { it == "Live update in progress" }
-        )
-        tokens.add(NotificationTextNormalizer.normalize(source.tickerText))
-        source.extras
-            .getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
-            ?.take(2)
-            ?.map(NotificationTextNormalizer::normalize)
-            ?.forEach(tokens::add)
-        if (allowRemoteViewFallback) {
-            extractRemoteViewTexts(source)
-                .take(2)
-                .map(NotificationTextNormalizer::normalize)
-                .forEach(tokens::add)
-        }
-        return tokens
-    }
-
-    private fun startMirroredIslandAnimation(
-        context: Context,
-        manager: NotificationManagerCompat,
-        mirrorKey: String,
-        sbn: StatusBarNotification,
-        appPresentationOverride: AppPresentationOverride,
-        mirrorChannel: MirrorNotificationChannel,
-        progressOverride: ProgressOverride?,
-        initialToken: String? = null,
-        samsungBridge: SamsungBridgeContext,
-        allowRemoteViewFallback: Boolean = true,
-        allowNavigationIconHeuristics: Boolean = true
-    ) {
-        val tokens = buildMirroredAnimatedIslandTokens(
-            context = context,
-            sbn = sbn,
-            allowRemoteViewFallback = allowRemoteViewFallback
-        )
-        startSmartIslandAnimation(
-            context = context,
-            manager = manager,
-            aggregateKey = mirrorKey,
-            sbn = sbn,
-            appPresentationOverride = appPresentationOverride,
-            mirrorChannel = mirrorChannel,
-            progressOverride = progressOverride,
-            smartRuleId = null,
-            tokens = tokens,
-            initialToken = initialToken
-                ?: extractTitle(sbn.notification, resolveAppName(context, sbn.packageName), allowRemoteViewFallback),
-            compactCodeOverride = null,
-            samsungBridge = samsungBridge,
-            requiresAggregateState = false,
-            allowNavigationIconHeuristics = allowNavigationIconHeuristics
-        )
-    }
-
     private fun startSmartIslandAnimation(
         context: Context,
         manager: NotificationManagerCompat,
@@ -2993,13 +2885,11 @@ object LiveUpdateNotifier {
         appPresentationOverride: AppPresentationOverride,
         mirrorChannel: MirrorNotificationChannel,
         progressOverride: ProgressOverride?,
-        smartRuleId: String?,
+        smartRuleId: String,
         tokens: List<String?>,
         initialToken: String?,
         compactCodeOverride: String?,
-        samsungBridge: SamsungBridgeContext,
-        requiresAggregateState: Boolean = true,
-        allowNavigationIconHeuristics: Boolean = true
+        samsungBridge: SamsungBridgeContext
     ) {
         if (tokens.isEmpty()) {
             return
@@ -3035,8 +2925,6 @@ object LiveUpdateNotifier {
                 existingState.tokens = normalizedTokens
                 existingState.compactCodeOverride = compactCodeOverride
                 existingState.samsungBridge = samsungBridge
-                existingState.requiresAggregateState = requiresAggregateState
-                existingState.allowNavigationIconHeuristics = allowNavigationIconHeuristics
                 if (!normalizedInitial.isNullOrBlank() &&
                     normalizedTokens.any { it.equals(normalizedInitial, ignoreCase = true) } &&
                     existingState.lastShownToken.isNullOrBlank()
@@ -3058,9 +2946,7 @@ object LiveUpdateNotifier {
                 nextIndex = 0,
                 lastShownToken = normalizedInitial,
                 compactCodeOverride = compactCodeOverride,
-                samsungBridge = samsungBridge,
-                requiresAggregateState = requiresAggregateState,
-                allowNavigationIconHeuristics = allowNavigationIconHeuristics
+                samsungBridge = samsungBridge
             )
             nextGeneration
         } ?: return
@@ -3108,8 +2994,7 @@ object LiveUpdateNotifier {
                     smartRuleId = animationState.smartRuleId,
                     token = nextToken.token,
                     compactCodeOverride = animationState.compactCodeOverride,
-                    samsungBridge = animationState.samsungBridge,
-                    allowNavigationIconHeuristics = animationState.allowNavigationIconHeuristics
+                    samsungBridge = animationState.samsungBridge
                 )
             } ?: return@postDelayed
 
@@ -3126,7 +3011,6 @@ object LiveUpdateNotifier {
                     smartRuleId = frame.smartRuleId,
                     requestPromoted = true,
                     samsungBridge = frame.samsungBridge,
-                    allowNavigationIconHeuristics = frame.allowNavigationIconHeuristics,
                     preferSmartShortTextAsPrimary = true
                 )
                 notifyWithPromotionFallback(
@@ -3144,7 +3028,6 @@ object LiveUpdateNotifier {
                     compactCodeOverride = frame.compactCodeOverride,
                     smartRuleId = frame.smartRuleId,
                     samsungBridge = frame.samsungBridge,
-                    allowNavigationIconHeuristics = frame.allowNavigationIconHeuristics,
                     preferSmartShortTextAsPrimary = true
                 )
             } catch (error: Throwable) {
@@ -3169,13 +3052,11 @@ object LiveUpdateNotifier {
     }
 
     private fun isSmartAnimationGenerationCurrentLocked(aggregateKey: String, generation: Long): Boolean {
-        val animationState = smartAnimationStates[aggregateKey] ?: return false
-        if (animationState.requiresAggregateState) {
-            val state = aggregateStates[aggregateKey] ?: return false
-            if (state.activeSbnKeys.isEmpty()) {
-                return false
-            }
-        } else if (mirrorKeysByNotificationId[mirrorIdForKey(aggregateKey)] != aggregateKey) {
+        val state = aggregateStates[aggregateKey] ?: return false
+        if (state.activeSbnKeys.isEmpty()) {
+            return false
+        }
+        if (!smartAnimationStates.containsKey(aggregateKey)) {
             return false
         }
         return smartAnimationGenerations[aggregateKey] == generation
@@ -5107,14 +4988,12 @@ object LiveUpdateNotifier {
         var appPresentationOverride: AppPresentationOverride,
         var mirrorChannel: MirrorNotificationChannel,
         var progressOverride: ProgressOverride?,
-        var smartRuleId: String?,
+        var smartRuleId: String,
         var tokens: List<String?>,
         var nextIndex: Int,
         var lastShownToken: String?,
         var compactCodeOverride: String?,
-        var samsungBridge: SamsungBridgeContext,
-        var requiresAggregateState: Boolean,
-        var allowNavigationIconHeuristics: Boolean
+        var samsungBridge: SamsungBridgeContext
     )
 
     private data class SmartAnimationFrame(
@@ -5122,11 +5001,10 @@ object LiveUpdateNotifier {
         val appPresentationOverride: AppPresentationOverride,
         val mirrorChannel: MirrorNotificationChannel,
         val progressOverride: ProgressOverride?,
-        val smartRuleId: String?,
+        val smartRuleId: String,
         val token: String,
         val compactCodeOverride: String?,
-        val samsungBridge: SamsungBridgeContext,
-        val allowNavigationIconHeuristics: Boolean
+        val samsungBridge: SamsungBridgeContext
     )
 
     private data class SmartAnimationToken(
