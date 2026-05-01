@@ -116,7 +116,11 @@ object LiveUpdateNotifier {
         setOf(RegexOption.IGNORE_CASE)
     )
     private val callActiveTextPattern = Regex(
-        """(ongoing\s+call|active\s+call|call\s+in\s+progress|on\s+call|in\s+call|разговор|ид[её]т\s+звонок|текущий\s+звонок|通话中|通話中)""",
+        """((?:ongoing|active).{0,40}\bcall\b|call\s+in\s+progress|on\s+call|in\s+call|разговор|ид[её]т\s+звонок|текущий\s+звонок|通话中|通話中)""",
+        setOf(RegexOption.IGNORE_CASE)
+    )
+    private val callContextTextPattern = Regex(
+        """(\bcall\b|звонок|вызов|разговор|通话|通話)""",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val weatherCelsiusPattern =
@@ -379,10 +383,7 @@ object LiveUpdateNotifier {
             )
             val mediaPlaybackSmartEnabled = prefs.getSmartMediaPlaybackEnabled()
             val bypassesRules = prefs.shouldBypassAllRulesForPackage(sbn.packageName)
-            val callMirrorSnapshot = if (
-                source.category == Notification.CATEGORY_CALL &&
-                prefs.getSmartCallsEnabled()
-            ) {
+            val callMirrorSnapshot = if (prefs.getSmartCallsEnabled()) {
                 detectActiveCallMirrorSnapshot(
                     sbn = sbn,
                     samsungReparse = samsungBridge.reparsePayload
@@ -390,10 +391,9 @@ object LiveUpdateNotifier {
             } else {
                 null
             }
-            if (source.category == Notification.CATEGORY_CALL) {
-                if (callMirrorSnapshot == null ||
-                    (!bypassesRules &&
-                        !passesBaseFilters(prefs, sbn, parserDictionary, mediaPlaybackSmartEnabled))
+            if (callMirrorSnapshot != null) {
+                if (!bypassesRules &&
+                    !passesBaseFilters(prefs, sbn, parserDictionary, mediaPlaybackSmartEnabled)
                 ) {
                     val staleAggregateIds = synchronized(stateLock) {
                         clearAggregateTrackingForSbnKeyLocked(sbn.key)
@@ -402,7 +402,6 @@ object LiveUpdateNotifier {
                     cancelMirroredNotification(manager, mirrorIdForKey(sbn.key))
                     return notMirroredResult()
                 }
-
                 val staleAggregateIds = synchronized(stateLock) {
                     clearAggregateTrackingForSbnKeyLocked(sbn.key)
                 }
@@ -447,6 +446,13 @@ object LiveUpdateNotifier {
                     notificationId = mirrorIdForKey(sbn.key),
                     mirrorKey = sbn.key
                 )
+            } else if (source.category == Notification.CATEGORY_CALL) {
+                val staleAggregateIds = synchronized(stateLock) {
+                    clearAggregateTrackingForSbnKeyLocked(sbn.key)
+                }
+                staleAggregateIds.forEach { cancelMirroredNotification(manager, it) }
+                cancelMirroredNotification(manager, mirrorIdForKey(sbn.key))
+                return notMirroredResult()
             }
             if (prefs.shouldBypassAllRulesForPackage(sbn.packageName)) {
                 val staleAggregateIds = synchronized(stateLock) {
@@ -1032,9 +1038,6 @@ object LiveUpdateNotifier {
         samsungReparse: SamsungReparsePayload?
     ): CallMirrorSnapshot? {
         val source = sbn.notification
-        if (source.category != Notification.CATEGORY_CALL) {
-            return null
-        }
         val ongoing = sbn.isOngoing ||
                 source.flags and Notification.FLAG_ONGOING_EVENT != 0 ||
                 !sbn.isClearable
@@ -1055,6 +1058,15 @@ object LiveUpdateNotifier {
         val timeSeed = resolveCallTimeSeed(source, contentTexts)
         val hasEndCallAction = actionTexts.any(callEndActionPattern::containsMatchIn)
         val hasActiveCallText = contentTexts.any(callActiveTextPattern::containsMatchIn)
+        val hasCallContext =
+            source.category == Notification.CATEGORY_CALL ||
+                    contentTexts.any(callContextTextPattern::containsMatchIn)
+        if (!hasCallContext) {
+            return null
+        }
+        if (source.category != Notification.CATEGORY_CALL && !hasEndCallAction) {
+            return null
+        }
         if (!timeSeed.hasExplicitSource && !hasEndCallAction && !hasActiveCallText) {
             return null
         }
