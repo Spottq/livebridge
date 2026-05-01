@@ -648,13 +648,6 @@ class _RulesNetworkConnectionsScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                        strings.networkSpeedThresholdSubtitle,
-                        style: LbTextStyles.caption.copyWith(
-                          color: palette.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: LbSpacing.sliderSectionGap),
                       Row(
                         children: <Widget>[
                           LbIcon(
