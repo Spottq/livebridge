@@ -802,7 +802,8 @@ object LiveUpdateNotifier {
                         compactCodeOverride = routeState.compactOrderCode,
                         smartRuleId = smartRuleId,
                         requestPromoted = true,
-                        samsungBridge = samsungBridge
+                        samsungBridge = samsungBridge,
+                        preferSmartShortTextAsPrimary = animatedIslandEnabled
                     )
                     notifyWithPromotionFallback(
                         context = context,
@@ -818,7 +819,8 @@ object LiveUpdateNotifier {
                         smartShortTextOverride = smartStatusText,
                         compactCodeOverride = routeState.compactOrderCode,
                         smartRuleId = smartRuleId,
-                        samsungBridge = samsungBridge
+                        samsungBridge = samsungBridge,
+                        preferSmartShortTextAsPrimary = animatedIslandEnabled
                     )
                     if (animatedIslandEnabled) {
                         val animatedTokens = buildSmartAnimatedIslandTokens(
@@ -840,6 +842,7 @@ object LiveUpdateNotifier {
                             smartRuleId = smartRuleId,
                             tokens = animatedTokens,
                             initialToken = smartStatusText,
+                            compactCodeOverride = routeState.compactOrderCode,
                             samsungBridge = samsungBridge
                         )
                     }
@@ -1240,7 +1243,8 @@ object LiveUpdateNotifier {
         mediaPlaybackIsPlaying: Boolean? = null,
         titleOverride: String? = null,
         textOverride: String? = null,
-        largeIconOverride: Bitmap? = null
+        largeIconOverride: Bitmap? = null,
+        preferSmartShortTextAsPrimary: Boolean = false
     ): Notification {
         val runtimePrefs = ConverterPrefs(context)
         val parserDictionary = LiveParserDictionaryLoader.get(context, runtimePrefs)
@@ -1699,7 +1703,8 @@ object LiveUpdateNotifier {
                 remoteViewMiniTextPair = samsungRemoteViewMiniTextPair,
                 twoGisPrimaryText = samsungTwoGisPrimaryText,
                 twoGisEtaDistanceText = samsungTwoGisEtaDistanceText,
-                twoGisVisibleSecondaryText = samsungTwoGisVisibleSecondaryText
+                twoGisVisibleSecondaryText = samsungTwoGisVisibleSecondaryText,
+                preferSmartShortTextAsPrimary = preferSmartShortTextAsPrimary
             )
             SamsungNowBarApplier.apply(
                 context = context,
@@ -1775,7 +1780,8 @@ object LiveUpdateNotifier {
         mediaPlaybackIsPlaying: Boolean? = null,
         titleOverride: String? = null,
         textOverride: String? = null,
-        largeIconOverride: Bitmap? = null
+        largeIconOverride: Bitmap? = null,
+        preferSmartShortTextAsPrimary: Boolean = false
     ) {
         try {
             notifyMirroredNotification(
@@ -1804,7 +1810,8 @@ object LiveUpdateNotifier {
                 mediaPlaybackIsPlaying = mediaPlaybackIsPlaying,
                 titleOverride = titleOverride,
                 textOverride = textOverride,
-                largeIconOverride = largeIconOverride
+                largeIconOverride = largeIconOverride,
+                preferSmartShortTextAsPrimary = preferSmartShortTextAsPrimary
             )
             notifyMirroredNotification(
                 manager = manager,
@@ -2880,6 +2887,7 @@ object LiveUpdateNotifier {
         smartRuleId: String,
         tokens: List<String?>,
         initialToken: String?,
+        compactCodeOverride: String?,
         samsungBridge: SamsungBridgeContext
     ) {
         if (tokens.isEmpty()) {
@@ -2914,6 +2922,7 @@ object LiveUpdateNotifier {
                 existingState.progressOverride = progressOverride
                 existingState.smartRuleId = smartRuleId
                 existingState.tokens = normalizedTokens
+                existingState.compactCodeOverride = compactCodeOverride
                 existingState.samsungBridge = samsungBridge
                 if (!normalizedInitial.isNullOrBlank() &&
                     normalizedTokens.any { it.equals(normalizedInitial, ignoreCase = true) } &&
@@ -2935,6 +2944,7 @@ object LiveUpdateNotifier {
                 tokens = normalizedTokens,
                 nextIndex = 0,
                 lastShownToken = normalizedInitial,
+                compactCodeOverride = compactCodeOverride,
                 samsungBridge = samsungBridge
             )
             nextGeneration
@@ -2982,6 +2992,7 @@ object LiveUpdateNotifier {
                     progressOverride = animationState.progressOverride,
                     smartRuleId = animationState.smartRuleId,
                     token = nextToken.token,
+                    compactCodeOverride = animationState.compactCodeOverride,
                     samsungBridge = animationState.samsungBridge
                 )
             } ?: return@postDelayed
@@ -2995,9 +3006,11 @@ object LiveUpdateNotifier {
                     progressOverride = frame.progressOverride,
                     otpOverride = null,
                     smartShortTextOverride = frame.token,
+                    compactCodeOverride = frame.compactCodeOverride,
                     smartRuleId = frame.smartRuleId,
                     requestPromoted = true,
-                    samsungBridge = frame.samsungBridge
+                    samsungBridge = frame.samsungBridge,
+                    preferSmartShortTextAsPrimary = true
                 )
                 notifyWithPromotionFallback(
                     context = context,
@@ -3011,8 +3024,10 @@ object LiveUpdateNotifier {
                     progressOverride = frame.progressOverride,
                     otpOverride = null,
                     smartShortTextOverride = frame.token,
+                    compactCodeOverride = frame.compactCodeOverride,
                     smartRuleId = frame.smartRuleId,
-                    samsungBridge = frame.samsungBridge
+                    samsungBridge = frame.samsungBridge,
+                    preferSmartShortTextAsPrimary = true
                 )
             } catch (error: Throwable) {
                 Log.e(TAG, "Failed smart island animation update: $aggregateKey", error)
@@ -4975,6 +4990,7 @@ object LiveUpdateNotifier {
         var tokens: List<String?>,
         var nextIndex: Int,
         var lastShownToken: String?,
+        var compactCodeOverride: String?,
         var samsungBridge: SamsungBridgeContext
     )
 
@@ -4985,6 +5001,7 @@ object LiveUpdateNotifier {
         val progressOverride: ProgressOverride?,
         val smartRuleId: String,
         val token: String,
+        val compactCodeOverride: String?,
         val samsungBridge: SamsungBridgeContext
     )
 

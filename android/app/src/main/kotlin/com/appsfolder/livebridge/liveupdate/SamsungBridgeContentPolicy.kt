@@ -43,22 +43,37 @@ internal object SamsungBridgeContentPolicy {
         remoteViewMiniTextPair: SamsungMiniTextPair?,
         twoGisPrimaryText: String?,
         twoGisEtaDistanceText: String?,
-        twoGisVisibleSecondaryText: String?
+        twoGisVisibleSecondaryText: String?,
+        preferSmartShortTextAsPrimary: Boolean = false
     ): SamsungBridgeTexts {
         val isTwoGisPackage = sourcePackageName == TWO_GIS_PACKAGE
+        val preferredSmartText = smartShortTextOverride
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+        val useSmartShortTextAsPrimary =
+            preferSmartShortTextAsPrimary && preferredSmartText != null
         val useTextOnlyMiniNowBar =
-            hasCustomRemoteCard && remoteViewMiniTextPair != null && !isTwoGisPackage
-        val shouldClearContentText =
+            !useSmartShortTextAsPrimary &&
+                    hasCustomRemoteCard &&
+                    remoteViewMiniTextPair != null &&
+                    !isTwoGisPackage
+        val shouldClearContentText = if (useSmartShortTextAsPrimary) {
+            true
+        } else {
             !isTwoGisPackage &&
                     !useTextOnlyMiniNowBar &&
                     (hasCustomRemoteCard || smartRuleId == "navigation")
+        }
         val shouldUseSmartShortTextAsSecondary =
+            !useSmartShortTextAsPrimary &&
             !isTwoGisPackage &&
                     !useTextOnlyMiniNowBar &&
                     smartShortTextOverride != null &&
                     !hasProgress &&
                     smartRuleId != "weather"
-        val secondaryText = if (isTwoGisPackage) {
+        val secondaryText = if (useSmartShortTextAsPrimary) {
+            displayText
+        } else if (isTwoGisPackage) {
             twoGisVisibleSecondaryText?.trim()?.takeIf { it.isNotEmpty() }
                 ?: twoGisEtaDistanceText?.trim()?.takeIf { it.isNotEmpty() }
                 ?: displayText
@@ -67,17 +82,23 @@ internal object SamsungBridgeContentPolicy {
         } else {
             displayText
         }
-        val chipText = sequenceOf(
-            twoGisPrimaryText?.trim()?.takeIf { isTwoGisPackage && it.isNotEmpty() },
-            resolvedProgressChipText?.trim()?.takeIf { !isTwoGisPackage },
-            otpShortTextOverride?.trim(),
-            otpCode?.trim(),
-            compactCodeOverride?.trim(),
-            samsungReparseChipText?.trim(),
-            smartShortTextOverride?.trim(),
-            compactPrimaryText.trim()
-        ).firstOrNull { !it.isNullOrEmpty() }
-        val nowBarPrimaryText = if (isTwoGisPackage) {
+        val chipText = if (useSmartShortTextAsPrimary) {
+            preferredSmartText
+        } else {
+            sequenceOf(
+                twoGisPrimaryText?.trim()?.takeIf { isTwoGisPackage && it.isNotEmpty() },
+                resolvedProgressChipText?.trim()?.takeIf { !isTwoGisPackage },
+                otpShortTextOverride?.trim(),
+                otpCode?.trim(),
+                compactCodeOverride?.trim(),
+                samsungReparseChipText?.trim(),
+                smartShortTextOverride?.trim(),
+                compactPrimaryText.trim()
+            ).firstOrNull { !it.isNullOrEmpty() }
+        }
+        val nowBarPrimaryText = if (useSmartShortTextAsPrimary) {
+            preferredSmartText ?: compactPrimaryText.trim()
+        } else if (isTwoGisPackage) {
             twoGisPrimaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
@@ -92,6 +113,7 @@ internal object SamsungBridgeContentPolicy {
                 ?: compactPrimaryText.trim()
         }
         val nowBarSecondaryText = when {
+            useSmartShortTextAsPrimary -> null
             isTwoGisPackage -> twoGisVisibleSecondaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
@@ -113,21 +135,23 @@ internal object SamsungBridgeContentPolicy {
             chipText = chipText,
             nowBarPrimaryText = nowBarPrimaryText,
             nowBarSecondaryText = nowBarSecondaryText,
-            showSecondaryInNowBar =
+            showSecondaryInNowBar = !useSmartShortTextAsPrimary && (
                 remoteViewMiniTextPair != null ||
-                        (smartRuleId != "navigation" && !hasCustomRemoteCard),
+                        (smartRuleId != "navigation" && !hasCustomRemoteCard)
+            ),
             preferCompactNowBarRemoteView =
+                !useSmartShortTextAsPrimary &&
                 !useTextOnlyMiniNowBar && !isTwoGisPackage && (
                     sourcePackageName == YANDEX_MAPS_PACKAGE && !hasProgress
                 ),
-            disableNowBarRemoteView = isTwoGisPackage,
+            disableNowBarRemoteView = useSmartShortTextAsPrimary || isTwoGisPackage,
             disableMiniRemoteView = useTextOnlyMiniNowBar,
             showMiniIcon = !useTextOnlyMiniNowBar,
             showSmallIcon = !useTextOnlyMiniNowBar,
             allowNowBarProgress = !useTextOnlyMiniNowBar && !isTwoGisPackage,
-            keepCollapsedRemoteView = useTextOnlyMiniNowBar,
+            keepCollapsedRemoteView = !useSmartShortTextAsPrimary && useTextOnlyMiniNowBar,
             preferExpandedRemoteBody = false,
-            reuseNotificationRemoteViews = !isTwoGisPackage
+            reuseNotificationRemoteViews = !useSmartShortTextAsPrimary && !isTwoGisPackage
         )
     }
 }
