@@ -147,7 +147,7 @@ class AppStrings {
     en: 'Dictionary updated from GitHub.',
     ru: 'Словарь обновлен из GitHub.',
     tr: 'Sözlük GitHub\'dan güncellendi.',
-    ptBr: 'Dicionário atualizado pelo GitHub.',
+    ptBr: 'Dicionário atualizado do GitHub.',
     zhHans: '词典已从 GitHub 更新。',
     zhHant: '字典已從 GitHub 更新。',
   );
@@ -165,7 +165,7 @@ class AppStrings {
     en: 'Failed to update dictionary from GitHub.',
     ru: 'Не удалось обновить словарь из GitHub.',
     tr: 'Sözlük GitHub\'dan güncellenemedi.',
-    ptBr: 'Falha ao atualizar o dicionário pelo GitHub.',
+    ptBr: 'Falha ao atualizar o dicionário do GitHub.',
     zhHans: '从 GitHub 更新词典失败。',
     zhHant: '從 GitHub 更新字典失敗。',
   );
@@ -182,8 +182,8 @@ class AppStrings {
   String get dictionaryManageSubtitle => tr(
     en: 'tap to manage',
     ru: 'нажмите для управления',
-    tr: 'yönetmek için dokunun',
-    ptBr: 'toque para gerenciar',
+    tr: 'yönetmek için açın',
+    ptBr: 'toque para abrir',
     zhHans: '点按以管理',
     zhHant: '點按以管理',
   );
@@ -200,7 +200,7 @@ class AppStrings {
   String get dictionaryLanguagesSubtitle => tr(
     en: 'tap to choose',
     ru: 'нажмите для выбора',
-    tr: 'seçmek için dokunun',
+    tr: 'seçmek için açın',
     ptBr: 'toque para escolher',
     zhHans: '点按以选择',
     zhHant: '點按以選擇',
@@ -281,10 +281,37 @@ class AppStrings {
   String get appConfigTitle => tr(
     en: 'App config',
     ru: 'Настройки приложения',
-    tr: 'Uygulama yapılandırması',
-    ptBr: 'Configuração do app',
-    zhHans: '应用配置',
-    zhHant: '應用配置',
+    tr: 'Uygulama ayarları',
+    ptBr: 'Ajustes do app',
+    zhHans: '应用设置',
+    zhHant: '應用設定',
+  );
+
+  String get appLanguageTitle => tr(
+    en: 'App language',
+    ru: 'Язык приложения',
+    tr: 'Uygulama dili',
+    ptBr: 'Idioma do app',
+    zhHans: '应用语言',
+    zhHant: '應用語言',
+  );
+
+  String get appLanguagePickerTitle => tr(
+    en: 'Choose app language',
+    ru: 'Выберите язык приложения',
+    tr: 'Uygulama dilini seçin',
+    ptBr: 'Escolha o idioma do app',
+    zhHans: '选择应用语言',
+    zhHant: '選擇應用語言',
+  );
+
+  String get appLanguageSystem => tr(
+    en: 'Auto',
+    ru: 'Автовыбор',
+    tr: 'Otomatik',
+    ptBr: 'Automático',
+    zhHans: '自动',
+    zhHant: '自動',
   );
 
   String get brandSpecificTitle => tr(
@@ -674,9 +701,27 @@ class AppStrings {
     zhHant: '媒體播放',
   );
 
+  String get showMediaOnLockTitle => tr(
+    en: 'Show media on lockscreen',
+    ru: 'Медиа на экране блокировки',
+    tr: 'Kilit ekranında medyayı göster',
+    ptBr: 'Mostrar mídia na tela bloqueada',
+    zhHans: '在锁屏显示媒体',
+    zhHant: '在鎖定畫面顯示媒體',
+  );
+
+  String get useSymbolsInMediaPlayerTitle => tr(
+    en: 'Use symbols in media player',
+    ru: 'Символы в медиаплеере',
+    tr: 'Medya oynatıcıda semboller kullan',
+    ptBr: 'Usar símbolos no player',
+    zhHans: '在媒体播放器中使用符号',
+    zhHant: '在媒體播放器中使用符號',
+  );
+
   String get weatherBroadcastsTitle => tr(
     en: 'Weather broadcasts',
-    ru: 'Погодные уведомления',
+    ru: 'Прогнозы погоды',
     tr: 'Hava durumu bildirimleri',
     ptBr: 'Alertas de clima',
     zhHans: '天气播报',
@@ -843,6 +888,33 @@ class AppStrings {
     ptBr: 'já está na versão mais recente',
     zhHans: '已经是最新版本',
     zhHant: '已是最新版本',
+  );
+
+  String get appUpdateLogTitle => tr(
+    en: 'What\'s new',
+    ru: 'Что нового',
+    tr: 'Güncelleme günlüğü',
+    ptBr: 'Registro de atualização',
+    zhHans: '更新日志',
+    zhHant: '更新紀錄',
+  );
+
+  String get appUpdateLogLoading => tr(
+    en: 'loading update log...',
+    ru: 'загружаем список изменений...',
+    tr: 'güncelleme günlüğü yükleniyor...',
+    ptBr: 'carregando registro de atualização...',
+    zhHans: '正在加载更新日志...',
+    zhHant: '正在載入更新紀錄...',
+  );
+
+  String get appUpdateLogUnavailable => tr(
+    en: 'update log is not available',
+    ru: 'список изменений недоступен',
+    tr: 'güncelleme günlüğü mevcut değil',
+    ptBr: 'registro de atualização indisponível',
+    zhHans: '更新日志不可用',
+    zhHant: '更新紀錄無法使用',
   );
 
   String get visitProjectPageTitle => tr(
@@ -1063,6 +1135,124 @@ class AppStrings {
     zhHant: '回報問題',
   );
 
+  String get supportLiveBridgeTitle => tr(
+    en: 'Support LiveBridge',
+    ru: 'Поддержать LiveBridge',
+    tr: 'LiveBridge’i destekle',
+    ptBr: 'Apoiar o LiveBridge',
+    zhHans: '支持 LiveBridge',
+    zhHant: '支持 LiveBridge',
+  );
+
+  String get supportIntroTitle => tr(
+    en: 'Keep LiveBridge free',
+    ru: 'LiveBridge остается бесплатным',
+    tr: 'LiveBridge ücretsiz kalsın',
+    ptBr: 'Mantenha o LiveBridge gratuito',
+    zhHans: '让 LiveBridge 保持免费',
+    zhHant: '讓 LiveBridge 保持免費',
+  );
+
+  String get supportIntroBody => tr(
+    en: 'Donations are optional and never unlock features. They help cover testing devices and development time.',
+    ru: 'Донаты добровольны и не открывают функций. Они помогают покрывать тестовые устройства и время разработки.',
+    tr: 'Bağışlar isteğe bağlıdır ve özellik açmaz. Test cihazlarını ve geliştirme süresini destekler.',
+    ptBr:
+        'Doações são opcionais e não desbloqueiam recursos. Elas ajudam com aparelhos de teste e tempo de desenvolvimento.',
+    zhHans: '捐赠是自愿的，不会解锁功能。它们用于测试设备和开发时间。',
+    zhHant: '捐贈是自願的，不會解鎖功能。它們用於測試裝置和開發時間。',
+  );
+
+  String get supportBoostyTitle => tr(
+    en: 'Boosty',
+    ru: 'Boosty',
+    tr: 'Boosty',
+    ptBr: 'Boosty',
+    zhHans: 'Boosty',
+    zhHant: 'Boosty',
+  );
+
+  String get supportBoostySubtitle => tr(
+    en: 'cards and recurring support',
+    ru: 'карты и регулярная поддержка',
+    tr: 'kartlar ve düzenli destek',
+    ptBr: 'cartões e apoio recorrente',
+    zhHans: '银行卡和定期支持',
+    zhHant: '銀行卡和定期支持',
+  );
+
+  String get supportCryptoTitle => tr(
+    en: 'Crypto',
+    ru: 'Криптовалюта',
+    tr: 'Kripto',
+    ptBr: 'Cripto',
+    zhHans: '加密货币',
+    zhHant: '加密貨幣',
+  );
+
+  String get supportCryptoSubtitle => tr(
+    en: 'copy wallet details',
+    ru: 'скопировать реквизиты кошелька',
+    tr: 'cüzdan bilgilerini kopyala',
+    ptBr: 'copiar dados da carteira',
+    zhHans: '复制钱包信息',
+    zhHant: '複製錢包資訊',
+  );
+
+  String get supportDiscussTitle => tr(
+    en: 'Discuss',
+    ru: 'Discuss',
+    tr: 'Tartış',
+    ptBr: 'Discutir',
+    zhHans: '讨论',
+    zhHant: '討論',
+  );
+
+  String get supportDiscussSubtitle => tr(
+    en: 'telegram topics',
+    ru: 'telegram topics',
+    tr: 'telegram konuları',
+    ptBr: 'tópicos no telegram',
+    zhHans: 'telegram 话题',
+    zhHant: 'telegram 話題',
+  );
+
+  String get supportGithubTitle => tr(
+    en: 'Star on GitHub',
+    ru: 'Поставить звезду на GitHub',
+    tr: 'GitHub',
+    ptBr: 'GitHub',
+    zhHans: 'GitHub',
+    zhHant: 'GitHub',
+  );
+
+  String get supportGithubSubtitle => tr(
+    en: 'source code and releases',
+    ru: 'исходный код и релизы',
+    tr: 'kaynak kod ve sürümler',
+    ptBr: 'código-fonte e versões',
+    zhHans: '源代码和版本发布',
+    zhHant: '原始碼和版本發布',
+  );
+
+  String get supportMethodNotConfigured => tr(
+    en: 'Support method is not configured yet.',
+    ru: 'Способ поддержки еще не настроен.',
+    tr: 'Destek yöntemi henüz yapılandırılmadı.',
+    ptBr: 'O método de apoio ainda não foi configurado.',
+    zhHans: '支持方式尚未配置。',
+    zhHant: '支持方式尚未設定。',
+  );
+
+  String get supportCryptoCopied => tr(
+    en: 'Crypto details copied',
+    ru: 'Криптореквизиты скопированы',
+    tr: 'Kripto bilgileri kopyalandı',
+    ptBr: 'Dados de cripto copiados',
+    zhHans: '加密货币信息已复制',
+    zhHant: '加密貨幣資訊已複製',
+  );
+
   String get bugReportCopied => tr(
     en: 'Diagnostics copied to clipboard. Paste it into the issue.',
     ru: 'Диагностика скопирована в буфер. Вставьте в issue.',
@@ -1130,9 +1320,9 @@ class AppStrings {
     en: 'Alt background mode',
     ru: 'Альтернативный фоновый режим',
     tr: 'Alternatif arka plan modu',
-    ptBr: 'Modo alternativo em segundo plano',
-    zhHans: '替代后台模式',
-    zhHant: '替代背景模式',
+    ptBr: 'Modo de segundo plano alternativo',
+    zhHans: '备用后台模式',
+    zhHant: '備用背景模式',
   );
 
   String get networkSpeedTitle => tr(
@@ -1165,16 +1355,16 @@ class AppStrings {
   String get preventDismissingTitle => tr(
     en: 'Prevent dismissing',
     ru: 'Запретить скрытие',
-    tr: 'Kapatmayı engelle',
-    ptBr: 'Impedir dispensa',
-    zhHans: '防止被关闭',
-    zhHant: '防止被關閉',
+    tr: 'Bildirimi kapatmayı engelle',
+    ptBr: 'Impedir fechamento',
+    zhHans: '防止通知被关闭',
+    zhHant: '防止通知被關閉',
   );
 
   String get updateChecksTitle => tr(
     en: 'Update checking',
     ru: 'Проверка обновлений',
-    tr: 'Güncelleme denetimi',
+    tr: 'Güncellemeleri denetle',
     ptBr: 'Verificação de atualizações',
     zhHans: '检查更新',
     zhHant: '檢查更新',

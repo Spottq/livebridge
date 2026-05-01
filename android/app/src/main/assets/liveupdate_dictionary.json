@@ -53,17 +53,18 @@
         "(дарим\\s+скидк|скидк[\\p{L}]*\\s*\\d+%|\\d+%\\s*(скидк|off)|акци[яи]|промокод|promo\\s*code|coupon|cash\\s*back|кэшб[еэ]к|红包|紅包|优惠|優惠|折扣|满减|滿減|返现|返現|促销|促銷|券|免運|免运费)",
         "(payment\\s*(?:failure|failed|declined|unsuccessful)|оплат[аы][^\\n]*(?:не\\s*прошл|ошибк|отклон|не\\s*успеш)|неудачн[а-я\\s]*оплат|支付失败|支付失敗|扣款失败|扣款失敗|订单取消|訂單取消|已退款)",
         "(cart|basket|checkout|complete\\s+(?:your\\s+)?checkout|finish\\s+(?:your\\s+)?order|корзин|заверш(?:ите|ить)\\s+оформлени|оформите\\s+заказ|перейдите\\s+к\\s+оформлени|продолж(?:ите|ить)\\s+оформлени)",
+        "(you'?ll\\s+get\\s+an\\s+alert[^\\n]{0,80}(?:at\\s+your\\s+door|delivered)|keep\\s+your\\s+phone\\s+nearby\\s+until\\s+it'?s\\s+delivered|until\\s+it'?s\\s+delivered)",
         "(при\\s+заказе\\s+от\\s*\\d|order\\s+from\\s*\\d|满\\d+减|滿\\d+減)",
         "(почт[аы]\\s+росси|посыл(?:к|ок)|маркетплейс|отделени[ея]|трек-?номер|tracking|shipment|parcel|пункт\\s*выдачи|取件码|取件碼|快递|快遞|驿站|驛站|包裹|收发室|收發室)"
       ],
       "signals": [
         {
           "stage": 4,
-          "pattern": "(доставлен(?:а|о|ы)?|получен(?:а|о|ы)?|вручен(?:а|о|ы)?|delivery completed|order delivered|delivered|completed|приятного аппетита|enjoy(?: your meal)?|已送达|已送達|订单已完成|訂單已完成|祝您用餐愉快|取餐成功|餐点已送达|餐點已送達|您的外卖已送达|您的外賣已送達)"
+          "pattern": "(доставлен(?:а|о|ы)?|получен(?:а|о|ы)?|вручен(?:а|о|ы)?|delivery completed|order delivered|delivered|completed|приятного аппетита|enjoy(?: your (?:meal|order))?|thanks for ordering|已送达|已送達|订单已完成|訂單已完成|祝您用餐愉快|取餐成功|餐点已送达|餐點已送達|您的外卖已送达|您的外賣已送達)"
         },
         {
           "stage": 3,
-          "pattern": "(курьер[^\\n]*(в пути|едет|уже рядом|подъезжа(?:ет|л)|забрал(?: заказ)?)|out for delivery|on the way|heading to you|едет к вам|доставля(?:ется|ем|ют)|передан[^\\n]*курьеру|courier[^\\n]*(picked up|heading|on the way|nearby)|配送中|正在送出|骑手已取餐|騎手已取餐|外送員已取餐|正在前往|即将送达|即將送達|骑手正在前往|外送員正在前往|距离您|距離您)"
+          "pattern": "(курьер[^\\n]*(в пути|едет|уже рядом|подъезжа(?:ет|л)|забрал(?: заказ)?)|out for delivery|on the way|heading to you|едет к вам|вез[её]м\\s+заказ|заказ[^\\n]{0,30}вез[её]м|доставля(?:ется|ем|ют)|передан[^\\n]*курьеру|courier[^\\n]*(picked up|heading|on the way|nearby)|give[^\\n]{0,60}a\\s+moment\\s+to\\s+leave\\s+your\\s+order\\s+at\\s+the\\s+door|配送中|正在送出|骑手已取餐|騎手已取餐|外送員已取餐|正在前往|即将送达|即將送達|骑手正在前往|外送員正在前往|距离您|距離您)"
         },
         {
           "stage": 2,
@@ -349,6 +350,25 @@
     }
   ],
   "blocked_source_packages": [],
+  "privacy_redaction_placeholders": [
+    "sensitive content hidden",
+    "content hidden",
+    "hidden content",
+    "notification content hidden",
+    "unlock to view",
+    "содержимое скрыто",
+    "контент скрыт",
+    "скрытое содержимое",
+    "разблокируйте, чтобы посмотреть",
+    "内容已隐藏",
+    "敏感内容已隐藏",
+    "通知内容已隐藏",
+    "解锁即可查看",
+    "內容已隱藏",
+    "敏感內容已隱藏",
+    "通知內容已隱藏",
+    "解鎖即可查看"
+  ],
   "known_navigation_packages": [
     "ru.dublgis.dgismobile",
     "ru.yandex.yandexmaps",
@@ -443,7 +463,7 @@
     "todayweather"
   ],
   "weather_context_pattern": "(погод|weather|температур|temperature|ощущаетс|feels like|влажност|humidity|ветер|wind|осадк|precip|давлен|pressure|прогноз|forecast|uv|aqi|today|tomorrow|highs?|lows?|sunny|clear|cloudy|overcast|rain(?:y)?|snow(?:y)?|fog(?:gy)?|mist|haze|wind(?:y)?|gust(?:y)?|thunder(?:storm)?|storm(?:y)?|天气|天氣|温度|溫度|体感|體感|湿度|濕度|风|風|降水|气压|氣壓|预报|預報|晴天|雨天|多云|多雲|雷阵雨|雷陣雨|台风|颱風|暴雨|豪雨|雷暴|雨)",
-  "weather_temperature_pattern": "(?<!\\d)([+\\-−]?\\d{1,3})\\s*(?:°\\s*(?:c|f|с|ф)?|℃|℉)",
+  "weather_temperature_pattern": "(?<!\\d)([+\\-−]?\\d{1,3})\\s*(?:°(?:\\s*(?:c|f|с|ф)(?!\\p{L}))?|℃|℉)",
   "weather_day_pattern": "(сегодня|завтра|утром|днем|вечером|ночью|today|tomorrow|morning|afternoon|evening|night|今天|明天|早上|上午|下午|晚上|夜间|夜間)",
   "weather_condition_pattern": "(ясно|пасмурно|облачно|дожд|снег|туман|ветрено|солнечно|sunny|cloudy|overcast|rain|snow|fog|windy|clear|晴|阴|陰|多云|多雲|阵雨|陣雨|雷阵雨|雷陣雨|暴雨|台风|颱風|下雪|大雪|雾|霧|晴天|雨天|多云|多雲|雷阵雨|雷陣雨|台风|颱風|暴雨|豪雨|雷暴|雨)",
   "weather_condition_thunder_pattern": "(гроз|thunder|storm|雷|风暴|風暴)",
@@ -555,6 +575,7 @@
     "發送"
   ],
   "otp_code_patterns": [
+    "(?:\\bcode\\b|\\botp\\b|\\bpasscode\\b|\\bкод\\b|пароль|验证码|驗證碼|密码|密碼|校验码|校驗碼)[^\\d\\n]{0,80}(\\d(?:[\\s-]?\\d){3,7})(?!\\d)",
     "(?<!\\S)(\\d{4,8})(?!\\d)",
     "(?<!\\S)(\\d(?:[\\s-]?\\d){3,7})(?!\\d)",
     "(?<!\\S)([A-Z0-9]{4,8})(?!\\w)"
@@ -571,8 +592,7 @@
   "entity_token_patterns": [
     "(?:заказ|order|trip|ride|поездк[аы]|订单|訂單|行程)\\s*(?:#|№|id|no\\.?|number|номер|编号|編號|号|號)\\s*([a-zA-Z0-9-]{2,16})",
     "(?:заказ|order|trip|ride|поездк[аы]|订单|訂單|行程)\\s+([a-zA-Z0-9-]*\\d[a-zA-Z0-9-]{1,15})",
-    "(?:#|№)\\s*([a-zA-Z0-9-]{2,16})",
-    "\\b(\\d{4,12})\\b"
+    "(?:#|№)\\s*([a-zA-Z0-9-]{2,16})"
   ],
   "status_labels": {
     "food": {

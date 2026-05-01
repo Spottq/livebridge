@@ -21,6 +21,27 @@ object ConversionLogStore {
     }
 
     @Synchronized
+    fun getEntriesPageRaw(context: Context, offset: Int, limit: Int): String {
+        val normalizedOffset = offset.coerceAtLeast(0)
+        val normalizedLimit = limit.coerceIn(1, 100)
+        val entries = readArray(context)
+        val page = JSONArray()
+        val endExclusive = minOf(entries.length(), normalizedOffset + normalizedLimit)
+
+        if (normalizedOffset < entries.length()) {
+            for (index in normalizedOffset until endExclusive) {
+                entries.optJSONObject(index)?.let(page::put)
+            }
+        }
+
+        return JSONObject().apply {
+            put("entries", page)
+            put("has_more", endExclusive < entries.length())
+            put("total_count", entries.length())
+        }.toString()
+    }
+
+    @Synchronized
     fun trimToPrefs(context: Context, prefs: ConverterPrefs) {
         val entries = readEntries(context)
         trimToMaxBytes(entries, prefs.getConversionLogMaxBytes())

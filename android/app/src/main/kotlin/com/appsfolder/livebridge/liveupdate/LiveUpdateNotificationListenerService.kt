@@ -85,6 +85,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             if (isUnsupportedDevice()) {
                 FlashlightSourceState.clear()
                 FlashlightForegroundService.stop(applicationContext)
+                NetworkSpeedForegroundService.stop(applicationContext)
                 LiveUpdateNotifier.cancelAllMirrored(applicationContext)
                 return
             }
@@ -128,6 +129,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         if (isUnsupportedDevice()) {
             FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
+            NetworkSpeedForegroundService.stop(applicationContext)
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
             return
         }
@@ -137,6 +139,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
         syncTorchMonitoring()
         LiveUpdateNotifier.ensureChannel(applicationContext)
+        syncNetworkSpeedService()
         scheduleSnapshotSync()
     }
 
@@ -148,10 +151,12 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         if (isUnsupportedDevice()) {
             FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
+            NetworkSpeedForegroundService.stop(applicationContext)
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
             return
         }
 
+        syncNetworkSpeedService()
         syncTorchMonitoring()
         val snapshots = try {
             activeNotifications?.toList().orEmpty()
@@ -191,6 +196,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         if (isUnsupportedDevice()) {
             return
         }
+        syncNetworkSpeedService()
         scheduleRebind("listener_disconnected")
     }
 
@@ -263,6 +269,14 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     private fun isUnsupportedDevice(): Boolean {
         return DeviceBlocker.isBlockedDevice()
+    }
+
+    private fun syncNetworkSpeedService() {
+        if (prefs.getNetworkSpeedEnabled() && !DeviceBlocker.isBlockedDevice()) {
+            NetworkSpeedForegroundService.sync(applicationContext)
+        } else {
+            NetworkSpeedForegroundService.stop(applicationContext)
+        }
     }
 
     override fun onDestroy() {

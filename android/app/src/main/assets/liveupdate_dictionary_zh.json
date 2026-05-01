@@ -294,6 +294,21 @@
     }
   ],
   "blocked_source_packages": [],
+  "privacy_redaction_placeholders": [
+    "sensitive content hidden",
+    "content hidden",
+    "hidden content",
+    "notification content hidden",
+    "unlock to view",
+    "内容已隐藏",
+    "敏感内容已隐藏",
+    "通知内容已隐藏",
+    "解锁即可查看",
+    "內容已隱藏",
+    "敏感內容已隱藏",
+    "通知內容已隱藏",
+    "解鎖即可查看"
+  ],
   "known_navigation_packages": [
     "ru.dublgis.dgismobile",
     "ru.yandex.yandexmaps",
@@ -376,7 +391,7 @@
     "todayweather"
   ],
   "weather_context_pattern": "(天气|天氣|温度|溫度|体感|體感|湿度|濕度|风|風|降水|气压|氣壓|预报|預報|晴天|雨天|多云|多雲|雷阵雨|雷陣雨|台风|颱風|暴雨|豪雨|雷暴|雨)",
-  "weather_temperature_pattern": "(?<!\\d)([+\\-−]?\\d{1,3})\\s*(?:°\\s*(?:c|f)?|℃|℉)",
+  "weather_temperature_pattern": "(?<!\\d)([+\\-−]?\\d{1,3})\\s*(?:°(?:\\s*(?:c|f)(?!\\p{L}))?|℃|℉)",
   "weather_day_pattern": "(今天|明天|早上|上午|下午|晚上|夜间|夜間)",
   "weather_condition_pattern": "(晴|阴|陰|多云|多雲|阵雨|陣雨|雷阵雨|雷陣雨|暴雨|台风|颱風|下雪|大雪|雾|霧|晴天|雨天|多云|多雲|雷阵雨|雷陣雨|台风|颱風|暴雨|豪雨|雷暴|雨)",
   "weather_condition_thunder_pattern": "(雷|风暴|風暴)",
@@ -460,6 +475,7 @@
     "發送"
   ],
   "otp_code_patterns": [
+    "(?:验证码|驗證碼|密码|密碼|校验码|校驗碼|动态码|動態碼|安全码|安全碼|code|otp)[^\\d\\n]{0,80}(\\d(?:[\\s-]?\\d){3,7})(?!\\d)",
     "(?<!\\S)(\\d{4,8})(?!\\d)",
     "(?<!\\S)(\\d(?:[\\s-]?\\d){3,7})(?!\\d)",
     "(?<!\\S)([A-Z0-9]{4,8})(?!\\w)"

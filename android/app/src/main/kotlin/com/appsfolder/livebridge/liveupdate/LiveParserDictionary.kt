@@ -11,6 +11,7 @@ private const val EMPTY_REGEX_PATTERN = "(?!)"
 internal data class LiveParserDictionary(
     val smartRules: List<SmartRuleEntry>,
     val blockedSourcePackages: Set<String>,
+    val privacyRedactionPlaceholders: Set<String>,
     val knownNavigationPackages: Set<String>,
     val navigationPackageMarkers: Set<String>,
     val navigationDistancePattern: Regex,
@@ -55,6 +56,8 @@ internal data class LiveParserDictionary(
         return LiveParserDictionary(
             smartRules = mergeSmartRules(smartRules, other.smartRules),
             blockedSourcePackages = blockedSourcePackages + other.blockedSourcePackages,
+            privacyRedactionPlaceholders =
+                privacyRedactionPlaceholders + other.privacyRedactionPlaceholders,
             knownNavigationPackages = knownNavigationPackages + other.knownNavigationPackages,
             navigationPackageMarkers = navigationPackageMarkers + other.navigationPackageMarkers,
             navigationDistancePattern = mergeRegex(
@@ -149,6 +152,7 @@ internal data class LiveParserDictionary(
             return LiveParserDictionary(
                 smartRules = emptyList(),
                 blockedSourcePackages = emptySet(),
+                privacyRedactionPlaceholders = emptySet(),
                 knownNavigationPackages = emptySet(),
                 navigationPackageMarkers = emptySet(),
                 navigationDistancePattern = emptyRegex,
@@ -197,6 +201,10 @@ internal data class LiveParserDictionary(
             val blockedSourcePackages =
                 parseStringSet(root.optJSONArray("blocked_source_packages")).ifEmpty {
                     defaults.blockedSourcePackages
+                }
+            val privacyRedactionPlaceholders =
+                parseStringSet(root.optJSONArray("privacy_redaction_placeholders")).ifEmpty {
+                    defaults.privacyRedactionPlaceholders
                 }
             val knownNavigationPackages =
                 parseStringSet(root.optJSONArray("known_navigation_packages")).ifEmpty {
@@ -337,6 +345,7 @@ internal data class LiveParserDictionary(
             return LiveParserDictionary(
                 smartRules = smartRules,
                 blockedSourcePackages = blockedSourcePackages,
+                privacyRedactionPlaceholders = privacyRedactionPlaceholders,
                 knownNavigationPackages = knownNavigationPackages,
                 navigationPackageMarkers = navigationPackageMarkers,
                 navigationDistancePattern = navigationDistancePattern,

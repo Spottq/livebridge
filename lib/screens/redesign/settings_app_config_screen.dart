@@ -2,13 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_locale_controller.dart';
 import '../../l10n/app_strings.dart';
 import '../../platform/livebridge_platform.dart';
 import '../../theme/livebridge_tokens.dart';
 import '../../utils/livebridge_haptics.dart';
+import '../../widgets/redesign/lb_app_language_sheet.dart';
 import '../../widgets/redesign/lb_detail_screen.dart';
 import '../../widgets/redesign/lb_icon.dart';
 import '../../widgets/redesign/lb_list_component.dart';
+import '../../widgets/redesign/lb_modal_bottom_sheet.dart';
 import '../../widgets/redesign/lb_slider.dart';
 import '../../widgets/redesign/lb_toggle.dart';
 
@@ -29,6 +32,7 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
   bool _syncDnd = true;
   bool _preventDismissing = false;
   bool _conversionLogEnabled = false;
+  String _appLanguageId = appLanguageSystemId;
   int _logLengthMb = 5;
   double _logLengthSliderValue = (5 - _logLengthMinMb).toDouble();
 
@@ -51,12 +55,17 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
           LiveBridgePlatform.getConversionLogEnabled();
       final Future<int> conversionLogMaxBytesFuture =
           LiveBridgePlatform.getConversionLogMaxBytes();
+      final Future<String> appLanguageFuture =
+          LiveBridgePlatform.getAppLanguageTag();
 
       final bool altBackgroundMode = await altBackgroundFuture;
       final bool syncDnd = await syncDndFuture;
       final bool preventDismissing = await preventDismissingFuture;
       final bool conversionLogEnabled = await conversionLogEnabledFuture;
       final int conversionLogMaxBytes = await conversionLogMaxBytesFuture;
+      final String appLanguageId = normalizeAppLanguageId(
+        await appLanguageFuture,
+      );
 
       if (!mounted) {
         return;
@@ -71,6 +80,7 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
         _syncDnd = syncDnd;
         _preventDismissing = preventDismissing;
         _conversionLogEnabled = conversionLogEnabled;
+        _appLanguageId = appLanguageId;
         _logLengthMb = normalizedLogLengthMb;
         _logLengthSliderValue = _sliderPositionForMb(normalizedLogLengthMb);
       });
@@ -117,6 +127,37 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
     await LiveBridgePlatform.setConversionLogMaxBytes(normalized * _bytesPerMb);
   }
 
+  Future<void> _setAppLanguage(String languageId) async {
+    final String normalized = normalizeAppLanguageId(languageId);
+    if (_appLanguageId == normalized) {
+      return;
+    }
+    setState(() => _appLanguageId = normalized);
+    await setAppLocalePreference(normalized);
+  }
+
+  Future<void> _openAppLanguageSheet() async {
+    final AppStrings strings = AppStrings.of(context);
+    await showLbModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext context) => LbAppLanguageSheet(
+        title: strings.appLanguagePickerTitle,
+        systemLabel: strings.appLanguageSystem,
+        selectedId: _appLanguageId,
+        onChanged: (String value) {
+          unawaited(_setAppLanguage(value));
+        },
+      ),
+    );
+  }
+
+  String _languageLabel(AppStrings strings) {
+    if (_appLanguageId == appLanguageSystemId) {
+      return strings.appLanguageSystem;
+    }
+    return appLanguageOptionForId(_appLanguageId).label;
+  }
+
   int _snapLogLengthMb(double sliderValue) {
     return (_logLengthMinMb + sliderValue.round()).clamp(
       _logLengthMinMb,
@@ -137,6 +178,14 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
     final double sliderMax = (_logLengthMaxMb - _logLengthMinMb).toDouble();
 
     final List<LbListItemData> primaryItems = <LbListItemData>[
+      LbListItemData(
+        title: strings.appLanguageTitle,
+        subtitle: _languageLabel(strings),
+        onTap: () {
+          unawaited(LiveBridgeHaptics.openSurface());
+          unawaited(_openAppLanguageSheet());
+        },
+      ),
       LbListItemData(
         title: strings.keepAliveForegroundTitle,
         showChevron: false,

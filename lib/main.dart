@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'l10n/app_locale_controller.dart';
 import 'screens/redesign/home_redesign_screen.dart';
 import 'theme/livebridge_tokens.dart';
 
@@ -16,6 +17,7 @@ Future<void> main() async {
   SystemChrome.setSystemUIOverlayStyle(
     LbAppTheme.overlayStyle(platformBrightness),
   );
+  await loadAppLocalePreference();
   runApp(const LiveBridgeApp());
 }
 
@@ -24,26 +26,25 @@ class LiveBridgeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'LiveBridge',
-      debugShowCheckedModeBanner: false,
-      supportedLocales: const <Locale>[
-        Locale('en'),
-        Locale('ru'),
-        Locale('tr'),
-        Locale('pt', 'BR'),
-        Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hans'),
-        Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
-      ],
-      localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      theme: LbAppTheme.light(),
-      darkTheme: LbAppTheme.dark(),
-      themeMode: ThemeMode.system,
-      home: const HomeRedesignScreen(),
+    return ValueListenableBuilder<Locale?>(
+      valueListenable: appLocaleOverrideNotifier,
+      builder: (BuildContext context, Locale? locale, _) {
+        return MaterialApp(
+          title: 'LiveBridge',
+          debugShowCheckedModeBanner: false,
+          locale: locale,
+          supportedLocales: supportedAppLocales(),
+          localizationsDelegates: const <LocalizationsDelegate<dynamic>>[
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          theme: LbAppTheme.light(),
+          darkTheme: LbAppTheme.dark(),
+          themeMode: ThemeMode.system,
+          home: const HomeRedesignScreen(),
+        );
+      },
     );
   }
 }

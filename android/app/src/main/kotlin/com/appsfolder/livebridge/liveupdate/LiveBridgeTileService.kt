@@ -43,6 +43,7 @@ class LiveBridgeTileService : TileService() {
             requestNotificationListenerRebindIfPossible()
         }
         syncKeepAliveForegroundService()
+        syncNetworkSpeedService()
         updateTile()
     }
 
@@ -78,6 +79,14 @@ class LiveBridgeTileService : TileService() {
             KeepAliveForegroundService.start(applicationContext)
         } else {
             KeepAliveForegroundService.stop(applicationContext)
+        }
+    }
+
+    private fun syncNetworkSpeedService() {
+        if (prefs.getNetworkSpeedEnabled() && !DeviceBlocker.isBlockedDevice()) {
+            NetworkSpeedForegroundService.sync(applicationContext)
+        } else {
+            NetworkSpeedForegroundService.stop(applicationContext)
         }
     }
 

@@ -21,6 +21,8 @@ class RulesMiscellaneousScreen extends StatefulWidget {
 class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
   bool _navigationEnabled = true;
   bool _mediaPlaybackEnabled = true;
+  bool _showMediaOnLock = false;
+  bool _useSymbolsInMediaPlayer = false;
   bool _weatherEnabled = false;
   bool _weatherLockscreenOnly = false;
   bool _smartFlashlightEnabled = false;
@@ -40,6 +42,10 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
           LiveBridgePlatform.getSmartNavigationEnabled();
       final Future<bool> mediaPlaybackFuture =
           LiveBridgePlatform.getSmartMediaPlaybackEnabled();
+      final Future<bool> showMediaOnLockFuture =
+          LiveBridgePlatform.getSmartMediaPlaybackShowOnLockScreen();
+      final Future<bool> useSymbolsInMediaPlayerFuture =
+          LiveBridgePlatform.getSmartMediaPlaybackUseSymbolsInPlayer();
       final Future<bool> weatherFuture =
           LiveBridgePlatform.getSmartWeatherEnabled();
       final Future<bool> weatherLockscreenOnlyFuture =
@@ -51,6 +57,8 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
 
       final bool navigationEnabled = await navigationFuture;
       final bool mediaPlaybackEnabled = await mediaPlaybackFuture;
+      final bool showMediaOnLock = await showMediaOnLockFuture;
+      final bool useSymbolsInMediaPlayer = await useSymbolsInMediaPlayerFuture;
       final bool weatherEnabled = await weatherFuture;
       final bool weatherLockscreenOnly = await weatherLockscreenOnlyFuture;
       final bool flashlightEnabled = await flashlightEnabledFuture;
@@ -64,6 +72,8 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
       setState(() {
         _navigationEnabled = navigationEnabled;
         _mediaPlaybackEnabled = mediaPlaybackEnabled;
+        _showMediaOnLock = showMediaOnLock;
+        _useSymbolsInMediaPlayer = useSymbolsInMediaPlayer;
         _weatherEnabled = weatherEnabled;
         _weatherLockscreenOnly = weatherLockscreenOnly;
         _smartFlashlightEnabled = flashlightEnabled;
@@ -86,6 +96,22 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
     }
     setState(() => _mediaPlaybackEnabled = value);
     await LiveBridgePlatform.setSmartMediaPlaybackEnabled(value);
+  }
+
+  Future<void> _setShowMediaOnLock(bool value) async {
+    if (!_mediaPlaybackEnabled || value == _showMediaOnLock) {
+      return;
+    }
+    setState(() => _showMediaOnLock = value);
+    await LiveBridgePlatform.setSmartMediaPlaybackShowOnLockScreen(value);
+  }
+
+  Future<void> _setUseSymbolsInMediaPlayer(bool value) async {
+    if (!_mediaPlaybackEnabled || value == _useSymbolsInMediaPlayer) {
+      return;
+    }
+    setState(() => _useSymbolsInMediaPlayer = value);
+    await LiveBridgePlatform.setSmartMediaPlaybackUseSymbolsInPlayer(value);
   }
 
   Future<void> _setWeatherEnabled(bool value) async {
@@ -137,21 +163,7 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
-    final List<LbListItemData> items = <LbListItemData>[
-      LbListItemData(
-        title: strings.navigationMapsTitle,
-        subtitle: strings.smartNavigationSubtitle,
-        showChevron: false,
-        toggleValue: _navigationEnabled,
-        onToggle: (bool value) {
-          unawaited(_setNavigationEnabled(value));
-        },
-        onTap: () {
-          final bool nextValue = !_navigationEnabled;
-          unawaited(LiveBridgeHaptics.toggle(nextValue));
-          unawaited(_setNavigationEnabled(nextValue));
-        },
-      ),
+    final List<LbListItemData> mediaItems = <LbListItemData>[
       LbListItemData(
         title: strings.mediaPlaybackRedesignTitle,
         subtitle: strings.smartMediaPlaybackSubtitle,
@@ -164,6 +176,57 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
           final bool nextValue = !_mediaPlaybackEnabled;
           unawaited(LiveBridgeHaptics.toggle(nextValue));
           unawaited(_setMediaPlaybackEnabled(nextValue));
+        },
+      ),
+      LbListItemData(
+        title: strings.showMediaOnLockTitle,
+        showChevron: false,
+        toggleValue: _showMediaOnLock,
+        enabled: _mediaPlaybackEnabled,
+        onToggle: (bool value) {
+          unawaited(_setShowMediaOnLock(value));
+        },
+        onTap: () {
+          if (!_mediaPlaybackEnabled) {
+            return;
+          }
+          final bool nextValue = !_showMediaOnLock;
+          unawaited(LiveBridgeHaptics.toggle(nextValue));
+          unawaited(_setShowMediaOnLock(nextValue));
+        },
+      ),
+      LbListItemData(
+        title: strings.useSymbolsInMediaPlayerTitle,
+        showChevron: false,
+        toggleValue: _useSymbolsInMediaPlayer,
+        enabled: _mediaPlaybackEnabled,
+        onToggle: (bool value) {
+          unawaited(_setUseSymbolsInMediaPlayer(value));
+        },
+        onTap: () {
+          if (!_mediaPlaybackEnabled) {
+            return;
+          }
+          final bool nextValue = !_useSymbolsInMediaPlayer;
+          unawaited(LiveBridgeHaptics.toggle(nextValue));
+          unawaited(_setUseSymbolsInMediaPlayer(nextValue));
+        },
+      ),
+    ];
+
+    final List<LbListItemData> otherItems = <LbListItemData>[
+      LbListItemData(
+        title: strings.navigationMapsTitle,
+        subtitle: strings.smartNavigationSubtitle,
+        showChevron: false,
+        toggleValue: _navigationEnabled,
+        onToggle: (bool value) {
+          unawaited(_setNavigationEnabled(value));
+        },
+        onTap: () {
+          final bool nextValue = !_navigationEnabled;
+          unawaited(LiveBridgeHaptics.toggle(nextValue));
+          unawaited(_setNavigationEnabled(nextValue));
         },
       ),
       LbListItemData(
@@ -200,34 +263,46 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
             : null,
       ),
     ];
+    final List<LbListItemData> flashlightItems = <LbListItemData>[
+      LbListItemData(
+        title: strings.smartFlashlightTitle,
+        subtitle: _flashlightSubtitle(strings),
+        showChevron: false,
+        enabled: _flashlightCapability.available,
+        toggleValue: _smartFlashlightEnabled,
+        onToggle: _flashlightCapability.available
+            ? (bool value) {
+                unawaited(_setSmartFlashlightEnabled(value));
+              }
+            : null,
+        onTap: _flashlightCapability.available
+            ? () {
+                final bool nextValue = !_smartFlashlightEnabled;
+                unawaited(LiveBridgeHaptics.toggle(nextValue));
+                unawaited(_setSmartFlashlightEnabled(nextValue));
+              }
+            : null,
+      ),
+    ];
 
     return LbDetailScreen(
       title: strings.miscellaneousTitle,
       children: <Widget>[
-        LbListComponent(items: items, extendDividersToEnd: true),
+        LbListComponent(
+          items: mediaItems,
+          rowHeight: LbSpacing.recentRowHeight,
+          extendDividersToEnd: true,
+        ),
         const SizedBox(height: LbSpacing.detailSectionGap),
         LbListComponent(
-          items: <LbListItemData>[
-            LbListItemData(
-              title: strings.smartFlashlightTitle,
-              subtitle: _flashlightSubtitle(strings),
-              showChevron: false,
-              enabled: _flashlightCapability.available,
-              toggleValue: _smartFlashlightEnabled,
-              onToggle: _flashlightCapability.available
-                  ? (bool value) {
-                      unawaited(_setSmartFlashlightEnabled(value));
-                    }
-                  : null,
-              onTap: _flashlightCapability.available
-                  ? () {
-                      final bool nextValue = !_smartFlashlightEnabled;
-                      unawaited(LiveBridgeHaptics.toggle(nextValue));
-                      unawaited(_setSmartFlashlightEnabled(nextValue));
-                    }
-                  : null,
-            ),
-          ],
+          items: otherItems,
+          rowHeight: LbSpacing.recentRowHeight,
+          extendDividersToEnd: true,
+        ),
+        const SizedBox(height: LbSpacing.detailSectionGap),
+        LbListComponent(
+          items: flashlightItems,
+          rowHeight: LbSpacing.recentRowHeight,
           extendDividersToEnd: true,
         ),
       ],

@@ -118,6 +118,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getPreventMirrorDismissEnabled();
     final Future<bool> updateChecksFuture =
         LiveBridgePlatform.getUpdateChecksEnabled();
+    final Future<String> appLanguageFuture =
+        LiveBridgePlatform.getAppLanguageTag();
     final Future<bool> onlyWithProgressFuture =
         LiveBridgePlatform.getOnlyWithProgress();
     final Future<bool> textProgressFuture =
@@ -126,6 +128,10 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getSmartStatusDetectionEnabled();
     final Future<bool> smartMediaFuture =
         LiveBridgePlatform.getSmartMediaPlaybackEnabled();
+    final Future<bool> smartMediaShowOnLockFuture =
+        LiveBridgePlatform.getSmartMediaPlaybackShowOnLockScreen();
+    final Future<bool> smartMediaUseSymbolsFuture =
+        LiveBridgePlatform.getSmartMediaPlaybackUseSymbolsInPlayer();
     final Future<bool> smartNavigationFuture =
         LiveBridgePlatform.getSmartNavigationEnabled();
     final Future<bool> smartWeatherFuture =
@@ -255,10 +261,15 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         'sync_dnd_enabled': await syncDndFuture,
         'prevent_mirror_dismiss_enabled': await preventDismissingFuture,
         'update_checks_enabled': await updateChecksFuture,
+        'app_language': await appLanguageFuture,
         'only_with_progress': await onlyWithProgressFuture,
         'text_progress_enabled': await textProgressFuture,
         'smart_detection_enabled': await smartStatusFuture,
         'smart_media_playback_enabled': await smartMediaFuture,
+        'smart_media_playback_show_on_lock_screen':
+            await smartMediaShowOnLockFuture,
+        'smart_media_playback_use_symbols_in_player':
+            await smartMediaUseSymbolsFuture,
         'smart_navigation_enabled': await smartNavigationFuture,
         'smart_weather_enabled': await smartWeatherFuture,
         'smart_weather_lockscreen_only': await smartWeatherLockscreenOnlyFuture,

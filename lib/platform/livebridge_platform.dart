@@ -33,9 +33,6 @@ class LiveBridgePlatform {
 
   static Future<bool> isNotificationListenerEnabled() =>
       _askBool('isNotificationListenerEnabled');
-  static Future<bool> isDeviceBlocked() => _askBool('isDeviceBlocked');
-  static Future<bool> setPixelJokeBypassEnabled(bool value) =>
-      _askBool('setPixelJokeBypassEnabled', {'value': value});
   static Future<bool> openNotificationListenerSettings() =>
       _askBool('openNotificationListenerSettings');
   static Future<bool> isNotificationPermissionGranted() =>
@@ -90,12 +87,22 @@ class LiveBridgePlatform {
       _askBool('getBugReportAutoCopyEnabled');
   static Future<bool> setBugReportAutoCopyEnabled(bool value) =>
       _askBool('setBugReportAutoCopyEnabled', {'value': value});
+  static Future<String> getAppLanguageTag() => _askStr('getAppLanguageTag');
+  static Future<bool> setAppLanguageTag(String value) =>
+      _askBool('setAppLanguageTag', {'value': value});
   static Future<int> getConversionLogMaxBytes() =>
       _askInt('getConversionLogMaxBytes');
   static Future<bool> setConversionLogMaxBytes(int value) =>
       _askBool('setConversionLogMaxBytes', {'value': value});
   static Future<String> getConversionLogEntries() =>
       _askStr('getConversionLogEntries');
+  static Future<String> getConversionLogEntriesPage({
+    required int offset,
+    required int limit,
+  }) => _askStr('getConversionLogEntriesPage', {
+    'offset': offset,
+    'limit': limit,
+  });
   static Future<bool> getNetworkSpeedEnabled() =>
       _askBool('getNetworkSpeedEnabled');
   static Future<bool> setNetworkSpeedEnabled(bool value) =>
@@ -234,6 +241,14 @@ class LiveBridgePlatform {
       _askBool('getSmartMediaPlaybackEnabled');
   static Future<bool> setSmartMediaPlaybackEnabled(bool value) =>
       _askBool('setSmartMediaPlaybackEnabled', {'value': value});
+  static Future<bool> getSmartMediaPlaybackShowOnLockScreen() =>
+      _askBool('getSmartMediaPlaybackShowOnLockScreen');
+  static Future<bool> setSmartMediaPlaybackShowOnLockScreen(bool value) =>
+      _askBool('setSmartMediaPlaybackShowOnLockScreen', {'value': value});
+  static Future<bool> getSmartMediaPlaybackUseSymbolsInPlayer() =>
+      _askBool('getSmartMediaPlaybackUseSymbolsInPlayer');
+  static Future<bool> setSmartMediaPlaybackUseSymbolsInPlayer(bool value) =>
+      _askBool('setSmartMediaPlaybackUseSymbolsInPlayer', {'value': value});
   static Future<bool> getSmartNavigationEnabled() =>
       _askBool('getSmartNavigationEnabled');
   static Future<bool> setSmartNavigationEnabled(bool value) =>
@@ -375,9 +390,8 @@ class LiveBridgePlatform {
         const <String>[];
   }
 
-  static Future<bool> setParserDictionaryEnabledLanguages(
-    List<String> value,
-  ) => _askBool('setParserDictionaryEnabledLanguages', {'value': value});
+  static Future<bool> setParserDictionaryEnabledLanguages(List<String> value) =>
+      _askBool('setParserDictionaryEnabledLanguages', {'value': value});
 
   static Future<bool> setParserDictionaryLanguageOverride({
     required String languageId,

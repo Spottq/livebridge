@@ -92,6 +92,15 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_BUG_REPORT_AUTO_COPY_ENABLED, value).apply()
     }
 
+    fun getAppLanguageTag(): String {
+        return prefs.getString(KEY_APP_LANGUAGE_TAG, "system") ?: "system"
+    }
+
+    fun setAppLanguageTag(value: String?) {
+        val normalized = value?.trim().orEmpty().ifBlank { "system" }
+        prefs.edit().putString(KEY_APP_LANGUAGE_TAG, normalized).apply()
+    }
+
     fun getConversionLogMaxBytes(): Int {
         return prefs.getInt(
             KEY_CONVERSION_LOG_MAX_BYTES,
@@ -491,6 +500,26 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_SMART_MEDIA_PLAYBACK_ENABLED, value).apply()
     }
 
+    fun getSmartMediaPlaybackShowOnLockScreen(): Boolean {
+        return prefs.getBoolean(KEY_SMART_MEDIA_PLAYBACK_SHOW_ON_LOCK_SCREEN, false)
+    }
+
+    fun setSmartMediaPlaybackShowOnLockScreen(value: Boolean) {
+        prefs.edit()
+            .putBoolean(KEY_SMART_MEDIA_PLAYBACK_SHOW_ON_LOCK_SCREEN, value)
+            .apply()
+    }
+
+    fun getSmartMediaPlaybackUseSymbolsInPlayer(): Boolean {
+        return prefs.getBoolean(KEY_SMART_MEDIA_PLAYBACK_USE_SYMBOLS_IN_PLAYER, false)
+    }
+
+    fun setSmartMediaPlaybackUseSymbolsInPlayer(value: Boolean) {
+        prefs.edit()
+            .putBoolean(KEY_SMART_MEDIA_PLAYBACK_USE_SYMBOLS_IN_PLAYER, value)
+            .apply()
+    }
+
     fun getSmartNavigationEnabled(): Boolean {
         return prefs.getBoolean(KEY_SMART_NAVIGATION_ENABLED, true)
     }
@@ -593,14 +622,6 @@ class ConverterPrefs(context: Context) {
     fun setOtpPackageMode(value: String?) {
         val mode = PackageMode.from(value)
         prefs.edit().putString(KEY_OTP_PACKAGE_MODE, mode.id).apply()
-    }
-
-    fun getPixelJokeBypassEnabled(): Boolean {
-        return prefs.getBoolean(KEY_PIXEL_JOKE_BYPASS_ENABLED, false)
-    }
-
-    fun setPixelJokeBypassEnabled(value: Boolean) {
-        prefs.edit().putBoolean(KEY_PIXEL_JOKE_BYPASS_ENABLED, value).apply()
     }
 
     fun getAppListAccessGranted(): Boolean {
@@ -886,6 +907,7 @@ class ConverterPrefs(context: Context) {
             "prevent_mirror_dismiss_enabled"
         private const val KEY_CONVERSION_LOG_ENABLED = "conversion_log_enabled"
         private const val KEY_BUG_REPORT_AUTO_COPY_ENABLED = "bug_report_auto_copy_enabled"
+        private const val KEY_APP_LANGUAGE_TAG = "app_language_tag"
         private const val KEY_CONVERSION_LOG_MAX_BYTES = "conversion_log_max_bytes"
         private const val KEY_SYNC_DND_ENABLED = "sync_dnd_enabled"
         private const val KEY_UPDATE_CHECKS_ENABLED = "update_checks_enabled"
@@ -909,6 +931,10 @@ class ConverterPrefs(context: Context) {
         private const val KEY_SMART_TAXI_ENABLED = "smart_taxi_enabled"
         private const val KEY_SMART_DELIVERY_ENABLED = "smart_delivery_enabled"
         private const val KEY_SMART_MEDIA_PLAYBACK_ENABLED = "smart_media_playback_enabled"
+        private const val KEY_SMART_MEDIA_PLAYBACK_SHOW_ON_LOCK_SCREEN =
+            "smart_media_playback_show_on_lock_screen"
+        private const val KEY_SMART_MEDIA_PLAYBACK_USE_SYMBOLS_IN_PLAYER =
+            "smart_media_playback_use_symbols_in_player"
         private const val KEY_SMART_NAVIGATION_ENABLED = "smart_navigation_enabled"
         private const val KEY_SMART_WEATHER_ENABLED = "smart_weather_enabled"
         private const val KEY_SMART_WEATHER_LOCKSCREEN_ONLY = "smart_weather_lockscreen_only"
@@ -926,7 +952,6 @@ class ConverterPrefs(context: Context) {
             "otp_remove_original_message_enabled"
         private const val KEY_OTP_PACKAGE_RULES = "otp_package_rules"
         private const val KEY_OTP_PACKAGE_MODE = "otp_package_mode"
-        private const val KEY_PIXEL_JOKE_BYPASS_ENABLED = "pixel_joke_bypass_enabled"
         private const val KEY_APP_LIST_ACCESS_GRANTED = "app_list_access_granted"
         private const val KEY_BACKGROUND_WARNING_DISMISSED = "background_warning_dismissed"
         private const val KEY_SAMSUNG_WARNING_DISMISSED = "samsung_warning_dismissed"

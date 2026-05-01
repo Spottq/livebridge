@@ -11,6 +11,10 @@ enum LbIconSymbol {
   refresh,
   search,
   close,
+  handHeart,
+  wallet,
+  bankCard,
+  github,
   telegram,
   telegramFilled,
   translate,
@@ -104,6 +108,14 @@ IconData _iconFor(LbIconSymbol symbol) {
       return MingCuteIcons.mgc_search_2_line;
     case LbIconSymbol.close:
       return MingCuteIcons.mgc_close_line;
+    case LbIconSymbol.handHeart:
+      return MingCuteIcons.mgc_hand_heart_line;
+    case LbIconSymbol.wallet:
+      return MingCuteIcons.mgc_wallet_3_line;
+    case LbIconSymbol.bankCard:
+      return MingCuteIcons.mgc_bank_card_line;
+    case LbIconSymbol.github:
+      return MingCuteIcons.mgc_github_line;
     case LbIconSymbol.telegram:
       return MingCuteIcons.mgc_telegram_line;
     case LbIconSymbol.telegramFilled:

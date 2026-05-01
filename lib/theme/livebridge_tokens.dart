@@ -315,20 +315,6 @@ class LbRadius {
 class LbEffects {
   const LbEffects._();
 
-  static const double topEdgeBlurHeight = 96;
-  static const double bottomEdgeBlurHeight = 120;
-  static const double topEdgeBlurSigma = 24;
-  static const double bottomEdgeBlurSigma = 18;
-  static const double topEdgeBlurHoldStop = 0.34;
-  static const double bottomEdgeBlurHoldStop = 0.24;
-  static const double topEdgeBlurFadeStop = 0.84;
-  static const double bottomEdgeBlurFadeStop = 0.68;
-  static const double topEdgeBlurTint = 0.18;
-  static const double bottomEdgeBlurTint = 0.12;
-  static const double topEdgeOverlayTint = 0.14;
-  static const double bottomEdgeOverlayTint = 0.08;
-  static const double topEdgeOverlayFadeStop = 0.72;
-  static const double bottomEdgeOverlayFadeStop = 0.64;
   static const double modalSheetBackdropBlur = 7;
   static const double modalSheetBackdropTint = 0.16;
 }

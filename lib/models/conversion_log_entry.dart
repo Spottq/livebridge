@@ -52,3 +52,57 @@ class ConversionLogEntry {
         .toList(growable: false);
   }
 }
+
+class ConversionLogPage {
+  const ConversionLogPage({
+    required this.entries,
+    required this.hasMore,
+    required this.totalCount,
+  });
+
+  final List<ConversionLogEntry> entries;
+  final bool hasMore;
+  final int totalCount;
+
+  factory ConversionLogPage.decode(String raw) {
+    if (raw.trim().isEmpty) {
+      return const ConversionLogPage(
+        entries: <ConversionLogEntry>[],
+        hasMore: false,
+        totalCount: 0,
+      );
+    }
+
+    final Object? decoded = jsonDecode(raw);
+    if (decoded is! Map) {
+      return const ConversionLogPage(
+        entries: <ConversionLogEntry>[],
+        hasMore: false,
+        totalCount: 0,
+      );
+    }
+
+    final Map<String, dynamic> page = Map<String, dynamic>.from(decoded);
+    final Object? entriesJson = page['entries'];
+    final List<ConversionLogEntry> entries = entriesJson is List
+        ? entriesJson
+              .whereType<Map>()
+              .map(
+                (Map item) => ConversionLogEntry.fromJson(
+                  Map<String, dynamic>.from(item),
+                ),
+              )
+              .where(
+                (ConversionLogEntry entry) =>
+                    entry.sourceKey.isNotEmpty && entry.packageName.isNotEmpty,
+              )
+              .toList(growable: false)
+        : const <ConversionLogEntry>[];
+
+    return ConversionLogPage(
+      entries: entries,
+      hasMore: page['has_more'] as bool? ?? false,
+      totalCount: (page['total_count'] as num?)?.toInt() ?? entries.length,
+    );
+  }
+}

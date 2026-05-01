@@ -95,12 +95,6 @@ class MainActivity : FlutterActivity() {
                 DeviceBlocker.isBlockedDevice()
             )
 
-            "getPixelJokeBypassEnabled" -> res.success(prefs.getPixelJokeBypassEnabled())
-            "setPixelJokeBypassEnabled" -> {
-                prefs.setPixelJokeBypassEnabled(call.argument<Boolean>("value") ?: false)
-                res.success(true)
-            }
-
             "isNotificationListenerEnabled" -> res.success(isNotificationListenerEnabled())
             "requestNotificationListenerRebind" -> res.success(requestNotificationListenerRebind())
             "openNotificationListenerSettings" -> res.success(openNotificationListenerSettings())
@@ -279,15 +273,20 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
-            "getNetworkSpeedEnabled" -> res.success(prefs.getNetworkSpeedEnabled())
+            "getNetworkSpeedEnabled" -> {
+                syncNetworkSpeedService(prefs)
+                res.success(prefs.getNetworkSpeedEnabled())
+            }
             "setNetworkSpeedEnabled" -> {
                 prefs.setNetworkSpeedEnabled(call.argument<Boolean>("value") ?: false)
                 syncNetworkSpeedService(prefs)
                 res.success(true)
             }
 
-            "getNetworkSpeedMinThresholdBytesPerSecond" ->
+            "getNetworkSpeedMinThresholdBytesPerSecond" -> {
+                syncNetworkSpeedService(prefs)
                 res.success(prefs.getNetworkSpeedMinThresholdBytesPerSecond())
+            }
             "setNetworkSpeedMinThresholdBytesPerSecond" -> {
                 prefs.setNetworkSpeedMinThresholdBytesPerSecond(
                     call.argument<Number>("value")?.toLong() ?: 0L
@@ -391,6 +390,12 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getAppLanguageTag" -> res.success(prefs.getAppLanguageTag())
+            "setAppLanguageTag" -> {
+                prefs.setAppLanguageTag(call.argument<String>("value"))
+                res.success(true)
+            }
+
             "getConversionLogMaxBytes" -> res.success(prefs.getConversionLogMaxBytes())
             "setConversionLogMaxBytes" -> {
                 prefs.setConversionLogMaxBytes(call.argument<Number>("value")?.toInt() ?: 0)
@@ -400,6 +405,10 @@ class MainActivity : FlutterActivity() {
 
             "getConversionLogEntries" -> {
                 res.success(ConversionLogStore.getEntriesRaw(applicationContext))
+            }
+
+            "getConversionLogEntriesPage" -> {
+                loadConversionLogEntriesPageAsync(call, res)
             }
             "getSyncDndEnabled" -> res.success(prefs.getSyncDndEnabled())
             "setSyncDndEnabled" -> {
@@ -569,6 +578,24 @@ class MainActivity : FlutterActivity() {
             "getSmartMediaPlaybackEnabled" -> res.success(prefs.getSmartMediaPlaybackEnabled())
             "setSmartMediaPlaybackEnabled" -> {
                 prefs.setSmartMediaPlaybackEnabled(call.argument<Boolean>("value") ?: false)
+                res.success(true)
+            }
+            "getSmartMediaPlaybackShowOnLockScreen" -> {
+                res.success(prefs.getSmartMediaPlaybackShowOnLockScreen())
+            }
+            "setSmartMediaPlaybackShowOnLockScreen" -> {
+                prefs.setSmartMediaPlaybackShowOnLockScreen(
+                    call.argument<Boolean>("value") ?: false
+                )
+                res.success(true)
+            }
+            "getSmartMediaPlaybackUseSymbolsInPlayer" -> {
+                res.success(prefs.getSmartMediaPlaybackUseSymbolsInPlayer())
+            }
+            "setSmartMediaPlaybackUseSymbolsInPlayer" -> {
+                prefs.setSmartMediaPlaybackUseSymbolsInPlayer(
+                    call.argument<Boolean>("value") ?: false
+                )
                 res.success(true)
             }
 
@@ -1025,6 +1052,33 @@ class MainActivity : FlutterActivity() {
                     res.error(
                         "installed_apps_failed",
                         "Failed to load installed apps",
+                        error.message
+                    )
+                }
+            }
+        }
+    }
+
+    private fun loadConversionLogEntriesPageAsync(call: MethodCall, res: MethodChannel.Result) {
+        val offset = call.argument<Number>("offset")?.toInt() ?: 0
+        val limit = call.argument<Number>("limit")?.toInt() ?: 10
+
+        appsLoaderExecutor.execute {
+            try {
+                val page = ConversionLogStore.getEntriesPageRaw(
+                    context = applicationContext,
+                    offset = offset,
+                    limit = limit
+                )
+                runOnUiThread {
+                    res.success(page)
+                }
+            } catch (error: Throwable) {
+                Log.e(TAG, "Failed to load conversion log page", error)
+                runOnUiThread {
+                    res.error(
+                        "conversion_log_page_failed",
+                        "Failed to load conversion log page",
                         error.message
                     )
                 }
