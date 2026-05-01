@@ -701,6 +701,15 @@ class AppStrings {
     zhHant: '媒體播放',
   );
 
+  String get callsTitle => tr(
+    en: 'Calls',
+    ru: 'Звонки',
+    tr: 'Aramalar',
+    ptBr: 'Chamadas',
+    zhHans: '通话',
+    zhHant: '通話',
+  );
+
   String get showMediaOnLockTitle => tr(
     en: 'Show media on lockscreen',
     ru: 'Медиа на экране блокировки',
@@ -1723,6 +1732,16 @@ class AppStrings {
         'Converte notificações de reprodução de mídia em Live. Em alguns OEMs, isso pode duplicar a interface nativa de mídia.',
     zhHans: '将媒体播放通知转换为 Live。在某些 OEM 上可能会重复原生媒体界面。',
     zhHant: '將媒體播放通知轉換為 Live。在某些 OEM 上可能會重複原生媒體介面。',
+  );
+
+  String get smartCallsSubtitle => tr(
+    en: 'Mirrors active call notifications and shows elapsed call time in the chip.',
+    ru: 'Отражает уведомления активных звонков и показывает время разговора в чипе.',
+    tr: 'Etkin arama bildirimlerini yansıtır ve arama süresini çipte gösterir.',
+    ptBr:
+        'Espelha notificações de chamadas ativas e mostra o tempo da chamada no chip.',
+    zhHans: '镜像正在进行的通话通知，并在芯片中显示通话时长。',
+    zhHant: '鏡像進行中的通話通知，並在晶片中顯示通話時間。',
   );
 
   String get smartWeatherSubtitle => tr(
