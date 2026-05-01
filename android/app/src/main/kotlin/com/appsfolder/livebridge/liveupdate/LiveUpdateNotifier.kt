@@ -79,7 +79,6 @@ object LiveUpdateNotifier {
     )
     private const val SMART_ISLAND_ANIMATION_MIN_DELAY_MS = 2_000L
     private const val SMART_ISLAND_ANIMATION_MAX_DELAY_MS = 3_000L
-    private const val SMART_ISLAND_TOKEN_MAX_LENGTH = 20
     private const val PROGRAMMATIC_MIRROR_CANCEL_GRACE_MS = 2_000L
     private const val FOOD_DELIVERY_AGGREGATE_ENTITY = "delivery"
 
@@ -1686,7 +1685,9 @@ object LiveUpdateNotifier {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(text))
         }
         if (smartShortTextOverride != null && !hasProgress) {
-            builder.setContentText(smartShortTextOverride)
+            if (!preferSmartShortTextAsPrimary) {
+                builder.setContentText(smartShortTextOverride)
+            }
             builder.setShortCriticalText(
                 limitIslandText(
                     smartShortTextOverride,
@@ -3216,12 +3217,11 @@ object LiveUpdateNotifier {
         val normalized = raw.orEmpty()
             .replace(Regex("\\s+"), " ")
             .trim()
-        val normalizedLengthSafe = safeTakeByGraphemes(normalized, SMART_ISLAND_TOKEN_MAX_LENGTH)
-        if (normalizedLengthSafe.isBlank()) {
+        if (normalized.isBlank()) {
             return null
         }
         return limitIslandText(
-            normalizedLengthSafe,
+            normalized,
             aospCuttingEnabled,
             aospCuttingLength
         )

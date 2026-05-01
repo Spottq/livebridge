@@ -57,13 +57,11 @@ internal object SamsungBridgeContentPolicy {
                     hasCustomRemoteCard &&
                     remoteViewMiniTextPair != null &&
                     !isTwoGisPackage
-        val shouldClearContentText = if (useSmartShortTextAsPrimary) {
-            true
-        } else {
-            !isTwoGisPackage &&
+        val shouldClearContentText =
+            !useSmartShortTextAsPrimary &&
+                    !isTwoGisPackage &&
                     !useTextOnlyMiniNowBar &&
                     (hasCustomRemoteCard || smartRuleId == "navigation")
-        }
         val shouldUseSmartShortTextAsSecondary =
             !useSmartShortTextAsPrimary &&
             !isTwoGisPackage &&
