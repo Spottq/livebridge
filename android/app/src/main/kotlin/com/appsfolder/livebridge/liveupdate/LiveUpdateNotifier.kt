@@ -406,7 +406,7 @@ object LiveUpdateNotifier {
                     clearAggregateTrackingForSbnKeyLocked(sbn.key)
                 }
                 staleAggregateIds.forEach { cancelMirroredNotification(manager, it) }
-                val callDurationText = upsertCallMirrorState(
+                val callStartedAtWallClockMs = upsertCallMirrorState(
                     context = context,
                     sbn = sbn,
                     appPresentationOverride = appPresentationOverride,
@@ -420,11 +420,12 @@ object LiveUpdateNotifier {
                     mirrorChannel = MirrorNotificationChannel.CALLS,
                     progressOverride = null,
                     otpOverride = null,
-                    smartShortTextOverride = callDurationText,
+                    smartShortTextOverride = null,
                     requestPromoted = true,
                     samsungBridge = samsungBridge,
                     allowNavigationIconHeuristics = false,
-                    callMirrorActive = true
+                    callMirrorActive = true,
+                    callChronometerStartWallClockMs = callStartedAtWallClockMs
                 )
                 notifyWithPromotionFallback(
                     context = context,
@@ -437,10 +438,11 @@ object LiveUpdateNotifier {
                     mirrorChannel = MirrorNotificationChannel.CALLS,
                     progressOverride = null,
                     otpOverride = null,
-                    smartShortTextOverride = callDurationText,
+                    smartShortTextOverride = null,
                     samsungBridge = samsungBridge,
                     allowNavigationIconHeuristics = false,
-                    callMirrorActive = true
+                    callMirrorActive = true,
+                    callChronometerStartWallClockMs = callStartedAtWallClockMs
                 )
                 return mirroredResult(
                     notificationId = mirrorIdForKey(sbn.key),
@@ -1083,7 +1085,7 @@ object LiveUpdateNotifier {
         appPresentationOverride: AppPresentationOverride,
         samsungBridge: SamsungBridgeContext,
         snapshot: CallMirrorSnapshot
-    ): String {
+    ): Long {
         val now = System.currentTimeMillis()
         var scheduleGeneration: Long? = null
         val startedAtWallClockMs = synchronized(stateLock) {
@@ -1121,7 +1123,7 @@ object LiveUpdateNotifier {
                 generation = generation
             )
         }
-        return formatCallElapsedText(startedAtWallClockMs, now)
+        return startedAtWallClockMs
     }
 
     private fun scheduleCallMirrorRefresh(
@@ -1147,10 +1149,6 @@ object LiveUpdateNotifier {
             } ?: return@postDelayed
 
             val manager = NotificationManagerCompat.from(context)
-            val durationText = formatCallElapsedText(
-                startedAtWallClockMs = frame.startedAtWallClockMs,
-                nowWallClockMs = System.currentTimeMillis()
-            )
             try {
                 val notification = buildMirroredNotification(
                     context = context,
@@ -1159,11 +1157,12 @@ object LiveUpdateNotifier {
                     mirrorChannel = MirrorNotificationChannel.CALLS,
                     progressOverride = null,
                     otpOverride = null,
-                    smartShortTextOverride = durationText,
+                    smartShortTextOverride = null,
                     requestPromoted = true,
                     samsungBridge = frame.samsungBridge,
                     allowNavigationIconHeuristics = false,
-                    callMirrorActive = true
+                    callMirrorActive = true,
+                    callChronometerStartWallClockMs = frame.startedAtWallClockMs
                 )
                 notifyWithPromotionFallback(
                     context = context,
@@ -1176,10 +1175,11 @@ object LiveUpdateNotifier {
                     mirrorChannel = MirrorNotificationChannel.CALLS,
                     progressOverride = null,
                     otpOverride = null,
-                    smartShortTextOverride = durationText,
+                    smartShortTextOverride = null,
                     samsungBridge = frame.samsungBridge,
                     allowNavigationIconHeuristics = false,
-                    callMirrorActive = true
+                    callMirrorActive = true,
+                    callChronometerStartWallClockMs = frame.startedAtWallClockMs
                 )
             } catch (error: Throwable) {
                 Log.e(TAG, "Failed call duration mirror update: $mirrorKey", error)
@@ -1275,13 +1275,6 @@ object LiveUpdateNotifier {
             minutes * 60L + seconds
         }
         return (totalSeconds * 1_000L).coerceAtLeast(0L)
-    }
-
-    private fun formatCallElapsedText(
-        startedAtWallClockMs: Long,
-        nowWallClockMs: Long
-    ): String {
-        return formatMillisecondsAsClock(nowWallClockMs - startedAtWallClockMs)
     }
 
     private fun hasIncomingOrDialingCallMarker(
@@ -1687,7 +1680,8 @@ object LiveUpdateNotifier {
         textOverride: String? = null,
         largeIconOverride: Bitmap? = null,
         preferSmartShortTextAsPrimary: Boolean = false,
-        callMirrorActive: Boolean = false
+        callMirrorActive: Boolean = false,
+        callChronometerStartWallClockMs: Long? = null
     ): Notification {
         val runtimePrefs = ConverterPrefs(context)
         val parserDictionary = LiveParserDictionaryLoader.get(context, runtimePrefs)
@@ -1863,6 +1857,9 @@ object LiveUpdateNotifier {
         val hyperBridgeEnabled = runtimePrefs.getHyperBridgeEnabled()
         val weatherLockscreenOnly =
             smartRuleId == "weather" && runtimePrefs.getSmartWeatherLockscreenOnly()
+        val callChronometerStart = callChronometerStartWallClockMs
+            ?.takeIf { callMirrorActive && it > 0L }
+            ?.coerceAtMost(System.currentTimeMillis())
 
         val sourceHasProgress = hasEffectiveProgress(sbn.packageName, source)
         val samsungProgressMax = samsungReparse?.progressMax ?: 0
@@ -1976,8 +1973,8 @@ object LiveUpdateNotifier {
             .setDefaults(0)
             .setOngoing(true)
             .setAutoCancel(false)
-            .setWhen(resolveStableWhen(source, sbn.postTime))
-            .setShowWhen(false)
+            .setWhen(callChronometerStart ?: resolveStableWhen(source, sbn.postTime))
+            .setShowWhen(callChronometerStart != null)
             .setColor(progressColor)
             .setCategory(
                 if (callMirrorActive) {
@@ -1990,6 +1987,11 @@ object LiveUpdateNotifier {
             )
             .setVisibility(visibility)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+
+        if (callChronometerStart != null) {
+            builder.setUsesChronometer(true)
+            builder.setChronometerCountDown(false)
+        }
 
         applySmallIcon(context, builder, preferredPrimaryIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
@@ -2091,6 +2093,8 @@ object LiveUpdateNotifier {
             if (!preferSmartShortTextAsPrimary) {
                 builder.setContentText(smartShortTextOverride)
             }
+        }
+        if (smartShortTextOverride != null && !hasProgress) {
             builder.setShortCriticalText(
                 limitIslandText(
                     smartShortTextOverride,
@@ -2163,6 +2167,7 @@ object LiveUpdateNotifier {
                 chipIcon = preferredChipIcon,
                 nowBarIcon = preferredPrimaryIcon,
                 rightIcon = nowBarRightIcon,
+                suppressChipExpandedText = callChronometerStart != null,
                 lockscreenOnly = weatherLockscreenOnly,
                 hasProgress = hasProgress,
                 progressValue = progressValue,
@@ -2229,7 +2234,8 @@ object LiveUpdateNotifier {
         textOverride: String? = null,
         largeIconOverride: Bitmap? = null,
         preferSmartShortTextAsPrimary: Boolean = false,
-        callMirrorActive: Boolean = false
+        callMirrorActive: Boolean = false,
+        callChronometerStartWallClockMs: Long? = null
     ) {
         try {
             notifyMirroredNotification(
@@ -2260,7 +2266,8 @@ object LiveUpdateNotifier {
                 textOverride = textOverride,
                 largeIconOverride = largeIconOverride,
                 preferSmartShortTextAsPrimary = preferSmartShortTextAsPrimary,
-                callMirrorActive = callMirrorActive
+                callMirrorActive = callMirrorActive,
+                callChronometerStartWallClockMs = callChronometerStartWallClockMs
             )
             notifyMirroredNotification(
                 manager = manager,

@@ -23,6 +23,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         chipIcon: IconCompat?,
         nowBarIcon: IconCompat?,
         rightIcon: IconCompat?,
+        suppressChipExpandedText: Boolean = false,
         hasProgress: Boolean,
         progressValue: Int,
         progressMax: Int,
@@ -74,7 +75,9 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
             ) {
                 putCharSequence(KEY_SECONDARY_INFO, normalizedSecondary)
             }
-            putCharSequence(KEY_CHIP_EXPANDED_TEXT, normalizedChipText)
+            if (!suppressChipExpandedText) {
+                putCharSequence(KEY_CHIP_EXPANDED_TEXT, normalizedChipText)
+            }
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, normalizedNowBarPrimary)
             if (showSecondaryInNowBar) {
                 normalizedNowBarSecondary?.let {
