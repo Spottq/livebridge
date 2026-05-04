@@ -179,7 +179,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
     final List<LbListItemData> mediaItems = <LbListItemData>[
       LbListItemData(
         title: strings.mediaPlaybackRedesignTitle,
-        subtitle: strings.smartMediaPlaybackSubtitle,
         description: strings.mediaPlaybackDescription,
         showChevron: false,
         toggleValue: _mediaPlaybackEnabled,
@@ -233,7 +232,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
     final List<LbListItemData> otherItems = <LbListItemData>[
       LbListItemData(
         title: strings.callsTitle,
-        subtitle: strings.smartCallsSubtitle,
         description: strings.callsDescription,
         showChevron: false,
         toggleValue: _callsEnabled,
@@ -248,7 +246,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
       ),
       LbListItemData(
         title: strings.navigationMapsTitle,
-        subtitle: strings.smartNavigationSubtitle,
         description: strings.navigationMapsDescription,
         showChevron: false,
         toggleValue: _navigationEnabled,
@@ -263,7 +260,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
       ),
       LbListItemData(
         title: strings.weatherBroadcastsTitle,
-        subtitle: strings.smartWeatherSubtitle,
         description: strings.weatherBroadcastsDescription,
         showChevron: false,
         toggleValue: _weatherEnabled,
@@ -278,7 +274,7 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
       ),
       LbListItemData(
         title: strings.smartWeatherLockscreenOnlyTitle,
-        subtitle: strings.smartWeatherLockscreenOnlySubtitle,
+        description: strings.smartWeatherLockscreenOnlySubtitle,
         showChevron: false,
         enabled: _weatherEnabled,
         toggleValue: _weatherLockscreenOnly,
@@ -299,7 +295,7 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
     final List<LbListItemData> flashlightItems = <LbListItemData>[
       LbListItemData(
         title: strings.smartFlashlightTitle,
-        subtitle: _flashlightSubtitle(strings),
+        description: _flashlightSubtitle(strings),
         showChevron: false,
         enabled: _flashlightCapability.available,
         toggleValue: _smartFlashlightEnabled,

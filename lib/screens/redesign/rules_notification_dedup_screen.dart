@@ -280,7 +280,7 @@ class _RulesNotificationDedupScreenState
     final List<LbListItemData> dedupItems = <LbListItemData>[
       LbListItemData(
         title: strings.notificationDedupTitle,
-        subtitle: strings.notificationDedupSubtitle,
+        description: strings.notificationDedupSubtitle,
         showChevron: false,
         toggleValue: _dedupEnabled,
         onToggle: (bool value) {

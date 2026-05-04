@@ -422,7 +422,6 @@ class _RulesNetworkConnectionsScreenState
     final List<LbListItemData> primaryItems = <LbListItemData>[
       LbListItemData(
         title: strings.vpnsTitle,
-        subtitle: strings.smartVpnSubtitle,
         description: strings.vpnsDescription,
         showChevron: false,
         toggleValue: _vpnEnabled,
@@ -437,7 +436,6 @@ class _RulesNetworkConnectionsScreenState
       ),
       LbListItemData(
         title: strings.externalDevicesTitle,
-        subtitle: strings.smartExternalDevicesSubtitle,
         description: strings.externalDevicesDescription,
         showChevron: false,
         toggleValue: _externalDevicesEnabled,
@@ -452,7 +450,6 @@ class _RulesNetworkConnectionsScreenState
       ),
       LbListItemData(
         title: strings.ignoreDebuggingDevicesTitle,
-        subtitle: strings.smartExternalDevicesIgnoreDebuggingSubtitle,
         description: strings.ignoreDebuggingDevicesDescription,
         showChevron: false,
         toggleValue: _ignoreDebuggingDevices,
@@ -475,7 +472,7 @@ class _RulesNetworkConnectionsScreenState
     final List<LbListItemData> networkSpeedItems = <LbListItemData>[
       LbListItemData(
         title: strings.networkSpeedEnabledTitle,
-        subtitle: strings.networkSpeedEnabledSubtitle,
+        description: strings.networkSpeedEnabledSubtitle,
         showChevron: false,
         toggleValue: _networkSpeedEnabled,
         onToggle: (bool value) {
@@ -532,7 +529,7 @@ class _RulesNetworkConnectionsScreenState
       ),
       LbListItemData(
         title: strings.networkSpeedPrioritizeUploadTitle,
-        subtitle: strings.networkSpeedPrioritizeUploadSubtitle,
+        description: strings.networkSpeedPrioritizeUploadSubtitle,
         showChevron: false,
         enabled: _networkSpeedEnabled,
         toggleValue: _networkSpeedPrioritizeUpload,
@@ -551,7 +548,7 @@ class _RulesNetworkConnectionsScreenState
       ),
       LbListItemData(
         title: strings.networkSpeedLockscreenOnlyTitle,
-        subtitle: strings.networkSpeedLockscreenOnlySubtitle,
+        description: strings.networkSpeedLockscreenOnlySubtitle,
         showChevron: false,
         enabled: _networkSpeedEnabled,
         toggleValue: _networkSpeedLockscreenOnly,
@@ -570,7 +567,7 @@ class _RulesNetworkConnectionsScreenState
       ),
       LbListItemData(
         title: strings.networkSpeedDisableChipBackgroundTitle,
-        subtitle: strings.networkSpeedDisableChipBackgroundSubtitle,
+        description: strings.networkSpeedDisableChipBackgroundSubtitle,
         showChevron: false,
         enabled: _networkSpeedEnabled,
         toggleValue: _networkSpeedChipBackgroundDisabled,

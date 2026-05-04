@@ -71,7 +71,7 @@ class SettingsSupportScreen extends StatelessWidget {
           items: <LbListItemData>[
             LbListItemData(
               title: strings.supportBoostyTitle,
-              subtitle: strings.supportBoostySubtitle,
+              description: strings.supportBoostySubtitle,
               leadingIcon: LbIconSymbol.bankCard,
               showChevron: false,
               trailingWidget: LbIcon(
@@ -83,7 +83,7 @@ class SettingsSupportScreen extends StatelessWidget {
             ),
             LbListItemData(
               title: strings.supportCryptoTitle,
-              subtitle: strings.supportCryptoSubtitle,
+              description: strings.supportCryptoSubtitle,
               leadingIcon: LbIconSymbol.shieldCheck,
               showChevron: false,
               trailingWidget: LbIcon(
@@ -102,7 +102,7 @@ class SettingsSupportScreen extends StatelessWidget {
           items: <LbListItemData>[
             LbListItemData(
               title: strings.supportDiscussTitle,
-              subtitle: strings.supportDiscussSubtitle,
+              description: strings.supportDiscussSubtitle,
               leadingIcon: LbIconSymbol.telegram,
               showChevron: false,
               trailingWidget: LbIcon(
@@ -114,7 +114,7 @@ class SettingsSupportScreen extends StatelessWidget {
             ),
             LbListItemData(
               title: strings.supportGithubTitle,
-              subtitle: strings.supportGithubSubtitle,
+              description: strings.supportGithubSubtitle,
               leadingIcon: LbIconSymbol.github,
               showChevron: false,
               trailingWidget: LbIcon(
