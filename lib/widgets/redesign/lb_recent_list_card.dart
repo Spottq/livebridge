@@ -21,10 +21,8 @@ class LbRecentListCard extends StatelessWidget {
     return LbListComponent(
       items: items
           .map(
-            (String item) => LbListItemData(
-              title: item,
-              leadingText: _initialFor(item),
-            ),
+            (String item) =>
+                LbListItemData(title: item, leadingText: _initialFor(item)),
           )
           .toList(),
       rowHeight: LbSpacing.recentRowHeight,

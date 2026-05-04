@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/livebridge_tokens.dart';
 
 class LbSelectionIndicator extends StatelessWidget {
-  const LbSelectionIndicator({
-    super.key,
-    required this.selected,
-  });
+  const LbSelectionIndicator({super.key, required this.selected});
 
   final bool selected;
 

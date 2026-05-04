@@ -3,6 +3,7 @@ import 'package:ming_cute_icons/ming_cute_icons.dart';
 
 enum LbIconSymbol {
   overflow,
+  info,
   defaultsFlow,
   filterTwo,
   copy,
@@ -93,6 +94,8 @@ IconData _iconFor(LbIconSymbol symbol) {
   switch (symbol) {
     case LbIconSymbol.overflow:
       return MingCuteIcons.mgc_dots_vertical_fill;
+    case LbIconSymbol.info:
+      return MingCuteIcons.mgc_information_line;
     case LbIconSymbol.defaultsFlow:
       return MingCuteIcons.mgc_transfer_line;
     case LbIconSymbol.filterTwo:

@@ -40,20 +40,22 @@ class LbAppLanguageSheet extends StatelessWidget {
         ),
         const SizedBox(height: LbSpacing.md),
         LbListComponent(
-          items: appLanguageOptions.map((AppLanguageOption option) {
-            final bool selected = option.id == selectedId;
-            return LbListItemData(
-              title: _labelFor(option),
-              showChevron: false,
-              trailingWidget: LbSelectionIndicator(selected: selected),
-              trailingWidgetWidth: LbSpacing.selectionIndicatorSize,
-              onTap: () {
-                unawaited(LiveBridgeHaptics.selection());
-                onChanged(option.id);
-                Navigator.of(context).pop();
-              },
-            );
-          }).toList(growable: false),
+          items: appLanguageOptions
+              .map((AppLanguageOption option) {
+                final bool selected = option.id == selectedId;
+                return LbListItemData(
+                  title: _labelFor(option),
+                  showChevron: false,
+                  trailingWidget: LbSelectionIndicator(selected: selected),
+                  trailingWidgetWidth: LbSpacing.selectionIndicatorSize,
+                  onTap: () {
+                    unawaited(LiveBridgeHaptics.selection());
+                    onChanged(option.id);
+                    Navigator.of(context).pop();
+                  },
+                );
+              })
+              .toList(growable: false),
           rowHeight: LbSpacing.recentRowHeight,
           extendDividersToEnd: true,
         ),

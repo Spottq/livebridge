@@ -9,6 +9,7 @@ import '../../theme/livebridge_tokens.dart';
 import '../../utils/livebridge_haptics.dart';
 import '../../widgets/redesign/lb_detail_screen.dart';
 import '../../widgets/redesign/lb_icon.dart';
+import '../../widgets/redesign/lb_info_title.dart';
 import '../../widgets/redesign/lb_list_component.dart';
 import '../../widgets/redesign/lb_modal_bottom_sheet.dart';
 import '../../widgets/redesign/lb_selection_indicator.dart';
@@ -422,6 +423,7 @@ class _RulesNetworkConnectionsScreenState
       LbListItemData(
         title: strings.vpnsTitle,
         subtitle: strings.smartVpnSubtitle,
+        description: strings.vpnsDescription,
         showChevron: false,
         toggleValue: _vpnEnabled,
         onToggle: (bool value) {
@@ -436,6 +438,7 @@ class _RulesNetworkConnectionsScreenState
       LbListItemData(
         title: strings.externalDevicesTitle,
         subtitle: strings.smartExternalDevicesSubtitle,
+        description: strings.externalDevicesDescription,
         showChevron: false,
         toggleValue: _externalDevicesEnabled,
         onToggle: (bool value) {
@@ -450,6 +453,7 @@ class _RulesNetworkConnectionsScreenState
       LbListItemData(
         title: strings.ignoreDebuggingDevicesTitle,
         subtitle: strings.smartExternalDevicesIgnoreDebuggingSubtitle,
+        description: strings.ignoreDebuggingDevicesDescription,
         showChevron: false,
         toggleValue: _ignoreDebuggingDevices,
         enabled: _externalDevicesEnabled,
@@ -606,9 +610,10 @@ class _RulesNetworkConnectionsScreenState
                     children: <Widget>[
                       const SizedBox(width: LbSpacing.listTextOnlyInset),
                       Expanded(
-                        child: Text(
-                          strings.networkSpeedThresholdTitle,
-                          style: LbTextStyles.body.copyWith(
+                        child: LbInfoTitle(
+                          title: strings.networkSpeedThresholdTitle,
+                          description: strings.networkSpeedThresholdDescription,
+                          titleStyle: LbTextStyles.body.copyWith(
                             color: palette.textPrimary,
                           ),
                         ),

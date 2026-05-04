@@ -289,6 +289,7 @@ class _RulesOtpCodesScreenState extends State<RulesOtpCodesScreen> {
     final List<LbListItemData> otpItems = <LbListItemData>[
       LbListItemData(
         title: strings.otpCodesTitle,
+        description: strings.otpCodesDescription,
         showChevron: false,
         toggleValue: _otpCodesEnabled,
         onToggle: (bool value) {
@@ -302,6 +303,7 @@ class _RulesOtpCodesScreenState extends State<RulesOtpCodesScreen> {
       ),
       LbListItemData(
         title: strings.autoCopyCodeTitle,
+        description: strings.autoCopyCodeDescription,
         showChevron: false,
         toggleValue: _autoCopyEnabled,
         onToggle: _otpCodesEnabled
@@ -320,6 +322,7 @@ class _RulesOtpCodesScreenState extends State<RulesOtpCodesScreen> {
       LbListItemData(
         title: strings.removeOriginalMessageTitle,
         titleSuffix: strings.experimentalSuffix,
+        description: strings.removeOriginalMessageDescription,
         showChevron: false,
         toggleValue: _removeOriginalMessageEnabled,
         onToggle: _otpCodesEnabled
@@ -340,6 +343,7 @@ class _RulesOtpCodesScreenState extends State<RulesOtpCodesScreen> {
     final List<LbListItemData> conversionItems = <LbListItemData>[
       LbListItemData(
         title: strings.allAppsTitle,
+        description: strings.allAppsDescription,
         showChevron: false,
         trailingWidget: LbSelectionIndicator(
           selected: _conversionMode == LbRulesConversionMode.allApps,
@@ -352,6 +356,7 @@ class _RulesOtpCodesScreenState extends State<RulesOtpCodesScreen> {
       ),
       LbListItemData(
         title: strings.onlySelectedTitle,
+        description: strings.onlySelectedDescription,
         showChevron: false,
         trailingWidget: LbSelectionIndicator(
           selected: _conversionMode == LbRulesConversionMode.onlySelected,
@@ -364,6 +369,7 @@ class _RulesOtpCodesScreenState extends State<RulesOtpCodesScreen> {
       ),
       LbListItemData(
         title: strings.excludeSelectedTitle,
+        description: strings.excludeSelectedDescription,
         showChevron: false,
         trailingWidget: LbSelectionIndicator(
           selected: _conversionMode == LbRulesConversionMode.excludeSelected,

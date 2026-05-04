@@ -191,8 +191,9 @@ class _LbBottomFloatingNavState extends State<LbBottomFloatingNav>
                 onHorizontalDragStart: widget.onSelectionDragUpdate == null
                     ? null
                     : (DragStartDetails details) {
-                        if (
-                            !activeRect.inflate(6).contains(details.localPosition)) {
+                        if (!activeRect
+                            .inflate(6)
+                            .contains(details.localPosition)) {
                           _isDraggingSelector = false;
                           return;
                         }

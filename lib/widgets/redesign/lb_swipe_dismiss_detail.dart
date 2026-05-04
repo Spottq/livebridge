@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 class LbSwipeDismissDetail extends StatefulWidget {
-  const LbSwipeDismissDetail({
-    super.key,
-    required this.child,
-  });
+  const LbSwipeDismissDetail({super.key, required this.child});
 
   final Widget child;
 
@@ -26,16 +23,17 @@ class _LbSwipeDismissDetailState extends State<LbSwipeDismissDetail>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 180),
-    )..addListener(() {
-      final Animation<double>? animation = _settleAnimation;
-      if (animation == null) {
-        return;
-      }
-      setState(() => _dragOffset = animation.value);
-    });
+    _controller =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 180),
+        )..addListener(() {
+          final Animation<double>? animation = _settleAnimation;
+          if (animation == null) {
+            return;
+          }
+          setState(() => _dragOffset = animation.value);
+        });
     _controller.addStatusListener((AnimationStatus status) {
       if (status != AnimationStatus.completed || !_isSettling) {
         return;

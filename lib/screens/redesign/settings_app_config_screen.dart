@@ -9,7 +9,9 @@ import '../../theme/livebridge_tokens.dart';
 import '../../utils/livebridge_haptics.dart';
 import '../../widgets/redesign/lb_app_language_sheet.dart';
 import '../../widgets/redesign/lb_detail_screen.dart';
+import '../../widgets/redesign/lb_hints_controller.dart';
 import '../../widgets/redesign/lb_icon.dart';
+import '../../widgets/redesign/lb_info_title.dart';
 import '../../widgets/redesign/lb_list_component.dart';
 import '../../widgets/redesign/lb_modal_bottom_sheet.dart';
 import '../../widgets/redesign/lb_slider.dart';
@@ -31,6 +33,8 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
   bool _altBackgroundMode = false;
   bool _syncDnd = true;
   bool _preventDismissing = false;
+  bool _hideLockscreenContent = false;
+  bool _hintsDisabled = false;
   bool _conversionLogEnabled = false;
   String _appLanguageId = appLanguageSystemId;
   int _logLengthMb = 5;
@@ -51,6 +55,10 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
       final Future<bool> syncDndFuture = LiveBridgePlatform.getSyncDndEnabled();
       final Future<bool> preventDismissingFuture =
           LiveBridgePlatform.getPreventMirrorDismissEnabled();
+      final Future<bool> hideLockscreenContentFuture =
+          LiveBridgePlatform.getHideLockscreenContentEnabled();
+      final Future<bool> hintsDisabledFuture =
+          LiveBridgePlatform.getHintsDisabled();
       final Future<bool> conversionLogEnabledFuture =
           LiveBridgePlatform.getConversionLogEnabled();
       final Future<int> conversionLogMaxBytesFuture =
@@ -61,6 +69,8 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
       final bool altBackgroundMode = await altBackgroundFuture;
       final bool syncDnd = await syncDndFuture;
       final bool preventDismissing = await preventDismissingFuture;
+      final bool hideLockscreenContent = await hideLockscreenContentFuture;
+      final bool hintsDisabled = await hintsDisabledFuture;
       final bool conversionLogEnabled = await conversionLogEnabledFuture;
       final int conversionLogMaxBytes = await conversionLogMaxBytesFuture;
       final String appLanguageId = normalizeAppLanguageId(
@@ -79,11 +89,14 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
         _altBackgroundMode = altBackgroundMode;
         _syncDnd = syncDnd;
         _preventDismissing = preventDismissing;
+        _hideLockscreenContent = hideLockscreenContent;
+        _hintsDisabled = hintsDisabled;
         _conversionLogEnabled = conversionLogEnabled;
         _appLanguageId = appLanguageId;
         _logLengthMb = normalizedLogLengthMb;
         _logLengthSliderValue = _sliderPositionForMb(normalizedLogLengthMb);
       });
+      LbHintsController.updateLocal(hintsDisabled);
     } catch (_) {}
   }
 
@@ -109,6 +122,22 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
     }
     setState(() => _preventDismissing = value);
     await LiveBridgePlatform.setPreventMirrorDismissEnabled(value);
+  }
+
+  Future<void> _setHideLockscreenContent(bool value) async {
+    if (value == _hideLockscreenContent) {
+      return;
+    }
+    setState(() => _hideLockscreenContent = value);
+    await LiveBridgePlatform.setHideLockscreenContentEnabled(value);
+  }
+
+  Future<void> _setHintsDisabled(bool value) async {
+    if (value == _hintsDisabled) {
+      return;
+    }
+    setState(() => _hintsDisabled = value);
+    await LbHintsController.setDisabled(value);
   }
 
   Future<void> _setConversionLogEnabled(bool value) async {
@@ -180,6 +209,7 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
     final List<LbListItemData> primaryItems = <LbListItemData>[
       LbListItemData(
         title: strings.appLanguageTitle,
+        description: strings.appLanguageDescription,
         subtitle: _languageLabel(strings),
         onTap: () {
           unawaited(LiveBridgeHaptics.openSurface());
@@ -188,6 +218,7 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
       ),
       LbListItemData(
         title: strings.keepAliveForegroundTitle,
+        description: strings.keepAliveForegroundDescription,
         showChevron: false,
         toggleValue: _altBackgroundMode,
         onToggle: (bool value) {
@@ -201,6 +232,7 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
       ),
       LbListItemData(
         title: strings.syncDndTitle,
+        description: strings.syncDndDescription,
         showChevron: false,
         toggleValue: _syncDnd,
         onToggle: (bool value) {
@@ -214,6 +246,7 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
       ),
       LbListItemData(
         title: strings.preventDismissingTitle,
+        description: strings.preventDismissingDescription,
         showChevron: false,
         toggleValue: _preventDismissing,
         onToggle: (bool value) {
@@ -223,6 +256,34 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
           final bool nextValue = !_preventDismissing;
           unawaited(LiveBridgeHaptics.toggle(nextValue));
           unawaited(_setPreventDismissing(nextValue));
+        },
+      ),
+      LbListItemData(
+        title: strings.hideLockscreenContentTitle,
+        description: strings.hideLockscreenContentDescription,
+        showChevron: false,
+        toggleValue: _hideLockscreenContent,
+        onToggle: (bool value) {
+          unawaited(_setHideLockscreenContent(value));
+        },
+        onTap: () {
+          final bool nextValue = !_hideLockscreenContent;
+          unawaited(LiveBridgeHaptics.toggle(nextValue));
+          unawaited(_setHideLockscreenContent(nextValue));
+        },
+      ),
+      LbListItemData(
+        title: strings.disableHintsTitle,
+        description: strings.disableHintsDescription,
+        showChevron: false,
+        toggleValue: _hintsDisabled,
+        onToggle: (bool value) {
+          unawaited(_setHintsDisabled(value));
+        },
+        onTap: () {
+          final bool nextValue = !_hintsDisabled;
+          unawaited(LiveBridgeHaptics.toggle(nextValue));
+          unawaited(_setHintsDisabled(nextValue));
         },
       ),
     ];
@@ -252,9 +313,10 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
                     children: <Widget>[
                       const SizedBox(width: LbSpacing.listTextOnlyInset),
                       Expanded(
-                        child: Text(
-                          strings.conversionLogTitle,
-                          style: LbTextStyles.body.copyWith(
+                        child: LbInfoTitle(
+                          title: strings.conversionLogTitle,
+                          description: strings.conversionLogDescription,
+                          titleStyle: LbTextStyles.body.copyWith(
                             color: palette.textPrimary,
                           ),
                         ),
@@ -292,9 +354,10 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
                     Row(
                       children: <Widget>[
                         Expanded(
-                          child: Text(
-                            strings.logLengthTitle,
-                            style: LbTextStyles.body.copyWith(
+                          child: LbInfoTitle(
+                            title: strings.logLengthTitle,
+                            description: strings.logLengthDescription,
+                            titleStyle: LbTextStyles.body.copyWith(
                               color: palette.textPrimary,
                             ),
                           ),

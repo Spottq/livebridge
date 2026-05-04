@@ -116,6 +116,10 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
     final Future<bool> syncDndFuture = LiveBridgePlatform.getSyncDndEnabled();
     final Future<bool> preventDismissingFuture =
         LiveBridgePlatform.getPreventMirrorDismissEnabled();
+    final Future<bool> hideLockscreenContentFuture =
+        LiveBridgePlatform.getHideLockscreenContentEnabled();
+    final Future<bool> hintsDisabledFuture =
+        LiveBridgePlatform.getHintsDisabled();
     final Future<bool> updateChecksFuture =
         LiveBridgePlatform.getUpdateChecksEnabled();
     final Future<String> appLanguageFuture =
@@ -132,6 +136,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getSmartMediaPlaybackShowOnLockScreen();
     final Future<bool> smartMediaUseSymbolsFuture =
         LiveBridgePlatform.getSmartMediaPlaybackUseSymbolsInPlayer();
+    final Future<bool> smartCallsFuture =
+        LiveBridgePlatform.getSmartCallsEnabled();
     final Future<bool> smartNavigationFuture =
         LiveBridgePlatform.getSmartNavigationEnabled();
     final Future<bool> smartWeatherFuture =
@@ -260,6 +266,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
             await networkSpeedChipBackgroundDisabledFuture,
         'sync_dnd_enabled': await syncDndFuture,
         'prevent_mirror_dismiss_enabled': await preventDismissingFuture,
+        'hide_lockscreen_content_enabled': await hideLockscreenContentFuture,
+        'hints_disabled': await hintsDisabledFuture,
         'update_checks_enabled': await updateChecksFuture,
         'app_language': await appLanguageFuture,
         'only_with_progress': await onlyWithProgressFuture,
@@ -270,6 +278,7 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
             await smartMediaShowOnLockFuture,
         'smart_media_playback_use_symbols_in_player':
             await smartMediaUseSymbolsFuture,
+        'smart_calls_enabled': await smartCallsFuture,
         'smart_navigation_enabled': await smartNavigationFuture,
         'smart_weather_enabled': await smartWeatherFuture,
         'smart_weather_lockscreen_only': await smartWeatherLockscreenOnlyFuture,
@@ -398,6 +407,7 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
           items: <LbListItemData>[
             LbListItemData(
               title: strings.copyDebugJsonTitle,
+              description: strings.copyDebugJsonDescription,
               showChevron: false,
               trailingWidget: LbIcon(
                 symbol: LbIconSymbol.copy,
@@ -410,6 +420,7 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
             ),
             LbListItemData(
               title: strings.openGithubPageTitle,
+              description: strings.openGithubPageDescription,
               showChevron: false,
               trailingWidget: LbIcon(
                 symbol: LbIconSymbol.externalLink,
@@ -422,6 +433,7 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
             ),
             LbListItemData(
               title: strings.autoCopyDebugJsonTitle,
+              description: strings.autoCopyDebugJsonDescription,
               showChevron: false,
               toggleValue: _autoCopyDebugJson,
               onToggle: (bool value) {

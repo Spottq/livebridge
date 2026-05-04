@@ -241,6 +241,15 @@ class LbSpacing {
   static const double listTrailingChevronIconGap = 4;
   static const double listDividerTrailingInset = 10;
   static const double listPressedRadius = 14;
+  static const double listDescriptionIconSize = 20;
+  static const double listDescriptionIconGap = 8;
+  static const double descriptionPopoverMaxWidth = 330;
+  static const double descriptionPopoverHorizontalInset = 18;
+  static const double descriptionPopoverVerticalGap = 10;
+  static const double descriptionPopoverArrowWidth = 42;
+  static const double descriptionPopoverArrowHeight = 18;
+  static const double descriptionPopoverPaddingHorizontal = 18;
+  static const double descriptionPopoverPaddingVertical = 14;
   static const double inlineSuffixLift = 3;
   static const double sliderTrackHeight = 28;
   static const double sliderThumbSize = 18;
@@ -317,6 +326,13 @@ class LbEffects {
 
   static const double modalSheetBackdropBlur = 7;
   static const double modalSheetBackdropTint = 0.16;
+  static const double descriptionPopoverBackdropBlur = 8;
+  static const double descriptionPopoverBackdropAlpha = 0.88;
+  static const double descriptionPopoverShadowAlpha = 0.20;
+  static const double descriptionPopoverShadowBlur = 8;
+  static const double descriptionPopoverShadowOffsetY = 16;
+  static const double descriptionPopoverAmbientShadowAlpha = 0.09;
+  static const double descriptionPopoverAmbientShadowBlur = 6;
 }
 
 class LbMotion {

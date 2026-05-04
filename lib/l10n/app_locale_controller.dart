@@ -17,26 +17,10 @@ class AppLanguageOption {
 }
 
 const List<AppLanguageOption> appLanguageOptions = <AppLanguageOption>[
-  AppLanguageOption(
-    id: appLanguageSystemId,
-    label: 'Auto',
-    locale: null,
-  ),
-  AppLanguageOption(
-    id: 'en',
-    label: 'English',
-    locale: Locale('en'),
-  ),
-  AppLanguageOption(
-    id: 'ru',
-    label: 'Русский',
-    locale: Locale('ru'),
-  ),
-  AppLanguageOption(
-    id: 'tr',
-    label: 'Türkçe',
-    locale: Locale('tr'),
-  ),
+  AppLanguageOption(id: appLanguageSystemId, label: 'Auto', locale: null),
+  AppLanguageOption(id: 'en', label: 'English', locale: Locale('en')),
+  AppLanguageOption(id: 'ru', label: 'Русский', locale: Locale('ru')),
+  AppLanguageOption(id: 'tr', label: 'Türkçe', locale: Locale('tr')),
   AppLanguageOption(
     id: 'pt-BR',
     label: 'Português (Brasil)',
@@ -54,8 +38,9 @@ const List<AppLanguageOption> appLanguageOptions = <AppLanguageOption>[
   ),
 ];
 
-final ValueNotifier<Locale?> appLocaleOverrideNotifier =
-    ValueNotifier<Locale?>(null);
+final ValueNotifier<Locale?> appLocaleOverrideNotifier = ValueNotifier<Locale?>(
+  null,
+);
 
 Future<void> loadAppLocalePreference() async {
   try {

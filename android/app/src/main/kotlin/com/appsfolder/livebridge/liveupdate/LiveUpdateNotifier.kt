@@ -101,6 +101,7 @@ object LiveUpdateNotifier {
     private const val SMART_ISLAND_ANIMATION_MAX_DELAY_MS = 3_000L
     private const val PROGRAMMATIC_MIRROR_CANCEL_GRACE_MS = 2_000L
     private const val FOOD_DELIVERY_AGGREGATE_ENTITY = "delivery"
+    private const val LOCKSCREEN_CONTENT_HIDDEN_TEXT = "Content hidden"
 
     private val OTP_CODE_LENGTH = 4..8
     private val weatherHighLowPattern = Regex(
@@ -211,6 +212,7 @@ object LiveUpdateNotifier {
         context: Context,
         channel: MirrorNotificationChannel
     ) {
+        val lockscreenVisibility = mirrorChannelLockscreenVisibility(context)
         val current = manager.getNotificationChannel(channel.id)
         if (current == null) {
             manager.createNotificationChannel(createChannel(context, channel))
@@ -221,14 +223,14 @@ object LiveUpdateNotifier {
         val shouldUpdate =
             current.name?.toString() != channelText.name ||
                     current.description != channelText.description ||
-                    current.lockscreenVisibility != Notification.VISIBILITY_PUBLIC
+                    current.lockscreenVisibility != lockscreenVisibility
         if (!shouldUpdate) {
             return
         }
 
         current.name = channelText.name
         current.description = channelText.description
-        current.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        current.lockscreenVisibility = lockscreenVisibility
         manager.createNotificationChannel(current)
     }
 
@@ -245,7 +247,15 @@ object LiveUpdateNotifier {
             description = channelText.description
             enableVibration(false)
             setSound(null, null)
-            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+            lockscreenVisibility = mirrorChannelLockscreenVisibility(context)
+        }
+    }
+
+    private fun mirrorChannelLockscreenVisibility(context: Context): Int {
+        return if (ConverterPrefs(context).getHideLockscreenContentEnabled()) {
+            Notification.VISIBILITY_PRIVATE
+        } else {
+            Notification.VISIBILITY_PUBLIC
         }
     }
 
@@ -334,10 +344,11 @@ object LiveUpdateNotifier {
 
     fun cancelCallMirrors(context: Context): Int {
         val manager = NotificationManagerCompat.from(context)
-        val stateMirrorKeys = synchronized(stateLock) {
-            callMirrorStates.keys.toList()
+        val stateNotificationIds = synchronized(stateLock) {
+            val keys = callMirrorStates.keys.toList()
+            callMirrorStates.clear()
+            keys.map(::mirrorIdForKey)
         }
-        val stateNotificationIds = stateMirrorKeys.map(::mirrorIdForKey)
         val activeNotificationIds = runCatching {
             val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
@@ -613,21 +624,6 @@ object LiveUpdateNotifier {
                         parserDictionary = parserDictionary
                     )
             if (shouldSuppressNonTrafficVpn) {
-                val staleAggregateIds = synchronized(stateLock) {
-                    clearAggregateTrackingForSbnKeyLocked(sbn.key)
-                }
-                staleAggregateIds.forEach { cancelMirroredNotification(manager, it) }
-                cancelMirroredNotification(manager, mirrorIdForKey(sbn.key))
-                return notMirroredResult()
-            }
-
-            if (!hasNativeProgress &&
-                !isMediaPlaybackNotification &&
-                otpMatch == null &&
-                smartMatch == null &&
-                textProgressMatch == null &&
-                prefs.getOnlyWithProgress()
-            ) {
                 val staleAggregateIds = synchronized(stateLock) {
                     clearAggregateTrackingForSbnKeyLocked(sbn.key)
                 }
@@ -1008,22 +1004,17 @@ object LiveUpdateNotifier {
                     )
                 }
 
-                else -> {
+                hasNativeProgress -> {
                     val staleAggregateIds = synchronized(stateLock) {
                         clearAggregateTrackingForSbnKeyLocked(sbn.key)
                     }
                     staleAggregateIds.forEach { cancelMirroredNotification(manager, it) }
 
-                    val mirrorChannel = if (hasNativeProgress) {
-                        MirrorNotificationChannel.PROGRESS_NOTIFICATIONS
-                    } else {
-                        MirrorNotificationChannel.BYPASS
-                    }
                     val notification = buildMirroredNotification(
                         context = context,
                         sbn = sbn,
                         appPresentationOverride = appPresentationOverride,
-                        mirrorChannel = mirrorChannel,
+                        mirrorChannel = MirrorNotificationChannel.PROGRESS_NOTIFICATIONS,
                         progressOverride = null,
                         otpOverride = null,
                         smartShortTextOverride = null,
@@ -1038,7 +1029,7 @@ object LiveUpdateNotifier {
                         promotedNotification = notification,
                         sbn = sbn,
                         appPresentationOverride = appPresentationOverride,
-                        mirrorChannel = mirrorChannel,
+                        mirrorChannel = MirrorNotificationChannel.PROGRESS_NOTIFICATIONS,
                         progressOverride = null,
                         otpOverride = null,
                         smartShortTextOverride = null,
@@ -1048,6 +1039,15 @@ object LiveUpdateNotifier {
                         notificationId = mirrorIdForKey(sbn.key),
                         mirrorKey = sbn.key
                     )
+                }
+
+                else -> {
+                    val staleAggregateIds = synchronized(stateLock) {
+                        clearAggregateTrackingForSbnKeyLocked(sbn.key)
+                    }
+                    staleAggregateIds.forEach { cancelMirroredNotification(manager, it) }
+                    cancelMirroredNotification(manager, mirrorIdForKey(sbn.key))
+                    notMirroredResult()
                 }
             }
         } catch (error: Throwable) {
@@ -1473,6 +1473,7 @@ object LiveUpdateNotifier {
             sourceSnapshotsByMirrorKey.remove(mirrorKey)
             callMirrorStates.remove(mirrorKey)
             userDismissedMirrorKeys.add(mirrorKey)
+            callMirrorStates.remove(mirrorKey)
             smartAnimationGenerations.remove(mirrorKey)
             smartAnimationStates.remove(mirrorKey)
             otpAnimationGenerations.remove(mirrorKey)
@@ -1960,13 +1961,14 @@ object LiveUpdateNotifier {
         } else {
             displayText
         }
-        val visibility = if (
+        val hideLockscreenContent = runtimePrefs.getHideLockscreenContentEnabled()
+        val visibility = when {
             preferMediaControls &&
-            !runtimePrefs.getSmartMediaPlaybackShowOnLockScreen()
-        ) {
-            NotificationCompat.VISIBILITY_SECRET
-        } else {
-            NotificationCompat.VISIBILITY_PUBLIC
+                    !runtimePrefs.getSmartMediaPlaybackShowOnLockScreen() ->
+                NotificationCompat.VISIBILITY_SECRET
+
+            hideLockscreenContent -> NotificationCompat.VISIBILITY_PRIVATE
+            else -> NotificationCompat.VISIBILITY_PUBLIC
         }
         val useMediaActionSymbols = preferMediaControls &&
                 runtimePrefs.getSmartMediaPlaybackUseSymbolsInPlayer()
@@ -2128,6 +2130,24 @@ object LiveUpdateNotifier {
         applySmallIcon(context, builder, preferredPrimaryIcon)
         preferredLargeIcon?.let(builder::setLargeIcon)
 
+        if (hideLockscreenContent && visibility == NotificationCompat.VISIBILITY_PRIVATE) {
+            val publicBuilder = NotificationCompat.Builder(context, mirrorChannel.id)
+                .setContentTitle(LOCKSCREEN_CONTENT_HIDDEN_TEXT)
+                .setOnlyAlertOnce(true)
+                .setSilent(true)
+                .setDefaults(0)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setWhen(resolveStableWhen(source, sbn.postTime))
+            .setShowWhen(false)
+            .setColor(progressColor)
+            .setCategory(Notification.CATEGORY_STATUS)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            applySmallIcon(context, publicBuilder, preferredPrimaryIcon)
+            builder.setPublicVersion(publicBuilder.build())
+        }
+
         if (requestPromoted) {
             builder.setRequestPromotedOngoing(true)
         }
@@ -2226,6 +2246,15 @@ object LiveUpdateNotifier {
                 builder.setContentText(smartShortTextOverride)
             }
         }
+        if (callChronometerStart != null && !hasProgress) {
+            builder.setShortCriticalText(
+                limitIslandText(
+                    formatMillisecondsAsClock(System.currentTimeMillis() - callChronometerStart),
+                    aospCuttingEnabled,
+                    aospCuttingLength
+                )
+            )
+        }
         if (smartShortTextOverride != null && !hasProgress) {
             builder.setShortCriticalText(
                 limitIslandText(
@@ -2270,29 +2299,50 @@ object LiveUpdateNotifier {
         }
 
         if (samsungBridge.enabled) {
-            val samsungTexts = SamsungBridgeContentPolicy.resolve(
-                sourcePackageName = sbn.packageName,
-                hasCustomRemoteCard = samsungBridge.hasCustomRemoteCard,
-                hasProgress = hasProgress,
-                smartRuleId = smartRuleId,
-                smartShortTextOverride = smartShortTextOverride,
-                displayText = samsungPolicyDisplayText,
-                compactPrimaryText = compactPrimaryText,
-                resolvedProgressChipText = resolvedProgressChipText,
-                otpShortTextOverride = otpShortTextOverride,
-                otpCode = otpOverride?.code,
-                compactCodeOverride = compactCodeOverride,
-                samsungReparseChipText = samsungReparse?.chipText,
-                remoteViewMiniTextPair = samsungRemoteViewMiniTextPair,
-                twoGisPrimaryText = samsungTwoGisPrimaryText,
-                twoGisEtaDistanceText = samsungTwoGisEtaDistanceText,
-                twoGisVisibleSecondaryText = samsungTwoGisVisibleSecondaryText,
-                preferSmartShortTextAsPrimary = preferSmartShortTextAsPrimary
-            ).let { texts ->
-                if (callMirrorActive) {
-                    texts.copy(shouldClearContentText = false)
-                } else {
-                    texts
+            val hideSamsungNowBarContent = hideLockscreenContent
+            val samsungTexts = if (hideSamsungNowBarContent) {
+                SamsungBridgeTexts(
+                    shouldClearContentText = false,
+                    secondaryText = "",
+                    chipText = LOCKSCREEN_CONTENT_HIDDEN_TEXT,
+                    nowBarPrimaryText = LOCKSCREEN_CONTENT_HIDDEN_TEXT,
+                    nowBarSecondaryText = null,
+                    showSecondaryInNowBar = false,
+                    preferCompactNowBarRemoteView = false,
+                    disableNowBarRemoteView = true,
+                    disableMiniRemoteView = false,
+                    showMiniIcon = true,
+                    showSmallIcon = true,
+                    allowNowBarProgress = false,
+                    keepCollapsedRemoteView = false,
+                    preferExpandedRemoteBody = false,
+                    reuseNotificationRemoteViews = false
+                )
+            } else {
+                SamsungBridgeContentPolicy.resolve(
+                    sourcePackageName = sbn.packageName,
+                    hasCustomRemoteCard = samsungBridge.hasCustomRemoteCard,
+                    hasProgress = hasProgress,
+                    smartRuleId = smartRuleId,
+                    smartShortTextOverride = smartShortTextOverride,
+                    displayText = samsungPolicyDisplayText,
+                    compactPrimaryText = compactPrimaryText,
+                    resolvedProgressChipText = resolvedProgressChipText,
+                    otpShortTextOverride = otpShortTextOverride,
+                    otpCode = otpOverride?.code,
+                    compactCodeOverride = compactCodeOverride,
+                    samsungReparseChipText = samsungReparse?.chipText,
+                    remoteViewMiniTextPair = samsungRemoteViewMiniTextPair,
+                    twoGisPrimaryText = samsungTwoGisPrimaryText,
+                    twoGisEtaDistanceText = samsungTwoGisEtaDistanceText,
+                    twoGisVisibleSecondaryText = samsungTwoGisVisibleSecondaryText,
+                    preferSmartShortTextAsPrimary = preferSmartShortTextAsPrimary
+                ).let { texts ->
+                    if (callMirrorActive) {
+                        texts.copy(shouldClearContentText = false)
+                    } else {
+                        texts
+                    }
                 }
             }
             SamsungNowBarApplier.apply(
@@ -2304,14 +2354,16 @@ object LiveUpdateNotifier {
                 texts = samsungTexts,
                 chipIcon = preferredChipIcon,
                 nowBarIcon = preferredPrimaryIcon,
-                rightIcon = nowBarRightIcon,
-                suppressChipExpandedText = callChronometerStart != null,
-                suppressSourceRemoteViews = false,
-                suppressSourceNowBarRemoteView = suppressCallNowBarRemoteView,
+                rightIcon = if (hideSamsungNowBarContent) null else nowBarRightIcon,
+                suppressChipExpandedText =
+                    !hideSamsungNowBarContent && callChronometerStart != null,
+                suppressSourceRemoteViews = hideSamsungNowBarContent,
+                suppressSourceNowBarRemoteView =
+                    hideSamsungNowBarContent || suppressCallNowBarRemoteView,
                 lockscreenOnly = weatherLockscreenOnly,
-                hasProgress = hasProgress,
-                progressValue = progressValue,
-                progressMax = progressMax
+                hasProgress = hasProgress && !hideSamsungNowBarContent,
+                progressValue = if (hideSamsungNowBarContent) 0 else progressValue,
+                progressMax = if (hideSamsungNowBarContent) 0 else progressMax
             )
         }
 
@@ -2326,6 +2378,8 @@ object LiveUpdateNotifier {
             }
             val hyperTicker = when {
                 otpOverride != null -> otpPresentationText ?: otpOverride.code
+                callChronometerStart != null ->
+                    formatMillisecondsAsClock(System.currentTimeMillis() - callChronometerStart)
                 mediaTicker != null -> mediaTicker
                 !smartShortTextOverride.isNullOrBlank() -> smartShortTextOverride
                 determinateProgressPercent != null -> "$determinateProgressPercent%"

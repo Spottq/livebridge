@@ -184,6 +184,7 @@ class _RulesDictionaryScreenState extends State<RulesDictionaryScreen> {
           items: <LbListItemData>[
             LbListItemData(
               title: strings.dictionaryUpdateAction,
+              description: strings.dictionaryUpdateDescription,
               showChevron: false,
               trailingIcon: _isUpdating ? null : LbIconSymbol.downloadThree,
               trailingIconColor: palette.textPrimary,
@@ -204,6 +205,7 @@ class _RulesDictionaryScreenState extends State<RulesDictionaryScreen> {
             LbListItemData(
               title: strings.dictionaryEditorTitle,
               titleSuffix: strings.dictionaryComingSoon,
+              description: strings.dictionaryEditorDescription,
               showChevron: false,
               trailingIcon: LbIconSymbol.quillPen,
               trailingIconColor: palette.textMuted,

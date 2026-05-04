@@ -275,6 +275,7 @@ class _RulesProgressScreenState extends State<RulesProgressScreen> {
     final List<LbListItemData> progressItems = <LbListItemData>[
       LbListItemData(
         title: strings.nativeProgressTitle,
+        description: strings.nativeProgressDescription,
         showChevron: false,
         toggleValue: _nativeProgressEnabled,
         onToggle: (bool value) {
@@ -288,6 +289,7 @@ class _RulesProgressScreenState extends State<RulesProgressScreen> {
       ),
       LbListItemData(
         title: strings.textProgressTitle,
+        description: strings.textProgressDescription,
         showChevron: false,
         toggleValue: _textProgressEnabled,
         onToggle: (bool value) {
@@ -304,6 +306,7 @@ class _RulesProgressScreenState extends State<RulesProgressScreen> {
     final List<LbListItemData> conversionItems = <LbListItemData>[
       LbListItemData(
         title: strings.allAppsTitle,
+        description: strings.allAppsDescription,
         showChevron: false,
         trailingWidget: LbSelectionIndicator(
           selected: _conversionMode == LbRulesConversionMode.allApps,
@@ -316,6 +319,7 @@ class _RulesProgressScreenState extends State<RulesProgressScreen> {
       ),
       LbListItemData(
         title: strings.onlySelectedTitle,
+        description: strings.onlySelectedDescription,
         showChevron: false,
         trailingWidget: LbSelectionIndicator(
           selected: _conversionMode == LbRulesConversionMode.onlySelected,
@@ -328,6 +332,7 @@ class _RulesProgressScreenState extends State<RulesProgressScreen> {
       ),
       LbListItemData(
         title: strings.excludeSelectedTitle,
+        description: strings.excludeSelectedDescription,
         showChevron: false,
         trailingWidget: LbSelectionIndicator(
           selected: _conversionMode == LbRulesConversionMode.excludeSelected,

@@ -180,7 +180,8 @@ List<dynamic> _scopeSmartRules(List<dynamic>? raw, String languageId) {
       }
     });
 
-    final List<dynamic> signals = scoped['signals'] as List<dynamic>? ?? const <dynamic>[];
+    final List<dynamic> signals =
+        scoped['signals'] as List<dynamic>? ?? const <dynamic>[];
     if (signals.isEmpty) {
       continue;
     }
@@ -199,14 +200,14 @@ List<dynamic> _scopeSignals(List<dynamic>? raw, String languageId) {
       continue;
     }
     final Map<String, dynamic> source = Map<String, dynamic>.from(item);
-    final String? pattern = _filterLanguageString(source['pattern'], languageId);
+    final String? pattern = _filterLanguageString(
+      source['pattern'],
+      languageId,
+    );
     if (pattern == null) {
       continue;
     }
-    values.add(<String, dynamic>{
-      'stage': source['stage'],
-      'pattern': pattern,
-    });
+    values.add(<String, dynamic>{'stage': source['stage'], 'pattern': pattern});
   }
   return values;
 }

@@ -516,6 +516,7 @@ class _SettingsUpdateScreenState extends State<SettingsUpdateScreen>
           items: <LbListItemData>[
             LbListItemData(
               title: strings.updateChecksTitle,
+              description: strings.updateChecksDescription,
               showChevron: false,
               toggleValue: _updateChecksEnabled,
               onToggle: (bool value) {

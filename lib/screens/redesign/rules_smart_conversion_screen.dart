@@ -291,6 +291,7 @@ class _RulesSmartConversionScreenState
     final List<LbListItemData> smartItems = <LbListItemData>[
       LbListItemData(
         title: strings.taxiTitle,
+        description: strings.taxiDescription,
         showChevron: false,
         toggleValue: _taxiEnabled,
         onToggle: (bool value) {
@@ -304,6 +305,7 @@ class _RulesSmartConversionScreenState
       ),
       LbListItemData(
         title: strings.deliveriesTitle,
+        description: strings.deliveriesDescription,
         showChevron: false,
         toggleValue: _deliveriesEnabled,
         onToggle: (bool value) {
@@ -318,6 +320,7 @@ class _RulesSmartConversionScreenState
       LbListItemData(
         title: strings.removeOriginalMessageTitle,
         titleSuffix: strings.experimentalSuffix,
+        description: strings.removeOriginalMessageDescription,
         showChevron: false,
         toggleValue: _removeOriginalMessageEnabled,
         onToggle: (bool value) {
@@ -334,6 +337,7 @@ class _RulesSmartConversionScreenState
     final List<LbListItemData> conversionItems = <LbListItemData>[
       LbListItemData(
         title: strings.allAppsTitle,
+        description: strings.allAppsDescription,
         showChevron: false,
         trailingWidget: LbSelectionIndicator(
           selected: _conversionMode == LbRulesConversionMode.allApps,
@@ -346,6 +350,7 @@ class _RulesSmartConversionScreenState
       ),
       LbListItemData(
         title: strings.onlySelectedTitle,
+        description: strings.onlySelectedDescription,
         showChevron: false,
         trailingWidget: LbSelectionIndicator(
           selected: _conversionMode == LbRulesConversionMode.onlySelected,
@@ -358,6 +363,7 @@ class _RulesSmartConversionScreenState
       ),
       LbListItemData(
         title: strings.excludeSelectedTitle,
+        description: strings.excludeSelectedDescription,
         showChevron: false,
         trailingWidget: LbSelectionIndicator(
           selected: _conversionMode == LbRulesConversionMode.excludeSelected,

@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum LbRulesConversionMode {
-  allApps,
-  onlySelected,
-  excludeSelected,
-}
+enum LbRulesConversionMode { allApps, onlySelected, excludeSelected }
 
 class LbRulesScopeAppItem {
   const LbRulesScopeAppItem({

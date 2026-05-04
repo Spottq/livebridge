@@ -183,7 +183,7 @@ class AppStrings {
     en: 'tap to manage',
     ru: 'нажмите для управления',
     tr: 'yönetmek için açın',
-    ptBr: 'toque para abrir',
+    ptBr: 'toque para gerenciar',
     zhHans: '点按以管理',
     zhHant: '點按以管理',
   );
@@ -224,6 +224,16 @@ class AppStrings {
     zhHant: '更新字典',
   );
 
+  String get dictionaryUpdateDescription => tr(
+    en: 'downloads the latest parser dictionaries for enabled languages',
+    ru: 'загружает свежие словари парсинга для включенных языков',
+    tr: 'etkin diller için en güncel ayrıştırma sözlüklerini indirir',
+    ptBr:
+        'baixa os dicionários de análise mais recentes para os idiomas ativados',
+    zhHans: '下载已启用语言的最新解析词典',
+    zhHant: '下載已啟用語言的最新解析字典',
+  );
+
   String get dictionaryEditorTitle => tr(
     en: 'Dictionary editor',
     ru: 'Редактор словаря',
@@ -231,6 +241,15 @@ class AppStrings {
     ptBr: 'Editor de dicionário',
     zhHans: '词典编辑器',
     zhHant: '字典編輯器',
+  );
+
+  String get dictionaryEditorDescription => tr(
+    en: 'in-app dictionary editing will be added later',
+    ru: 'редактирование словарей внутри приложения появится позже',
+    tr: 'uygulama içi sözlük düzenleme daha sonra eklenecek',
+    ptBr: 'a edição de dicionários dentro do app será adicionada depois',
+    zhHans: '应用内词典编辑会稍后添加',
+    zhHant: '應用程式內字典編輯稍後會加入',
   );
 
   String get dictionaryComingSoon => tr(
@@ -282,7 +301,7 @@ class AppStrings {
     en: 'App config',
     ru: 'Настройки приложения',
     tr: 'Uygulama ayarları',
-    ptBr: 'Ajustes do app',
+    ptBr: 'Configurações do app',
     zhHans: '应用设置',
     zhHant: '應用設定',
   );
@@ -372,7 +391,7 @@ class AppStrings {
     en: 'telegram topics',
     ru: 'telegram topics',
     tr: 'telegram konuları',
-    ptBr: 'tópicos no Telegram',
+    ptBr: 'tópicos do Telegram',
     zhHans: 'telegram 话题',
     zhHant: 'telegram 話題',
   );
@@ -489,7 +508,7 @@ class AppStrings {
     en: 'Progress',
     ru: 'Прогресс',
     tr: 'İlerleme',
-    ptBr: 'Progresso',
+    ptBr: 'Barras de Progresso (Downloads/Mídia)',
     zhHans: '进度',
     zhHant: '進度',
   );
@@ -498,7 +517,7 @@ class AppStrings {
     en: 'Native progress',
     ru: 'Нативный прогресс',
     tr: 'Yerel ilerleme',
-    ptBr: 'Progresso nativo',
+    ptBr: 'Barras de progresso do sistema',
     zhHans: '原生进度',
     zhHant: '原生進度',
   );
@@ -552,7 +571,7 @@ class AppStrings {
     en: 'Remove original message',
     ru: 'Удалять исходное уведомление',
     tr: 'Orijinal bildirimi kaldır',
-    ptBr: 'Remover mensagem original',
+    ptBr: 'Remover notificação original (Evita notificações duplicadas)',
     zhHans: '移除原始通知',
     zhHant: '移除原始通知',
   );
@@ -615,7 +634,7 @@ class AppStrings {
     en: 'show system',
     ru: 'показать системные',
     tr: 'sistem uygulamalarını göster',
-    ptBr: 'mostrar sistema',
+    ptBr: 'mostrar aplicativos do sistema',
     zhHans: '显示系统',
     zhHant: '顯示系統',
   );
@@ -624,7 +643,7 @@ class AppStrings {
     en: 'hide system',
     ru: 'скрыть системные',
     tr: 'sistem uygulamalarını gizle',
-    ptBr: 'ocultar sistema',
+    ptBr: 'ocultar aplicativos do sistema',
     zhHans: '隐藏系统',
     zhHant: '隱藏系統',
   );
@@ -714,7 +733,7 @@ class AppStrings {
     en: 'Show media on lockscreen',
     ru: 'Медиа на экране блокировки',
     tr: 'Kilit ekranında medyayı göster',
-    ptBr: 'Mostrar mídia na tela bloqueada',
+    ptBr: 'Mostrar apenas na tela de bloqueio',
     zhHans: '在锁屏显示媒体',
     zhHant: '在鎖定畫面顯示媒體',
   );
@@ -723,7 +742,7 @@ class AppStrings {
     en: 'Use symbols in media player',
     ru: 'Символы в медиаплеере',
     tr: 'Medya oynatıcıda semboller kullan',
-    ptBr: 'Usar símbolos no player',
+    ptBr: 'Usar símbolos no reprodutor de mídia',
     zhHans: '在媒体播放器中使用符号',
     zhHant: '在媒體播放器中使用符號',
   );
@@ -741,7 +760,7 @@ class AppStrings {
     en: 'Bypass',
     ru: 'Bypass',
     tr: 'Bypass',
-    ptBr: 'Bypass',
+    ptBr: 'Forçar notificações ao vivo',
     zhHans: '绕过',
     zhHant: '繞過',
   );
@@ -867,7 +886,7 @@ class AppStrings {
     en: 'You’re all set',
     ru: 'Всё хорошо',
     tr: 'Her şey hazır',
-    ptBr: 'Tudo certo',
+    ptBr: 'Tudo pronto',
     zhHans: '已是最新',
     zhHant: '已是最新',
   );
@@ -1020,7 +1039,7 @@ class AppStrings {
     en: 'OTP dedup',
     ru: 'OTP dedup',
     tr: 'OTP tekilleştirme',
-    ptBr: 'Deduplicação de OTP',
+    ptBr: 'Desduplicação de OTP',
     zhHans: 'OTP 去重',
     zhHant: 'OTP 去重',
   );
@@ -1029,7 +1048,7 @@ class AppStrings {
     en: 'Smart conversion dedup',
     ru: 'Smart conversion dedup',
     tr: 'Akıllı dönüştürme tekilleştirme',
-    ptBr: 'Deduplicação da conversão inteligente',
+    ptBr: 'Desduplicação da conversão inteligente',
     zhHans: '智能转换去重',
     zhHant: '智慧轉換去重',
   );
@@ -1061,6 +1080,16 @@ class AppStrings {
     zhHant: '複製偵錯 JSON',
   );
 
+  String get copyDebugJsonDescription => tr(
+    en: 'copies device, permission, settings, and rules state for bug reports',
+    ru: 'копирует состояние устройства, разрешений, настроек и правил для issue',
+    tr: 'hata raporları için cihaz, izin, ayar ve kural durumunu kopyalar',
+    ptBr:
+        'copia o estado do dispositivo, permissões, configurações e regras para reportar bugs',
+    zhHans: '复制用于问题报告的设备、权限、设置和规则状态',
+    zhHant: '複製用於問題回報的裝置、權限、設定與規則狀態',
+  );
+
   String get openGithubPageTitle => tr(
     en: 'Open GitHub page',
     ru: 'Открыть GitHub',
@@ -1070,6 +1099,15 @@ class AppStrings {
     zhHant: '開啟 GitHub 頁面',
   );
 
+  String get openGithubPageDescription => tr(
+    en: 'opens the GitHub issue page for reporting bugs',
+    ru: 'открывает страницу GitHub Issues для багрепорта',
+    tr: 'hata bildirmek için GitHub Issues sayfasını açar',
+    ptBr: 'abre a página de Issues do GitHub para reportar bugs',
+    zhHans: '打开用于报告问题的 GitHub Issues 页面',
+    zhHant: '開啟用於回報問題的 GitHub Issues 頁面',
+  );
+
   String get autoCopyDebugJsonTitle => tr(
     en: 'Auto-copy debug JSON',
     ru: 'Автокопирование debug JSON',
@@ -1077,6 +1115,15 @@ class AppStrings {
     ptBr: 'Copiar JSON de debug automaticamente',
     zhHans: '自动复制调试 JSON',
     zhHant: '自動複製偵錯 JSON',
+  );
+
+  String get autoCopyDebugJsonDescription => tr(
+    en: 'copies diagnostics automatically before opening GitHub',
+    ru: 'автоматически копирует диагностику перед открытием GitHub',
+    tr: 'GitHub açılmadan önce tanılama verilerini otomatik kopyalar',
+    ptBr: 'copia os diagnósticos automaticamente antes de abrir o GitHub',
+    zhHans: '打开 GitHub 前自动复制诊断信息',
+    zhHant: '開啟 GitHub 前自動複製診斷資訊',
   );
 
   String conversionLogFrom(String appLabel) => tr(
@@ -1293,7 +1340,7 @@ class AppStrings {
     en: 'Notification Listener access',
     ru: 'Доступ к уведомлениям',
     tr: 'Bildirim dinleyicisi erişimi',
-    ptBr: 'Acesso ao Notification Listener',
+    ptBr: 'Permitir acesso do app as notificações',
     zhHans: '通知监听访问',
     zhHant: '通知監聽存取',
   );
@@ -1302,7 +1349,7 @@ class AppStrings {
     en: 'Post notifications permission',
     ru: 'Отправка уведомлений',
     tr: 'Bildirim gönderme izni',
-    ptBr: 'Permissão para enviar notificações',
+    ptBr: 'Permita que o app envie notificações',
     zhHans: '发送通知权限',
     zhHant: '發送通知權限',
   );
@@ -1311,7 +1358,7 @@ class AppStrings {
     en: 'Live Updates promotion',
     ru: 'Разрешение на Live Updates',
     tr: 'Live Updates tanıtımı',
-    ptBr: 'Permissão para Live Updates',
+    ptBr: 'Permitir atualizações ao vivo',
     zhHans: 'Live Updates 推送权限',
     zhHant: 'Live Updates 推送權限',
   );
@@ -1370,6 +1417,24 @@ class AppStrings {
     zhHant: '防止通知被關閉',
   );
 
+  String get hideLockscreenContentTitle => tr(
+    en: 'Hide lockscreen content',
+    ru: 'Скрывать на локскрине',
+    tr: 'Kilit ekranında içeriği gizle',
+    ptBr: 'Ocultar conteúdo quando a tela estiver bloqueada',
+    zhHans: '隐藏锁屏内容',
+    zhHant: '隱藏鎖定畫面內容',
+  );
+
+  String get disableHintsTitle => tr(
+    en: 'Disable hints',
+    ru: 'Отключить подсказки',
+    tr: 'İpuçlarını kapat',
+    ptBr: 'Desativar dicas',
+    zhHans: '关闭提示',
+    zhHant: '關閉提示',
+  );
+
   String get updateChecksTitle => tr(
     en: 'Update checking',
     ru: 'Проверка обновлений',
@@ -1377,6 +1442,16 @@ class AppStrings {
     ptBr: 'Verificação de atualizações',
     zhHans: '检查更新',
     zhHant: '檢查更新',
+  );
+
+  String get updateChecksDescription => tr(
+    en: 'checks GitHub releases and shows an update card when a new version is available',
+    ru: 'проверяет релизы GitHub и показывает карточку, когда доступна новая версия',
+    tr: 'GitHub sürümlerini denetler ve yeni sürüm varsa güncelleme kartı gösterir',
+    ptBr:
+        'verifica lançamentos no GitHub e mostra um cartão quando há nova versão disponível',
+    zhHans: '检查 GitHub 发布，并在有新版本时显示更新卡片',
+    zhHant: '檢查 GitHub 發布版本，並在有新版本時顯示更新卡片',
   );
 
   String get experimentalTitle => tr(
@@ -2040,8 +2115,340 @@ class AppStrings {
     en: 'Text progress',
     ru: 'Текстовые прогрессы',
     tr: 'Metin ilerlemesi',
-    ptBr: 'Progresso por texto',
+    ptBr: 'Progresso baseado em texto ao invés de barra',
     zhHans: '文本进度',
     zhHant: '文字進度',
+  );
+
+  String get nativeProgressDescription => tr(
+    en: 'uses Android progress from notifications when available',
+    ru: 'использует прогресс из Android-уведомлений, если он есть',
+    tr: 'varsa Android bildirimlerindeki ilerlemeyi kullanır',
+    ptBr: 'Usa barras de progresso do Android quando disponível',
+    zhHans: '可用时使用 Android 通知中的进度',
+    zhHant: '可用時使用 Android 通知中的進度',
+  );
+
+  String get textProgressDescription => tr(
+    en: 'detects progress from notification text like 42%',
+    ru: 'определяет прогресс из текста уведомлений, например 42%',
+    tr: '42% gibi bildirim metnindeki ilerlemeyi algılar',
+    ptBr: 'Detecta o progresso a partir do texto da notificação. Ex: 42%',
+    zhHans: '从通知文本中识别进度，例如 42%',
+    zhHant: '從通知文字中識別進度，例如 42%',
+  );
+
+  String get otpCodesDescription => tr(
+    en: 'detects verification codes and shows them in Live Updates',
+    ru: 'находит коды подтверждения и показывает их в Live Updates',
+    tr: 'doğrulama kodlarını algılar ve Live Updates içinde gösterir',
+    ptBr: 'Detecta códigos de verificação e exibe como notificações ao vivo',
+    zhHans: '识别验证码并在 Live Updates 中显示',
+    zhHant: '識別驗證碼並在 Live Updates 中顯示',
+  );
+
+  String get autoCopyCodeDescription => tr(
+    en: 'copies detected OTP codes to clipboard automatically',
+    ru: 'автоматически копирует найденные OTP-коды в буфер обмена',
+    tr: 'algılanan OTP kodlarını otomatik olarak panoya kopyalar',
+    ptBr: 'Quando detectado, copia automaticamente os códigos OTP',
+    zhHans: '自动将识别到的 OTP 验证码复制到剪贴板',
+    zhHant: '自動將識別到的 OTP 驗證碼複製到剪貼簿',
+  );
+
+  String get removeOriginalMessageDescription => tr(
+    en: 'tries to hide the original notification after conversion',
+    ru: 'пытается скрыть исходное уведомление после конвертации',
+    tr: 'dönüştürmeden sonra orijinal bildirimi gizlemeyi dener',
+    ptBr: 'Tenta esconder a notificação original após a conversão',
+    zhHans: '转换后尝试隐藏原始通知',
+    zhHant: '轉換後嘗試隱藏原始通知',
+  );
+
+  String get taxiDescription => tr(
+    en: 'shows taxi ride state as a Live Update',
+    ru: 'показывает состояние поездки такси в Live Updates',
+    tr: 'taksi yolculuğu durumunu Live Update olarak gösterir',
+    ptBr: 'Mostra o estado da corrida de táxi com atualizações ao vivo',
+    zhHans: '将打车行程状态显示为 Live Update',
+    zhHant: '將計程車行程狀態顯示為 Live Update',
+  );
+
+  String get deliveriesDescription => tr(
+    en: 'shows delivery progress from food and shopping apps',
+    ru: 'показывает прогресс доставки из еды и магазинов',
+    tr: 'yemek ve alışveriş uygulamalarındaki teslimat ilerlemesini gösterir',
+    ptBr: 'Mostra o progresso da entrega de aplicativos como compras e comidas',
+    zhHans: '显示外卖和购物应用的配送进度',
+    zhHant: '顯示外送與購物應用程式的配送進度',
+  );
+
+  String get allAppsDescription => tr(
+    en: 'converts matching notifications from every app',
+    ru: 'конвертирует подходящие уведомления из всех приложений',
+    tr: 'tüm uygulamalardan eşleşen bildirimleri dönüştürür',
+    ptBr: 'Converte notificações recebidas de todos os apps',
+    zhHans: '转换所有应用中匹配的通知',
+    zhHant: '轉換所有應用程式中符合條件的通知',
+  );
+
+  String get onlySelectedDescription => tr(
+    en: 'converts notifications only from apps you select',
+    ru: 'конвертирует уведомления только из выбранных приложений',
+    tr: 'yalnızca seçtiğiniz uygulamalardan gelen bildirimleri dönüştürür',
+    ptBr: 'Converte notificação apenas dos apps que você selecionar',
+    zhHans: '仅转换你选择的应用通知',
+    zhHant: '僅轉換你選取的應用程式通知',
+  );
+
+  String get excludeSelectedDescription => tr(
+    en: 'converts every app except the apps you select',
+    ru: 'конвертирует все приложения, кроме выбранных',
+    tr: 'seçtiğiniz uygulamalar dışındaki tüm uygulamaları dönüştürür',
+    ptBr: 'Converte todos os aplicativos, exceto os que você selecionar',
+    zhHans: '转换除所选应用之外的所有应用',
+    zhHant: '轉換除所選應用程式之外的所有應用程式',
+  );
+
+  String get vpnsDescription => tr(
+    en: 'shows active VPN traffic and connection state',
+    ru: 'показывает трафик и состояние активного VPN',
+    tr: 'aktif VPN trafiğini ve bağlantı durumunu gösterir',
+    ptBr: 'mostra o tráfego da VPN ativa e o estado da conexão',
+    zhHans: '显示活动 VPN 流量和连接状态',
+    zhHant: '顯示作用中 VPN 流量與連線狀態',
+  );
+
+  String get externalDevicesDescription => tr(
+    en: 'shows connected external devices in Live Updates',
+    ru: 'показывает подключенные внешние устройства в Live Updates',
+    tr: 'bağlı harici cihazları Live Updates içinde gösterir',
+    ptBr: 'mostra dispositivos externos conectados em Notificações ao vivo',
+    zhHans: '在 Live Updates 中显示已连接的外部设备',
+    zhHant: '在 Live Updates 中顯示已連接的外部裝置',
+  );
+
+  String get ignoreDebuggingDevicesDescription => tr(
+    en: 'hides ADB and debugging device notifications',
+    ru: 'скрывает ADB и уведомления отладочных устройств',
+    tr: 'ADB ve hata ayıklama cihazı bildirimlerini gizler',
+    ptBr: 'oculta notificações de ADB e dispositivos de depuração',
+    zhHans: '隐藏 ADB 和调试设备通知',
+    zhHant: '隱藏 ADB 與偵錯裝置通知',
+  );
+
+  String get mediaPlaybackDescription => tr(
+    en: 'shows track controls and playback status in Live Updates',
+    ru: 'показывает управление треком и статус воспроизведения',
+    tr: 'parça kontrollerini ve oynatma durumunu Live Updates içinde gösterir',
+    ptBr:
+        'mostra controles da faixa e estado da reprodução em Notificações ao vivo',
+    zhHans: '在 Live Updates 中显示曲目控制和播放状态',
+    zhHant: '在 Live Updates 中顯示曲目控制與播放狀態',
+  );
+
+  String get showMediaOnLockDescription => tr(
+    en: 'allows media Live Updates on the lockscreen',
+    ru: 'разрешает показывать медиа Live Updates на экране блокировки',
+    tr: 'kilit ekranında medya Live Updates gösterilmesine izin verir',
+    ptBr: 'permite Notificações ao vivo de mídia na tela de bloqueio',
+    zhHans: '允许在锁屏显示媒体 Live Updates',
+    zhHant: '允許在鎖定畫面顯示媒體 Live Updates',
+  );
+
+  String get useSymbolsInMediaPlayerDescription => tr(
+    en: 'uses ▶, ⏸, ⏮ and ⏭ instead of text actions',
+    ru: 'использует ▶, ⏸, ⏮ и ⏭ вместо текстовых действий',
+    tr: 'metin eylemleri yerine ▶, ⏸, ⏮ ve ⏭ kullanır',
+    ptBr: 'usa ▶, ⏸, ⏮ e ⏭ em vez de ações em texto',
+    zhHans: '使用 ▶、⏸、⏮ 和 ⏭ 代替文字操作',
+    zhHant: '使用 ▶、⏸、⏮ 和 ⏭ 取代文字操作',
+  );
+
+  String get callsDescription => tr(
+    en: 'shows ongoing calls as Live Updates',
+    ru: 'показывает активные звонки в Live Updates',
+    tr: 'devam eden aramaları Live Updates olarak gösterir',
+    ptBr: 'mostra chamadas em andamento como Notificações ao vivo',
+    zhHans: '将正在进行的通话显示为 Live Updates',
+    zhHant: '將進行中的通話顯示為 Live Updates',
+  );
+
+  String get navigationMapsDescription => tr(
+    en: 'shows the direction and distance in Live Updates',
+    ru: 'показывает направление и расстояние в Live Updates',
+    tr: 'yönü ve mesafeyi Live Updates içinde gösterir',
+    ptBr: 'mostra direção e distância em Notificações ao vivo',
+    zhHans: '在 Live Updates 中显示方向和距离',
+    zhHant: '在 Live Updates 中顯示方向與距離',
+  );
+
+  String get weatherBroadcastsDescription => tr(
+    en: 'shows weather alerts and forecast notifications',
+    ru: 'показывает погодные уведомления и прогнозы',
+    tr: 'hava durumu uyarılarını ve tahmin bildirimlerini gösterir',
+    ptBr: 'mostra alertas de clima e notificações de previsão',
+    zhHans: '显示天气警报和预报通知',
+    zhHant: '顯示天氣警報與預報通知',
+  );
+
+  String get appLanguageDescription => tr(
+    en: 'changes the language used by LiveBridge UI',
+    ru: 'меняет язык интерфейса LiveBridge',
+    tr: 'LiveBridge arayüzünde kullanılan dili değiştirir',
+    ptBr: 'altera o idioma usado pela interface do LiveBridge',
+    zhHans: '更改 LiveBridge 界面使用的语言',
+    zhHant: '變更 LiveBridge 介面使用的語言',
+  );
+
+  String get keepAliveForegroundDescription => tr(
+    en: 'uses an alternate foreground mode for stricter firmwares',
+    ru: 'использует альтернативный foreground-режим для строгих прошивок',
+    tr: 'daha katı yazılımlar için alternatif ön plan modunu kullanır',
+    ptBr: 'usa um modo foreground alternativo para firmwares mais restritos',
+    zhHans: '为限制更严格的系统使用备用前台模式',
+    zhHant: '為限制更嚴格的系統使用備用前景模式',
+  );
+
+  String get syncDndDescription => tr(
+    en: 'syncs Live Updates behavior with Do Not Disturb',
+    ru: 'синхронизирует поведение Live Updates с режимом Не беспокоить',
+    tr: 'Live Updates davranışını Rahatsız Etmeyin ile eşitler',
+    ptBr:
+        'sincroniza o comportamento das Notificações ao vivo com o Não Perturbe',
+    zhHans: '将 Live Updates 行为与勿扰模式同步',
+    zhHant: '將 Live Updates 行為與勿擾模式同步',
+  );
+
+  String get preventDismissingDescription => tr(
+    en: 'restores the LiveBridge notification after it is swiped away',
+    ru: 'восстанавливает уведомление LiveBridge после свайпа',
+    tr: 'LiveBridge bildirimi kaydırılıp kapatıldıktan sonra geri yükler',
+    ptBr: 'restaura a notificação do LiveBridge depois que ela é dispensada',
+    zhHans: '在 LiveBridge 通知被滑掉后恢复它',
+    zhHant: '在 LiveBridge 通知被滑掉後恢復它',
+  );
+
+  String get hideLockscreenContentDescription => tr(
+    en: 'shows Content hidden instead of notification text on the lockscreen',
+    ru: 'показывает Content hidden вместо текста уведомления на локскрине',
+    tr: 'kilit ekranında bildirim metni yerine Content hidden gösterir',
+    ptBr:
+        'mostra Content hidden em vez do texto da notificação na tela de bloqueio',
+    zhHans: '在锁屏上显示 Content hidden 而不是通知文本',
+    zhHant: '在鎖定畫面顯示 Content hidden 而不是通知文字',
+  );
+
+  String get disableHintsDescription => tr(
+    en: 'hides info icons and hint popovers across the redesign UI',
+    ru: 'скрывает иконки info и всплывающие подсказки в новом интерфейсе',
+    tr: 'yeni arayüzde bilgi simgelerini ve ipucu pencerelerini gizler',
+    ptBr: 'oculta ícones de informação e dicas na nova interface',
+    zhHans: '隐藏新版界面中的信息图标和提示弹窗',
+    zhHant: '隱藏新版介面中的資訊圖示與提示彈窗',
+  );
+
+  String get conversionLogDescription => tr(
+    en: 'keeps recent converted notifications for debugging',
+    ru: 'сохраняет последние конвертации для отладки',
+    tr: 'hata ayıklama için son dönüştürülen bildirimleri saklar',
+    ptBr: 'mantém notificações convertidas recentemente para depuração',
+    zhHans: '保留最近转换的通知用于调试',
+    zhHant: '保留最近轉換的通知用於偵錯',
+  );
+
+  String get logLengthDescription => tr(
+    en: 'limits how much conversion log data is kept on device',
+    ru: 'ограничивает объем лога конвертаций на устройстве',
+    tr: 'cihazda tutulacak dönüştürme günlüğü verisi miktarını sınırlar',
+    ptBr: 'limita quantos dados do log de conversões ficam no dispositivo',
+    zhHans: '限制设备上保留的转换日志数据量',
+    zhHant: '限制裝置上保留的轉換記錄資料量',
+  );
+
+  String get networkSpeedDescription => tr(
+    en: 'shows current network traffic as a Live Update',
+    ru: 'показывает текущий трафик сети как Live Update',
+    tr: 'mevcut ağ trafiğini Live Update olarak gösterir',
+    ptBr: 'mostra o tráfego de rede atual como Notificação ao vivo',
+    zhHans: '将当前网络流量显示为 Live Update',
+    zhHant: '將目前網路流量顯示為 Live Update',
+  );
+
+  String get networkSpeedThresholdDescription => tr(
+    en: 'hides the network speed Live Update below this traffic level',
+    ru: 'скрывает Live Update скорости сети ниже этого порога',
+    tr: 'ağ hızı bu seviyenin altındaysa Live Update öğesini gizler',
+    ptBr:
+        'oculta a Notificação ao vivo de velocidade de rede abaixo deste nível',
+    zhHans: '当网速低于此阈值时隐藏网络速度 Live Update',
+    zhHant: '當網速低於此門檻時隱藏網路速度 Live Update',
+  );
+
+  String get xiaomiHyperIslandDescription => tr(
+    en: 'enables Xiaomi HyperIsland-specific Live Updates behavior',
+    ru: 'включает поведение Live Updates для Xiaomi HyperIsland',
+    tr: 'Xiaomi HyperIsland için özel Live Updates davranışını etkinleştirir',
+    ptBr:
+        'ativa comportamento de Notificações ao vivo específico do Xiaomi HyperIsland',
+    zhHans: '启用 Xiaomi HyperIsland 专用的 Live Updates 行为',
+    zhHant: '啟用 Xiaomi HyperIsland 專用的 Live Updates 行為',
+  );
+
+  String get aospCuttingDescription => tr(
+    en: 'shortens island text on AOSP-like firmwares that clip long content',
+    ru: 'укорачивает текст острова на AOSP-прошивках, где длинный текст обрезается',
+    tr: 'uzun içeriği kırpan AOSP benzeri yazılımlarda ada metnini kısaltır',
+    ptBr:
+        'encurta o texto da ilha em firmwares parecidos com AOSP que cortam conteúdo longo',
+    zhHans: '在会截断长内容的类 AOSP 系统上缩短岛内文本',
+    zhHant: '在會截斷長內容的類 AOSP 系統上縮短島內文字',
+  );
+
+  String get aospCuttingLengthDescription => tr(
+    en: 'sets the maximum island text length for AOSP cutting',
+    ru: 'задает максимальную длину текста острова для AOSP-обрезки',
+    tr: 'AOSP kırpması için en uzun ada metni uzunluğunu ayarlar',
+    ptBr: 'define o comprimento máximo do texto da ilha para o corte AOSP',
+    zhHans: '设置 AOSP 截断模式下岛内文本的最大长度',
+    zhHant: '設定 AOSP 截斷模式下島內文字的最大長度',
+  );
+
+  String get updateFrequencyDescription => tr(
+    en: 'controls how often animated island text frames are refreshed',
+    ru: 'задает частоту обновления кадров анимации текста острова',
+    tr: 'animasyonlu ada metni karelerinin ne sıklıkta yenileneceğini ayarlar',
+    ptBr:
+        'controla a frequência de atualização dos quadros de texto da ilha animada',
+    zhHans: '控制动画岛文本帧的刷新频率',
+    zhHant: '控制動畫島文字影格的刷新頻率',
+  );
+
+  String get otpDedupDescription => tr(
+    en: 'reduces repeated OTP notifications from the same source',
+    ru: 'уменьшает повторы OTP-уведомлений из одного источника',
+    tr: 'aynı kaynaktan gelen tekrarlı OTP bildirimlerini azaltır',
+    ptBr: 'reduz notificações OTP repetidas da mesma origem',
+    zhHans: '减少同一来源的重复 OTP 通知',
+    zhHant: '減少同一來源的重複 OTP 通知',
+  );
+
+  String get smartConversionDedupDescription => tr(
+    en: 'reduces repeated smart conversion notifications',
+    ru: 'уменьшает повторы уведомлений умной конвертации',
+    tr: 'tekrarlı akıllı dönüştürme bildirimlerini azaltır',
+    ptBr: 'reduz notificações repetidas de conversão inteligente',
+    zhHans: '减少重复的智能转换通知',
+    zhHant: '減少重複的智慧轉換通知',
+  );
+
+  String get animatedIslandDescription => tr(
+    en: 'adds smooth island text animations for supported conversions',
+    ru: 'добавляет плавные анимации текста острова',
+    tr: 'desteklenen dönüştürmeler için akıcı ada metni animasyonları ekler',
+    ptBr:
+        'adiciona animações suaves ao texto da ilha nas conversões compatíveis',
+    zhHans: '为支持的转换添加流畅的岛内文本动画',
+    zhHant: '為支援的轉換加入流暢的島內文字動畫',
   );
 }

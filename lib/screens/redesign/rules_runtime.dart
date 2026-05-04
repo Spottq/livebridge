@@ -21,12 +21,13 @@ Set<String> lbParsePackageRules(String value) {
 }
 
 String lbEncodePackageRules(Iterable<String> packageNames) {
-  final List<String> values = packageNames
-      .map(lbNormalizePackageName)
-      .where((String item) => item.isNotEmpty)
-      .toSet()
-      .toList()
-    ..sort();
+  final List<String> values =
+      packageNames
+          .map(lbNormalizePackageName)
+          .where((String item) => item.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
   return values.join('\n');
 }
 
@@ -112,7 +113,8 @@ Future<void> lbWaitForMinimumAppsLoading({
 }
 
 Future<bool> lbEnsureAppListAccess(BuildContext context) async {
-  final bool alreadyGranted = await LiveBridgePlatform.getAppListAccessGranted();
+  final bool alreadyGranted =
+      await LiveBridgePlatform.getAppListAccessGranted();
   if (alreadyGranted) {
     return true;
   }
@@ -122,34 +124,34 @@ Future<bool> lbEnsureAppListAccess(BuildContext context) async {
 
   final AppStrings strings = AppStrings.of(context);
   final bool granted =
-          await showDialog<bool>(
-            context: context,
-            builder: (BuildContext dialogContext) {
-              return AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                title: Text(strings.appsAccessTitle),
-                content: Text(strings.appsAccessMessage),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      LiveBridgeHaptics.selection();
-                      Navigator.of(dialogContext).pop(false);
-                    },
-                    child: Text(strings.cancel),
-                  ),
-                  FilledButton(
-                    onPressed: () {
-                      LiveBridgeHaptics.confirm();
-                      Navigator.of(dialogContext).pop(true);
-                    },
-                    child: Text(strings.allow),
-                  ),
-                ],
-              );
-            },
-          ) ??
+      await showDialog<bool>(
+        context: context,
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            title: Text(strings.appsAccessTitle),
+            content: Text(strings.appsAccessMessage),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  LiveBridgeHaptics.selection();
+                  Navigator.of(dialogContext).pop(false);
+                },
+                child: Text(strings.cancel),
+              ),
+              FilledButton(
+                onPressed: () {
+                  LiveBridgeHaptics.confirm();
+                  Navigator.of(dialogContext).pop(true);
+                },
+                child: Text(strings.allow),
+              ),
+            ],
+          );
+        },
+      ) ??
       false;
 
   if (!granted) {
