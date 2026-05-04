@@ -1,8 +1,11 @@
 package com.kakao.taxi.liveupdate
 
 import android.app.Notification
+import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Handler
@@ -28,6 +31,21 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private var rebindAttempts = 0
     private var rebindScheduled = false
     private var snapshotSyncScheduled = false
+    private var lockscreenStateReceiverRegistered = false
+
+    private val lockscreenPrivacyRefreshRunnable = Runnable {
+        requestImmediateSnapshotSync()
+    }
+
+    private val lockscreenStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                Intent.ACTION_SCREEN_OFF,
+                Intent.ACTION_SCREEN_ON,
+                Intent.ACTION_USER_PRESENT -> handleLockscreenStateChanged(intent.action)
+            }
+        }
+    }
 
     private data class ProtectedSourceDismissal(
         val sourceKey: String,
@@ -137,6 +155,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             LiveUpdateNotifier.cancelAllMirrored(applicationContext)
         }
 
+        registerLockscreenStateReceiver()
         syncTorchMonitoring()
         LiveUpdateNotifier.ensureChannel(applicationContext)
         syncNetworkSpeedService()
@@ -280,6 +299,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onDestroy() {
+        unregisterLockscreenStateReceiver()
         unregisterTorchCallbackIfNeeded()
         mainHandler.removeCallbacksAndMessages(null)
         rebindScheduled = false
@@ -339,6 +359,57 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         } else {
             unregisterTorchCallbackIfNeeded()
         }
+    }
+
+    private fun registerLockscreenStateReceiver() {
+        if (lockscreenStateReceiverRegistered) {
+            return
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_USER_PRESENT)
+        }
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(
+                    lockscreenStateReceiver,
+                    filter,
+                    Context.RECEIVER_NOT_EXPORTED
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                registerReceiver(lockscreenStateReceiver, filter)
+            }
+        }.onSuccess {
+            lockscreenStateReceiverRegistered = true
+        }.onFailure { error ->
+            Log.w(TAG, "Failed to register lockscreen state receiver", error)
+        }
+    }
+
+    private fun unregisterLockscreenStateReceiver() {
+        if (!lockscreenStateReceiverRegistered) {
+            return
+        }
+        runCatching { unregisterReceiver(lockscreenStateReceiver) }
+            .onFailure { error ->
+                Log.w(TAG, "Failed to unregister lockscreen state receiver", error)
+            }
+        lockscreenStateReceiverRegistered = false
+    }
+
+    private fun handleLockscreenStateChanged(action: String?) {
+        if (!prefs.getConverterEnabled() || !prefs.getHideLockscreenContentEnabled()) {
+            return
+        }
+        Log.d(TAG, "Lockscreen privacy state changed: $action")
+        mainHandler.removeCallbacks(lockscreenPrivacyRefreshRunnable)
+        requestImmediateSnapshotSync()
+        mainHandler.postDelayed(
+            lockscreenPrivacyRefreshRunnable,
+            LOCKSCREEN_PRIVACY_REFRESH_DELAY_MS
+        )
     }
 
     private fun ensureTorchCallbackRegistered() {
@@ -962,6 +1033,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val SELF_DISMISS_PROTECTION_MS = 10_000L
         private const val PROTECTED_MIRROR_REPOST_DELAY_MS = 350L
         private const val PROTECTED_MIRROR_MAX_REPOSTS = 2
+        private const val LOCKSCREEN_PRIVACY_REFRESH_DELAY_MS = 650L
         private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 1_500L
         private const val FLASHLIGHT_SOURCE_VERIFY_DELAY_MS = 300L
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"

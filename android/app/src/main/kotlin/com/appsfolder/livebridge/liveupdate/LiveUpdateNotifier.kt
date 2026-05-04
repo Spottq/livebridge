@@ -2,6 +2,7 @@
 
 import android.app.Notification
 import android.app.NotificationChannel
+import android.app.KeyguardManager
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.ClipData
@@ -1776,6 +1777,17 @@ object LiveUpdateNotifier {
         )
     }
 
+    private fun isDeviceShowingLockscreen(context: Context): Boolean {
+        val keyguardManager =
+            context.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
+                ?: return false
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            keyguardManager.isDeviceLocked || keyguardManager.isKeyguardLocked
+        } else {
+            keyguardManager.isKeyguardLocked
+        }
+    }
+
     private fun buildMirroredNotification(
         context: Context,
         sbn: StatusBarNotification,
@@ -1982,6 +1994,8 @@ object LiveUpdateNotifier {
             displayText
         }
         val hideLockscreenContent = runtimePrefs.getHideLockscreenContentEnabled()
+        val redactSamsungNowBarContent =
+            hideLockscreenContent && isDeviceShowingLockscreen(context)
         val visibility = when {
             preferMediaControls &&
                     !runtimePrefs.getSmartMediaPlaybackShowOnLockScreen() ->
@@ -2340,30 +2354,61 @@ object LiveUpdateNotifier {
         }
 
         if (samsungBridge.enabled) {
-            val samsungTexts = SamsungBridgeContentPolicy.resolve(
-                sourcePackageName = sbn.packageName,
-                hasCustomRemoteCard = samsungBridge.hasCustomRemoteCard,
-                hasProgress = hasProgress,
-                smartRuleId = smartRuleId,
-                smartShortTextOverride = smartShortTextOverride,
-                displayText = samsungPolicyDisplayText,
-                compactPrimaryText = compactPrimaryText,
-                resolvedProgressChipText = resolvedProgressChipText,
-                otpShortTextOverride = otpShortTextOverride,
-                otpCode = otpOverride?.code,
-                compactCodeOverride = compactCodeOverride,
-                samsungReparseChipText = samsungReparse?.chipText,
-                remoteViewMiniTextPair = samsungRemoteViewMiniTextPair,
-                twoGisPrimaryText = samsungTwoGisPrimaryText,
-                twoGisEtaDistanceText = samsungTwoGisEtaDistanceText,
-                twoGisVisibleSecondaryText = samsungTwoGisVisibleSecondaryText,
-                preferSmartShortTextAsPrimary = preferSmartShortTextAsPrimary
-            ).let { texts ->
-                if (callMirrorActive) {
-                    texts.copy(shouldClearContentText = false)
-                } else {
-                    texts
+            val samsungTexts = if (redactSamsungNowBarContent) {
+                hiddenSamsungBridgeTexts()
+            } else {
+                SamsungBridgeContentPolicy.resolve(
+                    sourcePackageName = sbn.packageName,
+                    hasCustomRemoteCard = samsungBridge.hasCustomRemoteCard,
+                    hasProgress = hasProgress,
+                    smartRuleId = smartRuleId,
+                    smartShortTextOverride = smartShortTextOverride,
+                    displayText = samsungPolicyDisplayText,
+                    compactPrimaryText = compactPrimaryText,
+                    resolvedProgressChipText = resolvedProgressChipText,
+                    otpShortTextOverride = otpShortTextOverride,
+                    otpCode = otpOverride?.code,
+                    compactCodeOverride = compactCodeOverride,
+                    samsungReparseChipText = samsungReparse?.chipText,
+                    remoteViewMiniTextPair = samsungRemoteViewMiniTextPair,
+                    twoGisPrimaryText = samsungTwoGisPrimaryText,
+                    twoGisEtaDistanceText = samsungTwoGisEtaDistanceText,
+                    twoGisVisibleSecondaryText = samsungTwoGisVisibleSecondaryText,
+                    preferSmartShortTextAsPrimary = preferSmartShortTextAsPrimary
+                ).let { texts ->
+                    if (callMirrorActive) {
+                        texts.copy(shouldClearContentText = false)
+                    } else {
+                        texts
+                    }
                 }
+            }
+            val samsungNowBarHasProgress = hasProgress && !redactSamsungNowBarContent
+            val samsungNowBarProgressValue = if (redactSamsungNowBarContent) {
+                0
+            } else {
+                progressValue
+            }
+            val samsungNowBarProgressMax = if (redactSamsungNowBarContent) {
+                0
+            } else {
+                progressMax
+            }
+            val samsungNowBarRightIcon = if (redactSamsungNowBarContent) {
+                null
+            } else {
+                nowBarRightIcon
+            }
+            val suppressSamsungSourceRemoteViews = redactSamsungNowBarContent
+            val suppressSamsungNowBarRemoteView = if (redactSamsungNowBarContent) {
+                true
+            } else {
+                suppressCallNowBarRemoteView
+            }
+            val suppressSamsungChipExpandedText = if (redactSamsungNowBarContent) {
+                false
+            } else {
+                callChronometerStart != null
             }
             SamsungNowBarApplier.apply(
                 context = context,
@@ -2374,14 +2419,14 @@ object LiveUpdateNotifier {
                 texts = samsungTexts,
                 chipIcon = preferredChipIcon,
                 nowBarIcon = preferredPrimaryIcon,
-                rightIcon = nowBarRightIcon,
-                suppressChipExpandedText = callChronometerStart != null,
-                suppressSourceRemoteViews = false,
-                suppressSourceNowBarRemoteView = suppressCallNowBarRemoteView,
+                rightIcon = samsungNowBarRightIcon,
+                suppressChipExpandedText = suppressSamsungChipExpandedText,
+                suppressSourceRemoteViews = suppressSamsungSourceRemoteViews,
+                suppressSourceNowBarRemoteView = suppressSamsungNowBarRemoteView,
                 lockscreenOnly = weatherLockscreenOnly,
-                hasProgress = hasProgress,
-                progressValue = progressValue,
-                progressMax = progressMax
+                hasProgress = samsungNowBarHasProgress,
+                progressValue = samsungNowBarProgressValue,
+                progressMax = samsungNowBarProgressMax
             )
         }
 

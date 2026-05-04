@@ -382,6 +382,7 @@ class MainActivity : FlutterActivity() {
             "setHideLockscreenContentEnabled" -> {
                 prefs.setHideLockscreenContentEnabled(call.argument<Boolean>("value") ?: false)
                 LiveUpdateNotifier.ensureChannel(applicationContext)
+                LiveUpdateNotificationListenerService.requestSnapshotSync()
                 res.success(true)
             }
 
