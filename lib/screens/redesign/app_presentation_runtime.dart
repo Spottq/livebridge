@@ -41,7 +41,9 @@ LbAppPresentationOverridesState lbParseAppPresentationOverrides(String raw) {
   final Map<String, AppPresentationOverride> overrides =
       <String, AppPresentationOverride>{};
   for (final MapEntry<dynamic, dynamic> entry in decoded.entries) {
-    final String packageName = lbNormalizePackageName(entry.key as String? ?? '');
+    final String packageName = lbNormalizePackageName(
+      entry.key as String? ?? '',
+    );
     if (packageName.isEmpty ||
         packageName == lbDefaultAppPresentationKey ||
         entry.value is! Map) {
@@ -88,5 +90,7 @@ bool _lbOverridesEqual(
       left.iconSource == right.iconSource &&
       left.effectiveTitleSource == right.effectiveTitleSource &&
       left.effectiveContentSource == right.effectiveContentSource &&
-      left.removeOriginalMessage == right.removeOriginalMessage;
+      left.removeOriginalMessage == right.removeOriginalMessage &&
+      left.notificationColorArgb == right.notificationColorArgb &&
+      left.notificationColorEnabled == right.notificationColorEnabled;
 }

@@ -9,6 +9,7 @@ enum LbIconSymbol {
   copyThree,
   externalLink,
   refresh,
+  restore,
   search,
   close,
   handHeart,
@@ -104,6 +105,8 @@ IconData _iconFor(LbIconSymbol symbol) {
       return MingCuteIcons.mgc_external_link_line;
     case LbIconSymbol.refresh:
       return MingCuteIcons.mgc_refresh_2_line;
+    case LbIconSymbol.restore:
+      return MingCuteIcons.mgc_refresh_anticlockwise_1_line;
     case LbIconSymbol.search:
       return MingCuteIcons.mgc_search_2_line;
     case LbIconSymbol.close:

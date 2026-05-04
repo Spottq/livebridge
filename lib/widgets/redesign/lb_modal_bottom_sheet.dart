@@ -14,22 +14,24 @@ Future<T?> showLbModalBottomSheet<T>({
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: Colors.transparent,
     transitionDuration: const Duration(milliseconds: 220),
-    pageBuilder: (
-      BuildContext dialogContext,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-    ) => builder(dialogContext),
-    transitionBuilder: (
-      BuildContext dialogContext,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      Widget child,
-    ) {
-      return _LbModalBottomSheetScaffold(
-        routeAnimation: animation,
-        child: child,
-      );
-    },
+    pageBuilder:
+        (
+          BuildContext dialogContext,
+          Animation<double> animation,
+          Animation<double> secondaryAnimation,
+        ) => builder(dialogContext),
+    transitionBuilder:
+        (
+          BuildContext dialogContext,
+          Animation<double> animation,
+          Animation<double> secondaryAnimation,
+          Widget child,
+        ) {
+          return _LbModalBottomSheetScaffold(
+            routeAnimation: animation,
+            child: child,
+          );
+        },
   );
 }
 
@@ -69,9 +71,7 @@ class LbModalBottomSheetSurface extends StatelessWidget {
           ),
           decoration: BoxDecoration(
             color: palette.surfaceRaised,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(25),
-            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -154,14 +154,8 @@ class _LbModalBottomSheetScaffoldState
 
   void _animateDragOffsetTo(double target) {
     _stopSettleAnimation();
-    _settleAnimation = Tween<double>(
-      begin: _dragOffset,
-      end: target,
-    ).animate(
-      CurvedAnimation(
-        parent: _settleController,
-        curve: Curves.easeOutCubic,
-      ),
+    _settleAnimation = Tween<double>(begin: _dragOffset, end: target).animate(
+      CurvedAnimation(parent: _settleController, curve: Curves.easeOutCubic),
     )..addListener(_handleSettleTick);
     _settleController.forward(from: 0);
   }
@@ -219,6 +213,9 @@ class _LbModalBottomSheetScaffoldState
             );
             final double backdropProgress =
                 (backdropCurve.value * (1 - _dismissProgress)).clamp(0.0, 1.0);
+            final double keyboardInset = MediaQuery.viewInsetsOf(
+              context,
+            ).bottom;
             return Material(
               color: Colors.transparent,
               child: Stack(
@@ -246,20 +243,25 @@ class _LbModalBottomSheetScaffoldState
                       ),
                     ),
                   ),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Transform.translate(
-                      offset: Offset(0, _dragOffset),
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 1),
-                          end: Offset.zero,
-                        ).animate(sheetCurve),
-                        child: LbModalBottomSheetSurface(
-                          onHandleDragStart: _handleDragStart,
-                          onHandleDragUpdate: _handleDragUpdate,
-                          onHandleDragEnd: _handleDragEnd,
-                          child: widget.child,
+                  AnimatedPadding(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    padding: EdgeInsets.only(bottom: keyboardInset),
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Transform.translate(
+                        offset: Offset(0, _dragOffset),
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).animate(sheetCurve),
+                          child: LbModalBottomSheetSurface(
+                            onHandleDragStart: _handleDragStart,
+                            onHandleDragUpdate: _handleDragUpdate,
+                            onHandleDragEnd: _handleDragEnd,
+                            child: widget.child,
+                          ),
                         ),
                       ),
                     ),

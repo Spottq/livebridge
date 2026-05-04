@@ -1469,6 +1469,21 @@ class AppStrings {
     zhHant: '各應用設定 JSON 無效。',
   );
 
+  String get customNotificationColorTitle => tr(
+    en: 'Custom notification color',
+    ru: '\u041f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u0441\u043a\u0438\u0439 \u0446\u0432\u0435\u0442 \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f',
+  );
+
+  String get notificationColorTitle => tr(
+    en: 'Notification color',
+    ru: '\u0426\u0432\u0435\u0442 \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f',
+  );
+
+  String get selectNotificationColorTitle => tr(
+    en: 'Select color',
+    ru: '\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u0446\u0432\u0435\u0442',
+  );
+
   String get downloadSettings => tr(
     en: 'Download settings',
     ru: 'Скачать настройки',

@@ -56,7 +56,9 @@ internal data class AppPresentationOverride(
     val iconSource: NotificationIconSource = NotificationIconSource.APP,
     val titleSource: NotificationTitleSource? = null,
     val contentSource: NotificationContentSource? = null,
-    val removeOriginalMessage: Boolean = false
+    val removeOriginalMessage: Boolean = false,
+    val notificationColorArgb: Int? = null,
+    val notificationColorEnabled: Boolean = false
 ) {
     fun usesExplicitSources(): Boolean {
         return titleSource != null || contentSource != null
@@ -70,12 +72,18 @@ internal data class AppPresentationOverride(
         return contentSource ?: NotificationContentSource.NOTIFICATION_TEXT
     }
 
+    fun effectiveNotificationColorArgb(): Int? {
+        return if (notificationColorEnabled) notificationColorArgb else null
+    }
+
     fun isDefault(): Boolean {
         return compactTextSource == CompactTextSource.TITLE &&
                 iconSource == NotificationIconSource.APP &&
                 resolvedTitleSource() == NotificationTitleSource.NOTIFICATION_TITLE &&
                 resolvedContentSource() == NotificationContentSource.NOTIFICATION_TEXT &&
-                !removeOriginalMessage
+                !removeOriginalMessage &&
+                notificationColorArgb == null &&
+                !notificationColorEnabled
     }
 }
 
@@ -98,6 +106,8 @@ internal object AppPresentationOverridesCodec {
     private const val KEY_TITLE_SOURCE = "title_source"
     private const val KEY_CONTENT_SOURCE = "content_source"
     private const val KEY_REMOVE_ORIGINAL_MESSAGE = "remove_original_message"
+    private const val KEY_NOTIFICATION_COLOR = "notification_color"
+    private const val KEY_NOTIFICATION_COLOR_ENABLED = "notification_color_enabled"
     private const val KEY_DEFAULT_OVERRIDE = "__default__"
 
     fun parse(raw: String?): AppPresentationOverridesState? {
@@ -165,6 +175,7 @@ internal object AppPresentationOverridesCodec {
         item ?: return null
         val titleSource = NotificationTitleSource.from(item.optString(KEY_TITLE_SOURCE))
         val contentSource = NotificationContentSource.from(item.optString(KEY_CONTENT_SOURCE))
+        val notificationColorArgb = parseNotificationColor(item.opt(KEY_NOTIFICATION_COLOR))
         return AppPresentationOverride(
             compactTextSource = if (titleSource != null || contentSource != null) {
                 CompactTextSource.TITLE
@@ -174,13 +185,22 @@ internal object AppPresentationOverridesCodec {
             iconSource = NotificationIconSource.from(item.optString(KEY_ICON_SOURCE)),
             titleSource = titleSource,
             contentSource = contentSource,
-            removeOriginalMessage = item.optBoolean(KEY_REMOVE_ORIGINAL_MESSAGE, false)
+            removeOriginalMessage = item.optBoolean(KEY_REMOVE_ORIGINAL_MESSAGE, false),
+            notificationColorArgb = notificationColorArgb,
+            notificationColorEnabled = notificationColorArgb != null &&
+                    parseNotificationColorEnabled(item.opt(KEY_NOTIFICATION_COLOR_ENABLED))
         )
     }
 
     private fun encodeEntry(entry: AppPresentationOverride): JSONObject {
         return JSONObject().apply {
             put(KEY_ICON_SOURCE, entry.iconSource.id)
+            entry.notificationColorArgb?.let {
+                put(KEY_NOTIFICATION_COLOR, formatNotificationColor(it))
+                if (!entry.notificationColorEnabled) {
+                    put(KEY_NOTIFICATION_COLOR_ENABLED, false)
+                }
+            }
             if (entry.removeOriginalMessage) {
                 put(KEY_REMOVE_ORIGINAL_MESSAGE, true)
             }
@@ -191,6 +211,47 @@ internal object AppPresentationOverridesCodec {
                 put(KEY_COMPACT_TEXT, entry.compactTextSource.id)
             }
         }
+    }
+
+    private fun parseNotificationColor(raw: Any?): Int? {
+        if (raw == null || raw == JSONObject.NULL) {
+            return null
+        }
+        if (raw is Number) {
+            return 0xFF000000.toInt() or (raw.toInt() and 0x00FFFFFF)
+        }
+
+        var value = raw.toString().trim()
+        if (value.isEmpty()) {
+            return null
+        }
+        value = when {
+            value.startsWith("#") -> value.drop(1)
+            value.startsWith("0x", ignoreCase = true) -> value.drop(2)
+            else -> value
+        }
+        if (value.length == 8) {
+            value = value.drop(2)
+        }
+        if (value.length != 6 || !value.matches(Regex("^[0-9a-fA-F]{6}$"))) {
+            return null
+        }
+        return 0xFF000000.toInt() or (value.toInt(16) and 0x00FFFFFF)
+    }
+
+    private fun parseNotificationColorEnabled(raw: Any?): Boolean {
+        if (raw == null || raw == JSONObject.NULL) {
+            return true
+        }
+        if (raw is Boolean) {
+            return raw
+        }
+        val normalized = raw.toString().trim().lowercase(Locale.ROOT)
+        return normalized !in setOf("false", "0", "off")
+    }
+
+    private fun formatNotificationColor(color: Int): String {
+        return String.format(Locale.US, "#%06X", color and 0x00FFFFFF)
     }
 }
 

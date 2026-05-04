@@ -1,5 +1,9 @@
 import 'dart:typed_data';
 
+const int defaultNotificationColorArgb = 0xFF0F766E;
+
+const Object _copyUnset = Object();
+
 class InstalledApp {
   const InstalledApp({
     required this.packageName,
@@ -414,6 +418,8 @@ class AppPresentationOverride {
     this.titleSource,
     this.contentSource,
     this.removeOriginalMessage = false,
+    this.notificationColorArgb,
+    this.notificationColorEnabled = false,
   });
 
   final AppCompactTextSource compactTextSource;
@@ -421,8 +427,13 @@ class AppPresentationOverride {
   final AppPresentationTitleSource? titleSource;
   final AppPresentationContentSource? contentSource;
   final bool removeOriginalMessage;
+  final int? notificationColorArgb;
+  final bool notificationColorEnabled;
 
   bool get usesExplicitSources => titleSource != null || contentSource != null;
+
+  int? get effectiveNotificationColorArgb =>
+      notificationColorEnabled ? notificationColorArgb : null;
 
   AppPresentationTitleSource get effectiveTitleSource =>
       titleSource ?? AppPresentationTitleSource.notificationTitle;
@@ -435,7 +446,9 @@ class AppPresentationOverride {
       compactTextSource == AppCompactTextSource.title &&
       effectiveTitleSource == AppPresentationTitleSource.notificationTitle &&
       effectiveContentSource == AppPresentationContentSource.notificationText &&
-      !removeOriginalMessage;
+      !removeOriginalMessage &&
+      notificationColorArgb == null &&
+      !notificationColorEnabled;
 
   bool get isEffectiveDefault => isDefault;
 
@@ -445,6 +458,8 @@ class AppPresentationOverride {
     AppPresentationTitleSource? titleSource,
     AppPresentationContentSource? contentSource,
     bool? removeOriginalMessage,
+    Object? notificationColorArgb = _copyUnset,
+    bool? notificationColorEnabled,
   }) {
     return AppPresentationOverride(
       compactTextSource: compactTextSource ?? this.compactTextSource,
@@ -453,6 +468,11 @@ class AppPresentationOverride {
       contentSource: contentSource ?? this.contentSource,
       removeOriginalMessage:
           removeOriginalMessage ?? this.removeOriginalMessage,
+      notificationColorArgb: identical(notificationColorArgb, _copyUnset)
+          ? this.notificationColorArgb
+          : notificationColorArgb as int?,
+      notificationColorEnabled:
+          notificationColorEnabled ?? this.notificationColorEnabled,
     );
   }
 
@@ -460,6 +480,13 @@ class AppPresentationOverride {
     final Map<String, String> payload = <String, String>{
       'icon_source': iconSource.id,
     };
+    final int? color = notificationColorArgb;
+    if (color != null) {
+      payload['notification_color'] = _formatNotificationColor(color);
+      if (!notificationColorEnabled) {
+        payload['notification_color_enabled'] = 'false';
+      }
+    }
     if (removeOriginalMessage) {
       payload['remove_original_message'] = 'true';
     }
@@ -480,6 +507,13 @@ class AppPresentationOverride {
           json['content_source'] as String?,
         );
 
+    final int? notificationColor = _parseNotificationColor(
+      json['notification_color'],
+    );
+    final bool notificationColorEnabled = notificationColor != null
+        ? _parseNotificationColorEnabled(json['notification_color_enabled'])
+        : false;
+
     return AppPresentationOverride(
       compactTextSource: (titleSource != null || contentSource != null)
           ? AppCompactTextSource.title
@@ -492,6 +526,51 @@ class AppPresentationOverride {
       removeOriginalMessage:
           json['remove_original_message'] == true ||
           json['remove_original_message'] == 'true',
+      notificationColorArgb: notificationColor,
+      notificationColorEnabled: notificationColorEnabled,
     );
+  }
+
+  static bool _parseNotificationColorEnabled(dynamic raw) {
+    if (raw == null) {
+      return true;
+    }
+    if (raw is bool) {
+      return raw;
+    }
+    final String value = raw.toString().trim().toLowerCase();
+    return value != 'false' && value != '0' && value != 'off';
+  }
+
+  static int? _parseNotificationColor(dynamic raw) {
+    if (raw is num) {
+      return 0xFF000000 | (raw.toInt() & 0x00FFFFFF);
+    }
+    if (raw is! String) {
+      return null;
+    }
+
+    String value = raw.trim();
+    if (value.isEmpty) {
+      return null;
+    }
+    if (value.startsWith('#')) {
+      value = value.substring(1);
+    } else if (value.toLowerCase().startsWith('0x')) {
+      value = value.substring(2);
+    }
+    if (value.length == 8) {
+      value = value.substring(2);
+    }
+    if (value.length != 6 || !RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(value)) {
+      return null;
+    }
+
+    return 0xFF000000 | int.parse(value, radix: 16);
+  }
+
+  static String _formatNotificationColor(int argb) {
+    final int rgb = argb & 0x00FFFFFF;
+    return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 }

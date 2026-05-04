@@ -94,7 +94,9 @@ class _RulesPerAppBehaviorScreenState extends State<RulesPerAppBehaviorScreen> {
         left.iconSource == right.iconSource &&
         left.effectiveTitleSource == right.effectiveTitleSource &&
         left.effectiveContentSource == right.effectiveContentSource &&
-        left.removeOriginalMessage == right.removeOriginalMessage;
+        left.removeOriginalMessage == right.removeOriginalMessage &&
+        left.notificationColorArgb == right.notificationColorArgb &&
+        left.notificationColorEnabled == right.notificationColorEnabled;
   }
 
   Future<void> _loadOverrides() async {

@@ -28,6 +28,7 @@ import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -46,6 +47,7 @@ object LiveUpdateNotifier {
     const val CHANNEL_ID = "livebridge_promoted_updates"
     private const val TWO_GIS_PACKAGE = "ru.dublgis.dgismobile"
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
+    private const val YANGO_MAPS_PACKAGE = "com.yango.maps.android"
     private const val SAMSUNG_TRAY_ICON_SIZE = 48
 
     private const val CHANNEL_NAME = "LiveBridge Updates"
@@ -58,6 +60,7 @@ object LiveUpdateNotifier {
     private const val CALL_DURATION_REFRESH_MS = 1_000L
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
         YANDEX_MAPS_PACKAGE,
+        YANGO_MAPS_PACKAGE,
         "com.google.android.apps.maps",
         "com.waze"
     )
@@ -159,6 +162,8 @@ object LiveUpdateNotifier {
         IconCompat.createWithBitmap(Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888))
     }
     private val progressColor = Color.valueOf(15f / 255f, 118f / 255f, 110f / 255f, 1f).toArgb()
+    private const val SAMSUNG_EXTRA_CHIP_BG_COLOR = "android.ongoingActivityNoti.chipBgColor"
+    private const val SAMSUNG_EXTRA_ACTION_BG_COLOR = "android.ongoingActivityNoti.actionBgColor"
     private val mainHandler = Handler(Looper.getMainLooper())
     private val appIconCacheLock = Any()
     private val appIconCache = mutableMapOf<String, AppIconAssets>()
@@ -1788,15 +1793,19 @@ object LiveUpdateNotifier {
         val sourcePackageNameLower = sbn.packageName.lowercase(Locale.ROOT)
         val isTwoGisPackage = sourcePackageNameLower == TWO_GIS_PACKAGE
         val isYandexMapsPackage = sourcePackageNameLower == YANDEX_MAPS_PACKAGE
+        val isYangoMapsPackage = sourcePackageNameLower == YANGO_MAPS_PACKAGE
+        val isYandexMapsLikePackage = isYandexMapsPackage || isYangoMapsPackage
         val isSamsungTwoGis =
             samsungBridge.enabled &&
                     samsungBridge.hasCustomRemoteCard &&
                     isTwoGisPackage
         val shouldTryNavigationArrowIcon =
             (appPresentationOverride.iconSource == NotificationIconSource.NOTIFICATION ||
-                    isTwoGisPackage) &&
+                    isTwoGisPackage ||
+                    isYandexMapsLikePackage) &&
                     (smartRuleId == "navigation" ||
                             isTwoGisPackage ||
+                            isYandexMapsLikePackage ||
                             (allowNavigationIconHeuristics &&
                                     isLikelyNavigationPackage(sbn.packageName, parserDictionary)))
         val navigationDrawable =
@@ -1808,7 +1817,7 @@ object LiveUpdateNotifier {
         val sourceLargeIcon = resolveSourceLargeIconBitmap(context, source)
         val preferredLargeIcon = when {
             largeIconOverride != null -> largeIconOverride
-            shouldTryNavigationArrowIcon ->
+            shouldTryNavigationArrowIcon && !isYandexMapsLikePackage ->
                 navigationDrawable?.bitmap ?: samsungLargeIcon ?: sourceLargeIcon
             else ->
                 samsungLargeIcon ?: sourceLargeIcon
@@ -1826,8 +1835,8 @@ object LiveUpdateNotifier {
                 appSmallIcon ?: sourceSmallIcon ?: samsungSmallIcon
         }
         val preferredChipIcon = when {
-            isYandexMapsPackage ->
-                appSmallIcon ?: preferredPrimaryIcon
+            isYandexMapsLikePackage ->
+                navigationDrawable?.icon ?: samsungSmallIcon ?: sourceSmallIcon ?: appSmallIcon
             shouldTryNavigationArrowIcon ->
                 navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
             samsungBridge.hasCustomRemoteCard ->
@@ -1999,6 +2008,13 @@ object LiveUpdateNotifier {
         val hasProgress = sourceHasProgress || progressOverride != null || samsungProgressMax > 0
         val suppressFrameworkProgressBody = isTwoGisPackage
         var resolvedProgressChipText: String? = null
+        val customNotificationColor = appPresentationOverride.effectiveNotificationColorArgb()
+        val builderAccentColor =
+            if (appPresentationOverride.iconSource == NotificationIconSource.NOTIFICATION) {
+                customNotificationColor ?: progressColor
+            } else {
+                progressColor
+            }
         val determinateProgressPercent = if (hasProgress && !indeterminate && progressMax > 0) {
             val safeMax = progressMax.coerceAtLeast(1)
             val safeProgress = progressValue.coerceIn(0, safeMax)
@@ -2091,7 +2107,7 @@ object LiveUpdateNotifier {
             .setAutoCancel(false)
             .setWhen(callChronometerStart ?: resolveStableWhen(source, sbn.postTime))
             .setShowWhen(callChronometerStart != null)
-            .setColor(progressColor)
+            .setColor(builderAccentColor)
             .setCategory(
                 if (callMirrorActive) {
                     Notification.CATEGORY_CALL
@@ -2330,7 +2346,18 @@ object LiveUpdateNotifier {
             )
         }
 
+        customNotificationColor?.let { color ->
+            builder.addExtras(buildCustomNotificationColorExtras(color))
+        }
+
         return builder.build()
+    }
+
+    private fun buildCustomNotificationColorExtras(color: Int): Bundle {
+        return Bundle().apply {
+            putInt(SAMSUNG_EXTRA_CHIP_BG_COLOR, color)
+            putInt(SAMSUNG_EXTRA_ACTION_BG_COLOR, color)
+        }
     }
 
     private fun notifyWithPromotionFallback(

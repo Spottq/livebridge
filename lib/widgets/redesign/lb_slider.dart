@@ -15,6 +15,8 @@ class LbSlider extends StatefulWidget {
     this.onChangeStart,
     this.onChangeEnd,
     this.enabled = true,
+    this.activeTrackColor,
+    this.inactiveTrackColor,
   });
 
   final double value;
@@ -24,6 +26,8 @@ class LbSlider extends StatefulWidget {
   final ValueChanged<double>? onChangeStart;
   final ValueChanged<double>? onChangeEnd;
   final bool enabled;
+  final Color? activeTrackColor;
+  final Color? inactiveTrackColor;
 
   @override
   State<LbSlider> createState() => _LbSliderState();
@@ -68,6 +72,8 @@ class _LbSliderState extends State<LbSlider> {
         trackShape: _LbSliderTrackShape(
           palette: palette,
           isEnabled: isInteractive,
+          activeTrackColor: widget.activeTrackColor,
+          inactiveTrackColor: widget.inactiveTrackColor,
         ),
       ),
       child: Slider(
@@ -86,10 +92,14 @@ class _LbSliderTrackShape extends SliderTrackShape {
   const _LbSliderTrackShape({
     required this.palette,
     required this.isEnabled,
+    this.activeTrackColor,
+    this.inactiveTrackColor,
   });
 
   final LbPalette palette;
   final bool isEnabled;
+  final Color? activeTrackColor;
+  final Color? inactiveTrackColor;
 
   @override
   Rect getPreferredRect({
@@ -134,10 +144,10 @@ class _LbSliderTrackShape extends SliderTrackShape {
     );
     final double thumbRadius =
         (sliderTheme.thumbShape
-                    ?.getPreferredSize(isEnabled, isDiscrete)
-                    .width ??
-                LbSpacing.sliderThumbSize) /
-            2;
+                ?.getPreferredSize(isEnabled, isDiscrete)
+                .width ??
+            LbSpacing.sliderThumbSize) /
+        2;
     final double visualInset = thumbRadius + LbSpacing.sliderEndInset;
     final Rect visibleRect = Rect.fromLTWH(
       innerRect.left - visualInset,
@@ -150,14 +160,15 @@ class _LbSliderTrackShape extends SliderTrackShape {
     final RRect fullTrack = RRect.fromRectAndRadius(visibleRect, radius);
     canvas.drawRRect(
       fullTrack,
-      Paint()..color = palette.toggleTrackInactive,
+      Paint()..color = inactiveTrackColor ?? palette.toggleTrackInactive,
     );
 
-    double activeWidth = (thumbCenter.dx -
-            visibleRect.left +
-            thumbRadius +
-            LbSpacing.sliderActiveThumbOffset)
-        .clamp(0, visibleRect.width);
+    double activeWidth =
+        (thumbCenter.dx -
+                visibleRect.left +
+                thumbRadius +
+                LbSpacing.sliderActiveThumbOffset)
+            .clamp(0, visibleRect.width);
 
     if (activeWidth > 0 && activeWidth < visibleRect.height) {
       activeWidth = visibleRect.height + LbSpacing.sliderActiveThumbOffset;
@@ -175,7 +186,10 @@ class _LbSliderTrackShape extends SliderTrackShape {
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(activeRect, radius),
-      Paint()..color = isEnabled ? palette.toggleTrackActive : palette.toggleTrackInactive,
+      Paint()
+        ..color = isEnabled
+            ? activeTrackColor ?? palette.toggleTrackActive
+            : inactiveTrackColor ?? palette.toggleTrackInactive,
     );
   }
 }
@@ -219,11 +233,7 @@ class _LbSliderThumbShape extends SliderComponentShape {
         ),
     );
 
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()..color = palette.toggleThumb,
-    );
+    canvas.drawCircle(center, radius, Paint()..color = palette.toggleThumb);
 
     canvas.drawCircle(
       center,

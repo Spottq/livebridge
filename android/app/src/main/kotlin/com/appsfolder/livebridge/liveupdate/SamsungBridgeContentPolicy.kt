@@ -26,6 +26,7 @@ internal data class SamsungMiniTextPair(
 internal object SamsungBridgeContentPolicy {
     private const val TWO_GIS_PACKAGE = "ru.dublgis.dgismobile"
     private const val YANDEX_MAPS_PACKAGE = "ru.yandex.yandexmaps"
+    private const val YANGO_MAPS_PACKAGE = "com.yango.maps.android"
 
     fun resolve(
         sourcePackageName: String,
@@ -47,6 +48,9 @@ internal object SamsungBridgeContentPolicy {
         preferSmartShortTextAsPrimary: Boolean = false
     ): SamsungBridgeTexts {
         val isTwoGisPackage = sourcePackageName == TWO_GIS_PACKAGE
+        val isYandexMapsLikePackage =
+            sourcePackageName == YANDEX_MAPS_PACKAGE ||
+                    sourcePackageName == YANGO_MAPS_PACKAGE
         val preferredSmartText = smartShortTextOverride
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
@@ -140,7 +144,7 @@ internal object SamsungBridgeContentPolicy {
             preferCompactNowBarRemoteView =
                 !useSmartShortTextAsPrimary &&
                 !useTextOnlyMiniNowBar && !isTwoGisPackage && (
-                    sourcePackageName == YANDEX_MAPS_PACKAGE && !hasProgress
+                    isYandexMapsLikePackage && !hasProgress
                 ),
             disableNowBarRemoteView = useSmartShortTextAsPrimary || isTwoGisPackage,
             disableMiniRemoteView = useTextOnlyMiniNowBar,

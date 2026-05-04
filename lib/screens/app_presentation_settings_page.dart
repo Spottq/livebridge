@@ -5,11 +5,13 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ming_cute_icons/ming_cute_icons.dart';
 
 import '../l10n/app_strings.dart';
 import '../models/app_models.dart';
 import '../platform/livebridge_platform.dart';
 import '../utils/livebridge_haptics.dart';
+import '../widgets/notification_color_picker.dart';
 import '../widgets/shared_widgets.dart';
 
 const String _defaultAppPresentationKey = '__default__';
@@ -108,7 +110,9 @@ bool _isSameStandaloneAppPresentationOverride(
       a.iconSource == b.iconSource &&
       a.effectiveTitleSource == b.effectiveTitleSource &&
       a.effectiveContentSource == b.effectiveContentSource &&
-      a.removeOriginalMessage == b.removeOriginalMessage;
+      a.removeOriginalMessage == b.removeOriginalMessage &&
+      a.notificationColorArgb == b.notificationColorArgb &&
+      a.notificationColorEnabled == b.notificationColorEnabled;
 }
 
 _ParsedAppPresentationOverrides _parseStandaloneAppPresentationOverrides(
@@ -201,6 +205,11 @@ void _showStandaloneAppPresentationSnack(BuildContext context, String value) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value)));
 }
 
+String _formatNotificationColorHex(int colorArgb) {
+  final int rgb = colorArgb & 0x00FFFFFF;
+  return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
+}
+
 class AppPresentationSettingsPage extends StatefulWidget {
   const AppPresentationSettingsPage({super.key});
 
@@ -230,7 +239,9 @@ class _AppPresentationSettingsPageState
         a.iconSource == b.iconSource &&
         a.effectiveTitleSource == b.effectiveTitleSource &&
         a.effectiveContentSource == b.effectiveContentSource &&
-        a.removeOriginalMessage == b.removeOriginalMessage;
+        a.removeOriginalMessage == b.removeOriginalMessage &&
+        a.notificationColorArgb == b.notificationColorArgb &&
+        a.notificationColorEnabled == b.notificationColorEnabled;
   }
 
   _ParsedAppPresentationOverrides _parseOverrides(String raw) {
@@ -487,6 +498,9 @@ class _AppPresentationSettingsPageState
         value.iconSource == AppNotificationIconSource.notification
         ? s.appPresentationIconNotification
         : s.appPresentationIconApp;
+    if (value.effectiveNotificationColorArgb != null) {
+      return '$textSummary \u2022 $iconSummary \u2022 ${s.notificationColorTitle}';
+    }
     return '$textSummary • $iconSummary';
   }
 
@@ -501,7 +515,7 @@ class _AppPresentationSettingsPageState
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
     final Color popupMenuColor = colorScheme.brightness == Brightness.light
         ? Colors.white
         : colorScheme.surfaceContainer;
@@ -829,11 +843,16 @@ class _AppPresentationEditorSheetState
   late AppCompactTextSource _compactTextSource =
       widget.initialValue.compactTextSource;
   late AppNotificationIconSource _iconSource = widget.initialValue.iconSource;
+  late int? _notificationColorArgb = widget.initialValue.notificationColorArgb;
+  late bool _notificationColorEnabled =
+      widget.initialValue.notificationColorEnabled;
 
   AppPresentationOverride _currentValue() {
     return AppPresentationOverride(
       compactTextSource: _compactTextSource,
       iconSource: _iconSource,
+      notificationColorArgb: _notificationColorArgb,
+      notificationColorEnabled: _notificationColorEnabled,
     );
   }
 
@@ -841,9 +860,69 @@ class _AppPresentationEditorSheetState
     widget.onChanged(_currentValue());
   }
 
+  Future<void> _openColorPicker() async {
+    final AppStrings s = AppStrings.of(context);
+    final int initialColor =
+        _notificationColorArgb ?? defaultNotificationColorArgb;
+    final int? selectedColor = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 8,
+              bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: NotificationColorPickerSheet(
+              title: s.selectNotificationColorTitle,
+              doneLabel: s.save,
+              initialColorArgb: initialColor,
+            ),
+          ),
+        );
+      },
+    );
+    if (selectedColor == null || !mounted) {
+      return;
+    }
+    setState(() => _notificationColorArgb = selectedColor);
+    _emitChanged();
+  }
+
+  void _setCustomColorEnabled(bool value) {
+    if (_notificationColorEnabled == value) {
+      return;
+    }
+    LiveBridgeHaptics.toggle(value);
+    setState(() {
+      _notificationColorEnabled = value;
+      _notificationColorArgb ??= defaultNotificationColorArgb;
+    });
+    _emitChanged();
+  }
+
+  void _resetNotificationColor() {
+    if (_notificationColorArgb == defaultNotificationColorArgb) {
+      return;
+    }
+    LiveBridgeHaptics.warning();
+    setState(() => _notificationColorArgb = defaultNotificationColorArgb);
+    _emitChanged();
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = AppStrings.of(context);
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
     return SafeArea(
       top: false,
@@ -854,115 +933,214 @@ class _AppPresentationEditorSheetState
           top: 8,
           bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                InstalledAppAvatar(app: widget.app),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.app.label,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  InstalledAppAvatar(app: widget.app),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.app.label,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        if (widget.app.packageName.trim().isNotEmpty)
+                          Text(
+                            widget.app.packageName,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              Text(
+                s.appPresentationTextSourceLabel,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 12),
+              LiveBridgeToggleSelector<AppCompactTextSource>(
+                value: _compactTextSource,
+                options: <SelectorOption<AppCompactTextSource>>[
+                  SelectorOption<AppCompactTextSource>(
+                    value: AppCompactTextSource.title,
+                    title: s.appPresentationTextTitle,
+                  ),
+                  SelectorOption<AppCompactTextSource>(
+                    value: AppCompactTextSource.text,
+                    title: s.appPresentationTextNotification,
+                  ),
+                ],
+                onChanged: (AppCompactTextSource next) {
+                  if (_compactTextSource == next) return;
+                  setState(() => _compactTextSource = next);
+                  _emitChanged();
+                },
+              ),
+              const SizedBox(height: 24),
+              Text(
+                s.appPresentationIconSourceLabel,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 12),
+              LiveBridgeToggleSelector<AppNotificationIconSource>(
+                value: _iconSource,
+                options: <SelectorOption<AppNotificationIconSource>>[
+                  SelectorOption<AppNotificationIconSource>(
+                    value: AppNotificationIconSource.app,
+                    title: s.appPresentationIconApp,
+                  ),
+                  SelectorOption<AppNotificationIconSource>(
+                    value: AppNotificationIconSource.notification,
+                    title: s.appPresentationIconNotification,
+                  ),
+                ],
+                onChanged: (AppNotificationIconSource next) {
+                  if (_iconSource == next) return;
+                  setState(() => _iconSource = next);
+                  _emitChanged();
+                },
+              ),
+              const SizedBox(height: 24),
+              Text(
+                s.notificationColorTitle,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.45,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: colorScheme.outlineVariant.withValues(alpha: 0.45),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    SwitchListTile.adaptive(
+                      value: _notificationColorEnabled,
+                      onChanged: _setCustomColorEnabled,
+                      title: Text(s.customNotificationColorTitle),
+                      activeThumbColor: colorScheme.primary,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                    ),
+                    if (_notificationColorArgb != null) ...<Widget>[
+                      Divider(
+                        height: 1,
+                        color: colorScheme.outlineVariant.withValues(
+                          alpha: 0.45,
                         ),
                       ),
-                      if (widget.app.packageName.trim().isNotEmpty)
-                        Text(
-                          widget.app.packageName,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
+                      InkWell(
+                        onTap: _openColorPicker,
+                        borderRadius: const BorderRadius.vertical(
+                          bottom: Radius.circular(18),
                         ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          child: Row(
+                            children: <Widget>[
+                              NotificationColorSwatch(
+                                colorArgb: _notificationColorArgb!,
+                                size: 32,
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Text(
+                                  _formatNotificationColorHex(
+                                    _notificationColorArgb!,
+                                  ),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: s.resetToDefault,
+                                onPressed: _resetNotificationColor,
+                                icon: const Icon(
+                                  MingCuteIcons
+                                      .mgc_refresh_anticlockwise_1_line,
+                                ),
+                                color: colorScheme.onSurfaceVariant,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints.tightFor(
+                                  width: 40,
+                                  height: 40,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
-                  ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            Text(
-              s.appPresentationTextSourceLabel,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            LiveBridgeToggleSelector<AppCompactTextSource>(
-              value: _compactTextSource,
-              options: <SelectorOption<AppCompactTextSource>>[
-                SelectorOption<AppCompactTextSource>(
-                  value: AppCompactTextSource.title,
-                  title: s.appPresentationTextTitle,
-                ),
-                SelectorOption<AppCompactTextSource>(
-                  value: AppCompactTextSource.text,
-                  title: s.appPresentationTextNotification,
-                ),
-              ],
-              onChanged: (AppCompactTextSource next) {
-                if (_compactTextSource == next) return;
-                setState(() => _compactTextSource = next);
-                _emitChanged();
-              },
-            ),
-            const SizedBox(height: 24),
-            Text(
-              s.appPresentationIconSourceLabel,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            LiveBridgeToggleSelector<AppNotificationIconSource>(
-              value: _iconSource,
-              options: <SelectorOption<AppNotificationIconSource>>[
-                SelectorOption<AppNotificationIconSource>(
-                  value: AppNotificationIconSource.app,
-                  title: s.appPresentationIconApp,
-                ),
-                SelectorOption<AppNotificationIconSource>(
-                  value: AppNotificationIconSource.notification,
-                  title: s.appPresentationIconNotification,
-                ),
-              ],
-              onChanged: (AppNotificationIconSource next) {
-                if (_iconSource == next) return;
-                setState(() => _iconSource = next);
-                _emitChanged();
-              },
-            ),
-            const SizedBox(height: 32),
-            Row(
-              children: [
-                if (widget.showResetAction)
-                  TextButton(
+              ),
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  if (widget.showResetAction)
+                    TextButton(
+                      onPressed: () {
+                        LiveBridgeHaptics.warning();
+                        setState(() {
+                          _compactTextSource =
+                              widget.resetValue.compactTextSource;
+                          _iconSource = widget.resetValue.iconSource;
+                          _notificationColorArgb =
+                              widget.resetValue.notificationColorArgb;
+                          _notificationColorEnabled =
+                              widget.resetValue.notificationColorEnabled;
+                        });
+                        _emitChanged();
+                      },
+                      child: Text(s.resetToDefault),
+                    ),
+                  const Spacer(),
+                  FilledButton.icon(
                     onPressed: () {
-                      LiveBridgeHaptics.warning();
-                      setState(() {
-                        _compactTextSource =
-                            widget.resetValue.compactTextSource;
-                        _iconSource = widget.resetValue.iconSource;
-                      });
-                      _emitChanged();
+                      LiveBridgeHaptics.confirm();
+                      Navigator.of(context).maybePop();
                     },
-                    child: Text(s.resetToDefault),
+                    icon: const Icon(Icons.check_rounded),
+                    label: Text(s.save),
                   ),
-                const Spacer(),
-                FilledButton.icon(
-                  onPressed: () {
-                    LiveBridgeHaptics.confirm();
-                    Navigator.of(context).maybePop();
-                  },
-                  icon: const Icon(Icons.check_rounded),
-                  label: Text(s.save),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
