@@ -306,6 +306,87 @@ class AppStrings {
     zhHant: '應用設定',
   );
 
+  String get backupRestoreTitle => tr(
+    en: 'Backup & Restore',
+    ru: 'Backup & Restore',
+    tr: 'Yedekleme ve geri yükleme',
+    ptBr: 'Backup e restauração',
+    zhHans: '备份与恢复',
+    zhHant: '備份與還原',
+  );
+
+  String get exportLiveBridgeSettingsTitle => tr(
+    en: 'Export LiveBridge settings',
+    ru: 'Экспорт настроек LiveBridge',
+    tr: 'LiveBridge ayarlarını dışa aktar',
+    ptBr: 'Exportar configurações do LiveBridge',
+    zhHans: '导出 LiveBridge 设置',
+    zhHant: '匯出 LiveBridge 設定',
+  );
+
+  String get importLiveBridgeSettingsTitle => tr(
+    en: 'Import LiveBridge settings',
+    ru: 'Импорт настроек LiveBridge',
+    tr: 'LiveBridge ayarlarını içe aktar',
+    ptBr: 'Importar configurações do LiveBridge',
+    zhHans: '导入 LiveBridge 设置',
+    zhHant: '匯入 LiveBridge 設定',
+  );
+
+  String get importFromDebugTitle => tr(
+    en: 'Import from debug JSON',
+    ru: 'Импорт из debug JSON',
+    tr: 'Debug JSON’dan içe aktar',
+    ptBr: 'Importar do debug JSON',
+    zhHans: '从 debug JSON 导入',
+    zhHant: '從 debug JSON 匯入',
+  );
+
+  String get liveBridgeSettingsExported => tr(
+    en: 'LiveBridge settings exported.',
+    ru: 'Настройки LiveBridge экспортированы.',
+    tr: 'LiveBridge ayarları dışa aktarıldı.',
+    ptBr: 'Configurações do LiveBridge exportadas.',
+    zhHans: 'LiveBridge 设置已导出。',
+    zhHant: 'LiveBridge 設定已匯出。',
+  );
+
+  String get liveBridgeSettingsExportFailed => tr(
+    en: 'Failed to export LiveBridge settings.',
+    ru: 'Не удалось экспортировать настройки LiveBridge.',
+    tr: 'LiveBridge ayarları dışa aktarılamadı.',
+    ptBr: 'Falha ao exportar configurações do LiveBridge.',
+    zhHans: '导出 LiveBridge 设置失败。',
+    zhHant: '匯出 LiveBridge 設定失敗。',
+  );
+
+  String get liveBridgeSettingsImported => tr(
+    en: 'LiveBridge settings imported.',
+    ru: 'Настройки LiveBridge импортированы.',
+    tr: 'LiveBridge ayarları içe aktarıldı.',
+    ptBr: 'Configurações do LiveBridge importadas.',
+    zhHans: 'LiveBridge 设置已导入。',
+    zhHant: 'LiveBridge 設定已匯入。',
+  );
+
+  String get liveBridgeSettingsImportFailed => tr(
+    en: 'Failed to import LiveBridge settings.',
+    ru: 'Не удалось импортировать настройки LiveBridge.',
+    tr: 'LiveBridge ayarları içe aktarılamadı.',
+    ptBr: 'Falha ao importar configurações do LiveBridge.',
+    zhHans: '导入 LiveBridge 设置失败。',
+    zhHant: '匯入 LiveBridge 設定失敗。',
+  );
+
+  String get copyOldDebugJsonFirst => tr(
+    en: 'please copy your old debug JSON first',
+    ru: 'сначала скопируйте старый debug JSON',
+    tr: 'lütfen önce eski debug JSON’unuzu kopyalayın',
+    ptBr: 'copie seu debug JSON antigo primeiro',
+    zhHans: '请先复制旧的 debug JSON',
+    zhHant: '請先複製舊的 debug JSON',
+  );
+
   String get appLanguageTitle => tr(
     en: 'App language',
     ru: 'Язык приложения',

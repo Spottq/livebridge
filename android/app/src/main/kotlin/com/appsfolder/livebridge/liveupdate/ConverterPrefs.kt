@@ -1,6 +1,8 @@
 package com.kakao.taxi.liveupdate
 
 import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.Locale
 
 class ConverterPrefs(context: Context) {
@@ -782,6 +784,39 @@ class ConverterPrefs(context: Context) {
             }
     }
 
+    fun exportSettingsBackupJson(): String {
+        val root = JSONObject()
+            .put("schema", "livebridge_settings_backup_v1")
+            .put("exported_at_ms", System.currentTimeMillis())
+            .put("settings", buildSettingsJson())
+            .put("rules", buildRulesJson())
+            .put("dictionary", buildDictionaryJson())
+            .put("app_presentation", buildAppPresentationJson())
+            .put("additional_state", buildAdditionalStateJson())
+
+        return root.toString(2)
+    }
+
+    fun importSettingsBackupJson(raw: String): Boolean {
+        val root = runCatching { JSONObject(raw) }.getOrNull() ?: return false
+        val hasImportableSections =
+            root.has("settings") ||
+                root.has("rules") ||
+                root.has("dictionary") ||
+                root.has("app_presentation") ||
+                root.has("additional_state")
+        if (!hasImportableSections) {
+            return false
+        }
+
+        optObject(root, "settings")?.let(::applySettingsJson)
+        optObject(root, "rules")?.let(::applyRulesJson)
+        optObject(root, "dictionary")?.let(::applyDictionaryJson)
+        optObject(root, "app_presentation")?.let(::applyAppPresentationJson)
+        optObject(root, "additional_state")?.let(::applyAdditionalStateJson)
+        return true
+    }
+
     fun isPackageAllowed(packageName: String): Boolean {
         val mode = PackageMode.from(getPackageMode())
         val packages = parsePackageRules(getPackageRulesRaw())
@@ -845,6 +880,310 @@ class ConverterPrefs(context: Context) {
             .map(::normalizePackageName)
             .filter { it.isNotBlank() }
             .toSet()
+    }
+
+    private fun buildSettingsJson(): JSONObject {
+        return JSONObject()
+            .put("converter_enabled", getConverterEnabled())
+            .put("keep_alive_foreground_enabled", getKeepAliveForegroundEnabled())
+            .put("spring_transitions_enabled", getSpringTransitionsEnabled())
+            .put("prevent_mirror_dismiss_enabled", getPreventMirrorDismissEnabled())
+            .put("hide_lockscreen_content_enabled", getHideLockscreenContentEnabled())
+            .put("hints_disabled", getHintsDisabled())
+            .put("conversion_log_enabled", getConversionLogEnabled())
+            .put("conversion_log_max_bytes", getConversionLogMaxBytes())
+            .put("bug_report_auto_copy_enabled", getBugReportAutoCopyEnabled())
+            .put("app_language", getAppLanguageTag())
+            .put("network_speed_enabled", getNetworkSpeedEnabled())
+            .put(
+                "network_speed_min_threshold_bytes_per_second",
+                getNetworkSpeedMinThresholdBytesPerSecond()
+            )
+            .put("network_speed_display_mode", getNetworkSpeedDisplayMode())
+            .put("network_speed_upload_prefix", getNetworkSpeedUploadPrefix())
+            .put("network_speed_download_prefix", getNetworkSpeedDownloadPrefix())
+            .put("network_speed_unit", getNetworkSpeedUnit())
+            .put("network_speed_prioritize_upload", getNetworkSpeedPrioritizeUpload())
+            .put("network_speed_lockscreen_only", getNetworkSpeedLockscreenOnly())
+            .put(
+                "network_speed_chip_background_disabled",
+                getNetworkSpeedChipBackgroundDisabled()
+            )
+            .put("sync_dnd_enabled", getSyncDndEnabled())
+            .put("update_checks_enabled", getUpdateChecksEnabled())
+            .put("only_with_progress", getOnlyWithProgress())
+            .put("text_progress_enabled", getTextProgressEnabled())
+            .put("aosp_cutting_enabled", getAospCuttingEnabled())
+            .put("aosp_cutting_length", getAospCuttingLength())
+            .put("animated_island_enabled", getAnimatedIslandEnabled())
+            .put(
+                "animated_island_update_frequency_ms",
+                getAnimatedIslandUpdateFrequencyMs()
+            )
+            .put("hyper_bridge_enabled", getHyperBridgeEnabled())
+            .put("notification_dedup_enabled", getNotificationDedupEnabled())
+            .put("notification_dedup_mode", getNotificationDedupMode())
+            .put("otp_detection_enabled", getOtpDetectionEnabled())
+            .put("otp_auto_copy_enabled", getOtpAutoCopyEnabled())
+            .put(
+                "otp_remove_original_message_enabled",
+                getOtpRemoveOriginalMessageEnabled()
+            )
+            .put("smart_detection_enabled", getSmartStatusDetectionEnabled())
+            .put("smart_taxi_enabled", getSmartTaxiEnabled())
+            .put("smart_delivery_enabled", getSmartDeliveryEnabled())
+            .put("smart_calls_enabled", getSmartCallsEnabled())
+            .put("smart_media_playback_enabled", getSmartMediaPlaybackEnabled())
+            .put(
+                "smart_media_playback_show_on_lock_screen",
+                getSmartMediaPlaybackShowOnLockScreen()
+            )
+            .put(
+                "smart_media_playback_use_symbols_in_player",
+                getSmartMediaPlaybackUseSymbolsInPlayer()
+            )
+            .put("smart_navigation_enabled", getSmartNavigationEnabled())
+            .put("smart_weather_enabled", getSmartWeatherEnabled())
+            .put("smart_weather_lockscreen_only", getSmartWeatherLockscreenOnly())
+            .put("smart_external_devices_enabled", getSmartExternalDevicesEnabled())
+            .put(
+                "smart_external_devices_ignore_debugging",
+                getSmartExternalDevicesIgnoreDebugging()
+            )
+            .put("smart_vpn_enabled", getSmartVpnEnabled())
+            .put("smart_flashlight_enabled", getSmartFlashlightEnabled())
+            .put("smart_flashlight_level", getSmartFlashlightLevel())
+            .put(
+                "smart_remove_original_message_enabled",
+                getSmartRemoveOriginalMessageEnabled()
+            )
+            .put("app_list_access_granted", getAppListAccessGranted())
+            .put("background_warning_dismissed", getBackgroundWarningDismissed())
+            .put("samsung_warning_dismissed", getSamsungWarningDismissed())
+            .put("samsung_remote_reparser_enabled", getSamsungRemoteReparserEnabled())
+    }
+
+    private fun buildRulesJson(): JSONObject {
+        return JSONObject()
+            .put("package_mode", getPackageMode())
+            .put("package_rules", jsonArrayFromRules(getPackageRulesRaw()))
+            .put("bypass_package_rules", jsonArrayFromRules(getBypassPackageRulesRaw()))
+            .put("notification_dedup_package_mode", getNotificationDedupPackageMode())
+            .put(
+                "notification_dedup_package_rules",
+                jsonArrayFromRules(getNotificationDedupPackageRulesRaw())
+            )
+            .put("otp_package_mode", getOtpPackageMode())
+            .put("otp_package_rules", jsonArrayFromRules(getOtpPackageRulesRaw()))
+            .put("smart_package_mode", getSmartPackageMode())
+            .put("smart_package_rules", jsonArrayFromRules(getSmartPackageRulesRaw()))
+    }
+
+    private fun buildDictionaryJson(): JSONObject {
+        val dictionary = JSONObject()
+            .put(
+                "parser_dictionary_enabled_languages",
+                JSONArray(getParserDictionaryEnabledLanguageIds().sorted())
+            )
+        getCustomParserDictionaryRaw()?.let { dictionary.put("custom_parser_dictionary", it) }
+        SUPPORTED_PARSER_DICTIONARY_LANGUAGE_IDS.forEach { languageId ->
+            getParserDictionaryLanguageOverrideRaw(languageId)?.let { raw ->
+                dictionary.put("parser_dictionary_${languageId}_override", raw)
+            }
+        }
+        return dictionary
+    }
+
+    private fun buildAppPresentationJson(): JSONObject {
+        return JSONObject()
+            .put("app_presentation_overrides", getAppPresentationOverridesRaw())
+    }
+
+    private fun buildAdditionalStateJson(): JSONObject {
+        val additionalState = JSONObject()
+        if (hasExpandedSectionsState()) {
+            additionalState.put("expanded_sections", getExpandedSectionsRaw())
+        }
+        return additionalState
+    }
+
+    private fun applySettingsJson(settings: JSONObject) {
+        bool(settings, "converter_enabled")?.let(::setConverterEnabled)
+        bool(settings, "keep_alive_foreground_enabled")?.let(::setKeepAliveForegroundEnabled)
+        bool(settings, "spring_transitions_enabled")?.let(::setSpringTransitionsEnabled)
+        bool(settings, "prevent_mirror_dismiss_enabled")?.let(::setPreventMirrorDismissEnabled)
+        bool(settings, "hide_lockscreen_content_enabled")?.let(::setHideLockscreenContentEnabled)
+        bool(settings, "hints_disabled")?.let(::setHintsDisabled)
+        bool(settings, "conversion_log_enabled")?.let(::setConversionLogEnabled)
+        int(settings, "conversion_log_max_bytes")?.let(::setConversionLogMaxBytes)
+        bool(settings, "bug_report_auto_copy_enabled")?.let(::setBugReportAutoCopyEnabled)
+        string(settings, "app_language")?.let(::setAppLanguageTag)
+        string(settings, "app_language_tag")?.let(::setAppLanguageTag)
+        bool(settings, "network_speed_enabled")?.let(::setNetworkSpeedEnabled)
+        long(settings, "network_speed_min_threshold_bytes_per_second")
+            ?.let(::setNetworkSpeedMinThresholdBytesPerSecond)
+        string(settings, "network_speed_display_mode")?.let(::setNetworkSpeedDisplayMode)
+        string(settings, "network_speed_upload_prefix")?.let(::setNetworkSpeedUploadPrefix)
+        string(settings, "network_speed_download_prefix")?.let(::setNetworkSpeedDownloadPrefix)
+        string(settings, "network_speed_unit")?.let(::setNetworkSpeedUnit)
+        bool(settings, "network_speed_prioritize_upload")
+            ?.let(::setNetworkSpeedPrioritizeUpload)
+        bool(settings, "network_speed_lockscreen_only")?.let(::setNetworkSpeedLockscreenOnly)
+        bool(settings, "network_speed_chip_background_disabled")
+            ?.let(::setNetworkSpeedChipBackgroundDisabled)
+        bool(settings, "network_speed_disable_chip_background")
+            ?.let(::setNetworkSpeedChipBackgroundDisabled)
+        bool(settings, "sync_dnd_enabled")?.let(::setSyncDndEnabled)
+        bool(settings, "update_checks_enabled")?.let(::setUpdateChecksEnabled)
+        bool(settings, "only_with_progress")?.let(::setOnlyWithProgress)
+        bool(settings, "text_progress_enabled")?.let(::setTextProgressEnabled)
+        bool(settings, "aosp_cutting_enabled")?.let(::setAospCuttingEnabled)
+        int(settings, "aosp_cutting_length")?.let(::setAospCuttingLength)
+        bool(settings, "animated_island_enabled")?.let(::setAnimatedIslandEnabled)
+        int(settings, "animated_island_update_frequency_ms")
+            ?.let(::setAnimatedIslandUpdateFrequencyMs)
+        bool(settings, "hyper_bridge_enabled")?.let(::setHyperBridgeEnabled)
+        bool(settings, "hyperbridge_enabled")?.let(::setHyperBridgeEnabled)
+        bool(settings, "notification_dedup_enabled")?.let(::setNotificationDedupEnabled)
+        string(settings, "notification_dedup_mode")?.let(::setNotificationDedupMode)
+        bool(settings, "otp_detection_enabled")?.let(::setOtpDetectionEnabled)
+        bool(settings, "otp_auto_copy_enabled")?.let(::setOtpAutoCopyEnabled)
+        bool(settings, "otp_remove_original_message_enabled")
+            ?.let(::setOtpRemoveOriginalMessageEnabled)
+
+        bool(settings, "smart_detection_enabled")?.let(::setSmartStatusDetectionEnabled)
+        bool(settings, "smart_taxi_enabled")?.let(::setSmartTaxiEnabled)
+        bool(settings, "smart_delivery_enabled")?.let(::setSmartDeliveryEnabled)
+        bool(settings, "smart_calls_enabled")?.let(::setSmartCallsEnabled)
+        bool(settings, "smart_media_playback_enabled")?.let(::setSmartMediaPlaybackEnabled)
+        bool(settings, "smart_media_playback_show_on_lock_screen")
+            ?.let(::setSmartMediaPlaybackShowOnLockScreen)
+        bool(settings, "smart_media_playback_use_symbols_in_player")
+            ?.let(::setSmartMediaPlaybackUseSymbolsInPlayer)
+        bool(settings, "smart_navigation_enabled")?.let(::setSmartNavigationEnabled)
+        bool(settings, "smart_weather_enabled")?.let(::setSmartWeatherEnabled)
+        bool(settings, "smart_weather_lockscreen_only")
+            ?.let(::setSmartWeatherLockscreenOnly)
+        bool(settings, "smart_external_devices_enabled")
+            ?.let(::setSmartExternalDevicesEnabled)
+        bool(settings, "smart_external_devices_ignore_debugging")
+            ?.let(::setSmartExternalDevicesIgnoreDebugging)
+        bool(settings, "smart_vpn_enabled")?.let(::setSmartVpnEnabled)
+        bool(settings, "smart_flashlight_enabled")?.let(::setSmartFlashlightEnabled)
+        int(settings, "smart_flashlight_level")?.let(::setSmartFlashlightLevel)
+        bool(settings, "smart_remove_original_message_enabled")
+            ?.let(::setSmartRemoveOriginalMessageEnabled)
+
+        bool(settings, "app_list_access_granted")?.let(::setAppListAccessGranted)
+        bool(settings, "background_warning_dismissed")?.let(::setBackgroundWarningDismissed)
+        bool(settings, "samsung_warning_dismissed")?.let(::setSamsungWarningDismissed)
+        bool(settings, "samsung_remote_reparser_enabled")?.let(::setSamsungRemoteReparserEnabled)
+    }
+
+    private fun applyRulesJson(rules: JSONObject) {
+        string(rules, "package_mode")?.let(::setPackageMode)
+        rulesValue(rules, "package_rules")?.let(::setPackageRulesRaw)
+        rulesValue(rules, "bypass_package_rules")?.let(::setBypassPackageRulesRaw)
+        string(rules, "notification_dedup_package_mode")
+            ?.let(::setNotificationDedupPackageMode)
+        rulesValue(rules, "notification_dedup_package_rules")
+            ?.let(::setNotificationDedupPackageRulesRaw)
+        string(rules, "otp_package_mode")?.let(::setOtpPackageMode)
+        rulesValue(rules, "otp_package_rules")?.let(::setOtpPackageRulesRaw)
+        string(rules, "smart_package_mode")?.let(::setSmartPackageMode)
+        rulesValue(rules, "smart_package_rules")?.let(::setSmartPackageRulesRaw)
+    }
+
+    private fun applyDictionaryJson(dictionary: JSONObject) {
+        stringSet(dictionary, "parser_dictionary_enabled_languages")
+            ?.let(::setParserDictionaryEnabledLanguageIds)
+        SUPPORTED_PARSER_DICTIONARY_LANGUAGE_IDS.forEach { languageId ->
+            string(dictionary, "parser_dictionary_${languageId}_override")?.let { raw ->
+                setParserDictionaryLanguageOverrideRaw(languageId, raw)
+            }
+        }
+        string(dictionary, "custom_parser_dictionary")?.let(::setCustomParserDictionaryRaw)
+    }
+
+    private fun applyAppPresentationJson(appPresentation: JSONObject) {
+        string(appPresentation, "app_presentation_overrides")?.let(::setAppPresentationOverridesRaw)
+    }
+
+    private fun applyAdditionalStateJson(additionalState: JSONObject) {
+        stringSet(additionalState, "parser_dictionary_enabled_languages")
+            ?.let(::setParserDictionaryEnabledLanguageIds)
+        string(additionalState, "expanded_sections")?.let(::setExpandedSectionsRaw)
+    }
+
+    private fun jsonArrayFromRules(raw: String): JSONArray {
+        return JSONArray(parsePackageRules(raw).sorted())
+    }
+
+    private fun optObject(parent: JSONObject, key: String): JSONObject? {
+        return parent.opt(key) as? JSONObject
+    }
+
+    private fun bool(parent: JSONObject, key: String): Boolean? {
+        if (!parent.has(key) || parent.isNull(key)) return null
+        return when (val value = parent.opt(key)) {
+            is Boolean -> value
+            is Number -> value.toInt() != 0
+            is String -> when (value.trim().lowercase(Locale.ROOT)) {
+                "true", "1", "yes", "enabled", "on" -> true
+                "false", "0", "no", "disabled", "off" -> false
+                else -> null
+            }
+            else -> null
+        }
+    }
+
+    private fun int(parent: JSONObject, key: String): Int? {
+        if (!parent.has(key) || parent.isNull(key)) return null
+        return when (val value = parent.opt(key)) {
+            is Number -> value.toInt()
+            is String -> value.trim().toIntOrNull()
+            else -> null
+        }
+    }
+
+    private fun long(parent: JSONObject, key: String): Long? {
+        if (!parent.has(key) || parent.isNull(key)) return null
+        return when (val value = parent.opt(key)) {
+            is Number -> value.toLong()
+            is String -> value.trim().toLongOrNull()
+            else -> null
+        }
+    }
+
+    private fun string(parent: JSONObject, key: String): String? {
+        if (!parent.has(key) || parent.isNull(key)) return null
+        return parent.optString(key, "").trim()
+    }
+
+    private fun rulesValue(parent: JSONObject, key: String): String? {
+        if (!parent.has(key) || parent.isNull(key)) return null
+        return when (val value = parent.opt(key)) {
+            is JSONArray -> (0 until value.length())
+                .mapNotNull { index -> value.optString(index, "").trim().ifBlank { null } }
+                .joinToString("\n")
+            is String -> value.trim()
+            else -> null
+        }
+    }
+
+    private fun stringSet(parent: JSONObject, key: String): Set<String>? {
+        if (!parent.has(key) || parent.isNull(key)) return null
+        return when (val value = parent.opt(key)) {
+            is JSONArray -> (0 until value.length())
+                .mapNotNull { index -> value.optString(index, "").trim().ifBlank { null } }
+                .toSet()
+            is String -> value
+                .split(',', ';', '\n', '\r', '\t', ' ')
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+                .toSet()
+            else -> null
+        }
     }
 
     private fun getLegacySmartStatusDefault(): Boolean {

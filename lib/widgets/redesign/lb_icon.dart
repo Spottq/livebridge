@@ -6,6 +6,7 @@ enum LbIconSymbol {
   info,
   defaultsFlow,
   filterTwo,
+  codeBraces,
   copy,
   copyThree,
   externalLink,
@@ -100,6 +101,8 @@ IconData _iconFor(LbIconSymbol symbol) {
       return MingCuteIcons.mgc_transfer_line;
     case LbIconSymbol.filterTwo:
       return MingCuteIcons.mgc_filter_2_line;
+    case LbIconSymbol.codeBraces:
+      return MingCuteIcons.mgc_braces_line;
     case LbIconSymbol.copy:
       return MingCuteIcons.mgc_copy_2_line;
     case LbIconSymbol.copyThree:

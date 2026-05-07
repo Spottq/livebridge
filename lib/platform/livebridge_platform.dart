@@ -45,6 +45,12 @@ class LiveBridgePlatform {
       _askBool('openPromotedNotificationSettings');
   static Future<bool> openAppNotificationSettings() =>
       _askBool('openAppNotificationSettings');
+  static Future<String> exportLiveBridgeSettingsBackup() =>
+      _askStr('exportLiveBridgeSettingsBackup');
+  static Future<String> saveLiveBridgeSettingsBackupToDownloads() =>
+      _askStr('saveLiveBridgeSettingsBackupToDownloads');
+  static Future<bool> importLiveBridgeSettingsBackup(String value) =>
+      _askBool('importLiveBridgeSettingsBackup', {'value': value});
 
   static Future<String> getPackageRules() => _askStr('getPackageRules');
   static Future<bool> setPackageRules(String value) =>

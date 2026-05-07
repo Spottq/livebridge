@@ -108,6 +108,31 @@ class MainActivity : FlutterActivity() {
                 res = res
             )
             "getDeviceInfo" -> res.success(getDeviceInfo())
+            "exportLiveBridgeSettingsBackup" -> res.success(prefs.exportSettingsBackupJson())
+            "saveLiveBridgeSettingsBackupToDownloads" -> {
+                val savedUri = saveJsonToDownloads(
+                    raw = prefs.exportSettingsBackupJson(),
+                    filePrefix = "livebridge_settings",
+                    extension = "lbst"
+                )
+                if (savedUri == null) {
+                    res.error("save_failed", "Unable to save LiveBridge settings backup", null)
+                } else {
+                    res.success(savedUri)
+                }
+            }
+            "importLiveBridgeSettingsBackup" -> {
+                val raw = call.argument<String>("value")?.trim().orEmpty()
+                if (raw.isBlank()) {
+                    res.success(false)
+                    return
+                }
+                val imported = prefs.importSettingsBackupJson(raw)
+                if (imported) {
+                    afterSettingsBackupImported(prefs)
+                }
+                res.success(imported)
+            }
             "getAppListAccessGranted" -> res.success(prefs.getAppListAccessGranted())
             "setAppListAccessGranted" -> {
                 prefs.setAppListAccessGranted(call.argument<Boolean>("value") ?: false)
@@ -730,12 +755,18 @@ class MainActivity : FlutterActivity() {
         return runCatching { JSONObject(raw) }.isSuccess
     }
 
-    private fun saveJsonToDownloads(raw: String, filePrefix: String): String? {
+    private fun saveJsonToDownloads(
+        raw: String,
+        filePrefix: String,
+        extension: String = "json",
+        mimeType: String = "application/json"
+    ): String? {
         val resolver = contentResolver
-        val fileName = "${filePrefix}_${System.currentTimeMillis()}.json"
+        val normalizedExtension = extension.trim().trimStart('.').ifBlank { "json" }
+        val fileName = "${filePrefix}_${System.currentTimeMillis()}.$normalizedExtension"
         val values = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, fileName)
-            put(MediaStore.Downloads.MIME_TYPE, "application/json")
+            put(MediaStore.Downloads.MIME_TYPE, mimeType)
             put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             put(MediaStore.Downloads.IS_PENDING, 1)
         }
@@ -761,6 +792,17 @@ class MainActivity : FlutterActivity() {
             runCatching { resolver.delete(uri, null, null) }
             null
         }
+    }
+
+    private fun afterSettingsBackupImported(prefs: ConverterPrefs) {
+        AppPresentationOverridesLoader.invalidate()
+        LiveParserDictionaryLoader.invalidate()
+        ConversionLogStore.trimToPrefs(applicationContext, prefs)
+        LiveUpdateNotifier.ensureChannel(applicationContext)
+        applyConverterEnabled(prefs, prefs.getConverterEnabled())
+        syncFlashlightService(prefs)
+        syncWeatherMirrors(prefs, enabled = prefs.getSmartWeatherEnabled())
+        LiveBridgeTileService.requestStateSync(applicationContext)
     }
 
     private fun syncKeepAliveForegroundService(prefs: ConverterPrefs) {

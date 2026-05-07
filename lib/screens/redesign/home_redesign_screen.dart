@@ -25,6 +25,7 @@ import '../../widgets/redesign/lb_status_card.dart';
 import '../../widgets/redesign/lb_toast.dart';
 import 'rules_dictionary_screen.dart';
 import 'settings_app_config_screen.dart';
+import 'settings_backup_restore_screen.dart';
 import 'rules_otp_codes_screen.dart';
 import 'rules_network_connections_screen.dart';
 import 'rules_miscellaneous_screen.dart';
@@ -577,6 +578,10 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
     return _pushRulesDetailScreen(const SettingsReportBugScreen());
   }
 
+  Future<void> _openBackupRestoreScreen() {
+    return _pushRulesDetailScreen(const SettingsBackupRestoreScreen());
+  }
+
   Future<void> _openSupportScreen() {
     return _pushRulesDetailScreen(const SettingsSupportScreen());
   }
@@ -1021,6 +1026,13 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
         onTap: () {
           unawaited(LiveBridgeHaptics.selection());
           unawaited(_openReportBugScreen());
+        },
+      ),
+      LbListItemData(
+        title: strings.backupRestoreTitle,
+        onTap: () {
+          unawaited(LiveBridgeHaptics.selection());
+          unawaited(_openBackupRestoreScreen());
         },
       ),
     ];
