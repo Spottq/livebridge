@@ -52,13 +52,13 @@ class LbModalBottomSheetSurface extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final LbPalette palette = LbPalette.of(context);
-    final double bottomInset = MediaQuery.paddingOf(context).bottom;
+    final MediaQueryData mediaQuery = MediaQuery.of(context);
+    final double bottomInset = mediaQuery.padding.bottom;
+    final double maxSheetHeight =
+        mediaQuery.size.height - mediaQuery.padding.top - LbSpacing.md;
 
-    return GestureDetector(
-      onVerticalDragStart: onHandleDragStart,
-      onVerticalDragUpdate: onHandleDragUpdate,
-      onVerticalDragEnd: onHandleDragEnd,
-      behavior: HitTestBehavior.translucent,
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxSheetHeight),
       child: Material(
         color: Colors.transparent,
         child: Container(
@@ -76,19 +76,25 @@ class LbModalBottomSheetSurface extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: LbSpacing.xs),
-                child: Container(
-                  width: LbSpacing.modalSheetHandleWidth,
-                  height: LbSpacing.modalSheetHandleHeight,
-                  decoration: BoxDecoration(
-                    color: palette.textMuted.withValues(alpha: 0.55),
-                    borderRadius: BorderRadius.circular(999),
+              GestureDetector(
+                onVerticalDragStart: onHandleDragStart,
+                onVerticalDragUpdate: onHandleDragUpdate,
+                onVerticalDragEnd: onHandleDragEnd,
+                behavior: HitTestBehavior.translucent,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: LbSpacing.xs),
+                  child: Container(
+                    width: LbSpacing.modalSheetHandleWidth,
+                    height: LbSpacing.modalSheetHandleHeight,
+                    decoration: BoxDecoration(
+                      color: palette.textMuted.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(height: LbSpacing.modalSheetContentTopGap),
-              child,
+              Flexible(child: child),
             ],
           ),
         ),
