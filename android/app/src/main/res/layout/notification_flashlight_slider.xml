@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/flashlight_notification_wrapper"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
-    android:orientation="vertical"
-    android:paddingBottom="2dp">
+    android:layoutDirection="ltr">
+
+    <LinearLayout
+        android:id="@+id/flashlight_notification_root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="2dp">
 
     <TextView
         android:id="@+id/flashlight_title"
@@ -194,4 +201,5 @@
         android:textColor="#FFF5F7FA"
         android:textSize="14sp"
         android:textStyle="bold" />
-</LinearLayout>
+    </LinearLayout>
+</FrameLayout>
