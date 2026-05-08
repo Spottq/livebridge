@@ -81,6 +81,10 @@ object LiveUpdateNotifier {
         "com.discord.canary",
         "com.hammerandchisel.discord"
     )
+    private val CALL_MIRROR_EXCLUDED_PACKAGES = setOf(
+        "com.whatsapp",
+        "com.whatsapp.w4b"
+    )
     private val NAVIGATION_DISTANCE_PATTERN = Regex(
         "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
         setOf(RegexOption.IGNORE_CASE)
@@ -1080,6 +1084,10 @@ object LiveUpdateNotifier {
         sbn: StatusBarNotification,
         samsungReparse: SamsungReparsePayload?
     ): CallMirrorSnapshot? {
+        if (sbn.packageName.lowercase(Locale.ROOT) in CALL_MIRROR_EXCLUDED_PACKAGES) {
+            return null
+        }
+
         val source = sbn.notification
         val ongoing = sbn.isOngoing ||
                 source.flags and Notification.FLAG_ONGOING_EVENT != 0 ||
