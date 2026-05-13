@@ -86,7 +86,10 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
                     putCharSequence(KEY_NOWBAR_SECONDARY_INFO, it)
                 }
             }
-            putInt(KEY_CHIP_BG_COLOR, resolveChipBackgroundColor(source))
+            putInt(
+                KEY_CHIP_BG_COLOR,
+                SamsungLiveUpdateReparser.resolveChipBackgroundColor(source)
+            )
             putBoolean(KEY_SHOW_SMALL_ICON, showSmallIcon)
         }
 
@@ -170,14 +173,6 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         headsUp?.let(builder::setCustomHeadsUpContentView)
     }
 
-    private fun resolveChipBackgroundColor(source: Notification): Int {
-        val sourceColor = source.color
-        if (sourceColor != Color.TRANSPARENT) {
-            return sourceColor
-        }
-        return DEFAULT_CHIP_BG_COLOR
-    }
-
     private fun resolveRemoteView(source: Notification): RemoteViews? {
         val extras = source.extras
         return (extras.get(KEY_REMOTE_VIEW) as? RemoteViews)
@@ -237,6 +232,14 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         private const val DEFAULT_CHIP_BG_COLOR = 0xFF0F766E.toInt()
         private const val STYLE_DEFAULT = 1
         private const val STYLE_NOW_BAR_ONLY = 2
+
+        internal fun resolveChipBackgroundColor(source: Notification): Int {
+            val sourceColor = source.color
+            if (sourceColor != Color.TRANSPARENT) {
+                return sourceColor
+            }
+            return DEFAULT_CHIP_BG_COLOR
+        }
 
         fun isSamsungDevice(): Boolean {
             val manufacturer = (Build.MANUFACTURER ?: "").lowercase(Locale.ROOT)
