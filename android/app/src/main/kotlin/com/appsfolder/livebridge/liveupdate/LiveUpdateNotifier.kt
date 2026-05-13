@@ -53,6 +53,7 @@ object LiveUpdateNotifier {
 
     private const val CHANNEL_NAME = "LiveBridge Updates"
     private const val TAG = "LiveUpdateNotifier"
+    private const val MEDIA_ONGOING_ACTIVITY_MARKER = "mediaongoingactivity"
     private const val MAX_MIRRORED_ACTIONS = 3
     private const val OTP_REPEAT_SUPPRESS_MS = 60_000L
     private const val OTP_AUTOCOPY_COPIED_SHOW_DELAY_MS = 1_000L
@@ -1727,6 +1728,9 @@ object LiveUpdateNotifier {
             return false
         }
         val source = sbn.notification
+        if (isPermanentlyBlockedSource(sbn, source)) {
+            return false
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
             isMirrorNotificationChannel(source.channelId)
         ) {
@@ -1741,6 +1745,24 @@ object LiveUpdateNotifier {
             return false
         }
         return true
+    }
+
+    private fun isPermanentlyBlockedSource(
+        sbn: StatusBarNotification,
+        source: Notification
+    ): Boolean {
+        val candidates = buildList {
+            add(sbn.packageName)
+            add(sbn.key)
+            sbn.tag?.let(::add)
+            source.extras.getString(Notification.EXTRA_TEMPLATE)?.let(::add)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                source.channelId?.let(::add)
+            }
+        }
+        return candidates.any { value ->
+            value.lowercase(Locale.ROOT).contains(MEDIA_ONGOING_ACTIVITY_MARKER)
+        }
     }
 
     private fun isPrivacyRedactedNotification(
