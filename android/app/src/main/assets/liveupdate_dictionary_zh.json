@@ -20,7 +20,10 @@
         "swiggy",
         "blinkit",
         "instamart",
-        "bigbasket"
+        "bigbasket",
+        "easi.customer",
+        "fantuan.customer",
+        "waimai"
       ],
       "text_triggers": [
         "订单",
@@ -37,7 +40,8 @@
         "送餐員",
         "餐点",
         "餐點",
-        "配送"
+        "配送",
+        "商家"
       ],
       "exclude_patterns": [
         "(生日快乐|生日快樂)",
@@ -61,11 +65,11 @@
         },
         {
           "stage": 1,
-          "pattern": "(准备中|準備中|制作中|製作中|商家已接单|商家已接單|开始制作|開始製作|烹饪中|烹飪中)"
+          "pattern": "(准备中|準備中|制作中|製作中|开始制作|開始製作|烹饪中|烹飪中)"
         },
         {
           "stage": 0,
-          "pattern": "(订单已接|訂單已接|已付款|支付成功|订单已确认|訂單已確認|下单成功|下單成功|已建立)"
+          "pattern": "(订单已接|訂單已接|已付款|支付成功|订单已确认|訂單已確認|下单成功|下單成功|已建立|商家已接单|商家已接單)"
         }
       ]
     },
@@ -395,7 +399,7 @@
   "weather_day_pattern": "(今天|明天|早上|上午|下午|晚上|夜间|夜間)",
   "weather_condition_pattern": "(晴|阴|陰|多云|多雲|阵雨|陣雨|雷阵雨|雷陣雨|暴雨|台风|颱風|下雪|大雪|雾|霧|晴天|雨天|多云|多雲|雷阵雨|雷陣雨|台风|颱風|暴雨|豪雨|雷暴|雨)",
   "weather_condition_thunder_pattern": "(雷|风暴|風暴)",
-  "weather_condition_rain_pattern": "(雨|降水)",
+  "weather_condition_rain_pattern": "(雨|降水|降雨)",
   "weather_condition_snow_pattern": "(雪|冰雹)",
   "weather_condition_fog_pattern": "(雾|霧|霾)",
   "weather_condition_wind_pattern": "(风|風)",

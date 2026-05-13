@@ -274,11 +274,17 @@
     "account code",
     "payment code",
     "passcode",
+    "password",
+    "kata sandi",
+    "sandi",
+    "kode",
+    "kode otp",
+    "kode verifikasi",
     "2fa",
     "auth code",
     "sms code"
   ],
-  "otp_loose_trigger_pattern": "(?:(?:\\bcode\\b|\\botp\\b|\\bpasscode\\b)\\s*[:#-]?[\\s]*\\d(?:[\\s-]?\\d){3,7})",
+  "otp_loose_trigger_pattern": "(?:(?:\\bcode\\b|\\botp\\b|\\bpasscode\\b|\\bpassword\\b|kata\\s+sandi|\\bsandi\\b|\\bkode\\b)\\s*[:#-]?[\\s]*\\d(?:[\\s-]?\\d){3,7})",
   "money_context_pattern": "(₽|\\$|€|￥|¥|rub|usd|eur|kzt|price|total|amount|sum|twd|nt\\$|rmb|cny|hkd)",
   "text_progress_percent_pattern": "(?<!\\d)(\\d{1,3})\\s*%",
   "text_progress_context_window": 80,
@@ -377,7 +383,7 @@
     "egress"
   ],
   "otp_code_patterns": [
-    "(?:\\bcode\\b|\\botp\\b|\\bpasscode\\b)[^\\d\\n]{0,80}(\\d(?:[\\s-]?\\d){3,7})(?!\\d)",
+    "(?:\\bcode\\b|\\botp\\b|\\bpasscode\\b|\\bpassword\\b|kata\\s+sandi|\\bsandi\\b|\\bkode\\b)[^\\d\\n]{0,80}(\\d(?:[\\s-]?\\d){3,7})(?!\\d)",
     "(?<!\\S)(\\d{4,8})(?!\\d)",
     "(?<!\\S)(\\d(?:[\\s-]?\\d){3,7})(?!\\d)",
     "(?<!\\S)([A-Z0-9]{4,8})(?!\\w)"

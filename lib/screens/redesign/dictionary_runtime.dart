@@ -29,6 +29,11 @@ const List<DictionaryLanguageOption> lbDictionaryLanguages =
         label: '中文',
         assetFileName: 'liveupdate_dictionary_zh.json',
       ),
+      DictionaryLanguageOption(
+        id: 'ko',
+        label: '한국어',
+        assetFileName: 'liveupdate_dictionary_ko.json',
+      ),
     ];
 
 const String lbDictionaryRemoteBaseUrl =
@@ -138,6 +143,7 @@ const Set<String> _languageSensitiveStringKeys = <String>{
   'navigation_instruction_pattern',
 };
 
+final RegExp _hangulRegExp = RegExp(r'[\uAC00-\uD7AF\u3131-\u318E]');
 final RegExp _cjkRegExp = RegExp(r'[\u3400-\u9FFF\uF900-\uFAFF]');
 final RegExp _cyrillicRegExp = RegExp(r'[\u0400-\u04FF]');
 final RegExp _latinRegExp = RegExp(r'[A-Za-z]');
@@ -281,10 +287,13 @@ bool _matchesLanguageForLocale(String localeKey, String languageId) {
 Set<String> _detectLanguages(String raw) {
   final String value = raw.trim();
   if (value.isEmpty) {
-    return const <String>{'en', 'ru', 'zh'};
+    return const <String>{'en', 'ru', 'zh', 'ko'};
   }
 
   final Set<String> languages = <String>{};
+  if (_hangulRegExp.hasMatch(value)) {
+    languages.add('ko');
+  }
   if (_cjkRegExp.hasMatch(value)) {
     languages.add('zh');
   }
@@ -295,7 +304,7 @@ Set<String> _detectLanguages(String raw) {
     languages.add('en');
   }
 
-  return languages.isEmpty ? const <String>{'en', 'ru', 'zh'} : languages;
+  return languages.isEmpty ? const <String>{'en', 'ru', 'zh', 'ko'} : languages;
 }
 
 dynamic _deepCopyJsonNode(dynamic node) {

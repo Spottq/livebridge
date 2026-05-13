@@ -36,6 +36,11 @@ const List<AppLanguageOption> appLanguageOptions = <AppLanguageOption>[
     label: '繁體中文',
     locale: Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   ),
+  AppLanguageOption(
+    id: 'ko',
+    label: '한국어',
+    locale: Locale('ko'),
+  ),
 ];
 
 final ValueNotifier<Locale?> appLocaleOverrideNotifier = ValueNotifier<Locale?>(

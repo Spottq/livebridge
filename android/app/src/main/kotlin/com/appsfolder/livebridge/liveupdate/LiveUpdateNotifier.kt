@@ -74,6 +74,10 @@ object LiveUpdateNotifier {
         "com.google.android.dialer",
         "com.google.android.apps.dialer"
     )
+    private val WHATSAPP_CALL_MIRROR_BLOCKED_PACKAGES = setOf(
+        "com.whatsapp",
+        "com.whatsapp.w4b"
+    )
     private val DISCORD_PACKAGES = setOf(
         "com.discord",
         "com.discord.alpha",
@@ -400,6 +404,10 @@ object LiveUpdateNotifier {
                 return notMirroredResult()
             }
             if (isNativeInCallNotification(sbn)) {
+                cancelMirrorsForIgnoredSource(manager, sbn)
+                return notMirroredResult()
+            }
+            if (isWhatsAppCallMirrorBlocked(sbn)) {
                 cancelMirrorsForIgnoredSource(manager, sbn)
                 return notMirroredResult()
             }
@@ -1146,6 +1154,37 @@ object LiveUpdateNotifier {
         return packageName in NATIVE_IN_CALL_PACKAGES
     }
 
+    private fun isWhatsAppCallMirrorBlocked(sbn: StatusBarNotification): Boolean {
+        val packageName = sbn.packageName.lowercase(Locale.ROOT)
+        if (packageName !in WHATSAPP_CALL_MIRROR_BLOCKED_PACKAGES) {
+            return false
+        }
+
+        val source = sbn.notification
+        if (source.category == Notification.CATEGORY_CALL) {
+            return true
+        }
+
+        val ongoing = sbn.isOngoing ||
+                source.flags and Notification.FLAG_ONGOING_EVENT != 0 ||
+                !sbn.isClearable
+        if (!ongoing) {
+            return false
+        }
+
+        val actionTexts = collectCallActionTexts(source)
+        if (actionTexts.any(callEndActionPattern::containsMatchIn)) {
+            return true
+        }
+
+        val contentTexts = collectCallContentTexts(
+            notification = source,
+            fallbackTitle = sbn.packageName
+        )
+        return contentTexts.any(callActiveTextPattern::containsMatchIn) &&
+                contentTexts.any(callDurationPattern::containsMatchIn)
+    }
+
     private fun isDiscordVoiceConnectionNotification(
         sbn: StatusBarNotification,
         contentTexts: List<String>,
@@ -1388,7 +1427,7 @@ object LiveUpdateNotifier {
     private fun collectCallContentTexts(
         notification: Notification,
         fallbackTitle: String,
-        samsungReparse: SamsungReparsePayload?
+        samsungReparse: SamsungReparsePayload? = null
     ): List<String> {
         val extras = notification.extras
         val parts = mutableListOf<String>()
