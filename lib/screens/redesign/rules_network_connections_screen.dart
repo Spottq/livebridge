@@ -7,6 +7,7 @@ import '../../models/app_models.dart';
 import '../../platform/livebridge_platform.dart';
 import '../../theme/livebridge_tokens.dart';
 import '../../utils/livebridge_haptics.dart';
+import '../../widgets/notification_color_picker.dart';
 import '../../widgets/redesign/lb_detail_screen.dart';
 import '../../widgets/redesign/lb_icon.dart';
 import '../../widgets/redesign/lb_info_title.dart';
@@ -44,6 +45,7 @@ class _RulesNetworkConnectionsScreenState
   bool _networkSpeedPrioritizeUpload = false;
   bool _networkSpeedLockscreenOnly = false;
   bool _networkSpeedChipBackgroundDisabled = false;
+  int _networkSpeedNotificationColorArgb = defaultNotificationColorArgb;
 
   @override
   void initState() {
@@ -79,6 +81,8 @@ class _RulesNetworkConnectionsScreenState
           LiveBridgePlatform.getNetworkSpeedLockscreenOnly();
       final Future<bool> networkSpeedChipBackgroundDisabledFuture =
           LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
+      final Future<int> networkSpeedNotificationColorFuture =
+          LiveBridgePlatform.getNetworkSpeedNotificationColorArgb();
 
       final bool vpnEnabled = await vpnEnabledFuture;
       final bool externalDevicesEnabled = await externalDevicesEnabledFuture;
@@ -99,6 +103,8 @@ class _RulesNetworkConnectionsScreenState
           await networkSpeedLockscreenOnlyFuture;
       final bool networkSpeedChipBackgroundDisabled =
           await networkSpeedChipBackgroundDisabledFuture;
+      final int networkSpeedNotificationColor =
+          await networkSpeedNotificationColorFuture;
 
       if (!mounted) {
         return;
@@ -131,6 +137,9 @@ class _RulesNetworkConnectionsScreenState
         _networkSpeedLockscreenOnly = networkSpeedLockscreenOnly;
         _networkSpeedChipBackgroundDisabled =
             networkSpeedChipBackgroundDisabled;
+        _networkSpeedNotificationColorArgb = _opaqueNotificationColor(
+          networkSpeedNotificationColor,
+        );
       });
     } catch (_) {}
   }
@@ -241,6 +250,43 @@ class _RulesNetworkConnectionsScreenState
     }
     setState(() => _networkSpeedChipBackgroundDisabled = value);
     await LiveBridgePlatform.setNetworkSpeedChipBackgroundDisabled(value);
+  }
+
+  Future<void> _setNetworkSpeedNotificationColorArgb(int value) async {
+    final int normalized = _opaqueNotificationColor(value);
+    if (normalized == _networkSpeedNotificationColorArgb) {
+      return;
+    }
+    setState(() => _networkSpeedNotificationColorArgb = normalized);
+    await LiveBridgePlatform.setNetworkSpeedNotificationColorArgb(normalized);
+  }
+
+  Future<void> _openNetworkSpeedColorPicker(AppStrings strings) async {
+    final int? selectedColor = await showLbModalBottomSheet<int>(
+      context: context,
+      builder: (BuildContext context) {
+        return NotificationColorPickerSheet(
+          title: strings.selectNotificationColorTitle,
+          doneLabel: strings.save,
+          initialColorArgb: _networkSpeedNotificationColorArgb,
+        );
+      },
+    );
+    if (selectedColor == null) {
+      return;
+    }
+    unawaited(LiveBridgeHaptics.selection());
+    unawaited(_setNetworkSpeedNotificationColorArgb(selectedColor));
+  }
+
+  void _resetNetworkSpeedNotificationColor() {
+    if (_networkSpeedNotificationColorArgb == defaultNotificationColorArgb) {
+      return;
+    }
+    unawaited(LiveBridgeHaptics.warning());
+    unawaited(
+      _setNetworkSpeedNotificationColorArgb(defaultNotificationColorArgb),
+    );
   }
 
   Future<void> _openDisplayModeSheet(AppStrings strings) async {
@@ -367,6 +413,15 @@ class _RulesNetworkConnectionsScreenState
         ? value.toStringAsFixed(1)
         : value.toStringAsFixed(0);
     return '$formatted $suffix';
+  }
+
+  int _opaqueNotificationColor(int colorArgb) {
+    return 0xFF000000 | (colorArgb & 0x00FFFFFF);
+  }
+
+  String _formatNotificationColorHex(int colorArgb) {
+    final int rgb = colorArgb & 0x00FFFFFF;
+    return '#${rgb.toRadixString(16).padLeft(6, '0').toUpperCase()}';
   }
 
   String _networkSpeedDisplayModeLabel(
@@ -524,6 +579,41 @@ class _RulesNetworkConnectionsScreenState
         onTap: _networkSpeedEnabled
             ? () {
                 unawaited(_openUnitsSheet(strings));
+              }
+            : null,
+      ),
+      LbListItemData(
+        title: strings.notificationColorTitle,
+        subtitle: _formatNotificationColorHex(
+          _networkSpeedNotificationColorArgb,
+        ),
+        showChevron: false,
+        enabled: _networkSpeedEnabled,
+        leadingChild: Opacity(
+          opacity: _networkSpeedEnabled ? 1 : 0.45,
+          child: NotificationColorSwatch(
+            colorArgb: _networkSpeedNotificationColorArgb,
+          ),
+        ),
+        trailingWidgetWidth: 44,
+        trailingWidget: IconButton(
+          tooltip: strings.resetToDefault,
+          onPressed: _networkSpeedEnabled
+              ? _resetNetworkSpeedNotificationColor
+              : null,
+          icon: LbIcon(
+            symbol: LbIconSymbol.restore,
+            size: 20,
+            color: _networkSpeedEnabled
+                ? palette.textSecondary
+                : palette.textMuted,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints.tightFor(width: 40, height: 40),
+        ),
+        onTap: _networkSpeedEnabled
+            ? () {
+                unawaited(_openNetworkSpeedColorPicker(strings));
               }
             : null,
       ),

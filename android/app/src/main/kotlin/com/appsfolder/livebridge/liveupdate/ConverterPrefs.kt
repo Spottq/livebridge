@@ -238,6 +238,21 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND, value).apply()
     }
 
+    fun getNetworkSpeedNotificationColorArgb(): Int {
+        return normalizeNotificationColor(
+            prefs.getInt(
+                KEY_NETWORK_SPEED_NOTIFICATION_COLOR,
+                DEFAULT_NETWORK_SPEED_NOTIFICATION_COLOR
+            )
+        )
+    }
+
+    fun setNetworkSpeedNotificationColorArgb(value: Int) {
+        prefs.edit()
+            .putInt(KEY_NETWORK_SPEED_NOTIFICATION_COLOR, normalizeNotificationColor(value))
+            .apply()
+    }
+
     fun getConverterEnabled(): Boolean {
         return prefs.getBoolean(KEY_CONVERTER_ENABLED, true)
     }
@@ -909,6 +924,10 @@ class ConverterPrefs(context: Context) {
                 "network_speed_chip_background_disabled",
                 getNetworkSpeedChipBackgroundDisabled()
             )
+            .put(
+                "network_speed_notification_color",
+                formatNotificationColor(getNetworkSpeedNotificationColorArgb())
+            )
             .put("sync_dnd_enabled", getSyncDndEnabled())
             .put("update_checks_enabled", getUpdateChecksEnabled())
             .put("only_with_progress", getOnlyWithProgress())
@@ -1033,6 +1052,10 @@ class ConverterPrefs(context: Context) {
             ?.let(::setNetworkSpeedChipBackgroundDisabled)
         bool(settings, "network_speed_disable_chip_background")
             ?.let(::setNetworkSpeedChipBackgroundDisabled)
+        parseNotificationColor(settings, "network_speed_notification_color")
+            ?.let(::setNetworkSpeedNotificationColorArgb)
+        parseNotificationColor(settings, "network_speed_color")
+            ?.let(::setNetworkSpeedNotificationColorArgb)
         bool(settings, "sync_dnd_enabled")?.let(::setSyncDndEnabled)
         bool(settings, "update_checks_enabled")?.let(::setUpdateChecksEnabled)
         bool(settings, "only_with_progress")?.let(::setOnlyWithProgress)
@@ -1160,6 +1183,45 @@ class ConverterPrefs(context: Context) {
         return parent.optString(key, "").trim()
     }
 
+    private fun parseNotificationColor(parent: JSONObject, key: String): Int? {
+        if (!parent.has(key) || parent.isNull(key)) return null
+        return when (val value = parent.opt(key)) {
+            is Number -> normalizeNotificationColor(value.toInt())
+            is String -> parseNotificationColor(value)
+            else -> null
+        }
+    }
+
+    private fun parseNotificationColor(raw: String): Int? {
+        var value = raw.trim()
+        if (value.isEmpty()) {
+            return null
+        }
+        if (value.startsWith("#")) {
+            value = value.substring(1)
+        } else if (value.lowercase(Locale.ROOT).startsWith("0x")) {
+            value = value.substring(2)
+        }
+        if (value.length == 8) {
+            value = value.substring(2)
+        }
+        return if (value.length == 6 &&
+            value.all { it in '0'..'9' || it in 'a'..'f' || it in 'A'..'F' }
+        ) {
+            value.toLongOrNull(16)?.toInt()?.let(::normalizeNotificationColor)
+        } else {
+            raw.trim().toLongOrNull()?.toInt()?.let(::normalizeNotificationColor)
+        }
+    }
+
+    private fun normalizeNotificationColor(value: Int): Int {
+        return 0xFF000000.toInt() or (value and 0x00FFFFFF)
+    }
+
+    private fun formatNotificationColor(color: Int): String {
+        return String.format(Locale.US, "#%06X", color and 0x00FFFFFF)
+    }
+
     private fun rulesValue(parent: JSONObject, key: String): String? {
         if (!parent.has(key) || parent.isNull(key)) return null
         return when (val value = parent.opt(key)) {
@@ -1265,6 +1327,8 @@ class ConverterPrefs(context: Context) {
         private const val KEY_NETWORK_SPEED_LOCKSCREEN_ONLY = "network_speed_lockscreen_only"
         private const val KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND =
             "network_speed_disable_chip_background"
+        private const val KEY_NETWORK_SPEED_NOTIFICATION_COLOR =
+            "network_speed_notification_color"
         private const val KEY_CONVERTER_ENABLED = "converter_enabled"
         private const val KEY_KEEP_ALIVE_FOREGROUND_ENABLED = "keep_alive_foreground_enabled"
         private const val KEY_SPRING_TRANSITIONS_ENABLED = "spring_transitions_enabled"
@@ -1342,6 +1406,7 @@ class ConverterPrefs(context: Context) {
         private const val KEY_PACKAGE_FILTER_LEGACY = "package_filter"
         private const val DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX = "\u25B2 "
         private const val DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX = "\u25BC "
+        private const val DEFAULT_NETWORK_SPEED_NOTIFICATION_COLOR = 0xFF0F766E.toInt()
         private const val DEFAULT_SMART_FLASHLIGHT_LEVEL = 4
         private const val MIN_AOSP_CUTTING_LENGTH = 7
         private const val MAX_AOSP_CUTTING_LENGTH = 12

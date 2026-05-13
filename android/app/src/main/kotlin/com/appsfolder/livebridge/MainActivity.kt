@@ -369,6 +369,15 @@ class MainActivity : FlutterActivity() {
                 syncNetworkSpeedService(prefs)
                 res.success(true)
             }
+            "getNetworkSpeedNotificationColorArgb" ->
+                res.success(prefs.getNetworkSpeedNotificationColorArgb().toLong() and 0xFFFFFFFFL)
+            "setNetworkSpeedNotificationColorArgb" -> {
+                val value = call.argument<Number>("value")?.toLong()?.toInt()
+                    ?: prefs.getNetworkSpeedNotificationColorArgb()
+                prefs.setNetworkSpeedNotificationColorArgb(value)
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
 
             "getConverterEnabled" -> res.success(
                 !DeviceBlocker.isBlockedDevice() && prefs.getConverterEnabled()

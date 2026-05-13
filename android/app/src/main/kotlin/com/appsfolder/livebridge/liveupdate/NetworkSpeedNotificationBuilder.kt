@@ -21,6 +21,7 @@ internal class NetworkSpeedNotificationBuilder(
         val title = notificationTitle()
         val totalText = NetworkSpeedFormatter.totalText(sample, prefs)
         val contentText = NetworkSpeedFormatter.contentText(sample, prefs)
+        val notificationColor = prefs.getNetworkSpeedNotificationColorArgb()
         val shouldPromote =
             sample.totalBytesPerSecond >=
                 prefs.getNetworkSpeedMinThresholdBytesPerSecond().coerceAtLeast(0L)
@@ -39,7 +40,7 @@ internal class NetworkSpeedNotificationBuilder(
             .setContentTitle(title)
             .setContentText(contentText)
             .setContentIntent(contentIntent)
-            .setColor(DEFAULT_ICON_ACCENT_COLOR)
+            .setColor(notificationColor)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
@@ -56,6 +57,7 @@ internal class NetworkSpeedNotificationBuilder(
                 buildSamsungExtras(
                     lockscreenOnly = prefs.getNetworkSpeedLockscreenOnly(),
                     chipBackgroundDisabled = prefs.getNetworkSpeedChipBackgroundDisabled(),
+                    chipBackgroundColor = notificationColor,
                     title = title,
                     chipText = totalText,
                     contentText = contentText,
@@ -70,6 +72,7 @@ internal class NetworkSpeedNotificationBuilder(
     private fun buildSamsungExtras(
         lockscreenOnly: Boolean,
         chipBackgroundDisabled: Boolean,
+        chipBackgroundColor: Int,
         title: String,
         chipText: String,
         contentText: String,
@@ -83,7 +86,10 @@ internal class NetworkSpeedNotificationBuilder(
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
             putCharSequence(KEY_NOWBAR_SECONDARY_INFO, contentText)
-            putInt(KEY_CHIP_BG_COLOR, resolveChipBackgroundColor(chipBackgroundDisabled))
+            putInt(
+                KEY_CHIP_BG_COLOR,
+                resolveChipBackgroundColor(chipBackgroundDisabled, chipBackgroundColor)
+            )
             putBoolean(KEY_SHOW_SMALL_ICON, true)
             icon?.let {
                 putParcelable(KEY_CHIP_ICON, it)
@@ -92,11 +98,14 @@ internal class NetworkSpeedNotificationBuilder(
         }
     }
 
-    private fun resolveChipBackgroundColor(chipBackgroundDisabled: Boolean): Int {
+    private fun resolveChipBackgroundColor(
+        chipBackgroundDisabled: Boolean,
+        chipBackgroundColor: Int
+    ): Int {
         return if (chipBackgroundDisabled) {
             Color.TRANSPARENT
         } else {
-            DEFAULT_CHIP_BG_COLOR
+            chipBackgroundColor
         }
     }
 
@@ -127,8 +136,6 @@ internal class NetworkSpeedNotificationBuilder(
         private const val KEY_NOWBAR_SECONDARY_INFO = "${ONGOING_PREFIX}nowbarSecondaryInfo"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
 
-        private const val DEFAULT_CHIP_BG_COLOR = 0xFF0F766E.toInt()
-        private const val DEFAULT_ICON_ACCENT_COLOR = DEFAULT_CHIP_BG_COLOR
         private const val STYLE_DEFAULT = 1
         private const val STYLE_NOW_BAR_ONLY = 2
     }
