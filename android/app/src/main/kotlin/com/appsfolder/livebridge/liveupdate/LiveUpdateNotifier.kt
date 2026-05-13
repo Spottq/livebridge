@@ -2092,12 +2092,7 @@ object LiveUpdateNotifier {
         val suppressFrameworkProgressBody = isTwoGisPackage
         var resolvedProgressChipText: String? = null
         val customNotificationColor = appPresentationOverride.effectiveNotificationColorArgb()
-        val builderAccentColor =
-            if (appPresentationOverride.iconSource == NotificationIconSource.NOTIFICATION) {
-                customNotificationColor ?: progressColor
-            } else {
-                progressColor
-            }
+        val builderAccentColor = customNotificationColor ?: progressColor
         val determinateProgressPercent = if (hasProgress && !indeterminate && progressMax > 0) {
             val safeMax = progressMax.coerceAtLeast(1)
             val safeProgress = progressValue.coerceIn(0, safeMax)
@@ -2221,7 +2216,7 @@ object LiveUpdateNotifier {
                 .setAutoCancel(false)
                 .setWhen(resolveStableWhen(source, sbn.postTime))
                 .setShowWhen(false)
-                .setColor(progressColor)
+                .setColor(builderAccentColor)
                 .setCategory(Notification.CATEGORY_STATUS)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
