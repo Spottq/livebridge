@@ -52,7 +52,7 @@ internal class FlashlightNotificationBuilder(
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
-        val nowBarRemoteView = buildNowBarRemoteViews(title = title)
+        val nowBarRemoteView = buildCompactNowBarRemoteViews(title = title)
         val statusBarIconCompat = IconCompat.createWithResource(
             context,
             R.drawable.ic_flashlight_system_notification
@@ -90,7 +90,8 @@ internal class FlashlightNotificationBuilder(
                     title = title,
                     chipText = chipText,
                     chipIcon = statusBarIconCompat,
-                    remoteView = nowBarRemoteView,
+                    expandedRemoteView = expandedView,
+                    nowBarRemoteView = nowBarRemoteView,
                     chipBackgroundColor = sourceSnapshot.accentColor
                 )
             )
@@ -125,10 +126,10 @@ internal class FlashlightNotificationBuilder(
         }
     }
 
-    private fun buildNowBarRemoteViews(
+    private fun buildCompactNowBarRemoteViews(
         title: String
     ): RemoteViews {
-        return RemoteViews(context.packageName, R.layout.notification_flashlight_slider).apply {
+        return RemoteViews(context.packageName, R.layout.notification_flashlight_compact).apply {
             setTextViewText(R.id.flashlight_title, title)
             setOnClickPendingIntent(R.id.flashlight_close_button, disablePendingIntent())
             setContentDescription(R.id.flashlight_close_button, disableButtonText())
@@ -222,7 +223,8 @@ internal class FlashlightNotificationBuilder(
         title: String,
         chipText: String?,
         chipIcon: IconCompat,
-        remoteView: RemoteViews,
+        expandedRemoteView: RemoteViews,
+        nowBarRemoteView: RemoteViews,
         chipBackgroundColor: Int
     ): Bundle {
         val icon = runCatching { chipIcon.toIcon(context) }.getOrNull()
@@ -236,7 +238,9 @@ internal class FlashlightNotificationBuilder(
             icon?.let {
                 putParcelable(KEY_CHIP_ICON, it)
             }
-            putParcelable(KEY_REMOTE_VIEW, remoteView)
+            putParcelable(KEY_EXPANDED_REMOTE_VIEW, expandedRemoteView)
+            putParcelable(KEY_NOWBAR_REMOTE_VIEW, nowBarRemoteView)
+            putParcelable(KEY_REMOTE_VIEW, nowBarRemoteView)
             putInt(KEY_REMOTE_VIEW_POSITION, 1)
             putString(KEY_REMOTE_VIEW_TAG, REMOTE_VIEW_TAG)
             putInt(KEY_NOWBAR_CHRONOMETER_POSITION, 1)
@@ -362,6 +366,8 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
         private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
         private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
+        private const val KEY_EXPANDED_REMOTE_VIEW = "${ONGOING_PREFIX}expandedRemoteView"
+        private const val KEY_NOWBAR_REMOTE_VIEW = "${ONGOING_PREFIX}nowbarRemoteView"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
