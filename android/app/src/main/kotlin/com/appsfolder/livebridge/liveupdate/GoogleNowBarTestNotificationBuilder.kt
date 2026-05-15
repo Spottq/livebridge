@@ -83,6 +83,8 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             .setSubText(fixture.substituteName)
             .setGroup(fixture.groupKey)
             .setGroupSummary(true)
+            .setOngoing(true)
+            .setAutoCancel(false)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setDefaults(0)
@@ -92,6 +94,7 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             .setTimeoutAfter(TIMEOUT_MS)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setRequestPromotedOngoing(true)
             .addExtras(buildSummaryExtras(fixture))
             .build()
     }
@@ -105,6 +108,8 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             .setSubText(fixture.substituteName)
             .setContentIntent(contentIntent)
             .setGroup(fixture.groupKey)
+            .setOngoing(true)
+            .setAutoCancel(false)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setDefaults(0)
@@ -114,7 +119,9 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             .setTimeoutAfter(TIMEOUT_MS)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setShortCriticalText(fixture.chipText)
+            .setRequestPromotedOngoing(true)
             .addExtras(buildChildExtras(fixture, contentIntent))
             .build()
     }
@@ -167,11 +174,18 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             putBoolean(KEY_RAW_CHRONOMETER_START, false)
             putParcelable(KEY_EXPANDED_REMOTE_VIEW, expandedView)
             putParcelable(KEY_NOWBAR_REMOTE_VIEW, nowBarView)
+            putParcelable(KEY_CHRONOMETER_REMOTE_VIEW, nowBarView)
             putParcelable(KEY_CHIP_EXPANDED_VIEW, nowBarView)
             putInt(KEY_RAW_PRIMARY_ACTION, 0)
             putInt(KEY_CARD_BACKGROUND, 0)
             putInt(KEY_CHIP_BACKGROUND, 0)
             putInt(KEY_CHIP_BG_COLOR, fixture.chipBgColor)
+            putInt(KEY_ACTION_TYPE, ACTION_TYPE_BUTTON_TEXT)
+            putInt(KEY_ACTION_PRIMARY_SET, ACTION_PRIMARY_SET)
+            putBoolean(KEY_SHOW_SMALL_ICON, true)
+            putString(KEY_CHRONOMETER_REMOTE_VIEW_TAG, fixture.remoteViewTag)
+            putInt(KEY_CHRONOMETER_REMOTE_VIEW_POSITION, REMOTE_VIEW_POSITION)
+            putInt(KEY_NOWBAR_CHRONOMETER_POSITION, REMOTE_VIEW_POSITION)
             putIntegerArrayList(KEY_ACTION_BG_COLORS, ArrayList())
             putInt(KEY_NOWBAR_EXPANDABLE_TYPE, 0)
             putString(KEY_PDE_NOTI_PKG, fixture.pdePackageName)
@@ -226,9 +240,11 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
         val nowBarPrimaryInfo: String,
         val nowBarSecondaryInfo: String,
         val chipExpandedText: String?,
+        val chipText: String,
         val chipBgColor: Int,
         val summaryText: String,
         val pdePackageName: String,
+        val remoteViewTag: String,
         val whenMs: Long
     )
 
@@ -257,8 +273,18 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
         private const val KEY_NOWBAR_REMOTE_VIEW = "${ONGOING_PREFIX}nowbarRemoteView"
         private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
         private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
+        private const val KEY_ACTION_TYPE = "${ONGOING_PREFIX}actionType"
+        private const val KEY_ACTION_PRIMARY_SET = "${ONGOING_PREFIX}actionPrimarySet"
+        private const val KEY_CHRONOMETER_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
+        private const val KEY_CHRONOMETER_REMOTE_VIEW_TAG =
+            "${ONGOING_PREFIX}chronometerRemoteViewTag"
+        private const val KEY_CHRONOMETER_REMOTE_VIEW_POSITION =
+            "${ONGOING_PREFIX}chronometerRemoteViewPosition"
+        private const val KEY_NOWBAR_CHRONOMETER_POSITION =
+            "${ONGOING_PREFIX}nowbarChronometerPosition"
         private const val KEY_SHOW = "${ONGOING_PREFIX}show"
         private const val KEY_STYLE = "${ONGOING_PREFIX}style"
+        private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REDUCED_IMAGES = "android.reduced.images"
         private const val KEY_SHOW_WHEN = "android.showWhen"
         private const val KEY_SUBSTITUTE_NAME = "android.substName"
@@ -280,6 +306,9 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
         private const val KEY_PDE_NOTI_ID = "pde_noti_id"
         private const val KEY_PDE_ENQUEUED_TIME_MS = "pde_enqueued_time_ms"
         private const val STYLE_DEFAULT = 1
+        private const val ACTION_TYPE_BUTTON_TEXT = 1
+        private const val ACTION_PRIMARY_SET = 1
+        private const val REMOTE_VIEW_POSITION = 1
 
         private val TEST_NOTIFICATION_IDS = intArrayOf(
             SPORTS_SUMMARY_ID,
@@ -302,9 +331,11 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             nowBarPrimaryInfo = "Arsenal leads Chelsea 2-1",
             nowBarSecondaryInfo = "Premier League - 78' - Chelsea attacking",
             chipExpandedText = null,
+            chipText = "ARS 2-1",
             chipBgColor = -13736492,
             summaryText = "Google Sports live score",
             pdePackageName = "com.google.android.googlequicksearchbox",
+            remoteViewTag = "google_sports_live_score",
             whenMs = 1778878475522L
         )
 
@@ -322,9 +353,11 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             nowBarPrimaryInfo = "GOOGL 175.24 +1.42%",
             nowBarSecondaryInfo = "NASDAQ - live market update",
             chipExpandedText = "GOOG",
+            chipText = "GOOG",
             chipBgColor = -12961222,
             summaryText = "Google Finance market update",
             pdePackageName = "com.google.android.googlequicksearchbox",
+            remoteViewTag = "google_finance_market_update",
             whenMs = 1778878770983L
         )
     }
