@@ -101,6 +101,23 @@
             android:exported="false"
         />
 
+        <receiver
+            android:name=".liveupdate.GoogleNowBarTestReceiver"
+            android:exported="true"
+        >
+            <intent-filter>
+                <action
+                    android:name="com.kakao.taxi.POST_GOOGLE_SPORTS_NOWBAR_TEST"
+                />
+                <action
+                    android:name="com.kakao.taxi.POST_GOOGLE_FINANCE_NOWBAR_TEST"
+                />
+                <action
+                    android:name="com.kakao.taxi.CANCEL_GOOGLE_NOWBAR_TESTS"
+                />
+            </intent-filter>
+        </receiver>
+
         <meta-data
             android:name="com.samsung.android.support.ongoing_activity"
             android:value="true"

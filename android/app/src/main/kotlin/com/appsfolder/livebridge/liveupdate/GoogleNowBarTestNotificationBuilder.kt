@@ -15,6 +15,7 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.ProgressStyle
 import androidx.core.app.NotificationManagerCompat
 import com.kakao.taxi.MainActivity
 import com.kakao.taxi.R
@@ -47,9 +48,12 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
         if (!manager.areNotificationsEnabled()) {
             return false
         }
+        if (!canPostPromotedNotifications()) {
+            return false
+        }
 
         ensureChannel(fixture)
-        manager.notify(fixture.summaryId, buildSummary(fixture))
+        manager.cancel(fixture.summaryId)
         manager.notify(fixture.childId, buildChild(fixture))
         return true
     }
@@ -70,33 +74,9 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
         ).apply {
             description = "Google Now Bar test fixture"
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            setShowBadge(true)
+            setShowBadge(false)
         }
         manager.createNotificationChannel(channel)
-    }
-
-    private fun buildSummary(fixture: Fixture): Notification {
-        return NotificationCompat.Builder(context, fixture.channelId)
-            .setSmallIcon(R.drawable.ic_stat_liveupdate)
-            .setContentTitle(fixture.remoteAppName)
-            .setContentText(fixture.summaryText)
-            .setSubText(fixture.substituteName)
-            .setGroup(fixture.groupKey)
-            .setGroupSummary(true)
-            .setOngoing(true)
-            .setAutoCancel(false)
-            .setOnlyAlertOnce(true)
-            .setSilent(true)
-            .setDefaults(0)
-            .setColor(Color.TRANSPARENT)
-            .setWhen(fixture.whenMs)
-            .setShowWhen(true)
-            .setTimeoutAfter(TIMEOUT_MS)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setRequestPromotedOngoing(true)
-            .addExtras(buildSummaryExtras(fixture))
-            .build()
     }
 
     private fun buildChild(fixture: Fixture): Notification {
@@ -107,7 +87,6 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             .setContentText(fixture.secondaryInfo)
             .setSubText(fixture.substituteName)
             .setContentIntent(contentIntent)
-            .setGroup(fixture.groupKey)
             .setOngoing(true)
             .setAutoCancel(false)
             .setOnlyAlertOnce(true)
@@ -122,21 +101,14 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setShortCriticalText(fixture.chipText)
             .setRequestPromotedOngoing(true)
+            .setProgress(fixture.progressMax, fixture.progressValue, false)
+            .setStyle(
+                ProgressStyle()
+                    .setStyledByProgress(false)
+                    .setProgress(fixture.progressValue)
+            )
             .addExtras(buildChildExtras(fixture, contentIntent))
             .build()
-    }
-
-    private fun buildSummaryExtras(fixture: Fixture): Bundle {
-        return Bundle().apply {
-            putCharSequence(Notification.EXTRA_TITLE, fixture.title)
-            putBoolean(KEY_REDUCED_IMAGES, true)
-            putParcelable(KEY_AOD_REMOTE_APP_PENDING_INTENT, contentPendingIntent(fixture.summaryId))
-            putParcelable(KEY_AOD_REMOTE_APP_ICON, appIcon())
-            putCharSequence(KEY_AOD_REMOTE_APP_NAME, fixture.remoteAppName)
-            putString(KEY_SUBSTITUTE_NAME, fixture.substituteName)
-            putInt(KEY_STYLE, STYLE_DEFAULT)
-            putBoolean(KEY_SHOW_WHEN, true)
-        }
     }
 
     private fun buildChildExtras(
@@ -151,6 +123,7 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             putParcelable(KEY_AOD_REMOTE_APP_PENDING_INTENT, contentIntent)
             putCharSequence(Notification.EXTRA_TITLE, fixture.title)
             putBoolean(KEY_REDUCED_IMAGES, true)
+            putString(KEY_SUBSTITUTE_NAME, fixture.substituteName)
             putCharSequence(KEY_RAW_PRIMARY_INFO, fixture.primaryInfo)
             putCharSequence(KEY_PRIMARY_INFO, fixture.primaryInfo)
             putCharSequence(KEY_RAW_SECONDARY_INFO, fixture.secondaryInfo)
@@ -182,6 +155,9 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             putInt(KEY_CHIP_BG_COLOR, fixture.chipBgColor)
             putInt(KEY_ACTION_TYPE, ACTION_TYPE_BUTTON_TEXT)
             putInt(KEY_ACTION_PRIMARY_SET, ACTION_PRIMARY_SET)
+            putInt(KEY_PROGRESS, fixture.progressValue)
+            putInt(KEY_PROGRESS_MAX, fixture.progressMax)
+            putInt(KEY_PROGRESS_COLOR, fixture.chipBgColor)
             putBoolean(KEY_SHOW_SMALL_ICON, true)
             putString(KEY_CHRONOMETER_REMOTE_VIEW_TAG, fixture.remoteViewTag)
             putInt(KEY_CHRONOMETER_REMOTE_VIEW_POSITION, REMOTE_VIEW_POSITION)
@@ -226,6 +202,19 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
         )
     }
 
+    private fun canPostPromotedNotifications(): Boolean {
+        if (Build.VERSION.SDK_INT < 36) {
+            return true
+        }
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                ?: return false
+        return runCatching {
+            val method = notificationManager.javaClass.getMethod("canPostPromotedNotifications")
+            method.invoke(notificationManager) as? Boolean ?: false
+        }.getOrDefault(false)
+    }
+
     private data class Fixture(
         val summaryId: Int,
         val childId: Int,
@@ -245,6 +234,8 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
         val summaryText: String,
         val pdePackageName: String,
         val remoteViewTag: String,
+        val progressValue: Int,
+        val progressMax: Int,
         val whenMs: Long
     )
 
@@ -273,6 +264,9 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
         private const val KEY_NOWBAR_REMOTE_VIEW = "${ONGOING_PREFIX}nowbarRemoteView"
         private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
         private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
+        private const val KEY_PROGRESS = "${ONGOING_PREFIX}progress"
+        private const val KEY_PROGRESS_MAX = "${ONGOING_PREFIX}progressMax"
+        private const val KEY_PROGRESS_COLOR = "${ONGOING_PREFIX}progressSegments.progressColor"
         private const val KEY_ACTION_TYPE = "${ONGOING_PREFIX}actionType"
         private const val KEY_ACTION_PRIMARY_SET = "${ONGOING_PREFIX}actionPrimarySet"
         private const val KEY_CHRONOMETER_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
@@ -336,6 +330,8 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             summaryText = "Google Sports live score",
             pdePackageName = "com.google.android.googlequicksearchbox",
             remoteViewTag = "google_sports_live_score",
+            progressValue = 78,
+            progressMax = 100,
             whenMs = 1778878475522L
         )
 
@@ -358,6 +354,8 @@ internal class GoogleNowBarTestNotificationBuilder(private val context: Context)
             summaryText = "Google Finance market update",
             pdePackageName = "com.google.android.googlequicksearchbox",
             remoteViewTag = "google_finance_market_update",
+            progressValue = 42,
+            progressMax = 100,
             whenMs = 1778878770983L
         )
     }

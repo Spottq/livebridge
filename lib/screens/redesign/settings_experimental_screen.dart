@@ -116,6 +116,20 @@ class _SettingsExperimentalScreenState
 
   Future<void> _postGoogleNowBarTest(Future<bool> Function() action) async {
     final AppStrings strings = AppStrings.of(context);
+    final bool canPostPromoted =
+        await LiveBridgePlatform.canPostPromotedNotifications();
+    if (!mounted) {
+      return;
+    }
+    if (!canPostPromoted) {
+      unawaited(LiveBridgeHaptics.warning());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(strings.googleNowBarTestNeedsLiveUpdatesAccess)),
+      );
+      await LiveBridgePlatform.openPromotedNotificationSettings();
+      return;
+    }
+
     final bool posted = await action();
     if (!mounted) {
       return;

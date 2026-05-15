@@ -1305,6 +1305,11 @@ class AppStrings {
     ru: 'Unable to post test notification. Check notification permission.',
   );
 
+  String get googleNowBarTestNeedsLiveUpdatesAccess => tr(
+    en: 'Enable Live Updates access for LiveBridge, then post the test again.',
+    ru: 'Enable Live Updates access for LiveBridge, then post the test again.',
+  );
+
   String get googleNowBarTestCancelled => tr(
     en: 'Google Now Bar test notifications cancelled.',
     ru: 'Google Now Bar test notifications cancelled.',
