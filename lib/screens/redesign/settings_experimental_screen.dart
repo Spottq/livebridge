@@ -114,6 +114,38 @@ class _SettingsExperimentalScreenState
     await LiveBridgePlatform.setAnimatedIslandUpdateFrequencyMs(normalized);
   }
 
+  Future<void> _postGoogleNowBarTest(Future<bool> Function() action) async {
+    final AppStrings strings = AppStrings.of(context);
+    final bool posted = await action();
+    if (!mounted) {
+      return;
+    }
+    unawaited(
+      posted ? LiveBridgeHaptics.confirm() : LiveBridgeHaptics.warning(),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          posted
+              ? strings.googleNowBarTestPosted
+              : strings.googleNowBarTestFailed,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _cancelGoogleNowBarTests() async {
+    final AppStrings strings = AppStrings.of(context);
+    await LiveBridgePlatform.cancelGoogleNowBarTestNotifications();
+    if (!mounted) {
+      return;
+    }
+    unawaited(LiveBridgeHaptics.confirm());
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(strings.googleNowBarTestCancelled)));
+  }
+
   int _snapUpdateFrequencyMs(double sliderValue) {
     return (_updateFrequencyMinMs +
             (sliderValue.round() * _updateFrequencyStepMs))
@@ -173,12 +205,53 @@ class _SettingsExperimentalScreenState
         },
       ),
     ];
+    final List<LbListItemData> googleNowBarTestItems = <LbListItemData>[
+      LbListItemData(
+        title: strings.googleSportsNowBarTestAction,
+        description: strings.googleNowBarTestDescription,
+        leadingIcon: LbIconSymbol.playCircle,
+        showChevron: false,
+        onTap: () {
+          unawaited(
+            _postGoogleNowBarTest(
+              LiveBridgePlatform.postGoogleSportsNowBarTestNotification,
+            ),
+          );
+        },
+      ),
+      LbListItemData(
+        title: strings.googleFinanceNowBarTestAction,
+        leadingIcon: LbIconSymbol.wallet,
+        showChevron: false,
+        onTap: () {
+          unawaited(
+            _postGoogleNowBarTest(
+              LiveBridgePlatform.postGoogleFinanceNowBarTestNotification,
+            ),
+          );
+        },
+      ),
+      LbListItemData(
+        title: strings.googleNowBarTestCancelAction,
+        leadingIcon: LbIconSymbol.close,
+        showChevron: false,
+        onTap: () {
+          unawaited(_cancelGoogleNowBarTests());
+        },
+      ),
+    ];
 
     return LbDetailScreen(
       title: strings.experimentalTitle,
       children: <Widget>[
         LbListComponent(
           items: primaryItems,
+          rowHeight: LbSpacing.recentRowHeight,
+          extendDividersToEnd: true,
+        ),
+        const SizedBox(height: LbSpacing.md),
+        LbListComponent(
+          items: googleNowBarTestItems,
           rowHeight: LbSpacing.recentRowHeight,
           extendDividersToEnd: true,
         ),

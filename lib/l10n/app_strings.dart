@@ -11,6 +11,7 @@ class AppStrings {
     final String countryCode = locale.countryCode?.toLowerCase() ?? '';
     return languageCode == 'pt' && countryCode == 'br';
   }
+
   bool get isKo => locale.languageCode.toLowerCase().startsWith('ko');
 
   bool get isZhHans {
@@ -1275,6 +1276,38 @@ class AppStrings {
     zhHans: '更新频率',
     zhHant: '更新頻率',
     ko: '업데이트 주기',
+  );
+
+  String get googleNowBarTestTitle =>
+      tr(en: 'Google Now Bar test', ru: 'Google Now Bar test');
+
+  String get googleNowBarTestDescription => tr(
+    en: 'Posts local Google Sports and Finance fixtures copied from dumpsys structure.',
+    ru: 'Posts local Google Sports and Finance fixtures copied from dumpsys structure.',
+  );
+
+  String get googleSportsNowBarTestAction =>
+      tr(en: 'Post Google Sports', ru: 'Post Google Sports');
+
+  String get googleFinanceNowBarTestAction =>
+      tr(en: 'Post Google Finance', ru: 'Post Google Finance');
+
+  String get googleNowBarTestCancelAction =>
+      tr(en: 'Cancel Google tests', ru: 'Cancel Google tests');
+
+  String get googleNowBarTestPosted => tr(
+    en: 'Google Now Bar test notification posted.',
+    ru: 'Google Now Bar test notification posted.',
+  );
+
+  String get googleNowBarTestFailed => tr(
+    en: 'Unable to post test notification. Check notification permission.',
+    ru: 'Unable to post test notification. Check notification permission.',
+  );
+
+  String get googleNowBarTestCancelled => tr(
+    en: 'Google Now Bar test notifications cancelled.',
+    ru: 'Google Now Bar test notifications cancelled.',
   );
 
   String get copyDebugJsonTitle => tr(

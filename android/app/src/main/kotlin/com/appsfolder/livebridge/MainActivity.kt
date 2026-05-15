@@ -32,6 +32,7 @@ import com.kakao.taxi.liveupdate.DeviceBlocker
 import com.kakao.taxi.liveupdate.DeviceProps
 import com.kakao.taxi.liveupdate.FlashlightController
 import com.kakao.taxi.liveupdate.FlashlightForegroundService
+import com.kakao.taxi.liveupdate.GoogleNowBarTestNotificationBuilder
 import com.kakao.taxi.liveupdate.InstalledAppsRepository
 import com.kakao.taxi.liveupdate.KeepAliveForegroundService
 import com.kakao.taxi.liveupdate.LiveBridgeTileService
@@ -514,6 +515,16 @@ class MainActivity : FlutterActivity() {
                     }
                     res.success(true)
                 }
+            }
+            "postGoogleSportsNowBarTestNotification" -> {
+                res.success(GoogleNowBarTestNotificationBuilder(applicationContext).postSports())
+            }
+            "postGoogleFinanceNowBarTestNotification" -> {
+                res.success(GoogleNowBarTestNotificationBuilder(applicationContext).postFinance())
+            }
+            "cancelGoogleNowBarTestNotifications" -> {
+                GoogleNowBarTestNotificationBuilder(applicationContext).cancelAll()
+                res.success(true)
             }
 
             "getAospCuttingEnabled" -> res.success(prefs.getAospCuttingEnabled())

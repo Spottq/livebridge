@@ -193,6 +193,12 @@ class LiveBridgePlatform {
   });
   static Future<bool> showToast(String message) =>
       _askBool('showToast', {'message': message});
+  static Future<bool> postGoogleSportsNowBarTestNotification() =>
+      _askBool('postGoogleSportsNowBarTestNotification');
+  static Future<bool> postGoogleFinanceNowBarTestNotification() =>
+      _askBool('postGoogleFinanceNowBarTestNotification');
+  static Future<bool> cancelGoogleNowBarTestNotifications() =>
+      _askBool('cancelGoogleNowBarTestNotifications');
   static Future<bool> getAospCuttingEnabled() =>
       _askBool('getAospCuttingEnabled');
   static Future<bool> setAospCuttingEnabled(bool value) =>
