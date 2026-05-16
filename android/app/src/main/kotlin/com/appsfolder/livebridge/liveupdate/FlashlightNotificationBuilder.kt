@@ -52,7 +52,11 @@ internal class FlashlightNotificationBuilder(
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
-        val nowBarRemoteView = buildNowBarRemoteViews(title = title)
+        val nowBarRemoteView = buildNowBarRemoteViews(
+            title = title,
+            capability = capability,
+            effectiveLevelIndex = effectiveLevelIndex
+        )
         val statusBarIconCompat = IconCompat.createWithResource(
             context,
             R.drawable.ic_flashlight_system_notification
@@ -63,7 +67,6 @@ internal class FlashlightNotificationBuilder(
             .setSmallIcon(R.drawable.ic_flashlight_system_notification)
             .setContentTitle(title)
             .setContentIntent(contentIntent)
-            .setDeleteIntent(disablePendingIntent())
             .setColor(sourceSnapshot.accentColor)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -108,7 +111,7 @@ internal class FlashlightNotificationBuilder(
             setTextViewText(R.id.flashlight_title, title)
             setTextViewText(R.id.flashlight_action_button, disableButtonText())
             setOnClickPendingIntent(R.id.flashlight_action_button, disablePendingIntent())
-            applyExpandedRemoteViewTheme(includeWarning = true)
+            applyRemoteViewTheme(includeWarning = true)
             val warning = warningText(capability)
             if (warning.isNullOrEmpty()) {
                 setViewVisibility(R.id.flashlight_warning, View.GONE)
@@ -126,13 +129,21 @@ internal class FlashlightNotificationBuilder(
     }
 
     private fun buildNowBarRemoteViews(
-        title: String
+        title: String,
+        capability: FlashlightCapability,
+        effectiveLevelIndex: Int
     ): RemoteViews {
         return RemoteViews(context.packageName, R.layout.notification_flashlight_slider).apply {
             setTextViewText(R.id.flashlight_title, title)
-            setOnClickPendingIntent(R.id.flashlight_close_button, disablePendingIntent())
-            setContentDescription(R.id.flashlight_close_button, disableButtonText())
-            applyCompactRemoteViewTheme()
+            setTextViewText(R.id.flashlight_action_button, disableButtonText())
+            setOnClickPendingIntent(R.id.flashlight_action_button, disablePendingIntent())
+            applyRemoteViewTheme(includeWarning = false)
+            applySliderState(
+                remoteViews = this,
+                capability = capability,
+                effectiveLevelIndex = effectiveLevelIndex,
+                interactive = capability.supportsFiveLevels
+            )
         }
     }
 
@@ -186,7 +197,7 @@ internal class FlashlightNotificationBuilder(
         )
     }
 
-    private fun RemoteViews.applyExpandedRemoteViewTheme(includeWarning: Boolean) {
+    private fun RemoteViews.applyRemoteViewTheme(includeWarning: Boolean) {
         val textColors = remoteViewTextColors()
         setInt(R.id.flashlight_notification_root, "setLayoutDirection", View.LAYOUT_DIRECTION_LTR)
         setTextColor(R.id.flashlight_title, textColors.primary)
@@ -194,13 +205,6 @@ internal class FlashlightNotificationBuilder(
         if (includeWarning) {
             setTextColor(R.id.flashlight_warning, textColors.warning)
         }
-    }
-
-    private fun RemoteViews.applyCompactRemoteViewTheme() {
-        val textColors = remoteViewTextColors()
-        setInt(R.id.flashlight_notification_root, "setLayoutDirection", View.LAYOUT_DIRECTION_LTR)
-        setTextColor(R.id.flashlight_title, textColors.primary)
-        setInt(R.id.flashlight_close_button, "setColorFilter", textColors.primary)
     }
 
     private fun remoteViewTextColors(): RemoteViewTextColors {
@@ -235,6 +239,9 @@ internal class FlashlightNotificationBuilder(
             putBoolean(KEY_SHOW_SMALL_ICON, true)
             icon?.let {
                 putParcelable(KEY_CHIP_ICON, it)
+                putParcelable(KEY_NOWBAR_ICON, it)
+                putParcelable(KEY_FIRST_ICON, it)
+                putParcelable(KEY_SECONDARY_INFO_ICON, it)
             }
             putParcelable(KEY_REMOTE_VIEW, remoteView)
             putInt(KEY_REMOTE_VIEW_POSITION, 1)
@@ -362,18 +369,22 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
         private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
         private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
+        private const val KEY_FIRST_ICON = "${ONGOING_PREFIX}firstIcon"
+        private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
+        private const val KEY_SECONDARY_INFO_ICON = "${ONGOING_PREFIX}secondaryInfoIcon"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
         private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"
         private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"
         private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
         private const val STYLE_DEFAULT = 1
+        private const val DEFAULT_ICON_ACCENT_COLOR = 0xFF387AFF.toInt()
         private const val DARK_THEME_TEXT_COLOR = 0xFFF5F7FA.toInt()
         private const val DARK_THEME_WARNING_TEXT_COLOR = 0xFF9CA3AF.toInt()
         private const val LIGHT_THEME_TEXT_COLOR = 0xFF111827.toInt()
         private const val LIGHT_THEME_WARNING_TEXT_COLOR = 0xFF4B5563.toInt()
-        private const val REMOTE_VIEW_TAG = "flashlight_compact_remote"
+        private const val REMOTE_VIEW_TAG = "flashlight_segments_remote"
         private const val REQUEST_CODE_DISABLE = 500
     }
 }
