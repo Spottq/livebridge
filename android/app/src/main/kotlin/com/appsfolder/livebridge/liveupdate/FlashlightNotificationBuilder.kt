@@ -53,7 +53,6 @@ internal class FlashlightNotificationBuilder(
             effectiveLevelIndex = effectiveLevelIndex
         )
         val nowBarRemoteView = buildNowBarRemoteViews(
-            title = title,
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
         )
@@ -129,15 +128,13 @@ internal class FlashlightNotificationBuilder(
     }
 
     private fun buildNowBarRemoteViews(
-        title: String,
         capability: FlashlightCapability,
         effectiveLevelIndex: Int
     ): RemoteViews {
         return RemoteViews(context.packageName, R.layout.notification_flashlight_slider).apply {
-            setTextViewText(R.id.flashlight_title, title)
             setTextViewText(R.id.flashlight_action_button, disableButtonText())
             setOnClickPendingIntent(R.id.flashlight_action_button, disablePendingIntent())
-            applyRemoteViewTheme(includeWarning = false)
+            applyNowBarRemoteViewTheme()
             applySliderState(
                 remoteViews = this,
                 capability = capability,
@@ -207,6 +204,13 @@ internal class FlashlightNotificationBuilder(
         }
     }
 
+    private fun RemoteViews.applyNowBarRemoteViewTheme() {
+        val textColors = remoteViewTextColors()
+        setInt(R.id.flashlight_notification_root, "setLayoutDirection", View.LAYOUT_DIRECTION_LTR)
+        setTextColor(R.id.flashlight_action_button, textColors.primary)
+        setInt(R.id.flashlight_nowbar_icon, "setColorFilter", textColors.primary)
+    }
+
     private fun remoteViewTextColors(): RemoteViewTextColors {
         val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
         return if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
@@ -236,12 +240,9 @@ internal class FlashlightNotificationBuilder(
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
             putInt(KEY_CHIP_BG_COLOR, chipBackgroundColor)
-            putBoolean(KEY_SHOW_SMALL_ICON, true)
+            putBoolean(KEY_SHOW_SMALL_ICON, false)
             icon?.let {
                 putParcelable(KEY_CHIP_ICON, it)
-                putParcelable(KEY_NOWBAR_ICON, it)
-                putParcelable(KEY_FIRST_ICON, it)
-                putParcelable(KEY_SECONDARY_INFO_ICON, it)
             }
             putParcelable(KEY_REMOTE_VIEW, remoteView)
             putInt(KEY_REMOTE_VIEW_POSITION, 1)
@@ -369,10 +370,7 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
         private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
         private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
-        private const val KEY_FIRST_ICON = "${ONGOING_PREFIX}firstIcon"
-        private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
-        private const val KEY_SECONDARY_INFO_ICON = "${ONGOING_PREFIX}secondaryInfoIcon"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
         private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"
