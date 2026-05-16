@@ -38,7 +38,6 @@ internal class FlashlightNotificationBuilder(
             FlashlightController.DEFAULT_LEVEL_INDEX
         }
         val secondaryText = secondaryText(capability)
-        val chipText = chipText()
         val contentIntent = PendingIntent.getActivity(
             context,
             0,
@@ -86,17 +85,14 @@ internal class FlashlightNotificationBuilder(
         if (!secondaryText.isNullOrEmpty()) {
             builder.setContentText(secondaryText)
         }
-        if (!chipText.isNullOrEmpty()) {
-            builder.setShortCriticalText(chipText)
-        }
 
         if (SamsungLiveUpdateReparser.isSamsungDevice()) {
             builder.addExtras(
                 buildSamsungExtras(
                     title = title,
-                    chipText = chipText,
                     chipIcon = nowBarIconCompat,
-                    remoteView = nowBarRemoteView,
+                    expandedRemoteView = expandedView,
+                    nowBarRemoteView = nowBarRemoteView,
                     chipBackgroundColor = sourceSnapshot.accentColor
                 )
             )
@@ -212,6 +208,7 @@ internal class FlashlightNotificationBuilder(
         val textColors = remoteViewTextColors()
         setInt(R.id.flashlight_notification_root, "setLayoutDirection", View.LAYOUT_DIRECTION_LTR)
         setTextColor(R.id.flashlight_action_button, textColors.primary)
+        setInt(R.id.flashlight_compact_icon, "setColorFilter", textColors.primary)
     }
 
     private fun remoteViewTextColors(): RemoteViewTextColors {
@@ -231,24 +228,24 @@ internal class FlashlightNotificationBuilder(
 
     private fun buildSamsungExtras(
         title: String,
-        chipText: String?,
         chipIcon: IconCompat,
-        remoteView: RemoteViews,
+        expandedRemoteView: RemoteViews,
+        nowBarRemoteView: RemoteViews,
         chipBackgroundColor: Int
     ): Bundle {
         val icon = runCatching { chipIcon.toIcon(context) }.getOrNull()
         return Bundle().apply {
             putInt(KEY_STYLE, STYLE_DEFAULT)
             putCharSequence(KEY_PRIMARY_INFO, title)
-            putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
             putCharSequence(KEY_NOWBAR_PRIMARY_INFO, title)
             putInt(KEY_CHIP_BG_COLOR, chipBackgroundColor)
-            putBoolean(KEY_SHOW_SMALL_ICON, true)
+            putBoolean(KEY_SHOW_SMALL_ICON, false)
             icon?.let {
                 putParcelable(KEY_CHIP_ICON, it)
-                putParcelable(KEY_NOWBAR_ICON, it)
             }
-            putParcelable(KEY_REMOTE_VIEW, remoteView)
+            putParcelable(KEY_EXPANDED_REMOTE_VIEW, expandedRemoteView)
+            putParcelable(KEY_NOWBAR_REMOTE_VIEW, nowBarRemoteView)
+            putParcelable(KEY_REMOTE_VIEW, nowBarRemoteView)
             putInt(KEY_REMOTE_VIEW_POSITION, 1)
             putString(KEY_REMOTE_VIEW_TAG, REMOTE_VIEW_TAG)
             putInt(KEY_NOWBAR_CHRONOMETER_POSITION, 1)
@@ -317,14 +314,6 @@ internal class FlashlightNotificationBuilder(
         return null
     }
 
-    private fun chipText(): String {
-        return if (isRussianLocale()) {
-            "\u0424\u043e\u043d\u0430\u0440\u0438\u043a"
-        } else {
-            "Flashlight"
-        }
-    }
-
     private fun warningText(capability: FlashlightCapability): String? {
         if (!capability.available) {
             return if (isRussianLocale()) {
@@ -373,8 +362,8 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_PRIMARY_INFO = "${ONGOING_PREFIX}primaryInfo"
         private const val KEY_CHIP_BG_COLOR = "${ONGOING_PREFIX}chipBgColor"
         private const val KEY_CHIP_ICON = "${ONGOING_PREFIX}chipIcon"
-        private const val KEY_CHIP_EXPANDED_TEXT = "${ONGOING_PREFIX}chipExpandedText"
-        private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
+        private const val KEY_EXPANDED_REMOTE_VIEW = "${ONGOING_PREFIX}expandedRemoteView"
+        private const val KEY_NOWBAR_REMOTE_VIEW = "${ONGOING_PREFIX}nowbarRemoteView"
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
