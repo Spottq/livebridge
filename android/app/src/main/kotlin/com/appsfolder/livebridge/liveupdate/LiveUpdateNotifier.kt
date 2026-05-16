@@ -35,6 +35,10 @@ import android.os.Looper
 import android.os.SystemClock
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -92,6 +96,15 @@ object LiveUpdateNotifier {
     )
     private val NAVIGATION_DISTANCE_PATTERN = Regex(
         "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
+        setOf(RegexOption.IGNORE_CASE)
+    )
+    private val DELIVERY_ETA_INLINE_PATTERN = Regex(
+        "(?<!\\d)(\\d{1,3})\\s*(мин(?:\\.|ут[\\p{L}]*)?|mins?|minutes?|ч(?:\\.|ас(?:а|ов)?)?|hrs?|hours?|h)(?=$|\\s|[,.;:!?)\\]])",
+        setOf(RegexOption.IGNORE_CASE)
+    )
+    private val DELIVERY_ETA_NUMBER_PATTERN = Regex("^\\d{1,3}$")
+    private val DELIVERY_ETA_UNIT_PATTERN = Regex(
+        "^(?:мин(?:\\.|ут[\\p{L}]*)?|mins?|minutes?|ч(?:\\.|ас(?:а|ов)?)?|hrs?|hours?|h)$",
         setOf(RegexOption.IGNORE_CASE)
     )
     private val TEXT_PROGRESS_PERCENT_PATTERN = Regex("(?<!\\d)(\\d{1,3})\\s*%")
@@ -901,7 +914,22 @@ object LiveUpdateNotifier {
                     val sourceNotification = sourceSbn.notification
                     val smartRuleId = smartRuleIdFromAggregateKey(smartMatch.aggregateKey)
                     val mirrorChannel = mirrorChannelForSmartRule(smartRuleId)
-                    val dedupKind = if (isNotificationDedupEligibleSmartRule(smartRuleId)) {
+                    val deliveryEta = if (smartRuleId == "food") {
+                        extractDeliveryEta(
+                            context = context,
+                            notification = sourceNotification,
+                            packageName = sourceSbn.packageName,
+                            fallbackTitle = sourceSbn.packageName
+                        )
+                    } else {
+                        null
+                    }
+                    // Delivery ETA can be driven by custom RemoteViews; keep that source active
+                    // so periodic snapshot sync can read the current value instead of freezing it.
+                    val dedupKind = if (
+                        deliveryEta == null &&
+                        isNotificationDedupEligibleSmartRule(smartRuleId)
+                    ) {
                         MirrorDedupKind.STATUS
                     } else {
                         MirrorDedupKind.NONE
@@ -942,6 +970,8 @@ object LiveUpdateNotifier {
                             parserDictionary = parserDictionary
                         ) ?: defaultSmartStatus
 
+                        "food" -> deliveryEta?.text ?: defaultSmartStatus
+
                         "vpn" -> formatDominantVpnTrafficText(vpnTraffic) ?: defaultSmartStatus
 
                         else -> defaultSmartStatus
@@ -955,6 +985,7 @@ object LiveUpdateNotifier {
                     } else {
                         ProgressOverride(routeState.stageValue, routeState.stageMax)
                     }
+                    val shouldAnimateSmartIsland = animatedIslandEnabled && deliveryEta == null
 
                     val notification = buildMirroredNotification(
                         context = context,
@@ -968,7 +999,7 @@ object LiveUpdateNotifier {
                         smartRuleId = smartRuleId,
                         requestPromoted = true,
                         samsungBridge = samsungBridge,
-                        preferSmartShortTextAsPrimary = animatedIslandEnabled
+                        preferSmartShortTextAsPrimary = shouldAnimateSmartIsland
                     )
                     notifyWithPromotionFallback(
                         context = context,
@@ -985,9 +1016,9 @@ object LiveUpdateNotifier {
                         compactCodeOverride = routeState.compactOrderCode,
                         smartRuleId = smartRuleId,
                         samsungBridge = samsungBridge,
-                        preferSmartShortTextAsPrimary = animatedIslandEnabled
+                        preferSmartShortTextAsPrimary = shouldAnimateSmartIsland
                     )
-                    if (animatedIslandEnabled) {
+                    if (shouldAnimateSmartIsland) {
                         val animatedTokens = buildSmartAnimatedIslandTokens(
                             ruleId = smartRuleId,
                             notification = sourceNotification,
@@ -3944,6 +3975,89 @@ object LiveUpdateNotifier {
         }
     }
 
+    private fun extractDeliveryEta(
+        context: Context,
+        notification: Notification,
+        packageName: String,
+        fallbackTitle: String
+    ): DeliveryEtaText? {
+        val renderedLines = extractRenderedRemoteViewTexts(
+            context = context,
+            notification = notification,
+            packageName = packageName
+        ).flatMap(::splitNotificationTextLines)
+        val remoteLines = extractRemoteViewTexts(notification)
+            .flatMap(::splitNotificationTextLines)
+        val candidateLines = linkedSetOf<String>()
+        renderedLines.forEach(candidateLines::add)
+        splitNotificationTextLines(
+            collectNotificationText(
+                notification = notification,
+                fallbackTitle = fallbackTitle,
+                includeRemoteViewTexts = true
+            )
+        ).forEach(candidateLines::add)
+        remoteLines.forEach(candidateLines::add)
+
+        val inlineCandidates = candidateLines.mapNotNull { candidate ->
+            DELIVERY_ETA_INLINE_PATTERN.find(candidate)
+                ?.value
+                ?.let(::parseDeliveryEtaText)
+        }
+        val adjacentCandidates = listOfNotNull(
+            extractAdjacentDeliveryEta(renderedLines),
+            extractAdjacentDeliveryEta(remoteLines)
+        )
+        val candidates = inlineCandidates + adjacentCandidates
+        if (candidates.isEmpty()) {
+            return null
+        }
+        val minuteCandidates = candidates.filter { it.totalMinutes != null }
+        return if (minuteCandidates.isNotEmpty()) {
+            minuteCandidates.minByOrNull { it.totalMinutes ?: Int.MAX_VALUE }
+        } else {
+            candidates.firstOrNull()
+        }
+    }
+
+    private fun extractAdjacentDeliveryEta(lines: List<String>): DeliveryEtaText? {
+        for (index in 0 until lines.lastIndex) {
+            val number = lines[index].trim()
+            val unit = lines[index + 1].trim()
+            if (DELIVERY_ETA_NUMBER_PATTERN.matches(number) &&
+                DELIVERY_ETA_UNIT_PATTERN.matches(unit)
+            ) {
+                return parseDeliveryEtaText("$number $unit")
+            }
+        }
+        return null
+    }
+
+    private fun parseDeliveryEtaText(value: String): DeliveryEtaText? {
+        val normalized = value
+            .replace(Regex("\\s+"), " ")
+            .trim()
+            .ifBlank { null }
+            ?: return null
+        val match = DELIVERY_ETA_INLINE_PATTERN.find(normalized) ?: return DeliveryEtaText(
+            text = normalized,
+            totalMinutes = null
+        )
+        val amount = match.groupValues.getOrNull(1)?.toIntOrNull()
+        val unitText = match.groupValues.getOrNull(2)
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?: "min"
+        val normalizedUnit = unitText.lowercase(Locale.ROOT)
+        val isMinuteUnit =
+            normalizedUnit.startsWith("мин") ||
+                    normalizedUnit.startsWith("min")
+        return DeliveryEtaText(
+            text = normalized,
+            totalMinutes = amount?.takeIf { isMinuteUnit }
+        )
+    }
+
     private fun composeTwoGisVisibleSecondaryText(
         leadingText: String?,
         etaDistanceText: String?,
@@ -4669,6 +4783,54 @@ object LiveUpdateNotifier {
         }
         canvas.drawBitmap(mutableSource, 0f, 0f, paint)
         return result
+    }
+
+    private fun extractRenderedRemoteViewTexts(
+        context: Context,
+        notification: Notification,
+        packageName: String
+    ): List<String> {
+        val remoteViews = listOfNotNull(
+            notification.contentView,
+            notification.bigContentView,
+            notification.headsUpContentView
+        )
+        if (remoteViews.isEmpty()) {
+            return emptyList()
+        }
+
+        val packageContext = runCatching {
+            context.createPackageContext(packageName, Context.CONTEXT_RESTRICTED)
+        }.getOrElse {
+            context
+        }
+        val applyContexts = listOf(context, packageContext)
+            .distinctBy { it.packageName }
+        val values = linkedSetOf<String>()
+        for (remoteView in remoteViews) {
+            for (applyContext in applyContexts) {
+                val root = runCatching {
+                    val parent = FrameLayout(applyContext)
+                    remoteView.apply(applyContext, parent)
+                }.getOrNull() ?: continue
+                collectRenderedTextViews(root, values)
+            }
+        }
+        return values.toList()
+    }
+
+    private fun collectRenderedTextViews(view: View, values: MutableSet<String>) {
+        if (view is TextView) {
+            val normalized = NotificationTextNormalizer.normalize(view.text)
+            if (!normalized.isNullOrEmpty()) {
+                values.add(normalized)
+            }
+        }
+        if (view is ViewGroup) {
+            for (index in 0 until view.childCount) {
+                collectRenderedTextViews(view.getChildAt(index), values)
+            }
+        }
     }
 
     private fun extractRemoteViewTexts(notification: Notification): List<String> {
@@ -5898,6 +6060,11 @@ object LiveUpdateNotifier {
         val appPresentationOverride: AppPresentationOverride,
         val samsungBridge: SamsungBridgeContext,
         val startedAtWallClockMs: Long
+    )
+
+    private data class DeliveryEtaText(
+        val text: String,
+        val totalMinutes: Int?
     )
 
     private data class MediaPlaybackSnapshot(
