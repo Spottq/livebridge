@@ -96,9 +96,11 @@ object LiveUpdateNotifier {
         "com.whatsapp",
         "com.whatsapp.w4b"
     )
-    private val NOTIFICATION_CAPSULE_EXCLUDED_PACKAGES = setOf(
+    private val NOTIFICATION_CAPSULE_SYSTEM_PACKAGES = setOf(
         "android",
-        "com.android.systemui",
+        "com.android.systemui"
+    )
+    private val NOTIFICATION_CAPSULE_EXCLUDED_PACKAGES = setOf(
         "com.samsung.android.app.aodservice",
         "com.samsung.android.providers.context"
     )
@@ -1899,6 +1901,7 @@ object LiveUpdateNotifier {
         sbn: StatusBarNotification
     ): Boolean {
         val packageNameLower = sbn.packageName.lowercase(Locale.ROOT)
+        val isSystemPackage = packageNameLower in NOTIFICATION_CAPSULE_SYSTEM_PACKAGES
         if (sbn.packageName == context.packageName) {
             return false
         }
@@ -1912,20 +1915,23 @@ object LiveUpdateNotifier {
         ) {
             return false
         }
-        if (!sbn.isClearable) {
+        if (!isSystemPackage && !sbn.isClearable) {
             return false
         }
-        if (source.flags and Notification.FLAG_ONGOING_EVENT != 0) {
+        if (!isSystemPackage && (source.flags and Notification.FLAG_ONGOING_EVENT != 0)) {
             return false
         }
-        if (source.flags and Notification.FLAG_FOREGROUND_SERVICE != 0) {
+        if (!isSystemPackage && (source.flags and Notification.FLAG_FOREGROUND_SERVICE != 0)) {
             return false
         }
         if (isLikelyMediaPlaybackNotification(source)) {
             return false
         }
         val category = source.category
-        if (category != null && category in NOTIFICATION_CAPSULE_EXCLUDED_CATEGORIES) {
+        if (!isSystemPackage &&
+            category != null &&
+            category in NOTIFICATION_CAPSULE_EXCLUDED_CATEGORIES
+        ) {
             return false
         }
 
@@ -2016,7 +2022,15 @@ object LiveUpdateNotifier {
     }
 
     private fun notificationCapsuleContentIntent(context: Context): PendingIntent? {
-        return NotificationPanelReceiver.pendingIntent(context)
+        val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+            ?: return null
+        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        return PendingIntent.getActivity(
+            context,
+            NOTIFICATION_CAPSULE_ID,
+            launchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     private fun notificationCapsuleTitle(context: Context, count: Int): String {
@@ -2033,13 +2047,38 @@ object LiveUpdateNotifier {
     }
 
     private fun notificationCapsuleAppLabel(context: Context, packageName: String): String {
-        return runCatching {
-            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
+        val normalizedPackageName = packageName.trim()
+        val packageLabel = runCatching {
+            val appInfo = context.packageManager.getApplicationInfo(normalizedPackageName, 0)
             context.packageManager.getApplicationLabel(appInfo)
                 ?.toString()
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
-        }.getOrNull() ?: packageName
+        }.getOrNull()
+        if (!packageLabel.isNullOrBlank() &&
+            !packageLabel.equals(normalizedPackageName, ignoreCase = true)
+        ) {
+            return packageLabel
+        }
+        notificationCapsuleSystemAppLabel(context, normalizedPackageName)?.let { return it }
+        return packageLabel ?: normalizedPackageName.ifBlank {
+            if (isRussianLocale(context)) "Система" else "System"
+        }
+    }
+
+    private fun notificationCapsuleSystemAppLabel(
+        context: Context,
+        packageName: String
+    ): String? {
+        return when (packageName.lowercase(Locale.ROOT)) {
+            "android" -> if (isRussianLocale(context)) "Система Android" else "Android System"
+            "com.android.systemui" -> if (isRussianLocale(context)) {
+                "Системный интерфейс"
+            } else {
+                "System UI"
+            }
+            else -> null
+        }
     }
 
     private fun isPrivacyRedactedNotification(
