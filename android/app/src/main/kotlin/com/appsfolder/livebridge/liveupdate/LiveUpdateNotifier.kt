@@ -416,19 +416,30 @@ object LiveUpdateNotifier {
             return 0
         }
 
-        val sources = snapshots
+        val candidates = snapshots
             .asSequence()
-            .filter { sbn -> isNotificationCapsuleSource(context, sbn) }
+            .filter { sbn -> isNotificationCapsuleCandidate(context, sbn) }
             .distinctBy { sbn -> sbn.key }
-            .sortedByDescending { sbn -> sbn.postTime }
             .toList()
+        val childGroupKeys = candidates
+            .asSequence()
+            .filterNot { sbn -> sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0 }
+            .map { sbn -> sbn.groupKey }
+            .filter { groupKey -> groupKey.isNotBlank() }
+            .toSet()
+        val sources = candidates
+            .filter { sbn ->
+                sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0 ||
+                    sbn.groupKey !in childGroupKeys
+            }
+            .sortedByDescending { sbn -> sbn.postTime }
         if (sources.isEmpty()) {
             cancelNotificationCapsule(context)
             return 0
         }
 
         ensureChannel(context)
-        val count = sources.size
+        val count = sources.sumOf { sbn -> notificationCapsuleItemCount(sbn.notification) }
         val title = notificationCapsuleTitle(context, count)
         val appNames = sources
             .map { sbn -> notificationCapsuleAppLabel(context, sbn.packageName) }
@@ -1883,7 +1894,7 @@ object LiveUpdateNotifier {
         }
     }
 
-    private fun isNotificationCapsuleSource(
+    private fun isNotificationCapsuleCandidate(
         context: Context,
         sbn: StatusBarNotification
     ): Boolean {
@@ -1904,9 +1915,6 @@ object LiveUpdateNotifier {
         if (!sbn.isClearable) {
             return false
         }
-        if (source.flags and Notification.FLAG_GROUP_SUMMARY != 0) {
-            return false
-        }
         if (source.flags and Notification.FLAG_ONGOING_EVENT != 0) {
             return false
         }
@@ -1922,6 +1930,22 @@ object LiveUpdateNotifier {
         }
 
         return true
+    }
+
+    private fun notificationCapsuleItemCount(notification: Notification): Int {
+        val extras = notification.extras ?: return 1
+        val messageCount = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            @Suppress("DEPRECATION")
+            extras.getParcelableArray(Notification.EXTRA_MESSAGES)
+                ?.let(Notification.MessagingStyle.Message::getMessagesFromBundleArray)
+                ?.count { message -> !message.text.isNullOrBlank() } ?: 0
+        } else {
+            0
+        }
+        val lineCount = extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+            ?.count { line -> !line.isNullOrBlank() } ?: 0
+
+        return maxOf(messageCount, lineCount, 1)
     }
 
     private fun buildNotificationCapsuleNotification(
@@ -1992,19 +2016,7 @@ object LiveUpdateNotifier {
     }
 
     private fun notificationCapsuleContentIntent(context: Context): PendingIntent? {
-        val intent = context.packageManager
-            .getLaunchIntentForPackage(context.packageName)
-            ?.apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            }
-            ?: return null
-
-        return PendingIntent.getActivity(
-            context,
-            NOTIFICATION_CAPSULE_ID,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        return NotificationPanelReceiver.pendingIntent(context)
     }
 
     private fun notificationCapsuleTitle(context: Context, count: Int): String {
