@@ -65,6 +65,7 @@ object LiveUpdateNotifier {
     private const val AOSP_ISLAND_TEXT_LIMIT = 7
     private const val CALL_DURATION_REFRESH_MS = 1_000L
     private const val NOTIFICATION_CAPSULE_ID = 41242
+    private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
         YANDEX_MAPS_PACKAGE,
         YANGO_MAPS_PACKAGE,
@@ -1970,6 +1971,7 @@ object LiveUpdateNotifier {
             .setAutoCancel(false)
             .setWhen(postTime)
             .setShowWhen(false)
+            .setColor(NOTIFICATION_CAPSULE_CHIP_COLOR)
             .setCategory(Notification.CATEGORY_STATUS)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -1984,6 +1986,7 @@ object LiveUpdateNotifier {
 
         @Suppress("DEPRECATION")
         val bridgeSource = Notification().apply {
+            color = NOTIFICATION_CAPSULE_CHIP_COLOR
             extras = Bundle()
         }
         SamsungLiveUpdateReparser(context).applyNowBarBridge(
@@ -2006,8 +2009,7 @@ object LiveUpdateNotifier {
             showSecondaryInNowBar = appNames.isNotBlank(),
             disableNowBarRemoteView = true,
             reuseNotificationRemoteViews = false,
-            lockscreenOnly = true,
-            chipBackgroundColor = null
+            lockscreenOnly = true
         )
 
         return builder.build()

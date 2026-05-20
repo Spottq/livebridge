@@ -38,8 +38,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         reuseNotificationRemoteViews: Boolean = true,
         showSmallIcon: Boolean = true,
         allowNowBarProgress: Boolean = true,
-        lockscreenOnly: Boolean = false,
-        chipBackgroundColor: Int? = resolveChipBackgroundColor(source)
+        lockscreenOnly: Boolean = false
     ) {
         val normalizedPrimary = primaryText.trim()
         if (normalizedPrimary.isEmpty()) {
@@ -87,7 +86,10 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
                     putCharSequence(KEY_NOWBAR_SECONDARY_INFO, it)
                 }
             }
-            chipBackgroundColor?.let { putInt(KEY_CHIP_BG_COLOR, it) }
+            putInt(
+                KEY_CHIP_BG_COLOR,
+                SamsungLiveUpdateReparser.resolveChipBackgroundColor(source)
+            )
             putBoolean(KEY_SHOW_SMALL_ICON, showSmallIcon)
         }
 
