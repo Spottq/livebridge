@@ -66,6 +66,7 @@ object LiveUpdateNotifier {
     private const val CALL_DURATION_REFRESH_MS = 1_000L
     private const val NOTIFICATION_CAPSULE_ID = 41242
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
+    private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
         YANDEX_MAPS_PACKAGE,
         YANGO_MAPS_PACKAGE,
@@ -101,13 +102,6 @@ object LiveUpdateNotifier {
         "com.android.systemui",
         "com.samsung.android.app.aodservice",
         "com.samsung.android.providers.context"
-    )
-    private val NOTIFICATION_CAPSULE_EXCLUDED_CATEGORIES = setOf(
-        Notification.CATEGORY_CALL,
-        Notification.CATEGORY_SERVICE,
-        Notification.CATEGORY_STATUS,
-        Notification.CATEGORY_SYSTEM,
-        Notification.CATEGORY_TRANSPORT
     )
     private val NAVIGATION_DISTANCE_PATTERN = Regex(
         "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
@@ -444,6 +438,7 @@ object LiveUpdateNotifier {
         val appNames = sources
             .map { sbn -> notificationCapsuleAppLabel(context, sbn.packageName) }
             .distinct()
+            .take(NOTIFICATION_CAPSULE_MAX_APP_NAMES)
             .joinToString(", ")
         val notification = buildNotificationCapsuleNotification(
             context = context,
@@ -1912,20 +1907,7 @@ object LiveUpdateNotifier {
         ) {
             return false
         }
-        if (!sbn.isClearable) {
-            return false
-        }
-        if (source.flags and Notification.FLAG_ONGOING_EVENT != 0) {
-            return false
-        }
-        if (source.flags and Notification.FLAG_FOREGROUND_SERVICE != 0) {
-            return false
-        }
         if (isLikelyMediaPlaybackNotification(source)) {
-            return false
-        }
-        val category = source.category
-        if (category != null && category in NOTIFICATION_CAPSULE_EXCLUDED_CATEGORIES) {
             return false
         }
 
