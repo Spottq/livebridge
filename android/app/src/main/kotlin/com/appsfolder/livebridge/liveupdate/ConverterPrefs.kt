@@ -587,6 +587,14 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_SMART_WEATHER_LOCKSCREEN_ONLY, value).apply()
     }
 
+    fun getSmartNotificationCapsuleEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SMART_NOTIFICATION_CAPSULE_ENABLED, false)
+    }
+
+    fun setSmartNotificationCapsuleEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_NOTIFICATION_CAPSULE_ENABLED, value).apply()
+    }
+
     fun getSmartExternalDevicesEnabled(): Boolean {
         return prefs.getBoolean(KEY_SMART_EXTERNAL_DEVICES_ENABLED, true)
     }
@@ -964,6 +972,7 @@ class ConverterPrefs(context: Context) {
             .put("smart_navigation_enabled", getSmartNavigationEnabled())
             .put("smart_weather_enabled", getSmartWeatherEnabled())
             .put("smart_weather_lockscreen_only", getSmartWeatherLockscreenOnly())
+            .put("smart_notification_capsule_enabled", getSmartNotificationCapsuleEnabled())
             .put("smart_external_devices_enabled", getSmartExternalDevicesEnabled())
             .put(
                 "smart_external_devices_ignore_debugging",
@@ -1087,6 +1096,8 @@ class ConverterPrefs(context: Context) {
         bool(settings, "smart_weather_enabled")?.let(::setSmartWeatherEnabled)
         bool(settings, "smart_weather_lockscreen_only")
             ?.let(::setSmartWeatherLockscreenOnly)
+        bool(settings, "smart_notification_capsule_enabled")
+            ?.let(::setSmartNotificationCapsuleEnabled)
         bool(settings, "smart_external_devices_enabled")
             ?.let(::setSmartExternalDevicesEnabled)
         bool(settings, "smart_external_devices_ignore_debugging")
@@ -1371,6 +1382,8 @@ class ConverterPrefs(context: Context) {
         private const val KEY_SMART_NAVIGATION_ENABLED = "smart_navigation_enabled"
         private const val KEY_SMART_WEATHER_ENABLED = "smart_weather_enabled"
         private const val KEY_SMART_WEATHER_LOCKSCREEN_ONLY = "smart_weather_lockscreen_only"
+        private const val KEY_SMART_NOTIFICATION_CAPSULE_ENABLED =
+            "smart_notification_capsule_enabled"
         private const val KEY_SMART_EXTERNAL_DEVICES_ENABLED = "smart_external_devices_enabled"
         private const val KEY_SMART_EXTERNAL_DEVICES_IGNORE_DEBUGGING =
             "smart_external_devices_ignore_debugging"

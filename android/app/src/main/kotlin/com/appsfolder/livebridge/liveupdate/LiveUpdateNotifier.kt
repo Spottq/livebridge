@@ -64,6 +64,8 @@ object LiveUpdateNotifier {
     private const val OTP_AUTOCOPY_COPIED_SHOW_DURATION_MS = 1_500L
     private const val AOSP_ISLAND_TEXT_LIMIT = 7
     private const val CALL_DURATION_REFRESH_MS = 1_000L
+    private const val NOTIFICATION_CAPSULE_ID = 41242
+    private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
         YANDEX_MAPS_PACKAGE,
         YANGO_MAPS_PACKAGE,
@@ -93,6 +95,19 @@ object LiveUpdateNotifier {
     private val CALL_MIRROR_EXCLUDED_PACKAGES = setOf(
         "com.whatsapp",
         "com.whatsapp.w4b"
+    )
+    private val NOTIFICATION_CAPSULE_EXCLUDED_PACKAGES = setOf(
+        "android",
+        "com.android.systemui",
+        "com.samsung.android.app.aodservice",
+        "com.samsung.android.providers.context"
+    )
+    private val NOTIFICATION_CAPSULE_EXCLUDED_CATEGORIES = setOf(
+        Notification.CATEGORY_CALL,
+        Notification.CATEGORY_SERVICE,
+        Notification.CATEGORY_STATUS,
+        Notification.CATEGORY_SYSTEM,
+        Notification.CATEGORY_TRANSPORT
     )
     private val NAVIGATION_DISTANCE_PATTERN = Regex(
         "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
@@ -385,6 +400,64 @@ object LiveUpdateNotifier {
             cancelMirroredNotification(manager, notificationId)
         }
         return notificationIds.size
+    }
+
+    fun refreshNotificationCapsule(
+        context: Context,
+        prefs: ConverterPrefs,
+        snapshots: Collection<StatusBarNotification>
+    ): Int {
+        if (
+            !prefs.getSmartNotificationCapsuleEnabled() ||
+            !prefs.getConverterEnabled() ||
+            DeviceBlocker.isBlockedDevice()
+        ) {
+            cancelNotificationCapsule(context)
+            return 0
+        }
+
+        val sources = snapshots
+            .asSequence()
+            .filter { sbn -> isNotificationCapsuleSource(context, sbn) }
+            .distinctBy { sbn -> sbn.key }
+            .sortedByDescending { sbn -> sbn.postTime }
+            .toList()
+        if (sources.isEmpty()) {
+            cancelNotificationCapsule(context)
+            return 0
+        }
+
+        ensureChannel(context)
+        val count = sources.size
+        val title = notificationCapsuleTitle(context, count)
+        val appNames = sources
+            .map { sbn -> notificationCapsuleAppLabel(context, sbn.packageName) }
+            .distinct()
+            .joinToString(", ")
+        val notification = buildNotificationCapsuleNotification(
+            context = context,
+            title = title,
+            appNames = appNames,
+            postTime = sources.maxOfOrNull { sbn -> sbn.postTime } ?: System.currentTimeMillis()
+        )
+
+        runCatching {
+            NotificationManagerCompat.from(context).notify(
+                NOTIFICATION_CAPSULE_ID,
+                notification
+            )
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to post notification capsule", error)
+        }
+        return count
+    }
+
+    fun cancelNotificationCapsule(context: Context) {
+        runCatching {
+            NotificationManagerCompat.from(context).cancel(NOTIFICATION_CAPSULE_ID)
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to cancel notification capsule", error)
+        }
     }
 
     fun maybeMirror(context: Context, prefs: ConverterPrefs, sbn: StatusBarNotification): MirrorResult {
@@ -1710,6 +1783,20 @@ object LiveUpdateNotifier {
                 }
             }
 
+            MirrorNotificationChannel.NOTIFICATION_CAPSULE -> {
+                if (isRussian) {
+                    MirrorChannelText(
+                        name = "Notification capsule",
+                        description = "Капсула со счётчиком уведомлений на экране блокировки"
+                    )
+                } else {
+                    MirrorChannelText(
+                        name = "Notification capsule",
+                        description = "Lock screen notification counter capsule"
+                    )
+                }
+            }
+
             MirrorNotificationChannel.BYPASS -> {
                 if (isRussian) {
                     MirrorChannelText(
@@ -1794,6 +1881,153 @@ object LiveUpdateNotifier {
         return candidates.any { value ->
             value.lowercase(Locale.ROOT).contains(MEDIA_ONGOING_ACTIVITY_MARKER)
         }
+    }
+
+    private fun isNotificationCapsuleSource(
+        context: Context,
+        sbn: StatusBarNotification
+    ): Boolean {
+        val packageNameLower = sbn.packageName.lowercase(Locale.ROOT)
+        if (sbn.packageName == context.packageName) {
+            return false
+        }
+        if (packageNameLower in NOTIFICATION_CAPSULE_EXCLUDED_PACKAGES) {
+            return false
+        }
+
+        val source = sbn.notification
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            isMirrorNotificationChannel(source.channelId)
+        ) {
+            return false
+        }
+        if (!sbn.isClearable) {
+            return false
+        }
+        if (source.flags and Notification.FLAG_GROUP_SUMMARY != 0) {
+            return false
+        }
+        if (source.flags and Notification.FLAG_ONGOING_EVENT != 0) {
+            return false
+        }
+        if (source.flags and Notification.FLAG_FOREGROUND_SERVICE != 0) {
+            return false
+        }
+        if (isLikelyMediaPlaybackNotification(source)) {
+            return false
+        }
+        val category = source.category
+        if (category != null && category in NOTIFICATION_CAPSULE_EXCLUDED_CATEGORIES) {
+            return false
+        }
+
+        return true
+    }
+
+    private fun buildNotificationCapsuleNotification(
+        context: Context,
+        title: String,
+        appNames: String,
+        postTime: Long
+    ): Notification {
+        val icon = IconCompat.createWithResource(
+            context,
+            R.drawable.ic_notification_capsule
+        )
+        val builder = NotificationCompat.Builder(
+            context,
+            MirrorNotificationChannel.NOTIFICATION_CAPSULE.id
+        )
+            .setContentTitle(title)
+            .setContentText(appNames)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setDefaults(0)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setWhen(postTime)
+            .setShowWhen(false)
+            .setColor(NOTIFICATION_CAPSULE_CHIP_COLOR)
+            .setCategory(Notification.CATEGORY_STATUS)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setRequestPromotedOngoing(true)
+            .setSmallIcon(icon)
+
+        notificationCapsuleContentIntent(context)?.let(builder::setContentIntent)
+
+        if (appNames.isNotBlank()) {
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(appNames))
+        }
+
+        @Suppress("DEPRECATION")
+        val bridgeSource = Notification().apply {
+            color = NOTIFICATION_CAPSULE_CHIP_COLOR
+            extras = Bundle()
+        }
+        SamsungLiveUpdateReparser(context).applyNowBarBridge(
+            builder = builder,
+            source = bridgeSource,
+            sourcePackageName = context.packageName,
+            primaryText = title,
+            secondaryText = appNames,
+            nowBarPrimaryText = title,
+            nowBarSecondaryText = appNames,
+            chipText = title,
+            chipIcon = icon,
+            nowBarIcon = icon,
+            rightIcon = null,
+            suppressSourceRemoteViews = true,
+            suppressSourceNowBarRemoteView = true,
+            hasProgress = false,
+            progressValue = 0,
+            progressMax = 0,
+            showSecondaryInNowBar = appNames.isNotBlank(),
+            disableNowBarRemoteView = true,
+            reuseNotificationRemoteViews = false,
+            lockscreenOnly = true
+        )
+
+        return builder.build()
+    }
+
+    private fun notificationCapsuleContentIntent(context: Context): PendingIntent? {
+        val intent = context.packageManager
+            .getLaunchIntentForPackage(context.packageName)
+            ?.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
+            ?: return null
+
+        return PendingIntent.getActivity(
+            context,
+            NOTIFICATION_CAPSULE_ID,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun notificationCapsuleTitle(context: Context, count: Int): String {
+        val language = currentLocale(context)?.language?.lowercase(Locale.ROOT).orEmpty()
+        return when {
+            language.startsWith("ru") -> "$count уведомлений"
+            language.startsWith("tr") -> "$count bildirim"
+            language.startsWith("pt") -> "$count notificações"
+            language.startsWith("zh") -> "$count 条通知"
+            language.startsWith("ko") -> "알림 ${count}개"
+            count == 1 -> "1 notification"
+            else -> "$count notifications"
+        }
+    }
+
+    private fun notificationCapsuleAppLabel(context: Context, packageName: String): String {
+        return runCatching {
+            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
+            context.packageManager.getApplicationLabel(appInfo)
+                ?.toString()
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
+        }.getOrNull() ?: packageName
     }
 
     private fun isPrivacyRedactedNotification(
@@ -5979,6 +6213,7 @@ object LiveUpdateNotifier {
         CALLS("livebridge_calls"),
         NETWORK_CONNECTIONS("livebridge_network_connections"),
         MISCELLANEOUS("livebridge_miscellaneous_conversions"),
+        NOTIFICATION_CAPSULE("livebridge_notification_capsule"),
         BYPASS("livebridge_bypass_applications")
     }
 

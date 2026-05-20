@@ -136,6 +136,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                 }
             }
 
+            refreshNotificationCapsule(snapshots)
             scheduleSnapshotSync()
         }
     }
@@ -193,6 +194,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
 
         if (snapshots.isEmpty()) {
+            refreshNotificationCapsule(snapshots)
             scheduleSnapshotSync()
             return
         }
@@ -207,6 +209,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                 Log.e(TAG, "Failed to restore active notification: ${sbn.key}", error)
             }
         }
+        refreshNotificationCapsule(snapshots)
         scheduleSnapshotSync()
     }
 
@@ -229,10 +232,12 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
         if (isFlashlightSourceNotification(sbn)) {
             syncFlashlightMirror(listOf(sbn))
+            refreshNotificationCapsuleFromActiveNotifications()
             return
         }
         if (!prefs.getConverterEnabled()) {
             LiveUpdateNotifier.cancelMirrored(applicationContext, sbn)
+            refreshNotificationCapsuleFromActiveNotifications()
             return
         }
 
@@ -241,6 +246,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         } catch (error: Throwable) {
             Log.e(TAG, "Failed to process posted notification: ${sbn.key}", error)
         }
+        refreshNotificationCapsuleFromActiveNotifications()
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
@@ -268,15 +274,18 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             return
         }
         if (consumeSelfDismissedSource(sbn)) {
+            refreshNotificationCapsuleFromActiveNotifications()
             return
         }
         if (isFlashlightSourceNotification(sbn)) {
             forgetTrackedFlashlightSourceKey(sbn.key)
             if (consumeSelfDismissedFlashlightSourceKey(sbn.key)) {
+                refreshNotificationCapsuleFromActiveNotifications()
                 return
             }
             FlashlightSourceState.clear()
             FlashlightForegroundService.stop(applicationContext)
+            refreshNotificationCapsuleFromActiveNotifications()
             return
         }
         try {
@@ -284,6 +293,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         } catch (error: Throwable) {
             Log.e(TAG, "Failed to process removed notification: ${sbn.key}", error)
         }
+        refreshNotificationCapsuleFromActiveNotifications()
     }
 
     private fun isUnsupportedDevice(): Boolean {
@@ -296,6 +306,24 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         } else {
             NetworkSpeedForegroundService.stop(applicationContext)
         }
+    }
+
+    private fun refreshNotificationCapsule(snapshots: Collection<StatusBarNotification>) {
+        LiveUpdateNotifier.refreshNotificationCapsule(
+            context = applicationContext,
+            prefs = prefs,
+            snapshots = snapshots
+        )
+    }
+
+    private fun refreshNotificationCapsuleFromActiveNotifications() {
+        val snapshots = try {
+            activeNotifications?.toList().orEmpty()
+        } catch (error: Throwable) {
+            Log.w(TAG, "Unable to refresh notification capsule from active notifications", error)
+            return
+        }
+        refreshNotificationCapsule(snapshots)
     }
 
     override fun onDestroy() {

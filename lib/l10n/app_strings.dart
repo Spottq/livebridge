@@ -11,6 +11,7 @@ class AppStrings {
     final String countryCode = locale.countryCode?.toLowerCase() ?? '';
     return languageCode == 'pt' && countryCode == 'br';
   }
+
   bool get isKo => locale.languageCode.toLowerCase().startsWith('ko');
 
   bool get isZhHans {
@@ -2126,6 +2127,27 @@ class AppStrings {
     ptBr: 'Ocultar clima quando o dispositivo estiver desbloqueado.',
     zhHans: '设备解锁时隐藏天气。',
     zhHant: '裝置解鎖時隱藏天氣。',
+  );
+
+  String get smartNotificationCapsuleTitle => tr(
+    en: 'Notification capsule',
+    ru: 'Капсула уведомлений',
+    tr: 'Bildirim kapsülü',
+    ptBr: 'Cápsula de notificações',
+    zhHans: '通知胶囊',
+    zhHant: '通知膠囊',
+    ko: '알림 캡슐',
+  );
+
+  String get smartNotificationCapsuleSubtitle => tr(
+    en: 'Shows only the total count and app names on the lock screen.',
+    ru: 'Показывает на экране блокировки только общее количество и названия приложений.',
+    tr: 'Kilit ekranında yalnızca toplam sayıyı ve uygulama adlarını gösterir.',
+    ptBr:
+        'Mostra somente a contagem total e os nomes dos apps na tela de bloqueio.',
+    zhHans: '仅在锁屏显示总数和应用名称。',
+    zhHant: '僅在鎖定畫面顯示總數和 App 名稱。',
+    ko: '잠금 화면에 전체 개수와 앱 이름만 표시합니다.',
   );
 
   String get smartFlashlightTitle => tr(

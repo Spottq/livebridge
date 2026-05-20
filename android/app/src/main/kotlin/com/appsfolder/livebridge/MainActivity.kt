@@ -70,6 +70,7 @@ class MainActivity : FlutterActivity() {
         syncKeepAliveForegroundService(prefs)
         syncNetworkSpeedService(prefs)
         syncFlashlightService(prefs)
+        syncNotificationCapsule(prefs)
         clearDynamicLauncherShortcuts()
         LiveBridgeTileService.requestStateSync(applicationContext)
     }
@@ -684,6 +685,14 @@ class MainActivity : FlutterActivity() {
                 syncWeatherMirrors(prefs, enabled = prefs.getSmartWeatherEnabled())
                 res.success(true)
             }
+            "getSmartNotificationCapsuleEnabled" -> {
+                res.success(prefs.getSmartNotificationCapsuleEnabled())
+            }
+            "setSmartNotificationCapsuleEnabled" -> {
+                prefs.setSmartNotificationCapsuleEnabled(call.argument<Boolean>("value") ?: false)
+                syncNotificationCapsule(prefs)
+                res.success(true)
+            }
 
             "getSmartExternalDevicesEnabled" -> res.success(prefs.getSmartExternalDevicesEnabled())
             "setSmartExternalDevicesEnabled" -> {
@@ -811,6 +820,7 @@ class MainActivity : FlutterActivity() {
         applyConverterEnabled(prefs, prefs.getConverterEnabled())
         syncFlashlightService(prefs)
         syncWeatherMirrors(prefs, enabled = prefs.getSmartWeatherEnabled())
+        syncNotificationCapsule(prefs)
         LiveBridgeTileService.requestStateSync(applicationContext)
     }
 
@@ -857,6 +867,19 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun syncNotificationCapsule(prefs: ConverterPrefs) {
+        if (
+            prefs.getSmartNotificationCapsuleEnabled() &&
+            prefs.getConverterEnabled() &&
+            !DeviceBlocker.isBlockedDevice()
+        ) {
+            LiveUpdateNotificationListenerService.requestSnapshotSync()
+            requestNotificationListenerRebind()
+        } else {
+            LiveUpdateNotifier.cancelNotificationCapsule(applicationContext)
+        }
+    }
+
     private fun initializeKeepAliveDefaultIfNeeded(prefs: ConverterPrefs) {
         if (prefs.hasKeepAliveForegroundPreference()) {
             return
@@ -876,6 +899,7 @@ class MainActivity : FlutterActivity() {
         }
         syncKeepAliveForegroundService(prefs)
         syncNetworkSpeedService(prefs)
+        syncNotificationCapsule(prefs)
         LiveBridgeTileService.requestStateSync(applicationContext)
     }
 

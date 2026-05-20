@@ -144,6 +144,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getSmartWeatherEnabled();
     final Future<bool> smartWeatherLockscreenOnlyFuture =
         LiveBridgePlatform.getSmartWeatherLockscreenOnly();
+    final Future<bool> smartNotificationCapsuleFuture =
+        LiveBridgePlatform.getSmartNotificationCapsuleEnabled();
     final Future<bool> smartExternalDevicesFuture =
         LiveBridgePlatform.getSmartExternalDevicesEnabled();
     final Future<bool> smartExternalDevicesIgnoreDebuggingFuture =
@@ -282,6 +284,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         'smart_navigation_enabled': await smartNavigationFuture,
         'smart_weather_enabled': await smartWeatherFuture,
         'smart_weather_lockscreen_only': await smartWeatherLockscreenOnlyFuture,
+        'smart_notification_capsule_enabled':
+            await smartNotificationCapsuleFuture,
         'smart_external_devices_enabled': await smartExternalDevicesFuture,
         'smart_external_devices_ignore_debugging':
             await smartExternalDevicesIgnoreDebuggingFuture,
