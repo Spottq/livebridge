@@ -96,11 +96,9 @@ object LiveUpdateNotifier {
         "com.whatsapp",
         "com.whatsapp.w4b"
     )
-    private val NOTIFICATION_CAPSULE_SYSTEM_PACKAGES = setOf(
-        "android",
-        "com.android.systemui"
-    )
     private val NOTIFICATION_CAPSULE_EXCLUDED_PACKAGES = setOf(
+        "android",
+        "com.android.systemui",
         "com.samsung.android.app.aodservice",
         "com.samsung.android.providers.context"
     )
@@ -1901,7 +1899,6 @@ object LiveUpdateNotifier {
         sbn: StatusBarNotification
     ): Boolean {
         val packageNameLower = sbn.packageName.lowercase(Locale.ROOT)
-        val isSystemPackage = packageNameLower in NOTIFICATION_CAPSULE_SYSTEM_PACKAGES
         if (sbn.packageName == context.packageName) {
             return false
         }
@@ -1915,23 +1912,20 @@ object LiveUpdateNotifier {
         ) {
             return false
         }
-        if (!isSystemPackage && !sbn.isClearable) {
+        if (!sbn.isClearable) {
             return false
         }
-        if (!isSystemPackage && (source.flags and Notification.FLAG_ONGOING_EVENT != 0)) {
+        if (source.flags and Notification.FLAG_ONGOING_EVENT != 0) {
             return false
         }
-        if (!isSystemPackage && (source.flags and Notification.FLAG_FOREGROUND_SERVICE != 0)) {
+        if (source.flags and Notification.FLAG_FOREGROUND_SERVICE != 0) {
             return false
         }
         if (isLikelyMediaPlaybackNotification(source)) {
             return false
         }
         val category = source.category
-        if (!isSystemPackage &&
-            category != null &&
-            category in NOTIFICATION_CAPSULE_EXCLUDED_CATEGORIES
-        ) {
+        if (category != null && category in NOTIFICATION_CAPSULE_EXCLUDED_CATEGORIES) {
             return false
         }
 
@@ -2060,24 +2054,8 @@ object LiveUpdateNotifier {
         ) {
             return packageLabel
         }
-        notificationCapsuleSystemAppLabel(context, normalizedPackageName)?.let { return it }
         return packageLabel ?: normalizedPackageName.ifBlank {
             if (isRussianLocale(context)) "Система" else "System"
-        }
-    }
-
-    private fun notificationCapsuleSystemAppLabel(
-        context: Context,
-        packageName: String
-    ): String? {
-        return when (packageName.lowercase(Locale.ROOT)) {
-            "android" -> if (isRussianLocale(context)) "Система Android" else "Android System"
-            "com.android.systemui" -> if (isRussianLocale(context)) {
-                "Системный интерфейс"
-            } else {
-                "System UI"
-            }
-            else -> null
         }
     }
 
