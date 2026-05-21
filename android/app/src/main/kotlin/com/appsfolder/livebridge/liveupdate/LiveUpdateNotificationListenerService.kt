@@ -326,6 +326,51 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         refreshNotificationCapsule(snapshots)
     }
 
+    private fun requestClearNotificationCapsuleNotifications() {
+        mainHandler.post {
+            clearNotificationCapsuleNotifications()
+        }
+    }
+
+    private fun clearNotificationCapsuleNotifications() {
+        if (isUnsupportedDevice()) {
+            return
+        }
+
+        val snapshots = try {
+            activeNotifications?.toList().orEmpty()
+        } catch (error: Throwable) {
+            Log.w(TAG, "Unable to read active notifications for capsule clear", error)
+            return
+        }
+        val clearableKeys = snapshots
+            .asSequence()
+            .filter { sbn -> sbn.packageName != packageName }
+            .filter { sbn -> sbn.isClearable }
+            .map { sbn -> sbn.key }
+            .filter { key -> key.isNotBlank() }
+            .distinct()
+            .toList()
+
+        if (clearableKeys.isEmpty()) {
+            refreshNotificationCapsule(snapshots)
+            return
+        }
+
+        runCatching {
+            cancelNotifications(clearableKeys.toTypedArray())
+        }.onSuccess {
+            Log.i(TAG, "Requested notification capsule clear for ${clearableKeys.size} notifications")
+        }.onFailure { error ->
+            Log.w(TAG, "Failed to clear notifications from capsule action", error)
+        }
+
+        mainHandler.postDelayed(
+            ::refreshNotificationCapsuleFromActiveNotifications,
+            CLEAR_NOTIFICATIONS_REFRESH_DELAY_MS
+        )
+    }
+
     override fun onDestroy() {
         unregisterLockscreenStateReceiver()
         unregisterTorchCallbackIfNeeded()
@@ -1062,6 +1107,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val PROTECTED_MIRROR_REPOST_DELAY_MS = 350L
         private const val PROTECTED_MIRROR_MAX_REPOSTS = 2
         private const val LOCKSCREEN_PRIVACY_REFRESH_DELAY_MS = 650L
+        private const val CLEAR_NOTIFICATIONS_REFRESH_DELAY_MS = 500L
         private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 1_500L
         private const val FLASHLIGHT_SOURCE_VERIFY_DELAY_MS = 300L
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
@@ -1086,6 +1132,16 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                 return
             }
             listener.requestTrackedFlashlightSourceDismissal()
+        }
+
+        fun requestClearNotificationCapsuleNotifications(context: Context) {
+            val listener = activeInstance
+            if (listener == null) {
+                Log.w(TAG, "Skip notification capsule clear: listener is not active")
+                requestRebindIfEnabled(context, "notification_capsule_clear")
+                return
+            }
+            listener.requestClearNotificationCapsuleNotifications()
         }
 
         private fun requestRebindIfEnabled(context: Context, reason: String): Boolean {

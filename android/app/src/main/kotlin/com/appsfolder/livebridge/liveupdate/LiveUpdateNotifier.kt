@@ -65,6 +65,7 @@ object LiveUpdateNotifier {
     private const val AOSP_ISLAND_TEXT_LIMIT = 7
     private const val CALL_DURATION_REFRESH_MS = 1_000L
     private const val NOTIFICATION_CAPSULE_ID = 41242
+    private const val NOTIFICATION_CAPSULE_CLEAR_REQUEST_CODE = 41243
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
@@ -1961,6 +1962,7 @@ object LiveUpdateNotifier {
             .setSmallIcon(icon)
 
         notificationCapsuleContentIntent(context)?.let(builder::setContentIntent)
+        builder.addAction(buildNotificationCapsuleClearAction(context))
 
         if (appNames.isNotBlank()) {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(appNames))
@@ -1997,6 +1999,23 @@ object LiveUpdateNotifier {
         return builder.build()
     }
 
+    private fun buildNotificationCapsuleClearAction(context: Context): NotificationCompat.Action {
+        val clearIntent = Intent(context, NotificationCapsuleActionReceiver::class.java).apply {
+            action = NotificationCapsuleActionReceiver.ACTION_CLEAR_NOTIFICATIONS
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            NOTIFICATION_CAPSULE_CLEAR_REQUEST_CODE,
+            clearIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        return NotificationCompat.Action.Builder(
+            IconCompat.createWithResource(context, R.drawable.ic_notification_capsule),
+            notificationCapsuleClearActionTitle(context),
+            pendingIntent
+        ).build()
+    }
+
     private fun notificationCapsuleContentIntent(context: Context): PendingIntent? {
         val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
             ?: return null
@@ -2007,6 +2026,14 @@ object LiveUpdateNotifier {
             launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+    }
+
+    private fun notificationCapsuleClearActionTitle(context: Context): String {
+        return if (isRussianLocale(context)) {
+            "\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f"
+        } else {
+            "Clear notifications"
+        }
     }
 
     private fun notificationCapsuleTitle(context: Context, count: Int): String {
