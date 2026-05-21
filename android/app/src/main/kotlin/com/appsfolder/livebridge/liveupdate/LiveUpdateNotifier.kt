@@ -2018,7 +2018,7 @@ object LiveUpdateNotifier {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Action.Builder(
-            IconCompat.createWithResource(context, R.drawable.ic_notification_capsule),
+            transparentActionIcon,
             notificationCapsuleClearActionTitle(context),
             pendingIntent
         ).build()
