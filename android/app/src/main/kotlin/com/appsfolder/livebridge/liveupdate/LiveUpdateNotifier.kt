@@ -1789,19 +1789,8 @@ object LiveUpdateNotifier {
                 }
             }
 
-            MirrorNotificationChannel.NOTIFICATION_CAPSULE -> {
-                if (isRussian) {
-                    MirrorChannelText(
-                        name = "Notification capsule",
-                        description = "Капсула со счётчиком уведомлений на экране блокировки"
-                    )
-                } else {
-                    MirrorChannelText(
-                        name = "Notification capsule",
-                        description = "Lock screen notification counter capsule"
-                    )
-                }
-            }
+            MirrorNotificationChannel.NOTIFICATION_CAPSULE ->
+                notificationCapsuleChannelText(context)
 
             MirrorNotificationChannel.BYPASS -> {
                 if (isRussian) {
@@ -2010,15 +1999,22 @@ object LiveUpdateNotifier {
     }
 
     private fun notificationCapsuleTitle(context: Context, count: Int): String {
-        val language = currentLocale(context)?.language?.lowercase(Locale.ROOT).orEmpty()
-        return when {
-            language.startsWith("ru") -> "$count уведомлений"
-            language.startsWith("tr") -> "$count bildirim"
-            language.startsWith("pt") -> "$count notificações"
-            language.startsWith("zh") -> "$count 条通知"
-            language.startsWith("ko") -> "알림 ${count}개"
-            count == 1 -> "1 notification"
-            else -> "$count notifications"
+        return when (appLocale(context)) {
+            AppLocale.RU -> "$count ${russianNotificationWord(count)}"
+            AppLocale.TR -> "$count bildirim"
+            AppLocale.PT_BR -> if (count == 1) {
+                "1 notificação"
+            } else {
+                "$count notificações"
+            }
+            AppLocale.ZH_HANS -> "$count 条通知"
+            AppLocale.ZH_HANT -> "$count 則通知"
+            AppLocale.KO -> "알림 ${count}개"
+            AppLocale.EN -> if (count == 1) {
+                "1 notification"
+            } else {
+                "$count notifications"
+            }
         }
     }
 
@@ -2037,7 +2033,7 @@ object LiveUpdateNotifier {
             return packageLabel
         }
         return packageLabel ?: normalizedPackageName.ifBlank {
-            if (isRussianLocale(context)) "Система" else "System"
+            notificationCapsuleSystemLabel(context)
         }
     }
 
@@ -2177,8 +2173,14 @@ object LiveUpdateNotifier {
             samsungBridge.enabled &&
                     samsungBridge.hasCustomRemoteCard &&
                     isTwoGisPackage
+        val effectiveIconSource =
+            if (DeviceProps.isSamsungOneUi7Android15() && appPresentationOverride.isDefault()) {
+                NotificationIconSource.NOTIFICATION
+            } else {
+                appPresentationOverride.iconSource
+            }
         val shouldTryNavigationArrowIcon =
-            (appPresentationOverride.iconSource == NotificationIconSource.NOTIFICATION ||
+            (effectiveIconSource == NotificationIconSource.NOTIFICATION ||
                     isTwoGisPackage ||
                     isYandexMapsLikePackage) &&
                     (smartRuleId == "navigation" ||
@@ -2200,7 +2202,7 @@ object LiveUpdateNotifier {
             else ->
                 samsungLargeIcon ?: sourceLargeIcon
         }
-        val preferredPrimaryIcon = when (appPresentationOverride.iconSource) {
+        val preferredPrimaryIcon = when (effectiveIconSource) {
             NotificationIconSource.NOTIFICATION -> when {
                 shouldTryNavigationArrowIcon ->
                     navigationDrawable?.icon ?: sourceSmallIcon ?: samsungSmallIcon ?: appSmallIcon
@@ -3755,10 +3757,85 @@ object LiveUpdateNotifier {
         }
     }
 
+    private fun appLocale(context: Context): AppLocale {
+        val locale = currentLocale(context) ?: return AppLocale.EN
+        val language = locale.language.lowercase(Locale.ROOT)
+        return when {
+            language.startsWith("ru") -> AppLocale.RU
+            language.startsWith("tr") -> AppLocale.TR
+            language.startsWith("pt") -> AppLocale.PT_BR
+            language.startsWith("zh") && isTraditionalChinese(locale) -> AppLocale.ZH_HANT
+            language.startsWith("zh") -> AppLocale.ZH_HANS
+            language.startsWith("ko") -> AppLocale.KO
+            else -> AppLocale.EN
+        }
+    }
+
+    private fun isTraditionalChinese(locale: Locale): Boolean {
+        val script = locale.script.lowercase(Locale.ROOT)
+        val country = locale.country.uppercase(Locale.ROOT)
+        return script == "hant" || country in setOf("TW", "HK", "MO")
+    }
+
     private fun isRussianLocale(context: Context): Boolean {
-        val locale = currentLocale(context)
-        val language = locale?.language?.lowercase(Locale.ROOT).orEmpty()
-        return language.startsWith("ru")
+        return appLocale(context) == AppLocale.RU
+    }
+
+    private fun notificationCapsuleChannelText(context: Context): MirrorChannelText {
+        return when (appLocale(context)) {
+            AppLocale.RU -> MirrorChannelText(
+                name = "Капсула уведомлений",
+                description = "Капсула со счётчиком уведомлений на экране блокировки"
+            )
+            AppLocale.TR -> MirrorChannelText(
+                name = "Bildirim kapsülü",
+                description = "Kilit ekranında bildirim sayacı kapsülü"
+            )
+            AppLocale.PT_BR -> MirrorChannelText(
+                name = "Cápsula de notificações",
+                description = "Cápsula com contador de notificações na tela de bloqueio"
+            )
+            AppLocale.ZH_HANS -> MirrorChannelText(
+                name = "通知胶囊",
+                description = "锁屏通知计数胶囊"
+            )
+            AppLocale.ZH_HANT -> MirrorChannelText(
+                name = "通知膠囊",
+                description = "鎖定畫面通知計數膠囊"
+            )
+            AppLocale.KO -> MirrorChannelText(
+                name = "알림 캡슐",
+                description = "잠금화면 알림 개수 캡슐"
+            )
+            AppLocale.EN -> MirrorChannelText(
+                name = "Notification capsule",
+                description = "Lock screen notification counter capsule"
+            )
+        }
+    }
+
+    private fun notificationCapsuleSystemLabel(context: Context): String {
+        return when (appLocale(context)) {
+            AppLocale.RU -> "Система"
+            AppLocale.TR -> "Sistem"
+            AppLocale.PT_BR -> "Sistema"
+            AppLocale.ZH_HANS -> "系统"
+            AppLocale.ZH_HANT -> "系統"
+            AppLocale.KO -> "시스템"
+            AppLocale.EN -> "System"
+        }
+    }
+
+    private fun russianNotificationWord(count: Int): String {
+        val mod100 = count % 100
+        if (mod100 in 11..14) {
+            return "уведомлений"
+        }
+        return when (count % 10) {
+            1 -> "уведомление"
+            in 2..4 -> "уведомления"
+            else -> "уведомлений"
+        }
     }
 
     private fun isLikelyMoneyCandidate(
@@ -6221,6 +6298,16 @@ object LiveUpdateNotifier {
         NONE,
         OTP,
         STATUS
+    }
+
+    private enum class AppLocale {
+        EN,
+        RU,
+        TR,
+        PT_BR,
+        ZH_HANS,
+        ZH_HANT,
+        KO
     }
 
     private enum class MirrorNotificationChannel(val id: String) {

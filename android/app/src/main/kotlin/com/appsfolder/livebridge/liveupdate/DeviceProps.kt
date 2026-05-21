@@ -32,6 +32,10 @@ object DeviceProps {
         return manufacturer.contains("samsung") || brand.contains("samsung")
     }
 
+    fun isSamsungOneUi7Android15(): Boolean {
+        return isSamsungDevice() && Build.VERSION.SDK_INT == 35
+    }
+
     private fun readSystemProperty(key: String): String? {
         return try {
             val clazz = Class.forName("android.os.SystemProperties")
