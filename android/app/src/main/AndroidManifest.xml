@@ -100,10 +100,6 @@
             android:name=".liveupdate.OtpCopyReceiver"
             android:exported="false"
         />
-        <receiver
-            android:name=".liveupdate.NotificationCapsuleActionReceiver"
-            android:exported="false"
-        />
 
         <meta-data
             android:name="com.samsung.android.support.ongoing_activity"

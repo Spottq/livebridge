@@ -38,7 +38,7 @@ internal class FlashlightNotificationBuilder(
             FlashlightController.DEFAULT_LEVEL_INDEX
         }
         val secondaryText = secondaryText(capability)
-        val chipText = chipText()
+        val nowBarCollapsedText = title
         val contentIntent = PendingIntent.getActivity(
             context,
             0,
@@ -83,15 +83,15 @@ internal class FlashlightNotificationBuilder(
         if (!secondaryText.isNullOrEmpty()) {
             builder.setContentText(secondaryText)
         }
-        if (!chipText.isNullOrEmpty()) {
-            builder.setShortCriticalText(chipText)
+        if (nowBarCollapsedText.isNotEmpty()) {
+            builder.setShortCriticalText(nowBarCollapsedText)
         }
 
         if (SamsungLiveUpdateReparser.isSamsungDevice()) {
             builder.addExtras(
                 buildSamsungExtras(
                     title = title,
-                    chipText = chipText,
+                    chipText = nowBarCollapsedText,
                     chipIcon = statusBarIconCompat,
                     remoteView = nowBarRemoteView,
                     chipBackgroundColor = sourceSnapshot.accentColor
@@ -312,14 +312,6 @@ internal class FlashlightNotificationBuilder(
         return null
     }
 
-    private fun chipText(): String {
-        return if (isRussianLocale()) {
-            "\u0424\u043e\u043d\u0430\u0440\u0438\u043a"
-        } else {
-            "Flashlight"
-        }
-    }
-
     private fun warningText(capability: FlashlightCapability): String? {
         if (!capability.available) {
             return if (isRussianLocale()) {
@@ -379,7 +371,6 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"
         private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
         private const val STYLE_DEFAULT = 1
-        private const val DEFAULT_ICON_ACCENT_COLOR = 0xFF387AFF.toInt()
         private const val DARK_THEME_TEXT_COLOR = 0xFFF5F7FA.toInt()
         private const val DARK_THEME_WARNING_TEXT_COLOR = 0xFF9CA3AF.toInt()
         private const val LIGHT_THEME_TEXT_COLOR = 0xFF111827.toInt()

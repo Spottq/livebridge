@@ -326,86 +326,6 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         refreshNotificationCapsule(snapshots)
     }
 
-    private fun requestClearNotificationCapsuleNotifications() {
-        mainHandler.post {
-            clearNotificationCapsuleNotifications()
-        }
-    }
-
-    private fun clearNotificationCapsuleNotifications() {
-        if (isUnsupportedDevice()) {
-            return
-        }
-
-        val snapshots = try {
-            activeNotifications?.toList().orEmpty()
-        } catch (error: Throwable) {
-            Log.w(TAG, "Unable to read active notifications for capsule clear", error)
-            return
-        }
-        val notificationKeys = snapshots
-            .asSequence()
-            .filterNot(::shouldSkipNotificationCapsuleClear)
-            .map { sbn -> sbn.key }
-            .filter { key -> key.isNotBlank() }
-            .distinct()
-            .toList()
-
-        if (notificationKeys.isEmpty()) {
-            refreshNotificationCapsule(snapshots)
-            return
-        }
-
-        runCatching {
-            cancelNotifications(notificationKeys.toTypedArray())
-        }.onSuccess {
-            Log.i(TAG, "Requested notification capsule clear for ${notificationKeys.size} notifications")
-        }.onFailure { error ->
-            Log.w(TAG, "Failed to clear notifications from capsule action", error)
-        }
-
-        mainHandler.postDelayed(
-            ::refreshNotificationCapsuleFromActiveNotifications,
-            CLEAR_NOTIFICATIONS_REFRESH_DELAY_MS
-        )
-    }
-
-    private fun shouldSkipNotificationCapsuleClear(sbn: StatusBarNotification): Boolean {
-        val notification = sbn.notification
-        if (sbn.packageName == packageName || isFlashlightSourceNotification(sbn)) {
-            return true
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            LiveUpdateNotifier.isMirrorNotificationChannel(notification.channelId)
-        ) {
-            return true
-        }
-
-        val flags = notification.flags
-        if (flags and Notification.FLAG_ONGOING_EVENT != 0 ||
-            flags and Notification.FLAG_FOREGROUND_SERVICE != 0 ||
-            flags and Notification.FLAG_NO_CLEAR != 0
-        ) {
-            return true
-        }
-
-        val category = notification.category?.trim()?.lowercase().orEmpty()
-        if (category in CAPSULE_CLEAR_LIVE_CATEGORIES) {
-            return true
-        }
-
-        val extras = notification.extras
-        if (extras.keySet().any { key ->
-                key.startsWith(SAMSUNG_ONGOING_EXTRA_PREFIX) ||
-                    key == Notification.EXTRA_MEDIA_SESSION
-            }
-        ) {
-            return true
-        }
-
-        return false
-    }
-
     override fun onDestroy() {
         unregisterLockscreenStateReceiver()
         unregisterTorchCallbackIfNeeded()
@@ -1142,25 +1062,11 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val PROTECTED_MIRROR_REPOST_DELAY_MS = 350L
         private const val PROTECTED_MIRROR_MAX_REPOSTS = 2
         private const val LOCKSCREEN_PRIVACY_REFRESH_DELAY_MS = 650L
-        private const val CLEAR_NOTIFICATIONS_REFRESH_DELAY_MS = 500L
         private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 1_500L
         private const val FLASHLIGHT_SOURCE_VERIFY_DELAY_MS = 300L
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
         private const val FLASHLIGHT_SOURCE_CHANNEL_ID = "FLASHLIGHT_ONGOING"
         private const val FLASHLIGHT_SOURCE_TAG = "Flashlight"
-        private const val SAMSUNG_ONGOING_EXTRA_PREFIX = "android.ongoingActivityNoti."
-        private val CAPSULE_CLEAR_LIVE_CATEGORIES = setOf(
-            "transport",
-            "call",
-            "navigation",
-            "service",
-            "progress",
-            "status",
-            "workout",
-            "stopwatch",
-            "alarm",
-            "location_sharing"
-        )
 
         @Volatile
         private var activeInstance: LiveUpdateNotificationListenerService? = null
@@ -1180,16 +1086,6 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                 return
             }
             listener.requestTrackedFlashlightSourceDismissal()
-        }
-
-        fun requestClearNotificationCapsuleNotifications(context: Context) {
-            val listener = activeInstance
-            if (listener == null) {
-                Log.w(TAG, "Skip notification capsule clear: listener is not active")
-                requestRebindIfEnabled(context, "notification_capsule_clear")
-                return
-            }
-            listener.requestClearNotificationCapsuleNotifications()
         }
 
         private fun requestRebindIfEnabled(context: Context, reason: String): Boolean {

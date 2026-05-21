@@ -65,7 +65,6 @@ object LiveUpdateNotifier {
     private const val AOSP_ISLAND_TEXT_LIMIT = 7
     private const val CALL_DURATION_REFRESH_MS = 1_000L
     private const val NOTIFICATION_CAPSULE_ID = 41242
-    private const val NOTIFICATION_CAPSULE_CLEAR_REQUEST_CODE = 41243
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
@@ -198,8 +197,6 @@ object LiveUpdateNotifier {
     private val progressColor = Color.valueOf(15f / 255f, 118f / 255f, 110f / 255f, 1f).toArgb()
     private const val SAMSUNG_EXTRA_CHIP_BG_COLOR = "android.ongoingActivityNoti.chipBgColor"
     private const val SAMSUNG_EXTRA_ACTION_BG_COLOR = "android.ongoingActivityNoti.actionBgColor"
-    private const val SAMSUNG_EXTRA_ACTION_TYPE = "android.ongoingActivityNoti.actionType"
-    private const val SAMSUNG_EXTRA_ACTION_PRIMARY_SET = "android.ongoingActivityNoti.actionPrimarySet"
     private val mainHandler = Handler(Looper.getMainLooper())
     private val appIconCacheLock = Any()
     private val appIconCache = mutableMapOf<String, AppIconAssets>()
@@ -1964,7 +1961,6 @@ object LiveUpdateNotifier {
             .setSmallIcon(icon)
 
         notificationCapsuleContentIntent(context)?.let(builder::setContentIntent)
-        builder.addAction(buildNotificationCapsuleClearAction(context))
 
         if (appNames.isNotBlank()) {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(appNames))
@@ -1997,31 +1993,8 @@ object LiveUpdateNotifier {
             reuseNotificationRemoteViews = false,
             lockscreenOnly = true
         )
-        builder.addExtras(
-            Bundle().apply {
-                putInt(SAMSUNG_EXTRA_ACTION_TYPE, 1)
-                putInt(SAMSUNG_EXTRA_ACTION_PRIMARY_SET, 0)
-            }
-        )
 
         return builder.build()
-    }
-
-    private fun buildNotificationCapsuleClearAction(context: Context): NotificationCompat.Action {
-        val clearIntent = Intent(context, NotificationCapsuleActionReceiver::class.java).apply {
-            action = NotificationCapsuleActionReceiver.ACTION_CLEAR_NOTIFICATIONS
-        }
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            NOTIFICATION_CAPSULE_CLEAR_REQUEST_CODE,
-            clearIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        return NotificationCompat.Action.Builder(
-            transparentActionIcon,
-            notificationCapsuleClearActionTitle(context),
-            pendingIntent
-        ).build()
     }
 
     private fun notificationCapsuleContentIntent(context: Context): PendingIntent? {
@@ -2034,14 +2007,6 @@ object LiveUpdateNotifier {
             launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-    }
-
-    private fun notificationCapsuleClearActionTitle(context: Context): String {
-        return if (isRussianLocale(context)) {
-            "\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f"
-        } else {
-            "Clear notifications"
-        }
     }
 
     private fun notificationCapsuleTitle(context: Context, count: Int): String {
