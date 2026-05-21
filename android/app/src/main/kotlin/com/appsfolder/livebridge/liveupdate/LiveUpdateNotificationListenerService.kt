@@ -345,6 +345,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
         val notificationKeys = snapshots
             .asSequence()
+            .filterNot(::shouldSkipNotificationCapsuleClear)
             .map { sbn -> sbn.key }
             .filter { key -> key.isNotBlank() }
             .distinct()
@@ -367,6 +368,42 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             ::refreshNotificationCapsuleFromActiveNotifications,
             CLEAR_NOTIFICATIONS_REFRESH_DELAY_MS
         )
+    }
+
+    private fun shouldSkipNotificationCapsuleClear(sbn: StatusBarNotification): Boolean {
+        val notification = sbn.notification
+        if (sbn.packageName == packageName || isFlashlightSourceNotification(sbn)) {
+            return true
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            LiveUpdateNotifier.isMirrorNotificationChannel(notification.channelId)
+        ) {
+            return true
+        }
+
+        val flags = notification.flags
+        if (flags and Notification.FLAG_ONGOING_EVENT != 0 ||
+            flags and Notification.FLAG_FOREGROUND_SERVICE != 0 ||
+            flags and Notification.FLAG_NO_CLEAR != 0
+        ) {
+            return true
+        }
+
+        val category = notification.category?.trim()?.lowercase().orEmpty()
+        if (category in CAPSULE_CLEAR_LIVE_CATEGORIES) {
+            return true
+        }
+
+        val extras = notification.extras
+        if (extras.keySet().any { key ->
+                key.startsWith(SAMSUNG_ONGOING_EXTRA_PREFIX) ||
+                    key == Notification.EXTRA_MEDIA_SESSION
+            }
+        ) {
+            return true
+        }
+
+        return false
     }
 
     override fun onDestroy() {
@@ -1111,6 +1148,19 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
         private const val FLASHLIGHT_SOURCE_CHANNEL_ID = "FLASHLIGHT_ONGOING"
         private const val FLASHLIGHT_SOURCE_TAG = "Flashlight"
+        private const val SAMSUNG_ONGOING_EXTRA_PREFIX = "android.ongoingActivityNoti."
+        private val CAPSULE_CLEAR_LIVE_CATEGORIES = setOf(
+            "transport",
+            "call",
+            "navigation",
+            "service",
+            "progress",
+            "status",
+            "workout",
+            "stopwatch",
+            "alarm",
+            "location_sharing"
+        )
 
         @Volatile
         private var activeInstance: LiveUpdateNotificationListenerService? = null
