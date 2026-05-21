@@ -38,7 +38,7 @@ internal class FlashlightNotificationBuilder(
             FlashlightController.DEFAULT_LEVEL_INDEX
         }
         val secondaryText = secondaryText(capability)
-        val chipText = chipText()
+        val nowBarCollapsedText = title
         val contentIntent = PendingIntent.getActivity(
             context,
             0,
@@ -48,11 +48,6 @@ internal class FlashlightNotificationBuilder(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val expandedView = buildExpandedRemoteViews(
-            title = title,
-            capability = capability,
-            effectiveLevelIndex = effectiveLevelIndex
-        )
-        val nowBarRemoteView = buildNowBarRemoteViews(
             title = title,
             capability = capability,
             effectiveLevelIndex = effectiveLevelIndex
@@ -83,17 +78,16 @@ internal class FlashlightNotificationBuilder(
         if (!secondaryText.isNullOrEmpty()) {
             builder.setContentText(secondaryText)
         }
-        if (!chipText.isNullOrEmpty()) {
-            builder.setShortCriticalText(chipText)
+        if (nowBarCollapsedText.isNotEmpty()) {
+            builder.setShortCriticalText(nowBarCollapsedText)
         }
 
         if (SamsungLiveUpdateReparser.isSamsungDevice()) {
             builder.addExtras(
                 buildSamsungExtras(
                     title = title,
-                    chipText = chipText,
+                    chipText = nowBarCollapsedText,
                     chipIcon = statusBarIconCompat,
-                    remoteView = nowBarRemoteView,
                     chipBackgroundColor = sourceSnapshot.accentColor
                 )
             )
@@ -119,25 +113,6 @@ internal class FlashlightNotificationBuilder(
                 setViewVisibility(R.id.flashlight_warning, View.VISIBLE)
                 setTextViewText(R.id.flashlight_warning, warning)
             }
-            applySliderState(
-                remoteViews = this,
-                capability = capability,
-                effectiveLevelIndex = effectiveLevelIndex,
-                interactive = capability.supportsFiveLevels
-            )
-        }
-    }
-
-    private fun buildNowBarRemoteViews(
-        title: String,
-        capability: FlashlightCapability,
-        effectiveLevelIndex: Int
-    ): RemoteViews {
-        return RemoteViews(context.packageName, R.layout.notification_flashlight_slider).apply {
-            setTextViewText(R.id.flashlight_title, title)
-            setTextViewText(R.id.flashlight_action_button, disableButtonText())
-            setOnClickPendingIntent(R.id.flashlight_action_button, disablePendingIntent())
-            applyRemoteViewTheme(includeWarning = false)
             applySliderState(
                 remoteViews = this,
                 capability = capability,
@@ -226,7 +201,6 @@ internal class FlashlightNotificationBuilder(
         title: String,
         chipText: String?,
         chipIcon: IconCompat,
-        remoteView: RemoteViews,
         chipBackgroundColor: Int
     ): Bundle {
         val icon = runCatching { chipIcon.toIcon(context) }.getOrNull()
@@ -243,10 +217,6 @@ internal class FlashlightNotificationBuilder(
                 putParcelable(KEY_FIRST_ICON, it)
                 putParcelable(KEY_SECONDARY_INFO_ICON, it)
             }
-            putParcelable(KEY_REMOTE_VIEW, remoteView)
-            putInt(KEY_REMOTE_VIEW_POSITION, 1)
-            putString(KEY_REMOTE_VIEW_TAG, REMOTE_VIEW_TAG)
-            putInt(KEY_NOWBAR_CHRONOMETER_POSITION, 1)
         }
     }
 
@@ -312,14 +282,6 @@ internal class FlashlightNotificationBuilder(
         return null
     }
 
-    private fun chipText(): String {
-        return if (isRussianLocale()) {
-            "\u0424\u043e\u043d\u0430\u0440\u0438\u043a"
-        } else {
-            "Flashlight"
-        }
-    }
-
     private fun warningText(capability: FlashlightCapability): String? {
         if (!capability.available) {
             return if (isRussianLocale()) {
@@ -374,17 +336,11 @@ internal class FlashlightNotificationBuilder(
         private const val KEY_NOWBAR_PRIMARY_INFO = "${ONGOING_PREFIX}nowbarPrimaryInfo"
         private const val KEY_SECONDARY_INFO_ICON = "${ONGOING_PREFIX}secondaryInfoIcon"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
-        private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
-        private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"
-        private const val KEY_REMOTE_VIEW_TAG = "${ONGOING_PREFIX}chronometerRemoteViewTag"
-        private const val KEY_NOWBAR_CHRONOMETER_POSITION = "${ONGOING_PREFIX}nowbarChronometerPosition"
         private const val STYLE_DEFAULT = 1
-        private const val DEFAULT_ICON_ACCENT_COLOR = 0xFF387AFF.toInt()
         private const val DARK_THEME_TEXT_COLOR = 0xFFF5F7FA.toInt()
         private const val DARK_THEME_WARNING_TEXT_COLOR = 0xFF9CA3AF.toInt()
         private const val LIGHT_THEME_TEXT_COLOR = 0xFF111827.toInt()
         private const val LIGHT_THEME_WARNING_TEXT_COLOR = 0xFF4B5563.toInt()
-        private const val REMOTE_VIEW_TAG = "flashlight_segments_remote"
         private const val REQUEST_CODE_DISABLE = 500
     }
 }
