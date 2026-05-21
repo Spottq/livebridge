@@ -343,24 +343,22 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             Log.w(TAG, "Unable to read active notifications for capsule clear", error)
             return
         }
-        val clearableKeys = snapshots
+        val notificationKeys = snapshots
             .asSequence()
-            .filter { sbn -> sbn.packageName != packageName }
-            .filter { sbn -> sbn.isClearable }
             .map { sbn -> sbn.key }
             .filter { key -> key.isNotBlank() }
             .distinct()
             .toList()
 
-        if (clearableKeys.isEmpty()) {
+        if (notificationKeys.isEmpty()) {
             refreshNotificationCapsule(snapshots)
             return
         }
 
         runCatching {
-            cancelNotifications(clearableKeys.toTypedArray())
+            cancelNotifications(notificationKeys.toTypedArray())
         }.onSuccess {
-            Log.i(TAG, "Requested notification capsule clear for ${clearableKeys.size} notifications")
+            Log.i(TAG, "Requested notification capsule clear for ${notificationKeys.size} notifications")
         }.onFailure { error ->
             Log.w(TAG, "Failed to clear notifications from capsule action", error)
         }

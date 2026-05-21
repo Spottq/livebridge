@@ -198,6 +198,8 @@ object LiveUpdateNotifier {
     private val progressColor = Color.valueOf(15f / 255f, 118f / 255f, 110f / 255f, 1f).toArgb()
     private const val SAMSUNG_EXTRA_CHIP_BG_COLOR = "android.ongoingActivityNoti.chipBgColor"
     private const val SAMSUNG_EXTRA_ACTION_BG_COLOR = "android.ongoingActivityNoti.actionBgColor"
+    private const val SAMSUNG_EXTRA_ACTION_TYPE = "android.ongoingActivityNoti.actionType"
+    private const val SAMSUNG_EXTRA_ACTION_PRIMARY_SET = "android.ongoingActivityNoti.actionPrimarySet"
     private val mainHandler = Handler(Looper.getMainLooper())
     private val appIconCacheLock = Any()
     private val appIconCache = mutableMapOf<String, AppIconAssets>()
@@ -1994,6 +1996,12 @@ object LiveUpdateNotifier {
             disableNowBarRemoteView = true,
             reuseNotificationRemoteViews = false,
             lockscreenOnly = true
+        )
+        builder.addExtras(
+            Bundle().apply {
+                putInt(SAMSUNG_EXTRA_ACTION_TYPE, 1)
+                putInt(SAMSUNG_EXTRA_ACTION_PRIMARY_SET, 0)
+            }
         )
 
         return builder.build()
