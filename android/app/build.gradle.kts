@@ -40,8 +40,8 @@ android {
         applicationId = "com.locnall.KimGiSa"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // Live Updates are available starting from Android 16 (API 36).
-        minSdk = 36
+        // Samsung One UI 7 exposes the vendor Now Bar on Android 15 (API 35).
+        minSdk = 35
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

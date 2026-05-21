@@ -52,7 +52,9 @@ internal class NetworkSpeedNotificationBuilder(
             builder.setRequestPromotedOngoing(true)
             builder.setShortCriticalText(totalText)
         }
-        if (shouldPromote && SamsungLiveUpdateReparser.isSamsungDevice()) {
+        val samsungNowBarEligible =
+            shouldPromote && SamsungLiveUpdateReparser.isSamsungDevice()
+        if (samsungNowBarEligible) {
             builder.addExtras(
                 buildSamsungExtras(
                     lockscreenOnly = prefs.getNetworkSpeedLockscreenOnly(),
@@ -66,7 +68,12 @@ internal class NetworkSpeedNotificationBuilder(
             )
         }
 
-        return builder.build()
+        val notification = builder.build()
+        return if (samsungNowBarEligible) {
+            SamsungOneUi7NowBarCompat.markEligible(notification)
+        } else {
+            notification
+        }
     }
 
     private fun buildSamsungExtras(

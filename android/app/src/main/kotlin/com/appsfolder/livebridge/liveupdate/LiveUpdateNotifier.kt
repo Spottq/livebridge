@@ -1994,7 +1994,7 @@ object LiveUpdateNotifier {
             lockscreenOnly = true
         )
 
-        return builder.build()
+        return SamsungOneUi7NowBarCompat.markEligible(builder.build())
     }
 
     private fun notificationCapsuleContentIntent(context: Context): PendingIntent? {
@@ -2812,7 +2812,12 @@ object LiveUpdateNotifier {
             builder.addExtras(buildCustomNotificationColorExtras(color))
         }
 
-        return builder.build()
+        val notification = builder.build()
+        return if (requestPromoted || samsungBridge.enabled) {
+            SamsungOneUi7NowBarCompat.markEligible(notification)
+        } else {
+            notification
+        }
     }
 
     private fun buildCustomNotificationColorExtras(color: Int): Bundle {
@@ -5955,7 +5960,10 @@ object LiveUpdateNotifier {
         mirrorKey: String,
         sourceSbn: StatusBarNotification
     ) {
-        manager.notify(notificationId, notification)
+        manager.notify(
+            notificationId,
+            SamsungOneUi7NowBarCompat.markEligible(notification)
+        )
         synchronized(stateLock) {
             pruneProgrammaticMirrorCancelsLocked(SystemClock.elapsedRealtime())
             mirrorKeysByNotificationId[notificationId] = mirrorKey

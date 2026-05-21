@@ -99,7 +99,12 @@ internal class FlashlightNotificationBuilder(
             )
         }
 
-        return builder.build()
+        val notification = builder.build()
+        return if (SamsungLiveUpdateReparser.isSamsungDevice()) {
+            SamsungOneUi7NowBarCompat.markEligible(notification)
+        } else {
+            notification
+        }
     }
 
     private fun buildExpandedRemoteViews(
