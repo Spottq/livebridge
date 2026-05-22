@@ -955,6 +955,9 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
           unawaited(_openRulesBypassScreen());
         },
       ),
+    ];
+
+    final List<LbListItemData> capsuleItems = <LbListItemData>[
       LbListItemData(
         title: strings.smartNotificationCapsuleTitle,
         onTap: () {
@@ -988,6 +991,11 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
         const SizedBox(height: LbSpacing.statCardGap),
         LbListComponent(
           items: secondaryItems,
+          rowHeight: LbSpacing.recentRowHeight,
+        ),
+        const SizedBox(height: LbSpacing.statCardGap),
+        LbListComponent(
+          items: capsuleItems,
           rowHeight: LbSpacing.recentRowHeight,
         ),
       ],
