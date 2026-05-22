@@ -443,15 +443,20 @@ object LiveUpdateNotifier {
             return 0
         }
 
-        val totalCount = sources.sumOf { sbn -> notificationCapsuleItemCount(sbn.notification) }
+        val visibleSources = sources
+            .filterNot { sbn -> prefs.isNotificationCapsulePackageExcluded(sbn.packageName) }
+        if (visibleSources.isEmpty()) {
+            cancelNotificationCapsule(context)
+            return 0
+        }
+
+        val totalCount = visibleSources.sumOf { sbn ->
+            notificationCapsuleItemCount(sbn.notification)
+        }
         ensureChannel(context)
         val manager = NotificationManagerCompat.from(context)
         val desiredIds = mutableSetOf<Int>()
-        val excludedSources = sources.filter { sbn ->
-            prefs.isNotificationCapsulePackageExcluded(sbn.packageName)
-        }
-        val appGroups = sources
-            .filterNot { sbn -> prefs.isNotificationCapsulePackageExcluded(sbn.packageName) }
+        val appGroups = visibleSources
             .groupBy { sbn -> sbn.packageName.lowercase(Locale.ROOT) }
             .values
             .sortedByDescending { group -> group.maxOfOrNull { sbn -> sbn.postTime } ?: 0L }
@@ -520,8 +525,7 @@ object LiveUpdateNotifier {
 
         if (
             prefs.getNotificationCapsuleSmartEnabled() &&
-            appGroups.size == 1 &&
-            excludedSources.isEmpty()
+            appGroups.size == 1
         ) {
             postAppCapsule(appGroups.first())
         } else if (
@@ -529,9 +533,8 @@ object LiveUpdateNotifier {
             prefs.getNotificationCapsuleMode() == "per_app"
         ) {
             appGroups.forEach(::postAppCapsule)
-            postGeneralCapsule(excludedSources)
         } else {
-            postGeneralCapsule(sources)
+            postGeneralCapsule(visibleSources)
         }
 
         cancelStaleNotificationCapsules(context, desiredIds)

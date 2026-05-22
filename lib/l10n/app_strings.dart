@@ -2252,14 +2252,13 @@ class AppStrings {
   );
 
   String get notificationCapsuleExcludedAppsDescription => tr(
-    en: 'Selected apps are counted only in the general capsule and never shown as separate app capsules.',
-    ru: 'Выбранные приложения учитываются только в общей капсуле и не показываются отдельными капсулами.',
-    tr: 'Seçilen uygulamalar yalnızca genel kapsülde sayılır ve ayrı uygulama kapsülü olarak gösterilmez.',
-    ptBr:
-        'Apps selecionados entram apenas na cápsula geral e nunca aparecem como cápsulas separadas.',
-    zhHans: '所选应用只计入通用胶囊，不会显示为单独的应用胶囊。',
-    zhHant: '所選 App 只計入一般膠囊，不會顯示為單獨 App 膠囊。',
-    ko: '선택한 앱은 일반 캡슐에만 포함되며 별도 앱 캡슐로 표시되지 않습니다.',
+    en: 'Selected apps are not shown in notification capsules.',
+    ru: 'Выбранные приложения не показываются в капсулах уведомлений.',
+    tr: 'Seçilen uygulamalar bildirim kapsüllerinde gösterilmez.',
+    ptBr: 'Apps selecionados não aparecem nas cápsulas de notificações.',
+    zhHans: '所选应用不会显示在通知胶囊中。',
+    zhHant: '所選 App 不會顯示在通知膠囊中。',
+    ko: '선택한 앱은 알림 캡슐에 표시되지 않습니다.',
   );
 
   String get smartFlashlightTitle => tr(
