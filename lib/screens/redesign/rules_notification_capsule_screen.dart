@@ -281,10 +281,6 @@ class _RulesNotificationCapsuleScreenState
     );
   }
 
-  bool get _appCapsulesPossible =>
-      _capsuleEnabled &&
-      (_smartCapsuleEnabled || _capsuleMode == NotificationCapsuleMode.perApp);
-
   @override
   Widget build(BuildContext context) {
     final AppStrings strings = AppStrings.of(context);
@@ -329,14 +325,14 @@ class _RulesNotificationCapsuleScreenState
         title: strings.notificationCapsuleClearActionTitle,
         description: strings.notificationCapsuleClearActionDescription,
         showChevron: false,
-        enabled: _appCapsulesPossible,
+        enabled: _capsuleEnabled,
         toggleValue: _clearActionEnabled,
-        onToggle: _appCapsulesPossible
+        onToggle: _capsuleEnabled
             ? (bool value) {
                 unawaited(_setClearActionEnabled(value));
               }
             : null,
-        onTap: _appCapsulesPossible
+        onTap: _capsuleEnabled
             ? () {
                 final bool nextValue = !_clearActionEnabled;
                 unawaited(LiveBridgeHaptics.toggle(nextValue));
@@ -440,11 +436,6 @@ class _RulesNotificationCapsuleScreenState
               ),
             ),
           ],
-        ),
-        const SizedBox(height: LbSpacing.recentSectionGap),
-        Text(
-          strings.notificationCapsuleExcludedAppsDescription,
-          style: LbTextStyles.body.copyWith(color: palette.textSecondary),
         ),
         const SizedBox(height: LbSpacing.recentSectionGap),
         AnimatedSwitcher(
