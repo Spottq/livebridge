@@ -19,6 +19,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         secondaryText: String,
         nowBarPrimaryText: String,
         nowBarSecondaryText: String?,
+        moreInfoText: String? = null,
         chipText: String?,
         chipIcon: IconCompat?,
         nowBarIcon: IconCompat?,
@@ -47,6 +48,9 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         val normalizedSecondary = secondaryText.trim()
         val normalizedNowBarPrimary = nowBarPrimaryText.trim().ifEmpty { normalizedPrimary }
         val normalizedNowBarSecondary = nowBarSecondaryText
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+        val normalizedMoreInfo = moreInfoText
             ?.trim()
             ?.takeIf { it.isNotEmpty() }
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
@@ -85,6 +89,9 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
                 normalizedNowBarSecondary?.let {
                     putCharSequence(KEY_NOWBAR_SECONDARY_INFO, it)
                 }
+            }
+            normalizedMoreInfo?.let {
+                putCharSequence(KEY_ONGOING_ACTIVITY_MORE_INFO, it)
             }
             putInt(
                 KEY_CHIP_BG_COLOR,
@@ -223,6 +230,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         private const val KEY_NOWBAR_SECONDARY_INFO = "${ONGOING_PREFIX}nowbarSecondaryInfo"
         private const val KEY_NOWBAR_ICON = "${ONGOING_PREFIX}nowbarIcon"
         private const val KEY_SECOND_ICON = "${ONGOING_PREFIX}secondIcon"
+        private const val KEY_ONGOING_ACTIVITY_MORE_INFO = "android.ongoingActivityMoreInfo"
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
         private const val KEY_REMOTE_VIEW = "${ONGOING_PREFIX}chronometerRemoteView"
         private const val KEY_REMOTE_VIEW_POSITION = "${ONGOING_PREFIX}chronometerRemoteViewPosition"

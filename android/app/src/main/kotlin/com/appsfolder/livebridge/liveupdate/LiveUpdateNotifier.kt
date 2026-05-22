@@ -1968,6 +1968,7 @@ object LiveUpdateNotifier {
             secondaryText = appNames,
             nowBarPrimaryText = title,
             nowBarSecondaryText = appNames,
+            moreInfoText = null,
             chipText = title,
             chipIcon = icon,
             nowBarIcon = icon,
@@ -2081,6 +2082,47 @@ object LiveUpdateNotifier {
         return parts.distinct()
     }
 
+    private fun resolveSamsungMoreInfoText(
+        notification: Notification,
+        appName: String,
+        primaryText: String,
+        secondaryText: String?,
+        contentTitle: String,
+        contentText: String
+    ): String? {
+        val extras = notification.extras
+        val excluded = listOf(primaryText, secondaryText, contentTitle, contentText)
+        val candidates = linkedSetOf<String>()
+
+        fun add(value: CharSequence?) {
+            val raw = value?.toString().orEmpty()
+            if (raw.isBlank()) {
+                return
+            }
+            val rawLines = raw
+                .lineSequence()
+                .mapNotNull { NotificationTextNormalizer.normalize(it) }
+                .toList()
+            if (rawLines.size > 1) {
+                candidates.addAll(rawLines)
+            } else {
+                NotificationTextNormalizer.normalize(raw)?.let(candidates::add)
+            }
+        }
+
+        extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)?.forEach(::add)
+        add(extras.getCharSequence(Notification.EXTRA_BIG_TEXT))
+        add(extras.getCharSequence(Notification.EXTRA_SUB_TEXT))
+        add(extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT))
+        add(extras.getCharSequence(Notification.EXTRA_INFO_TEXT))
+        add(appName)
+
+        return candidates.firstOrNull { candidate ->
+            !isGenericLiveUpdatePlaceholder(candidate) &&
+                    excluded.none { excludedText -> isEquivalentText(candidate, excludedText) }
+        }
+    }
+
     private fun isPrivacyRedactionPlaceholder(text: String, placeholders: Set<String>): Boolean {
         val normalized = text
             .trim()
@@ -2105,6 +2147,7 @@ object LiveUpdateNotifier {
             chipText = LOCKSCREEN_CONTENT_HIDDEN_TEXT,
             nowBarPrimaryText = LOCKSCREEN_CONTENT_HIDDEN_TEXT,
             nowBarSecondaryText = null,
+            moreInfoText = null,
             showSecondaryInNowBar = false,
             preferCompactNowBarRemoteView = false,
             disableNowBarRemoteView = true,
@@ -2730,6 +2773,22 @@ object LiveUpdateNotifier {
                     }
                 }
             }
+            val samsungTextsWithMoreInfo = if (redactSamsungNowBarContent) {
+                samsungTexts
+            } else {
+                samsungTexts.copy(
+                    moreInfoText = samsungTexts.moreInfoText
+                        ?: resolveSamsungMoreInfoText(
+                            notification = source,
+                            appName = appName,
+                            primaryText = samsungTexts.nowBarPrimaryText,
+                            secondaryText = samsungTexts.nowBarSecondaryText
+                                ?: samsungTexts.secondaryText,
+                            contentTitle = contentTitle,
+                            contentText = contentText
+                        )
+                )
+            }
             val samsungNowBarHasProgress = hasProgress && !redactSamsungNowBarContent
             val samsungNowBarProgressValue = if (redactSamsungNowBarContent) {
                 0
@@ -2762,8 +2821,8 @@ object LiveUpdateNotifier {
                 builder = builder,
                 source = source,
                 sourcePackageName = sbn.packageName,
-                primaryText = samsungTexts.nowBarPrimaryText,
-                texts = samsungTexts,
+                primaryText = samsungTextsWithMoreInfo.nowBarPrimaryText,
+                texts = samsungTextsWithMoreInfo,
                 chipIcon = preferredChipIcon,
                 nowBarIcon = preferredPrimaryIcon,
                 rightIcon = samsungNowBarRightIcon,
