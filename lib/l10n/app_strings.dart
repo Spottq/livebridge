@@ -2182,13 +2182,13 @@ class AppStrings {
   );
 
   String get notificationCapsuleClearActionDescription => tr(
-    en: 'Adds a cross icon and Clear action to app-specific capsules.',
-    ru: 'Добавляет крестик и действие Clear в капсулы конкретных приложений.',
-    tr: 'Uygulamaya özel kapsüllere çarpı simgesi ve Clear eylemi ekler.',
-    ptBr: 'Adiciona um ícone de X e a ação Clear às cápsulas por app.',
-    zhHans: '为应用专属胶囊添加叉号图标和 Clear 操作。',
-    zhHant: '為 App 專屬膠囊加入叉號圖示和 Clear 動作。',
-    ko: '앱별 캡슐에 X 아이콘과 Clear 동작을 추가합니다.',
+    en: 'Adds a cross icon and Clear action to notification capsules.',
+    ru: 'Добавляет крестик и действие Clear в капсулы уведомлений.',
+    tr: 'Bildirim kapsüllerine çarpı simgesi ve Clear eylemi ekler.',
+    ptBr: 'Adiciona um ícone de X e a ação Clear às cápsulas de notificações.',
+    zhHans: '为通知胶囊添加叉号图标和 Clear 操作。',
+    zhHant: '為通知膠囊加入叉號圖示和 Clear 動作。',
+    ko: '알림 캡슐에 X 아이콘과 Clear 동작을 추가합니다.',
   );
 
   String get notificationCapsuleDisplayModeTitle => tr(

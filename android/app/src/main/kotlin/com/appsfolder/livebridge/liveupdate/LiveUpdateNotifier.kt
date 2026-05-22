@@ -482,8 +482,8 @@ object LiveUpdateNotifier {
                     R.drawable.ic_notification_capsule
                 ),
                 largeIcon = null,
-                clearPackageName = null,
-                showClearAction = false
+                clearSourceKeys = generalSources.map { sbn -> sbn.key },
+                showClearAction = prefs.getNotificationCapsuleClearActionEnabled()
             )
             notifyNotificationCapsule(manager, NOTIFICATION_CAPSULE_ID, notification)
         }
@@ -512,7 +512,7 @@ object LiveUpdateNotifier {
                     R.drawable.ic_notification_capsule
                 ),
                 largeIcon = appIconAssets?.largeIconBitmap,
-                clearPackageName = packageName,
+                clearSourceKeys = groupSources.map { sbn -> sbn.key },
                 showClearAction = prefs.getNotificationCapsuleClearActionEnabled()
             )
             notifyNotificationCapsule(manager, notificationId, notification)
@@ -2080,17 +2080,22 @@ object LiveUpdateNotifier {
 
     private fun notificationCapsuleClearPendingIntent(
         context: Context,
-        packageName: String
+        notificationId: Int,
+        sourceKeys: List<String>
     ): PendingIntent {
+        val normalizedSourceKeys = sourceKeys
+            .map { key -> key.trim() }
+            .filter { key -> key.isNotBlank() }
         val intent = Intent(context, NotificationCapsuleActionReceiver::class.java).apply {
-            action = NotificationCapsuleActionReceiver.ACTION_CLEAR_PACKAGE
-            putExtra(NotificationCapsuleActionReceiver.EXTRA_PACKAGE_NAME, packageName)
+            action = NotificationCapsuleActionReceiver.ACTION_CLEAR_NOTIFICATION_KEYS
+            putStringArrayListExtra(
+                NotificationCapsuleActionReceiver.EXTRA_NOTIFICATION_KEYS,
+                ArrayList(normalizedSourceKeys)
+            )
         }
         return PendingIntent.getBroadcast(
             context,
-            mirrorIdForKey(
-                "$NOTIFICATION_CAPSULE_KEY_PREFIX${packageName.lowercase(Locale.ROOT)}:clear"
-            ),
+            mirrorIdForKey("$NOTIFICATION_CAPSULE_KEY_PREFIX$notificationId:clear"),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -2131,7 +2136,7 @@ object LiveUpdateNotifier {
         notificationId: Int,
         smallIcon: IconCompat,
         largeIcon: Bitmap?,
-        clearPackageName: String?,
+        clearSourceKeys: List<String>,
         showClearAction: Boolean
     ): Notification {
         val builder = NotificationCompat.Builder(
@@ -2160,8 +2165,8 @@ object LiveUpdateNotifier {
         if (description.isNotBlank()) {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(description))
         }
-        val clearPendingIntent = if (showClearAction && !clearPackageName.isNullOrBlank()) {
-            notificationCapsuleClearPendingIntent(context, clearPackageName)
+        val clearPendingIntent = if (showClearAction && clearSourceKeys.isNotEmpty()) {
+            notificationCapsuleClearPendingIntent(context, notificationId, clearSourceKeys)
         } else {
             null
         }

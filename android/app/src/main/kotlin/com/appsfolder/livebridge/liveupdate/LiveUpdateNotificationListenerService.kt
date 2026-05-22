@@ -366,6 +366,49 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         )
     }
 
+    private fun clearNotificationsForKeys(notificationKeys: Collection<String>) {
+        val requestedKeys = notificationKeys
+            .map { key -> key.trim() }
+            .filter { key -> key.isNotBlank() }
+            .toSet()
+        if (requestedKeys.isEmpty()) {
+            return
+        }
+        val snapshots = try {
+            activeNotifications?.toList().orEmpty()
+        } catch (error: Throwable) {
+            Log.w(TAG, "Unable to clear notification capsule keys", error)
+            return
+        }
+        val sourceKeys = snapshots
+            .filter { sbn -> sbn.key in requestedKeys }
+            .filter { sbn -> sbn.isClearable }
+            .map { sbn -> sbn.key }
+            .distinct()
+
+        if (sourceKeys.isEmpty()) {
+            refreshNotificationCapsule(snapshots)
+            return
+        }
+
+        sourceKeys.forEach { sourceKey ->
+            runCatching {
+                cancelNotification(sourceKey)
+            }.onFailure { error ->
+                Log.w(TAG, "cancelNotification failed for capsule clear: $sourceKey", error)
+            }
+        }
+        runCatching {
+            cancelNotifications(sourceKeys.toTypedArray())
+        }.onFailure { error ->
+            Log.w(TAG, "cancelNotifications failed for capsule clear", error)
+        }
+        mainHandler.postDelayed(
+            { refreshNotificationCapsuleFromActiveNotifications() },
+            CAPSULE_CLEAR_REFRESH_DELAY_MS
+        )
+    }
+
     override fun onDestroy() {
         unregisterLockscreenStateReceiver()
         unregisterTorchCallbackIfNeeded()
@@ -1127,6 +1170,15 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                 return
             }
             listener.clearNotificationsForPackage(packageName)
+        }
+
+        fun requestClearNotificationKeys(notificationKeys: Collection<String>) {
+            val listener = activeInstance
+            if (listener == null) {
+                Log.w(TAG, "Skip capsule clear: listener is not active")
+                return
+            }
+            listener.clearNotificationsForKeys(notificationKeys)
         }
 
         fun requestFlashlightSourceDismissal() {
