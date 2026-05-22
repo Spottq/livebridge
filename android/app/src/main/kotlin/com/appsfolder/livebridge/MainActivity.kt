@@ -693,6 +693,40 @@ class MainActivity : FlutterActivity() {
                 syncNotificationCapsule(prefs)
                 res.success(true)
             }
+            "getNotificationCapsuleSmartEnabled" -> {
+                res.success(prefs.getNotificationCapsuleSmartEnabled())
+            }
+            "setNotificationCapsuleSmartEnabled" -> {
+                prefs.setNotificationCapsuleSmartEnabled(call.argument<Boolean>("value") ?: false)
+                syncNotificationCapsule(prefs)
+                res.success(true)
+            }
+            "getNotificationCapsuleMode" -> {
+                res.success(prefs.getNotificationCapsuleMode())
+            }
+            "setNotificationCapsuleMode" -> {
+                prefs.setNotificationCapsuleMode(call.argument<String>("value"))
+                syncNotificationCapsule(prefs)
+                res.success(true)
+            }
+            "getNotificationCapsuleClearActionEnabled" -> {
+                res.success(prefs.getNotificationCapsuleClearActionEnabled())
+            }
+            "setNotificationCapsuleClearActionEnabled" -> {
+                prefs.setNotificationCapsuleClearActionEnabled(
+                    call.argument<Boolean>("value") ?: false
+                )
+                syncNotificationCapsule(prefs)
+                res.success(true)
+            }
+            "getNotificationCapsuleExcludedPackageRules" -> {
+                res.success(prefs.getNotificationCapsuleExcludedPackageRulesRaw())
+            }
+            "setNotificationCapsuleExcludedPackageRules" -> {
+                prefs.setNotificationCapsuleExcludedPackageRulesRaw(call.argument<String>("value"))
+                syncNotificationCapsule(prefs)
+                res.success(true)
+            }
 
             "getSmartExternalDevicesEnabled" -> res.success(prefs.getSmartExternalDevicesEnabled())
             "setSmartExternalDevicesEnabled" -> {

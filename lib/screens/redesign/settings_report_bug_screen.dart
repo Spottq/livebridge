@@ -146,6 +146,12 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getSmartWeatherLockscreenOnly();
     final Future<bool> smartNotificationCapsuleFuture =
         LiveBridgePlatform.getSmartNotificationCapsuleEnabled();
+    final Future<bool> notificationCapsuleSmartFuture =
+        LiveBridgePlatform.getNotificationCapsuleSmartEnabled();
+    final Future<String> notificationCapsuleModeFuture =
+        LiveBridgePlatform.getNotificationCapsuleMode();
+    final Future<bool> notificationCapsuleClearActionFuture =
+        LiveBridgePlatform.getNotificationCapsuleClearActionEnabled();
     final Future<bool> smartExternalDevicesFuture =
         LiveBridgePlatform.getSmartExternalDevicesEnabled();
     final Future<bool> smartExternalDevicesIgnoreDebuggingFuture =
@@ -187,6 +193,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getPackageRules();
     final Future<String> bypassPackageRulesFuture =
         LiveBridgePlatform.getBypassPackageRules();
+    final Future<String> notificationCapsuleExcludedPackageRulesFuture =
+        LiveBridgePlatform.getNotificationCapsuleExcludedPackageRules();
     final Future<String> otpPackageModeFuture =
         LiveBridgePlatform.getOtpPackageMode();
     final Future<String> otpPackageRulesFuture =
@@ -286,6 +294,11 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         'smart_weather_lockscreen_only': await smartWeatherLockscreenOnlyFuture,
         'smart_notification_capsule_enabled':
             await smartNotificationCapsuleFuture,
+        'notification_capsule_smart_enabled':
+            await notificationCapsuleSmartFuture,
+        'notification_capsule_mode': await notificationCapsuleModeFuture,
+        'notification_capsule_clear_action_enabled':
+            await notificationCapsuleClearActionFuture,
         'smart_external_devices_enabled': await smartExternalDevicesFuture,
         'smart_external_devices_ignore_debugging':
             await smartExternalDevicesIgnoreDebuggingFuture,
@@ -310,6 +323,9 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         'package_mode': await packageModeFuture,
         'package_rules': _parseRulesText(await packageRulesFuture),
         'bypass_package_rules': _parseRulesText(await bypassPackageRulesFuture),
+        'notification_capsule_excluded_package_rules': _parseRulesText(
+          await notificationCapsuleExcludedPackageRulesFuture,
+        ),
         'otp_package_mode': await otpPackageModeFuture,
         'otp_package_rules': _parseRulesText(await otpPackageRulesFuture),
         'smart_package_mode': await smartPackageModeFuture,

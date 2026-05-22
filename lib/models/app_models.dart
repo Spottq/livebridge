@@ -175,6 +175,8 @@ extension PackageModeId on PackageMode {
 
 enum NetworkSpeedDisplayMode { total, upload, download }
 
+enum NotificationCapsuleMode { general, perApp }
+
 const String kDefaultNetworkSpeedUploadPrefix = '\u25B2 ';
 const String kDefaultNetworkSpeedDownloadPrefix = '\u25BC ';
 
@@ -198,6 +200,26 @@ extension NetworkSpeedDisplayModeId on NetworkSpeedDisplayMode {
         return NetworkSpeedDisplayMode.download;
       default:
         return NetworkSpeedDisplayMode.total;
+    }
+  }
+}
+
+extension NotificationCapsuleModeId on NotificationCapsuleMode {
+  String get id {
+    switch (this) {
+      case NotificationCapsuleMode.general:
+        return 'general';
+      case NotificationCapsuleMode.perApp:
+        return 'per_app';
+    }
+  }
+
+  static NotificationCapsuleMode from(String? value) {
+    switch (value) {
+      case 'per_app':
+        return NotificationCapsuleMode.perApp;
+      default:
+        return NotificationCapsuleMode.general;
     }
   }
 }

@@ -65,6 +65,7 @@ object LiveUpdateNotifier {
     private const val AOSP_ISLAND_TEXT_LIMIT = 7
     private const val CALL_DURATION_REFRESH_MS = 1_000L
     private const val NOTIFICATION_CAPSULE_ID = 41242
+    private const val NOTIFICATION_CAPSULE_KEY_PREFIX = "notification_capsule:"
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
@@ -197,6 +198,14 @@ object LiveUpdateNotifier {
     private val progressColor = Color.valueOf(15f / 255f, 118f / 255f, 110f / 255f, 1f).toArgb()
     private const val SAMSUNG_EXTRA_CHIP_BG_COLOR = "android.ongoingActivityNoti.chipBgColor"
     private const val SAMSUNG_EXTRA_ACTION_BG_COLOR = "android.ongoingActivityNoti.actionBgColor"
+    private const val SAMSUNG_EXTRA_ACTION_TYPE = "android.ongoingActivityNoti.actionType"
+    private const val SAMSUNG_EXTRA_ACTION_PRIMARY_SET = "android.ongoingActivityNoti.actionPrimarySet"
+    private const val NOWBAR_EXTRA_ACTION_ID = "com.nowbar.action.ID"
+    private const val NOWBAR_EXTRA_ACTION_SEMANTIC = "com.nowbar.action.SEMANTIC"
+    private const val NOWBAR_EXTRA_DELETE_INTENT = "com.nowbar.ongoing.DELETE_INTENT"
+    private const val NOWBAR_EXTRA_DISMISSIBLE = "com.nowbar.ongoing.DISMISSIBLE"
+    private const val NOWBAR_ACTION_SEMANTIC_DELETE = "DELETE"
+    private const val NOTIFICATION_CAPSULE_CLEAR_ACTION_ID = "notification_capsule_clear"
     private val mainHandler = Handler(Looper.getMainLooper())
     private val appIconCacheLock = Any()
     private val appIconCache = mutableMapOf<String, AppIconAssets>()
@@ -217,6 +226,7 @@ object LiveUpdateNotifier {
     private val sourceSnapshotsByMirrorKey = mutableMapOf<String, StatusBarNotification>()
     private val userDismissedMirrorKeys = mutableSetOf<String>()
     private val programmaticMirrorCancelDeadlines = mutableMapOf<Int, Long>()
+    private val notificationCapsuleIds = mutableSetOf<Int>()
     private var callMirrorGenerationCounter = 0L
 
     private data class AppIconAssets(
@@ -307,6 +317,7 @@ object LiveUpdateNotifier {
             sourceSnapshotsByMirrorKey.clear()
             userDismissedMirrorKeys.clear()
             programmaticMirrorCancelDeadlines.clear()
+            notificationCapsuleIds.clear()
         }
         synchronized(appIconCacheLock) {
             appIconCache.clear()
@@ -432,37 +443,115 @@ object LiveUpdateNotifier {
             return 0
         }
 
+        val totalCount = sources.sumOf { sbn -> notificationCapsuleItemCount(sbn.notification) }
         ensureChannel(context)
-        val count = sources.sumOf { sbn -> notificationCapsuleItemCount(sbn.notification) }
-        val title = notificationCapsuleTitle(context, count)
-        val appNames = sources
-            .map { sbn -> notificationCapsuleAppLabel(context, sbn.packageName) }
-            .distinct()
-            .take(NOTIFICATION_CAPSULE_MAX_APP_NAMES)
-            .joinToString(", ")
-        val notification = buildNotificationCapsuleNotification(
-            context = context,
-            title = title,
-            appNames = appNames,
-            postTime = sources.maxOfOrNull { sbn -> sbn.postTime } ?: System.currentTimeMillis()
-        )
-
-        runCatching {
-            NotificationManagerCompat.from(context).notify(
-                NOTIFICATION_CAPSULE_ID,
-                notification
-            )
-        }.onFailure { error ->
-            Log.e(TAG, "Failed to post notification capsule", error)
+        val manager = NotificationManagerCompat.from(context)
+        val desiredIds = mutableSetOf<Int>()
+        val excludedSources = sources.filter { sbn ->
+            prefs.isNotificationCapsulePackageExcluded(sbn.packageName)
         }
-        return count
+        val appGroups = sources
+            .filterNot { sbn -> prefs.isNotificationCapsulePackageExcluded(sbn.packageName) }
+            .groupBy { sbn -> sbn.packageName.lowercase(Locale.ROOT) }
+            .values
+            .sortedByDescending { group -> group.maxOfOrNull { sbn -> sbn.postTime } ?: 0L }
+
+        fun postGeneralCapsule(generalSources: List<StatusBarNotification>) {
+            if (generalSources.isEmpty()) {
+                return
+            }
+            desiredIds.add(NOTIFICATION_CAPSULE_ID)
+            val count = generalSources.sumOf { sbn ->
+                notificationCapsuleItemCount(sbn.notification)
+            }
+            val title = notificationCapsuleTitle(context, count)
+            val appNames = generalSources
+                .map { sbn -> notificationCapsuleAppLabel(context, sbn.packageName) }
+                .distinct()
+                .take(NOTIFICATION_CAPSULE_MAX_APP_NAMES)
+                .joinToString(", ")
+            val notification = buildNotificationCapsuleNotification(
+                context = context,
+                title = title,
+                description = appNames,
+                postTime = generalSources.maxOfOrNull { sbn -> sbn.postTime }
+                    ?: System.currentTimeMillis(),
+                notificationId = NOTIFICATION_CAPSULE_ID,
+                smallIcon = IconCompat.createWithResource(
+                    context,
+                    R.drawable.ic_notification_capsule
+                ),
+                largeIcon = null,
+                clearPackageName = null,
+                showClearAction = false
+            )
+            notifyNotificationCapsule(manager, NOTIFICATION_CAPSULE_ID, notification)
+        }
+
+        fun postAppCapsule(groupSources: List<StatusBarNotification>) {
+            if (groupSources.isEmpty()) {
+                return
+            }
+            val packageName = groupSources.first().packageName
+            val notificationId = notificationCapsuleIdForPackage(packageName)
+            desiredIds.add(notificationId)
+            val count = groupSources.sumOf { sbn ->
+                notificationCapsuleItemCount(sbn.notification)
+            }
+            val appName = notificationCapsuleAppLabel(context, packageName)
+            val appIconAssets = resolveAppIconAssets(context, packageName)
+            val notification = buildNotificationCapsuleNotification(
+                context = context,
+                title = appName,
+                description = notificationCapsuleTitle(context, count),
+                postTime = groupSources.maxOfOrNull { sbn -> sbn.postTime }
+                    ?: System.currentTimeMillis(),
+                notificationId = notificationId,
+                smallIcon = appIconAssets?.smallIcon ?: IconCompat.createWithResource(
+                    context,
+                    R.drawable.ic_notification_capsule
+                ),
+                largeIcon = appIconAssets?.largeIconBitmap,
+                clearPackageName = packageName,
+                showClearAction = prefs.getNotificationCapsuleClearActionEnabled()
+            )
+            notifyNotificationCapsule(manager, notificationId, notification)
+        }
+
+        if (
+            prefs.getNotificationCapsuleSmartEnabled() &&
+            appGroups.size == 1 &&
+            excludedSources.isEmpty()
+        ) {
+            postAppCapsule(appGroups.first())
+        } else if (
+            !prefs.getNotificationCapsuleSmartEnabled() &&
+            prefs.getNotificationCapsuleMode() == "per_app"
+        ) {
+            appGroups.forEach(::postAppCapsule)
+            postGeneralCapsule(excludedSources)
+        } else {
+            postGeneralCapsule(sources)
+        }
+
+        cancelStaleNotificationCapsules(context, desiredIds)
+        return totalCount
     }
 
     fun cancelNotificationCapsule(context: Context) {
-        runCatching {
-            NotificationManagerCompat.from(context).cancel(NOTIFICATION_CAPSULE_ID)
-        }.onFailure { error ->
-            Log.e(TAG, "Failed to cancel notification capsule", error)
+        val ids = mutableSetOf(NOTIFICATION_CAPSULE_ID)
+        synchronized(stateLock) {
+            ids.addAll(notificationCapsuleIds)
+            notificationCapsuleIds.clear()
+        }
+        ids.addAll(activeNotificationCapsuleIds(context))
+        val manager = NotificationManagerCompat.from(context)
+        ids.forEach { notificationId ->
+            runCatching {
+                manager.cancel(notificationId)
+            }.onFailure { error ->
+                Log.e(TAG, "Failed to cancel notification capsule", error)
+            }
         }
     }
 
@@ -1919,22 +2008,138 @@ object LiveUpdateNotifier {
         return maxOf(messageCount, lineCount, 1)
     }
 
+    private fun notifyNotificationCapsule(
+        manager: NotificationManagerCompat,
+        notificationId: Int,
+        notification: Notification
+    ) {
+        runCatching {
+            manager.notify(notificationId, notification)
+        }.onSuccess {
+            synchronized(stateLock) {
+                notificationCapsuleIds.add(notificationId)
+            }
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to post notification capsule", error)
+        }
+    }
+
+    private fun cancelStaleNotificationCapsules(
+        context: Context,
+        desiredIds: Set<Int>
+    ) {
+        val staleIds = synchronized(stateLock) {
+            notificationCapsuleIds.toMutableSet()
+        }
+        staleIds.addAll(activeNotificationCapsuleIds(context))
+        staleIds.removeAll(desiredIds)
+
+        val manager = NotificationManagerCompat.from(context)
+        staleIds.forEach { notificationId ->
+            runCatching {
+                manager.cancel(notificationId)
+            }.onFailure { error ->
+                Log.e(TAG, "Failed to cancel stale notification capsule", error)
+            }
+        }
+
+        synchronized(stateLock) {
+            notificationCapsuleIds.clear()
+            notificationCapsuleIds.addAll(desiredIds)
+        }
+    }
+
+    private fun activeNotificationCapsuleIds(context: Context): Set<Int> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return emptySet()
+        }
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        return runCatching {
+            notificationManager.activeNotifications
+                .asSequence()
+                .filter { sbn -> sbn.packageName == context.packageName }
+                .filter { sbn ->
+                    sbn.notification.channelId == MirrorNotificationChannel.NOTIFICATION_CAPSULE.id
+                }
+                .map { sbn -> sbn.id }
+                .toSet()
+        }.getOrDefault(emptySet())
+    }
+
+    private fun notificationCapsuleIdForPackage(packageName: String): Int {
+        val id = mirrorIdForKey(
+            "$NOTIFICATION_CAPSULE_KEY_PREFIX${packageName.lowercase(Locale.ROOT)}"
+        )
+        return if (id == NOTIFICATION_CAPSULE_ID) {
+            NOTIFICATION_CAPSULE_ID + 1
+        } else {
+            id
+        }
+    }
+
+    private fun notificationCapsuleClearPendingIntent(
+        context: Context,
+        packageName: String
+    ): PendingIntent {
+        val intent = Intent(context, NotificationCapsuleActionReceiver::class.java).apply {
+            action = NotificationCapsuleActionReceiver.ACTION_CLEAR_PACKAGE
+            putExtra(NotificationCapsuleActionReceiver.EXTRA_PACKAGE_NAME, packageName)
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            mirrorIdForKey(
+                "$NOTIFICATION_CAPSULE_KEY_PREFIX${packageName.lowercase(Locale.ROOT)}:clear"
+            ),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private fun buildNotificationCapsuleClearAction(
+        context: Context,
+        pendingIntent: PendingIntent
+    ): NotificationCompat.Action {
+        return NotificationCompat.Action.Builder(
+            IconCompat.createWithResource(context, R.drawable.ic_clear_24),
+            notificationCapsuleClearActionText(context),
+            pendingIntent
+        ).addExtras(
+            Bundle().apply {
+                putString(NOWBAR_EXTRA_ACTION_ID, NOTIFICATION_CAPSULE_CLEAR_ACTION_ID)
+                putString(NOWBAR_EXTRA_ACTION_SEMANTIC, NOWBAR_ACTION_SEMANTIC_DELETE)
+            }
+        ).build()
+    }
+
+    private fun buildNotificationCapsuleDeleteExtras(
+        pendingIntent: PendingIntent
+    ): Bundle {
+        return Bundle().apply {
+            putInt(SAMSUNG_EXTRA_ACTION_TYPE, 1)
+            putInt(SAMSUNG_EXTRA_ACTION_PRIMARY_SET, 0)
+            putParcelable(NOWBAR_EXTRA_DELETE_INTENT, pendingIntent)
+            putBoolean(NOWBAR_EXTRA_DISMISSIBLE, true)
+        }
+    }
+
     private fun buildNotificationCapsuleNotification(
         context: Context,
         title: String,
-        appNames: String,
-        postTime: Long
+        description: String,
+        postTime: Long,
+        notificationId: Int,
+        smallIcon: IconCompat,
+        largeIcon: Bitmap?,
+        clearPackageName: String?,
+        showClearAction: Boolean
     ): Notification {
-        val icon = IconCompat.createWithResource(
-            context,
-            R.drawable.ic_notification_capsule
-        )
         val builder = NotificationCompat.Builder(
             context,
             MirrorNotificationChannel.NOTIFICATION_CAPSULE.id
         )
             .setContentTitle(title)
-            .setContentText(appNames)
+            .setContentText(description)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setDefaults(0)
@@ -1947,12 +2152,26 @@ object LiveUpdateNotifier {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setRequestPromotedOngoing(true)
-            .setSmallIcon(icon)
+            .setSmallIcon(smallIcon)
 
-        notificationCapsuleContentIntent(context)?.let(builder::setContentIntent)
+        largeIcon?.let(builder::setLargeIcon)
+        notificationCapsuleContentIntent(context, notificationId)?.let(builder::setContentIntent)
 
-        if (appNames.isNotBlank()) {
-            builder.setStyle(NotificationCompat.BigTextStyle().bigText(appNames))
+        if (description.isNotBlank()) {
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(description))
+        }
+        val clearPendingIntent = if (showClearAction && !clearPackageName.isNullOrBlank()) {
+            notificationCapsuleClearPendingIntent(context, clearPackageName)
+        } else {
+            null
+        }
+        clearPendingIntent?.let { pendingIntent ->
+            builder.addAction(
+                buildNotificationCapsuleClearAction(
+                    context = context,
+                    pendingIntent = pendingIntent
+                )
+            )
         }
 
         @Suppress("DEPRECATION")
@@ -1965,34 +2184,41 @@ object LiveUpdateNotifier {
             source = bridgeSource,
             sourcePackageName = context.packageName,
             primaryText = title,
-            secondaryText = appNames,
+            secondaryText = description,
             nowBarPrimaryText = title,
-            nowBarSecondaryText = appNames,
+            nowBarSecondaryText = description,
             chipText = title,
-            chipIcon = icon,
-            nowBarIcon = icon,
+            chipIcon = smallIcon,
+            nowBarIcon = smallIcon,
             rightIcon = null,
             suppressSourceRemoteViews = true,
             suppressSourceNowBarRemoteView = true,
             hasProgress = false,
             progressValue = 0,
             progressMax = 0,
-            showSecondaryInNowBar = appNames.isNotBlank(),
+            showSecondaryInNowBar = description.isNotBlank(),
             disableNowBarRemoteView = true,
             reuseNotificationRemoteViews = false,
             lockscreenOnly = true
         )
+        clearPendingIntent?.let { pendingIntent ->
+            builder.setDeleteIntent(pendingIntent)
+            builder.addExtras(buildNotificationCapsuleDeleteExtras(pendingIntent))
+        }
 
         return SamsungOneUi7NowBarCompat.markEligible(builder.build())
     }
 
-    private fun notificationCapsuleContentIntent(context: Context): PendingIntent? {
+    private fun notificationCapsuleContentIntent(
+        context: Context,
+        notificationId: Int
+    ): PendingIntent? {
         val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
             ?: return null
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         return PendingIntent.getActivity(
             context,
-            NOTIFICATION_CAPSULE_ID,
+            notificationId,
             launchIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -3811,6 +4037,18 @@ object LiveUpdateNotifier {
                 name = "Notification capsule",
                 description = "Lock screen notification counter capsule"
             )
+        }
+    }
+
+    private fun notificationCapsuleClearActionText(context: Context): String {
+        return when (appLocale(context)) {
+            AppLocale.TR -> "Temizle"
+            AppLocale.PT_BR -> "Limpar"
+            AppLocale.ZH_HANS -> "清除"
+            AppLocale.ZH_HANT -> "清除"
+            AppLocale.KO -> "지우기"
+            AppLocale.RU,
+            AppLocale.EN -> "Clear"
         }
     }
 

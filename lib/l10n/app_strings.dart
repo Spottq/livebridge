@@ -2150,6 +2150,118 @@ class AppStrings {
     ko: '잠금 화면에 전체 개수와 앱 이름만 표시합니다.',
   );
 
+  String get notificationCapsuleSmartTitle => tr(
+    en: 'Smart capsule',
+    ru: 'Умная капсула',
+    tr: 'Akıllı kapsül',
+    ptBr: 'Cápsula inteligente',
+    zhHans: '智能胶囊',
+    zhHant: '智慧膠囊',
+    ko: '스마트 캡슐',
+  );
+
+  String get notificationCapsuleSmartDescription => tr(
+    en: 'If notifications are only from one app, show that app icon, name, and count instead of the general capsule.',
+    ru: 'Если уведомления только от одного приложения, показывает его иконку, название и количество вместо общей капсулы.',
+    tr: 'Bildirimler tek bir uygulamadan geliyorsa genel kapsül yerine uygulama simgesini, adını ve sayısını gösterir.',
+    ptBr:
+        'Se houver notificações de apenas um app, mostra o ícone, nome e contagem do app no lugar da cápsula geral.',
+    zhHans: '如果通知只来自一个应用，则显示该应用图标、名称和数量，而不是通用胶囊。',
+    zhHant: '如果通知只來自一個 App，則顯示該 App 圖示、名稱和數量，而不是一般膠囊。',
+    ko: '알림이 한 앱에서만 온 경우 일반 캡슐 대신 앱 아이콘, 이름, 개수를 표시합니다.',
+  );
+
+  String get notificationCapsuleClearActionTitle => tr(
+    en: 'Clear action',
+    ru: 'Кнопка Clear',
+    tr: 'Clear eylemi',
+    ptBr: 'Ação Clear',
+    zhHans: 'Clear 操作',
+    zhHant: 'Clear 動作',
+    ko: 'Clear 동작',
+  );
+
+  String get notificationCapsuleClearActionDescription => tr(
+    en: 'Adds a cross icon and Clear action to app-specific capsules.',
+    ru: 'Добавляет крестик и действие Clear в капсулы конкретных приложений.',
+    tr: 'Uygulamaya özel kapsüllere çarpı simgesi ve Clear eylemi ekler.',
+    ptBr: 'Adiciona um ícone de X e a ação Clear às cápsulas por app.',
+    zhHans: '为应用专属胶囊添加叉号图标和 Clear 操作。',
+    zhHant: '為 App 專屬膠囊加入叉號圖示和 Clear 動作。',
+    ko: '앱별 캡슐에 X 아이콘과 Clear 동작을 추가합니다.',
+  );
+
+  String get notificationCapsuleDisplayModeTitle => tr(
+    en: 'Display mode',
+    ru: 'Режим отображения',
+    tr: 'Görüntüleme modu',
+    ptBr: 'Modo de exibição',
+    zhHans: '显示模式',
+    zhHant: '顯示模式',
+    ko: '표시 모드',
+  );
+
+  String get notificationCapsuleModeGeneralTitle => tr(
+    en: 'General capsule',
+    ru: 'Общая капсула',
+    tr: 'Genel kapsül',
+    ptBr: 'Cápsula geral',
+    zhHans: '通用胶囊',
+    zhHant: '一般膠囊',
+    ko: '일반 캡슐',
+  );
+
+  String get notificationCapsuleModeGeneralDescription => tr(
+    en: 'Show one total notification capsule like before.',
+    ru: 'Показывать одну общую капсулу уведомлений, как раньше.',
+    tr: 'Önceki gibi tek bir toplam bildirim kapsülü gösterir.',
+    ptBr: 'Mostra uma única cápsula total de notificações como antes.',
+    zhHans: '像以前一样显示一个总通知胶囊。',
+    zhHant: '像以前一樣顯示一個總通知膠囊。',
+    ko: '이전처럼 전체 알림 캡슐 하나를 표시합니다.',
+  );
+
+  String get notificationCapsuleModePerAppTitle => tr(
+    en: 'Capsule per app',
+    ru: 'Капсула для каждого приложения',
+    tr: 'Uygulama başına kapsül',
+    ptBr: 'Cápsula por app',
+    zhHans: '每个应用一个胶囊',
+    zhHant: '每個 App 一個膠囊',
+    ko: '앱별 캡슐',
+  );
+
+  String get notificationCapsuleModePerAppDescription => tr(
+    en: 'Create a separate capsule with icon, app name, and count for each app.',
+    ru: 'Создавать отдельную капсулу с иконкой, названием и количеством для каждого приложения.',
+    tr: 'Her uygulama için simge, uygulama adı ve sayı içeren ayrı bir kapsül oluşturur.',
+    ptBr: 'Cria uma cápsula separada com ícone, nome e contagem para cada app.',
+    zhHans: '为每个应用创建单独胶囊，显示图标、应用名称和数量。',
+    zhHant: '為每個 App 建立單獨膠囊，顯示圖示、App 名稱和數量。',
+    ko: '각 앱마다 아이콘, 앱 이름, 개수가 있는 별도 캡슐을 만듭니다.',
+  );
+
+  String get notificationCapsuleExcludedAppsTitle => tr(
+    en: 'Excluded apps',
+    ru: 'Исключенные приложения',
+    tr: 'Hariç tutulan uygulamalar',
+    ptBr: 'Apps excluídos',
+    zhHans: '排除的应用',
+    zhHant: '排除的 App',
+    ko: '제외한 앱',
+  );
+
+  String get notificationCapsuleExcludedAppsDescription => tr(
+    en: 'Selected apps are counted only in the general capsule and never shown as separate app capsules.',
+    ru: 'Выбранные приложения учитываются только в общей капсуле и не показываются отдельными капсулами.',
+    tr: 'Seçilen uygulamalar yalnızca genel kapsülde sayılır ve ayrı uygulama kapsülü olarak gösterilmez.',
+    ptBr:
+        'Apps selecionados entram apenas na cápsula geral e nunca aparecem como cápsulas separadas.',
+    zhHans: '所选应用只计入通用胶囊，不会显示为单独的应用胶囊。',
+    zhHant: '所選 App 只計入一般膠囊，不會顯示為單獨 App 膠囊。',
+    ko: '선택한 앱은 일반 캡슐에만 포함되며 별도 앱 캡슐로 표시되지 않습니다.',
+  );
+
   String get smartFlashlightTitle => tr(
     en: 'Flashlight',
     ru: 'Фонарик',

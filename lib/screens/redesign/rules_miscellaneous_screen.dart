@@ -26,7 +26,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
   bool _useSymbolsInMediaPlayer = false;
   bool _weatherEnabled = false;
   bool _weatherLockscreenOnly = false;
-  bool _notificationCapsuleEnabled = false;
   bool _smartFlashlightEnabled = false;
   FlashlightCapability _flashlightCapability = const FlashlightCapability();
 
@@ -54,8 +53,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
           LiveBridgePlatform.getSmartWeatherEnabled();
       final Future<bool> weatherLockscreenOnlyFuture =
           LiveBridgePlatform.getSmartWeatherLockscreenOnly();
-      final Future<bool> notificationCapsuleFuture =
-          LiveBridgePlatform.getSmartNotificationCapsuleEnabled();
       final Future<bool> flashlightEnabledFuture =
           LiveBridgePlatform.getSmartFlashlightEnabled();
       final Future<FlashlightCapability> flashlightCapabilityFuture =
@@ -68,7 +65,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
       final bool useSymbolsInMediaPlayer = await useSymbolsInMediaPlayerFuture;
       final bool weatherEnabled = await weatherFuture;
       final bool weatherLockscreenOnly = await weatherLockscreenOnlyFuture;
-      final bool notificationCapsuleEnabled = await notificationCapsuleFuture;
       final bool flashlightEnabled = await flashlightEnabledFuture;
       final FlashlightCapability flashlightCapability =
           await flashlightCapabilityFuture;
@@ -85,7 +81,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
         _useSymbolsInMediaPlayer = useSymbolsInMediaPlayer;
         _weatherEnabled = weatherEnabled;
         _weatherLockscreenOnly = weatherLockscreenOnly;
-        _notificationCapsuleEnabled = notificationCapsuleEnabled;
         _smartFlashlightEnabled = flashlightEnabled;
         _flashlightCapability = flashlightCapability;
       });
@@ -146,14 +141,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
     }
     setState(() => _weatherLockscreenOnly = value);
     await LiveBridgePlatform.setSmartWeatherLockscreenOnly(value);
-  }
-
-  Future<void> _setNotificationCapsuleEnabled(bool value) async {
-    if (value == _notificationCapsuleEnabled) {
-      return;
-    }
-    setState(() => _notificationCapsuleEnabled = value);
-    await LiveBridgePlatform.setSmartNotificationCapsuleEnabled(value);
   }
 
   Future<void> _setSmartFlashlightEnabled(bool value) async {
@@ -303,20 +290,6 @@ class _RulesMiscellaneousScreenState extends State<RulesMiscellaneousScreen> {
                 unawaited(_setWeatherLockscreenOnly(nextValue));
               }
             : null,
-      ),
-      LbListItemData(
-        title: strings.smartNotificationCapsuleTitle,
-        description: strings.smartNotificationCapsuleSubtitle,
-        showChevron: false,
-        toggleValue: _notificationCapsuleEnabled,
-        onToggle: (bool value) {
-          unawaited(_setNotificationCapsuleEnabled(value));
-        },
-        onTap: () {
-          final bool nextValue = !_notificationCapsuleEnabled;
-          unawaited(LiveBridgeHaptics.toggle(nextValue));
-          unawaited(_setNotificationCapsuleEnabled(nextValue));
-        },
       ),
     ];
     final List<LbListItemData> flashlightItems = <LbListItemData>[

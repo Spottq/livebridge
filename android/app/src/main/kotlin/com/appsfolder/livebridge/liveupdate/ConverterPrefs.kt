@@ -595,6 +595,46 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_SMART_NOTIFICATION_CAPSULE_ENABLED, value).apply()
     }
 
+    fun getNotificationCapsuleSmartEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NOTIFICATION_CAPSULE_SMART_ENABLED, false)
+    }
+
+    fun setNotificationCapsuleSmartEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_NOTIFICATION_CAPSULE_SMART_ENABLED, value).apply()
+    }
+
+    fun getNotificationCapsuleMode(): String {
+        val raw = prefs.getString(
+            KEY_NOTIFICATION_CAPSULE_MODE,
+            NotificationCapsuleMode.GENERAL.id
+        ) ?: NotificationCapsuleMode.GENERAL.id
+        return NotificationCapsuleMode.from(raw).id
+    }
+
+    fun setNotificationCapsuleMode(value: String?) {
+        val mode = NotificationCapsuleMode.from(value)
+        prefs.edit().putString(KEY_NOTIFICATION_CAPSULE_MODE, mode.id).apply()
+    }
+
+    fun getNotificationCapsuleClearActionEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NOTIFICATION_CAPSULE_CLEAR_ACTION_ENABLED, false)
+    }
+
+    fun setNotificationCapsuleClearActionEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_NOTIFICATION_CAPSULE_CLEAR_ACTION_ENABLED, value).apply()
+    }
+
+    fun getNotificationCapsuleExcludedPackageRulesRaw(): String {
+        return prefs.getString(KEY_NOTIFICATION_CAPSULE_EXCLUDED_PACKAGE_RULES, "") ?: ""
+    }
+
+    fun setNotificationCapsuleExcludedPackageRulesRaw(value: String?) {
+        val normalized = value?.trim().orEmpty()
+        prefs.edit()
+            .putString(KEY_NOTIFICATION_CAPSULE_EXCLUDED_PACKAGE_RULES, normalized)
+            .apply()
+    }
+
     fun getSmartExternalDevicesEnabled(): Boolean {
         return prefs.getBoolean(KEY_SMART_EXTERNAL_DEVICES_ENABLED, true)
     }
@@ -869,6 +909,11 @@ class ConverterPrefs(context: Context) {
         return normalizePackageName(packageName) in packages
     }
 
+    fun isNotificationCapsulePackageExcluded(packageName: String): Boolean {
+        val packages = parsePackageRules(getNotificationCapsuleExcludedPackageRulesRaw())
+        return normalizePackageName(packageName) in packages
+    }
+
     fun isNotificationDedupPackageAllowed(packageName: String): Boolean {
         val mode = PackageMode.from(getNotificationDedupPackageMode())
         val packages = parsePackageRules(getNotificationDedupPackageRulesRaw())
@@ -973,6 +1018,15 @@ class ConverterPrefs(context: Context) {
             .put("smart_weather_enabled", getSmartWeatherEnabled())
             .put("smart_weather_lockscreen_only", getSmartWeatherLockscreenOnly())
             .put("smart_notification_capsule_enabled", getSmartNotificationCapsuleEnabled())
+            .put(
+                "notification_capsule_smart_enabled",
+                getNotificationCapsuleSmartEnabled()
+            )
+            .put("notification_capsule_mode", getNotificationCapsuleMode())
+            .put(
+                "notification_capsule_clear_action_enabled",
+                getNotificationCapsuleClearActionEnabled()
+            )
             .put("smart_external_devices_enabled", getSmartExternalDevicesEnabled())
             .put(
                 "smart_external_devices_ignore_debugging",
@@ -996,6 +1050,10 @@ class ConverterPrefs(context: Context) {
             .put("package_mode", getPackageMode())
             .put("package_rules", jsonArrayFromRules(getPackageRulesRaw()))
             .put("bypass_package_rules", jsonArrayFromRules(getBypassPackageRulesRaw()))
+            .put(
+                "notification_capsule_excluded_package_rules",
+                jsonArrayFromRules(getNotificationCapsuleExcludedPackageRulesRaw())
+            )
             .put("notification_dedup_package_mode", getNotificationDedupPackageMode())
             .put(
                 "notification_dedup_package_rules",
@@ -1098,6 +1156,11 @@ class ConverterPrefs(context: Context) {
             ?.let(::setSmartWeatherLockscreenOnly)
         bool(settings, "smart_notification_capsule_enabled")
             ?.let(::setSmartNotificationCapsuleEnabled)
+        bool(settings, "notification_capsule_smart_enabled")
+            ?.let(::setNotificationCapsuleSmartEnabled)
+        string(settings, "notification_capsule_mode")?.let(::setNotificationCapsuleMode)
+        bool(settings, "notification_capsule_clear_action_enabled")
+            ?.let(::setNotificationCapsuleClearActionEnabled)
         bool(settings, "smart_external_devices_enabled")
             ?.let(::setSmartExternalDevicesEnabled)
         bool(settings, "smart_external_devices_ignore_debugging")
@@ -1118,6 +1181,8 @@ class ConverterPrefs(context: Context) {
         string(rules, "package_mode")?.let(::setPackageMode)
         rulesValue(rules, "package_rules")?.let(::setPackageRulesRaw)
         rulesValue(rules, "bypass_package_rules")?.let(::setBypassPackageRulesRaw)
+        rulesValue(rules, "notification_capsule_excluded_package_rules")
+            ?.let(::setNotificationCapsuleExcludedPackageRulesRaw)
         string(rules, "notification_dedup_package_mode")
             ?.let(::setNotificationDedupPackageMode)
         rulesValue(rules, "notification_dedup_package_rules")
@@ -1319,6 +1384,17 @@ class ConverterPrefs(context: Context) {
         }
     }
 
+    private enum class NotificationCapsuleMode(val id: String) {
+        GENERAL("general"),
+        PER_APP("per_app");
+
+        companion object {
+            fun from(raw: String?): NotificationCapsuleMode {
+                return entries.firstOrNull { it.id == raw } ?: GENERAL
+            }
+        }
+    }
+
     companion object {
         private const val PREFS_NAME = "live_bridge_prefs"
         private const val KEY_PACKAGE_RULES = "package_rules"
@@ -1384,6 +1460,13 @@ class ConverterPrefs(context: Context) {
         private const val KEY_SMART_WEATHER_LOCKSCREEN_ONLY = "smart_weather_lockscreen_only"
         private const val KEY_SMART_NOTIFICATION_CAPSULE_ENABLED =
             "smart_notification_capsule_enabled"
+        private const val KEY_NOTIFICATION_CAPSULE_SMART_ENABLED =
+            "notification_capsule_smart_enabled"
+        private const val KEY_NOTIFICATION_CAPSULE_MODE = "notification_capsule_mode"
+        private const val KEY_NOTIFICATION_CAPSULE_CLEAR_ACTION_ENABLED =
+            "notification_capsule_clear_action_enabled"
+        private const val KEY_NOTIFICATION_CAPSULE_EXCLUDED_PACKAGE_RULES =
+            "notification_capsule_excluded_package_rules"
         private const val KEY_SMART_EXTERNAL_DEVICES_ENABLED = "smart_external_devices_enabled"
         private const val KEY_SMART_EXTERNAL_DEVICES_IGNORE_DEBUGGING =
             "smart_external_devices_ignore_debugging"

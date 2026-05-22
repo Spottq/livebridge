@@ -286,6 +286,23 @@ class LiveBridgePlatform {
       _askBool('getSmartNotificationCapsuleEnabled');
   static Future<bool> setSmartNotificationCapsuleEnabled(bool value) =>
       _askBool('setSmartNotificationCapsuleEnabled', {'value': value});
+  static Future<bool> getNotificationCapsuleSmartEnabled() =>
+      _askBool('getNotificationCapsuleSmartEnabled');
+  static Future<bool> setNotificationCapsuleSmartEnabled(bool value) =>
+      _askBool('setNotificationCapsuleSmartEnabled', {'value': value});
+  static Future<String> getNotificationCapsuleMode() =>
+      _askStr('getNotificationCapsuleMode');
+  static Future<bool> setNotificationCapsuleMode(String value) =>
+      _askBool('setNotificationCapsuleMode', {'value': value});
+  static Future<bool> getNotificationCapsuleClearActionEnabled() =>
+      _askBool('getNotificationCapsuleClearActionEnabled');
+  static Future<bool> setNotificationCapsuleClearActionEnabled(bool value) =>
+      _askBool('setNotificationCapsuleClearActionEnabled', {'value': value});
+  static Future<String> getNotificationCapsuleExcludedPackageRules() =>
+      _askStr('getNotificationCapsuleExcludedPackageRules');
+  static Future<bool> setNotificationCapsuleExcludedPackageRules(
+    String value,
+  ) => _askBool('setNotificationCapsuleExcludedPackageRules', {'value': value});
   static Future<bool> getSmartExternalDevicesEnabled() =>
       _askBool('getSmartExternalDevicesEnabled');
   static Future<bool> setSmartExternalDevicesEnabled(bool value) =>
