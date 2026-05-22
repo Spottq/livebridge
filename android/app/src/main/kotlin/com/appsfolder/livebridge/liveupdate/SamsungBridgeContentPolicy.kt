@@ -6,7 +6,6 @@ internal data class SamsungBridgeTexts(
     val chipText: String?,
     val nowBarPrimaryText: String,
     val nowBarSecondaryText: String?,
-    val moreInfoText: String?,
     val showSecondaryInNowBar: Boolean,
     val preferCompactNowBarRemoteView: Boolean,
     val disableNowBarRemoteView: Boolean,
@@ -138,7 +137,6 @@ internal object SamsungBridgeContentPolicy {
             chipText = chipText,
             nowBarPrimaryText = nowBarPrimaryText,
             nowBarSecondaryText = nowBarSecondaryText,
-            moreInfoText = null,
             showSecondaryInNowBar = !useSmartShortTextAsPrimary && (
                 remoteViewMiniTextPair != null ||
                         (smartRuleId != "navigation" && !hasCustomRemoteCard)

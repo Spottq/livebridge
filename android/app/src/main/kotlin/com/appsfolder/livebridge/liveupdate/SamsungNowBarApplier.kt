@@ -36,7 +36,6 @@ internal object SamsungNowBarApplier {
             secondaryText = texts.secondaryText,
             nowBarPrimaryText = texts.nowBarPrimaryText,
             nowBarSecondaryText = texts.nowBarSecondaryText,
-            moreInfoText = texts.moreInfoText,
             chipText = texts.chipText,
             chipIcon = chipIcon?.takeIf { texts.showMiniIcon },
             nowBarIcon = nowBarIcon?.takeIf { texts.showMiniIcon },
