@@ -2236,7 +2236,7 @@ object LiveUpdateNotifier {
             return null
         }
         val latestLine = selectedLines.last()
-        if (!notificationCapsuleFitsSingleLine(latestLine.text)) {
+        if (selectedLines.any { line -> !notificationCapsuleFitsSingleLine(line.text) }) {
             return latestLine.text
         }
         return selectedLines.joinToString("\n") { line -> line.text }
