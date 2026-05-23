@@ -2036,11 +2036,9 @@ object LiveUpdateNotifier {
 
     private fun notificationCapsuleRecencyTime(sbn: StatusBarNotification): Long {
         val source = sbn.notification
-        return maxOf(
-            latestNotificationCapsuleMessage(source)?.timestamp ?: 0L,
-            source.`when`.takeIf { it > 0L } ?: 0L,
-            sbn.postTime
-        )
+        return latestNotificationCapsuleMessage(source)?.timestamp?.takeIf { it > 0L }
+            ?: source.`when`.takeIf { it > 0L }
+            ?: sbn.postTime
     }
 
     private fun latestNotificationCapsuleMessage(
@@ -2108,13 +2106,8 @@ object LiveUpdateNotifier {
             normalize(value)?.let(bodyCandidates::add)
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            addTitle(extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE))
-        }
-        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE))
-        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE_BIG))
-
-        latestNotificationCapsuleMessage(source)?.let { message ->
+        val latestMessage = latestNotificationCapsuleMessage(source)
+        latestMessage?.let { message ->
             val sender = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 normalize(message.senderPerson?.name)
             } else {
@@ -2129,6 +2122,12 @@ object LiveUpdateNotifier {
             }
             addBody(message.text)
         }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            addTitle(extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE))
+        }
+        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE))
+        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE_BIG))
 
         extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
             ?.asList()
