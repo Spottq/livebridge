@@ -68,6 +68,7 @@ object LiveUpdateNotifier {
     private const val NOTIFICATION_CAPSULE_KEY_PREFIX = "notification_capsule:"
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
+    private const val NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES = 4
     private const val NOTIFICATION_CAPSULE_IMAGE_MAX_EDGE = 768
     private const val NOTIFICATION_EXTRA_PICTURE_ICON = "android.pictureIcon"
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
@@ -240,6 +241,15 @@ object LiveUpdateNotifier {
         val title: String,
         val body: String?,
         val image: Bitmap?
+    )
+
+    private data class NotificationCapsuleMessageLine(
+        val conversationKey: String?,
+        val text: String,
+        val timestampMs: Long,
+        val sourcePostTimeMs: Long,
+        val sourceKey: String,
+        val messageIndex: Int
     )
 
     fun ensureChannel(context: Context) {
@@ -2056,15 +2066,7 @@ object LiveUpdateNotifier {
     private fun latestNotificationCapsuleMessage(
         notification: Notification
     ): Notification.MessagingStyle.Message? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
-            return null
-        }
-        @Suppress("DEPRECATION")
-        val messages = notification.extras
-            .getParcelableArray(Notification.EXTRA_MESSAGES)
-            ?.let(Notification.MessagingStyle.Message::getMessagesFromBundleArray)
-            ?.filter { message -> !message.text.isNullOrBlank() }
-            .orEmpty()
+        val messages = notificationCapsuleMessages(notification)
         return messages
             .mapIndexed { index, message -> index to message }
             .maxWithOrNull(
@@ -2074,6 +2076,20 @@ object LiveUpdateNotifier {
                 )
             )
             ?.second
+    }
+
+    private fun notificationCapsuleMessages(
+        notification: Notification
+    ): List<Notification.MessagingStyle.Message> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            return emptyList()
+        }
+        @Suppress("DEPRECATION")
+        return notification.extras
+            .getParcelableArray(Notification.EXTRA_MESSAGES)
+            ?.let(Notification.MessagingStyle.Message::getMessagesFromBundleArray)
+            ?.filter { message -> !message.text.isNullOrBlank() }
+            .orEmpty()
     }
 
     private fun notificationCapsuleExpandedContent(
@@ -2089,11 +2105,22 @@ object LiveUpdateNotifier {
                 fallbackTitle = fallbackTitle
             )
         }
-        return extracted ?: NotificationCapsuleExpandedContent(
-            title = fallbackTitle,
-            body = null,
-            image = null
-        )
+        val groupedMessageBody = if (latestSource != null && extracted != null) {
+            notificationCapsuleGroupedMessageBody(
+                sources = sources,
+                latestSource = latestSource,
+                latestTitle = extracted.title,
+                fallbackTitle = fallbackTitle
+            )
+        } else {
+            null
+        }
+        return extracted?.copy(body = groupedMessageBody ?: extracted.body)
+            ?: NotificationCapsuleExpandedContent(
+                title = fallbackTitle,
+                body = null,
+                image = null
+            )
     }
 
     private fun extractNotificationCapsuleExpandedContent(
@@ -2120,12 +2147,7 @@ object LiveUpdateNotifier {
 
         val latestMessage = latestNotificationCapsuleMessage(source)
         latestMessage?.let { message ->
-            val sender = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                normalize(message.senderPerson?.name)
-            } else {
-                @Suppress("DEPRECATION")
-                normalize(message.sender)
-            }
+            val sender = notificationCapsuleMessageSender(message)
             if (!sender.isNullOrBlank() &&
                 !isEquivalentText(sender, fallbackTitle) &&
                 titleCandidates.none { title -> isEquivalentText(sender, title) }
@@ -2172,6 +2194,123 @@ object LiveUpdateNotifier {
             body = body,
             image = resolveNotificationCapsuleImageBitmap(context, sbn)
         )
+    }
+
+    private fun notificationCapsuleGroupedMessageBody(
+        sources: List<StatusBarNotification>,
+        latestSource: StatusBarNotification,
+        latestTitle: String,
+        fallbackTitle: String
+    ): String? {
+        val latestConversationKey = notificationCapsuleConversationKey(latestSource.notification)
+            ?: latestTitle.takeUnless { title -> isEquivalentText(title, fallbackTitle) }
+            ?: return null
+        val lines = sources
+            .flatMap(::notificationCapsuleMessageLines)
+            .filter { line ->
+                line.conversationKey?.let { key -> isEquivalentText(key, latestConversationKey) } == true
+            }
+            .filter { line ->
+                !isEquivalentText(line.text, latestConversationKey) &&
+                    !isEquivalentText(line.text, fallbackTitle)
+            }
+            .sortedWith(
+                compareBy<NotificationCapsuleMessageLine>(
+                    { it.timestampMs },
+                    { it.sourcePostTimeMs },
+                    { it.sourceKey },
+                    { it.messageIndex }
+                )
+            )
+        val uniqueLines = mutableListOf<NotificationCapsuleMessageLine>()
+        val seen = mutableSetOf<String>()
+        lines.forEach { line ->
+            val key = "${line.timestampMs}\u0000${line.text}"
+            if (seen.add(key)) {
+                uniqueLines.add(line)
+            }
+        }
+        val selectedLines = uniqueLines.takeLast(NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES)
+        if (selectedLines.size < 2) {
+            return null
+        }
+        return selectedLines.joinToString("\n") { line -> line.text }
+    }
+
+    private fun notificationCapsuleMessageLines(
+        sbn: StatusBarNotification
+    ): List<NotificationCapsuleMessageLine> {
+        val source = sbn.notification
+        val sourceConversationKey = notificationCapsuleConversationKey(source)
+        val messages = notificationCapsuleMessages(source)
+        if (messages.isNotEmpty()) {
+            return messages.mapIndexedNotNull { index, message ->
+                val text = NotificationTextNormalizer.normalize(message.text) ?: return@mapIndexedNotNull null
+                NotificationCapsuleMessageLine(
+                    conversationKey = notificationCapsuleMessageSender(message) ?: sourceConversationKey,
+                    text = text,
+                    timestampMs = message.timestamp.takeIf { it > 0L }
+                        ?: source.`when`.takeIf { it > 0L }
+                        ?: sbn.postTime,
+                    sourcePostTimeMs = sbn.postTime,
+                    sourceKey = sbn.key,
+                    messageIndex = index
+                )
+            }
+        }
+
+        val text = notificationCapsuleSingleLineText(source) ?: return emptyList()
+        val conversationKey = sourceConversationKey ?: return emptyList()
+        return listOf(
+            NotificationCapsuleMessageLine(
+                conversationKey = conversationKey,
+                text = text,
+                timestampMs = source.`when`.takeIf { it > 0L } ?: sbn.postTime,
+                sourcePostTimeMs = sbn.postTime,
+                sourceKey = sbn.key,
+                messageIndex = 0
+            )
+        )
+    }
+
+    private fun notificationCapsuleMessageSender(
+        message: Notification.MessagingStyle.Message
+    ): String? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            NotificationTextNormalizer.normalize(message.senderPerson?.name)
+        } else {
+            @Suppress("DEPRECATION")
+            NotificationTextNormalizer.normalize(message.sender)
+        }
+    }
+
+    private fun notificationCapsuleConversationKey(notification: Notification): String? {
+        latestNotificationCapsuleMessage(notification)
+            ?.let(::notificationCapsuleMessageSender)
+            ?.let { sender -> return sender }
+        val extras = notification.extras ?: return null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            NotificationTextNormalizer.normalize(
+                extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)
+            )?.let { return it }
+        }
+        return sequenceOf(
+            extras.getCharSequence(Notification.EXTRA_TITLE),
+            extras.getCharSequence(Notification.EXTRA_TITLE_BIG)
+        ).mapNotNull(NotificationTextNormalizer::normalize)
+            .firstOrNull()
+    }
+
+    private fun notificationCapsuleSingleLineText(notification: Notification): String? {
+        val extras = notification.extras ?: return null
+        return sequenceOf(
+            extras.getCharSequence(Notification.EXTRA_TEXT),
+            extras.getCharSequence(Notification.EXTRA_BIG_TEXT),
+            extras.getCharSequence(Notification.EXTRA_SUB_TEXT),
+            extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT),
+            extras.getCharSequence(Notification.EXTRA_INFO_TEXT)
+        ).mapNotNull(NotificationTextNormalizer::normalize)
+            .firstOrNull()
     }
 
     private fun resolveNotificationCapsuleImageBitmap(
