@@ -68,7 +68,7 @@ object LiveUpdateNotifier {
     private const val NOTIFICATION_CAPSULE_KEY_PREFIX = "notification_capsule:"
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
-    private const val NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES = 4
+    private const val NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES = 2
     private const val NOTIFICATION_CAPSULE_IMAGE_MAX_EDGE = 768
     private const val NOTIFICATION_EXTRA_PICTURE_ICON = "android.pictureIcon"
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
