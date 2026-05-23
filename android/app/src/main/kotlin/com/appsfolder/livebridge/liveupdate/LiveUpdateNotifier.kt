@@ -2566,19 +2566,21 @@ object LiveUpdateNotifier {
         val expandedRightIcon = expandedImage?.let { image ->
             runCatching { IconCompat.createWithBitmap(image) }.getOrNull()
         }
-        val clearPendingIntent = if (showClearAction && clearSourceKeys.isNotEmpty()) {
+        val clearPendingIntent = if (clearSourceKeys.isNotEmpty()) {
             notificationCapsuleClearPendingIntent(context, notificationId, clearSourceKeys)
         } else {
             null
         }
-        clearPendingIntent?.let { pendingIntent ->
-            builder.addAction(
-                buildNotificationCapsuleClearAction(
-                    context = context,
-                    notificationId = notificationId,
-                    pendingIntent = pendingIntent
+        if (showClearAction) {
+            clearPendingIntent?.let { pendingIntent ->
+                builder.addAction(
+                    buildNotificationCapsuleClearAction(
+                        context = context,
+                        notificationId = notificationId,
+                        pendingIntent = pendingIntent
+                    )
                 )
-            )
+            }
         }
 
         @Suppress("DEPRECATION")
