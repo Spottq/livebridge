@@ -440,17 +440,18 @@ object LiveUpdateNotifier {
             return 0
         }
 
+        val childGroupKeys = snapshots
+            .asSequence()
+            .filterNot { sbn -> sbn.packageName == context.packageName }
+            .filterNot { sbn -> sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0 }
+            .map { sbn -> sbn.groupKey }
+            .filter { groupKey -> groupKey.isNotBlank() }
+            .toSet()
         val candidates = snapshots
             .asSequence()
             .filter { sbn -> isNotificationCapsuleCandidate(context, sbn) }
             .distinctBy { sbn -> sbn.key }
             .toList()
-        val childGroupKeys = candidates
-            .asSequence()
-            .filterNot { sbn -> sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0 }
-            .map { sbn -> sbn.groupKey }
-            .filter { groupKey -> groupKey.isNotBlank() }
-            .toSet()
         val sources = candidates
             .filter { sbn ->
                 sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0 ||
