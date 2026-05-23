@@ -2026,26 +2026,11 @@ object LiveUpdateNotifier {
         if (isLikelyMediaPlaybackNotification(source)) {
             return false
         }
-        if (isPersistentNotificationCapsuleNoise(sbn)) {
-            return false
-        }
         if (isNotificationCapsuleMirroredSource(sbn)) {
             return false
         }
 
         return true
-    }
-
-    private fun isPersistentNotificationCapsuleNoise(sbn: StatusBarNotification): Boolean {
-        if (sbn.isClearable) {
-            return false
-        }
-        val flags = sbn.notification.flags
-        return flags and (
-            Notification.FLAG_FOREGROUND_SERVICE or
-                Notification.FLAG_ONGOING_EVENT or
-                Notification.FLAG_NO_CLEAR
-            ) != 0
     }
 
     private fun isNotificationCapsuleMirroredSource(sbn: StatusBarNotification): Boolean {
