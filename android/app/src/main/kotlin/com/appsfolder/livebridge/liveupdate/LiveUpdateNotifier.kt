@@ -234,6 +234,11 @@ object LiveUpdateNotifier {
         val largeIconBitmap: Bitmap?
     )
 
+    private data class NotificationCapsuleExpandedContent(
+        val title: String,
+        val body: String?
+    )
+
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return
@@ -504,11 +509,19 @@ object LiveUpdateNotifier {
                 notificationCapsuleItemCount(sbn.notification)
             }
             val appName = notificationCapsuleAppLabel(context, packageName)
+            val countText = notificationCapsuleTitle(context, count)
+            val expandedContent = notificationCapsuleExpandedContent(
+                context = context,
+                sources = groupSources,
+                fallbackTitle = appName
+            )
             val appIconAssets = resolveAppIconAssets(context, packageName)
             val notification = buildNotificationCapsuleNotification(
                 context = context,
                 title = appName,
-                description = notificationCapsuleTitle(context, count),
+                description = countText,
+                expandedTitle = expandedContent.title,
+                expandedDescription = expandedContent.body ?: countText,
                 postTime = groupSources.maxOfOrNull { sbn -> sbn.postTime }
                     ?: System.currentTimeMillis(),
                 notificationId = notificationId,
@@ -2011,6 +2024,108 @@ object LiveUpdateNotifier {
         return maxOf(messageCount, lineCount, 1)
     }
 
+    private fun notificationCapsuleExpandedContent(
+        context: Context,
+        sources: List<StatusBarNotification>,
+        fallbackTitle: String
+    ): NotificationCapsuleExpandedContent {
+        val latestSource = sources.maxByOrNull { sbn -> sbn.postTime }
+        val extracted = latestSource?.let { sbn ->
+            extractNotificationCapsuleExpandedContent(
+                context = context,
+                sbn = sbn,
+                fallbackTitle = fallbackTitle
+            )
+        }
+        return extracted ?: NotificationCapsuleExpandedContent(
+            title = fallbackTitle,
+            body = null
+        )
+    }
+
+    private fun extractNotificationCapsuleExpandedContent(
+        context: Context,
+        sbn: StatusBarNotification,
+        fallbackTitle: String
+    ): NotificationCapsuleExpandedContent? {
+        val source = sbn.notification
+        val extras = source.extras ?: return null
+        val titleCandidates = linkedSetOf<String>()
+        val bodyCandidates = linkedSetOf<String>()
+
+        fun normalize(value: CharSequence?): String? {
+            return NotificationTextNormalizer.normalize(value)
+        }
+
+        fun addTitle(value: CharSequence?) {
+            normalize(value)?.let(titleCandidates::add)
+        }
+
+        fun addBody(value: CharSequence?) {
+            normalize(value)?.let(bodyCandidates::add)
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            addTitle(extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE))
+        }
+        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE))
+        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE_BIG))
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            @Suppress("DEPRECATION")
+            extras.getParcelableArray(Notification.EXTRA_MESSAGES)
+                ?.let(Notification.MessagingStyle.Message::getMessagesFromBundleArray)
+                ?.asReversed()
+                ?.firstOrNull { message -> !message.text.isNullOrBlank() }
+                ?.let { message ->
+                    val sender = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        normalize(message.senderPerson?.name)
+                    } else {
+                        @Suppress("DEPRECATION")
+                        normalize(message.sender)
+                    }
+                    if (!sender.isNullOrBlank() &&
+                        !isEquivalentText(sender, fallbackTitle) &&
+                        titleCandidates.none { title -> isEquivalentText(sender, title) }
+                    ) {
+                        titleCandidates.add(sender)
+                    }
+                    addBody(message.text)
+                }
+        }
+
+        extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+            ?.asList()
+            ?.asReversed()
+            ?.forEach(::addBody)
+        addBody(extras.getCharSequence(Notification.EXTRA_BIG_TEXT))
+        addBody(extras.getCharSequence(Notification.EXTRA_TEXT))
+        addBody(extras.getCharSequence(Notification.EXTRA_SUB_TEXT))
+        addBody(extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT))
+        addBody(extras.getCharSequence(Notification.EXTRA_INFO_TEXT))
+        extractRemoteViewTexts(source).forEach(::addBody)
+        extractRenderedRemoteViewTexts(
+            context = context,
+            notification = source,
+            packageName = sbn.packageName
+        ).forEach(::addBody)
+
+        val title = titleCandidates.firstOrNull()
+            ?: fallbackTitle.takeIf { it.isNotBlank() }
+            ?: return null
+        val body = bodyCandidates.firstOrNull { candidate ->
+            !isEquivalentText(candidate, title) &&
+                !isEquivalentText(candidate, fallbackTitle)
+        } ?: bodyCandidates.firstOrNull { candidate ->
+            !isEquivalentText(candidate, title)
+        }
+
+        return NotificationCapsuleExpandedContent(
+            title = title,
+            body = body
+        )
+    }
+
     private fun notifyNotificationCapsule(
         manager: NotificationManagerCompat,
         notificationId: Int,
@@ -2135,6 +2250,8 @@ object LiveUpdateNotifier {
         context: Context,
         title: String,
         description: String,
+        expandedTitle: String = title,
+        expandedDescription: String = description,
         postTime: Long,
         notificationId: Int,
         smallIcon: IconCompat,
@@ -2193,8 +2310,8 @@ object LiveUpdateNotifier {
             sourcePackageName = context.packageName,
             primaryText = title,
             secondaryText = description,
-            nowBarPrimaryText = title,
-            nowBarSecondaryText = description,
+            nowBarPrimaryText = expandedTitle,
+            nowBarSecondaryText = expandedDescription,
             chipText = title,
             chipIcon = smallIcon,
             nowBarIcon = smallIcon,
