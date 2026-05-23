@@ -2014,8 +2014,20 @@ object LiveUpdateNotifier {
         if (isLikelyMediaPlaybackNotification(source)) {
             return false
         }
+        if (isNotificationCapsuleMirroredSource(sbn)) {
+            return false
+        }
 
         return true
+    }
+
+    private fun isNotificationCapsuleMirroredSource(sbn: StatusBarNotification): Boolean {
+        return synchronized(stateLock) {
+            sourceSnapshotsByMirrorKey.containsKey(sbn.key) ||
+                callMirrorStates.containsKey(sbn.key) ||
+                sbnToAggregateKey.containsKey(sbn.key) ||
+                sbnToOtpAggregateKey.containsKey(sbn.key)
+        }
     }
 
     private fun notificationCapsuleItemCount(notification: Notification): Int {
