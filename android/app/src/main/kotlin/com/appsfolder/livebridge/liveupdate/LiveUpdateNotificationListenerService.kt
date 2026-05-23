@@ -218,6 +218,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         if (isUnsupportedDevice()) {
             return
         }
+        LiveUpdateNotifier.cancelNotificationCapsule(applicationContext)
         syncNetworkSpeedService()
         scheduleRebind("listener_disconnected")
     }
@@ -418,6 +419,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         if (activeInstance === this) {
             activeInstance = null
         }
+        LiveUpdateNotifier.cancelNotificationCapsule(applicationContext)
         super.onDestroy()
     }
 
