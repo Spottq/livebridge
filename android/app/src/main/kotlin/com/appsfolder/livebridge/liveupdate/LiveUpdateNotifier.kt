@@ -68,6 +68,8 @@ object LiveUpdateNotifier {
     private const val NOTIFICATION_CAPSULE_KEY_PREFIX = "notification_capsule:"
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
+    private const val NOTIFICATION_CAPSULE_IMAGE_MAX_EDGE = 768
+    private const val NOTIFICATION_EXTRA_PICTURE_ICON = "android.pictureIcon"
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
         YANDEX_MAPS_PACKAGE,
         YANGO_MAPS_PACKAGE,
@@ -236,7 +238,8 @@ object LiveUpdateNotifier {
 
     private data class NotificationCapsuleExpandedContent(
         val title: String,
-        val body: String?
+        val body: String?,
+        val image: Bitmap?
     )
 
     fun ensureChannel(context: Context) {
@@ -522,6 +525,7 @@ object LiveUpdateNotifier {
                 description = countText,
                 expandedTitle = expandedContent.title,
                 expandedDescription = expandedContent.body ?: countText,
+                expandedImage = expandedContent.image,
                 postTime = groupSources.maxOfOrNull { sbn -> sbn.postTime }
                     ?: System.currentTimeMillis(),
                 notificationId = notificationId,
@@ -2039,7 +2043,8 @@ object LiveUpdateNotifier {
         }
         return extracted ?: NotificationCapsuleExpandedContent(
             title = fallbackTitle,
-            body = null
+            body = null,
+            image = null
         )
     }
 
@@ -2122,8 +2127,60 @@ object LiveUpdateNotifier {
 
         return NotificationCapsuleExpandedContent(
             title = title,
-            body = body
+            body = body,
+            image = resolveNotificationCapsuleImageBitmap(context, sbn)
         )
+    }
+
+    private fun resolveNotificationCapsuleImageBitmap(
+        context: Context,
+        sbn: StatusBarNotification
+    ): Bitmap? {
+        val source = sbn.notification
+        val extras = source.extras
+        sequenceOf(
+            extras.get(Notification.EXTRA_PICTURE),
+            extras.get(NOTIFICATION_EXTRA_PICTURE_ICON)
+        ).forEach { value ->
+            resolveNotificationBitmapValue(context, value)
+                ?.let(::normalizeNotificationCapsuleImageBitmap)
+                ?.let { return it }
+        }
+        return resolveSourceLargeIconBitmap(context, source)
+            ?.let(::normalizeNotificationCapsuleImageBitmap)
+    }
+
+    private fun resolveNotificationBitmapValue(context: Context, value: Any?): Bitmap? {
+        return when (value) {
+            is Bitmap -> value
+            is android.graphics.drawable.Icon -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    iconToBitmap(context, value)
+                } else {
+                    null
+                }
+            }
+            is IconCompat -> runCatching {
+                value.toIcon(context)
+            }.getOrNull()?.let { iconToBitmap(context, it) }
+            else -> null
+        }
+    }
+
+    private fun normalizeNotificationCapsuleImageBitmap(bitmap: Bitmap): Bitmap? {
+        if (bitmap.isRecycled || bitmap.width <= 0 || bitmap.height <= 0) {
+            return null
+        }
+        val maxEdge = maxOf(bitmap.width, bitmap.height)
+        if (maxEdge <= NOTIFICATION_CAPSULE_IMAGE_MAX_EDGE) {
+            return bitmap
+        }
+        val scale = NOTIFICATION_CAPSULE_IMAGE_MAX_EDGE.toFloat() / maxEdge.toFloat()
+        val width = (bitmap.width * scale).roundToInt().coerceAtLeast(1)
+        val height = (bitmap.height * scale).roundToInt().coerceAtLeast(1)
+        return runCatching {
+            Bitmap.createScaledBitmap(bitmap, width, height, true)
+        }.getOrNull()
     }
 
     private fun notifyNotificationCapsule(
@@ -2221,6 +2278,7 @@ object LiveUpdateNotifier {
 
     private fun buildNotificationCapsuleClearAction(
         context: Context,
+        notificationId: Int,
         pendingIntent: PendingIntent
     ): NotificationCompat.Action {
         return NotificationCompat.Action.Builder(
@@ -2229,7 +2287,10 @@ object LiveUpdateNotifier {
             pendingIntent
         ).addExtras(
             Bundle().apply {
-                putString(NOWBAR_EXTRA_ACTION_ID, NOTIFICATION_CAPSULE_CLEAR_ACTION_ID)
+                putString(
+                    NOWBAR_EXTRA_ACTION_ID,
+                    "$NOTIFICATION_CAPSULE_CLEAR_ACTION_ID:$notificationId"
+                )
                 putString(NOWBAR_EXTRA_ACTION_SEMANTIC, NOWBAR_ACTION_SEMANTIC_DELETE)
             }
         ).build()
@@ -2252,6 +2313,7 @@ object LiveUpdateNotifier {
         description: String,
         expandedTitle: String = title,
         expandedDescription: String = description,
+        expandedImage: Bitmap? = null,
         postTime: Long,
         notificationId: Int,
         smallIcon: IconCompat,
@@ -2285,6 +2347,9 @@ object LiveUpdateNotifier {
         if (description.isNotBlank()) {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(description))
         }
+        val expandedRightIcon = expandedImage?.let { image ->
+            runCatching { IconCompat.createWithBitmap(image) }.getOrNull()
+        }
         val clearPendingIntent = if (showClearAction && clearSourceKeys.isNotEmpty()) {
             notificationCapsuleClearPendingIntent(context, notificationId, clearSourceKeys)
         } else {
@@ -2294,6 +2359,7 @@ object LiveUpdateNotifier {
             builder.addAction(
                 buildNotificationCapsuleClearAction(
                     context = context,
+                    notificationId = notificationId,
                     pendingIntent = pendingIntent
                 )
             )
@@ -2315,7 +2381,7 @@ object LiveUpdateNotifier {
             chipText = title,
             chipIcon = smallIcon,
             nowBarIcon = smallIcon,
-            rightIcon = null,
+            rightIcon = expandedRightIcon,
             suppressSourceRemoteViews = true,
             suppressSourceNowBarRemoteView = true,
             hasProgress = false,
