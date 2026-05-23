@@ -445,7 +445,7 @@ object LiveUpdateNotifier {
                 sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0 ||
                     sbn.groupKey !in childGroupKeys
             }
-            .sortedByDescending { sbn -> sbn.postTime }
+            .sortedByDescending { sbn -> notificationCapsuleRecencyTime(sbn) }
         if (sources.isEmpty()) {
             cancelNotificationCapsule(context)
             return 0
@@ -467,7 +467,9 @@ object LiveUpdateNotifier {
         val appGroups = visibleSources
             .groupBy { sbn -> sbn.packageName.lowercase(Locale.ROOT) }
             .values
-            .sortedByDescending { group -> group.maxOfOrNull { sbn -> sbn.postTime } ?: 0L }
+            .sortedByDescending { group ->
+                group.maxOfOrNull { sbn -> notificationCapsuleRecencyTime(sbn) } ?: 0L
+            }
 
         fun postGeneralCapsule(generalSources: List<StatusBarNotification>) {
             if (generalSources.isEmpty()) {
@@ -487,7 +489,9 @@ object LiveUpdateNotifier {
                 context = context,
                 title = title,
                 description = appNames,
-                postTime = generalSources.maxOfOrNull { sbn -> sbn.postTime }
+                postTime = generalSources.maxOfOrNull { sbn ->
+                    notificationCapsuleRecencyTime(sbn)
+                }
                     ?: System.currentTimeMillis(),
                 notificationId = NOTIFICATION_CAPSULE_ID,
                 smallIcon = IconCompat.createWithResource(
@@ -526,7 +530,9 @@ object LiveUpdateNotifier {
                 expandedTitle = expandedContent.title,
                 expandedDescription = expandedContent.body ?: countText,
                 expandedImage = expandedContent.image,
-                postTime = groupSources.maxOfOrNull { sbn -> sbn.postTime }
+                postTime = groupSources.maxOfOrNull { sbn ->
+                    notificationCapsuleRecencyTime(sbn)
+                }
                     ?: System.currentTimeMillis(),
                 notificationId = notificationId,
                 smallIcon = appIconAssets?.smallIcon ?: IconCompat.createWithResource(
@@ -2028,12 +2034,44 @@ object LiveUpdateNotifier {
         return maxOf(messageCount, lineCount, 1)
     }
 
+    private fun notificationCapsuleRecencyTime(sbn: StatusBarNotification): Long {
+        val source = sbn.notification
+        return maxOf(
+            latestNotificationCapsuleMessage(source)?.timestamp ?: 0L,
+            source.`when`.takeIf { it > 0L } ?: 0L,
+            sbn.postTime
+        )
+    }
+
+    private fun latestNotificationCapsuleMessage(
+        notification: Notification
+    ): Notification.MessagingStyle.Message? {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            return null
+        }
+        @Suppress("DEPRECATION")
+        val messages = notification.extras
+            .getParcelableArray(Notification.EXTRA_MESSAGES)
+            ?.let(Notification.MessagingStyle.Message::getMessagesFromBundleArray)
+            ?.filter { message -> !message.text.isNullOrBlank() }
+            .orEmpty()
+        return messages
+            .mapIndexed { index, message -> index to message }
+            .maxWithOrNull(
+                compareBy<Pair<Int, Notification.MessagingStyle.Message>>(
+                    { it.second.timestamp },
+                    { it.first }
+                )
+            )
+            ?.second
+    }
+
     private fun notificationCapsuleExpandedContent(
         context: Context,
         sources: List<StatusBarNotification>,
         fallbackTitle: String
     ): NotificationCapsuleExpandedContent {
-        val latestSource = sources.maxByOrNull { sbn -> sbn.postTime }
+        val latestSource = sources.maxByOrNull { sbn -> notificationCapsuleRecencyTime(sbn) }
         val extracted = latestSource?.let { sbn ->
             extractNotificationCapsuleExpandedContent(
                 context = context,
@@ -2076,27 +2114,20 @@ object LiveUpdateNotifier {
         addTitle(extras.getCharSequence(Notification.EXTRA_TITLE))
         addTitle(extras.getCharSequence(Notification.EXTRA_TITLE_BIG))
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            @Suppress("DEPRECATION")
-            extras.getParcelableArray(Notification.EXTRA_MESSAGES)
-                ?.let(Notification.MessagingStyle.Message::getMessagesFromBundleArray)
-                ?.asReversed()
-                ?.firstOrNull { message -> !message.text.isNullOrBlank() }
-                ?.let { message ->
-                    val sender = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        normalize(message.senderPerson?.name)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        normalize(message.sender)
-                    }
-                    if (!sender.isNullOrBlank() &&
-                        !isEquivalentText(sender, fallbackTitle) &&
-                        titleCandidates.none { title -> isEquivalentText(sender, title) }
-                    ) {
-                        titleCandidates.add(sender)
-                    }
-                    addBody(message.text)
-                }
+        latestNotificationCapsuleMessage(source)?.let { message ->
+            val sender = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                normalize(message.senderPerson?.name)
+            } else {
+                @Suppress("DEPRECATION")
+                normalize(message.sender)
+            }
+            if (!sender.isNullOrBlank() &&
+                !isEquivalentText(sender, fallbackTitle) &&
+                titleCandidates.none { title -> isEquivalentText(sender, title) }
+            ) {
+                titleCandidates.add(sender)
+            }
+            addBody(message.text)
         }
 
         extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
