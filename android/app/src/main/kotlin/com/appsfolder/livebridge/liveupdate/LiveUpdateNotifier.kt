@@ -69,6 +69,7 @@ object LiveUpdateNotifier {
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
     private const val NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES = 2
+    private const val NOTIFICATION_CAPSULE_SINGLE_LINE_GRAPHEME_LIMIT = 40
     private const val NOTIFICATION_CAPSULE_IMAGE_MAX_EDGE = 768
     private const val NOTIFICATION_EXTRA_PICTURE_ICON = "android.pictureIcon"
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
@@ -2234,6 +2235,10 @@ object LiveUpdateNotifier {
         if (selectedLines.size < 2) {
             return null
         }
+        val latestLine = selectedLines.last()
+        if (!notificationCapsuleFitsSingleLine(latestLine.text)) {
+            return latestLine.text
+        }
         return selectedLines.joinToString("\n") { line -> line.text }
     }
 
@@ -2311,6 +2316,20 @@ object LiveUpdateNotifier {
             extras.getCharSequence(Notification.EXTRA_INFO_TEXT)
         ).mapNotNull(NotificationTextNormalizer::normalize)
             .firstOrNull()
+    }
+
+    private fun notificationCapsuleFitsSingleLine(text: String): Boolean {
+        return notificationCapsuleGraphemeCount(text) <= NOTIFICATION_CAPSULE_SINGLE_LINE_GRAPHEME_LIMIT
+    }
+
+    private fun notificationCapsuleGraphemeCount(text: String): Int {
+        val iterator = BreakIterator.getCharacterInstance(Locale.getDefault())
+        iterator.setText(text)
+        var count = 0
+        while (iterator.next() != BreakIterator.DONE) {
+            count += 1
+        }
+        return count
     }
 
     private fun resolveNotificationCapsuleImageBitmap(
