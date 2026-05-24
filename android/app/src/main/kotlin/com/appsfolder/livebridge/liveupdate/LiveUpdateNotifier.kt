@@ -272,27 +272,22 @@ object LiveUpdateNotifier {
     )
 
     private enum class ChargingInfoSpeed(
-        val label: String,
         val iconRes: Int,
         val color: Int
     ) {
         CHARGING(
-            label = "Charging",
             iconRes = R.drawable.ic_charging_bolt,
             color = CHARGING_INFO_FAST_COLOR
         ),
         FAST(
-            label = "Fast charging",
             iconRes = R.drawable.ic_charging_bolt,
             color = CHARGING_INFO_FAST_COLOR
         ),
         SUPER_FAST(
-            label = "Super fast charging",
             iconRes = R.drawable.ic_charging_double_bolt,
             color = CHARGING_INFO_SUPER_FAST_COLOR
         ),
         SUPER_FAST_2(
-            label = "Super fast charging 2.0",
             iconRes = R.drawable.ic_charging_double_bolt,
             color = CHARGING_INFO_SUPER_FAST_2_COLOR
         )
@@ -754,9 +749,10 @@ object LiveUpdateNotifier {
         snapshot: ChargingInfoSnapshot
     ): Notification {
         val title = "${snapshot.percent}%"
-        val collapsedText = chargingInfoRemainingText(snapshot.remainingMinutes)
+        val collapsedText = chargingInfoRemainingText(context, snapshot.remainingMinutes)
         val speed = snapshot.speed
-        val expandedText = chargingInfoExpandedText(speed.label, collapsedText)
+        val speedLabel = chargingInfoSpeedLabel(context, speed)
+        val expandedText = chargingInfoExpandedText(speedLabel, collapsedText)
         val icon = IconCompat.createWithResource(context, speed.iconRes)
         val builder = NotificationCompat.Builder(
             context,
@@ -823,11 +819,80 @@ object LiveUpdateNotifier {
         }
     }
 
-    private fun chargingInfoRemainingText(remainingMinutes: Int?): String {
+    private fun chargingInfoRemainingText(context: Context, remainingMinutes: Int?): String {
         return when {
-            remainingMinutes == null -> "Charging"
-            remainingMinutes <= 0 -> "Full"
-            else -> "$remainingMinutes m until full"
+            remainingMinutes == null -> chargingInfoChargingText(context)
+            remainingMinutes <= 0 -> chargingInfoFullText(context)
+            else -> chargingInfoUntilFullText(context, remainingMinutes)
+        }
+    }
+
+    private fun chargingInfoSpeedLabel(context: Context, speed: ChargingInfoSpeed): String {
+        return when (speed) {
+            ChargingInfoSpeed.CHARGING -> chargingInfoChargingText(context)
+            ChargingInfoSpeed.FAST -> when (appLocale(context)) {
+                AppLocale.RU -> "Быстрая зарядка"
+                AppLocale.TR -> "Hızlı şarj"
+                AppLocale.PT_BR -> "Carregamento rápido"
+                AppLocale.ZH_HANS -> "快速充电"
+                AppLocale.ZH_HANT -> "快速充電"
+                AppLocale.KO -> "고속 충전"
+                AppLocale.EN -> "Fast charging"
+            }
+            ChargingInfoSpeed.SUPER_FAST -> when (appLocale(context)) {
+                AppLocale.RU -> "Очень быстрая зарядка"
+                AppLocale.TR -> "Süper hızlı şarj"
+                AppLocale.PT_BR -> "Carregamento super-rápido"
+                AppLocale.ZH_HANS -> "超快速充电"
+                AppLocale.ZH_HANT -> "超快速充電"
+                AppLocale.KO -> "초고속 충전"
+                AppLocale.EN -> "Super fast charging"
+            }
+            ChargingInfoSpeed.SUPER_FAST_2 -> when (appLocale(context)) {
+                AppLocale.RU -> "Очень быстрая зарядка 2.0"
+                AppLocale.TR -> "Süper hızlı şarj 2.0"
+                AppLocale.PT_BR -> "Carregamento super-rápido 2.0"
+                AppLocale.ZH_HANS -> "超快速充电 2.0"
+                AppLocale.ZH_HANT -> "超快速充電 2.0"
+                AppLocale.KO -> "초고속 충전 2.0"
+                AppLocale.EN -> "Super fast charging 2.0"
+            }
+        }
+    }
+
+    private fun chargingInfoChargingText(context: Context): String {
+        return when (appLocale(context)) {
+            AppLocale.RU -> "Зарядка"
+            AppLocale.TR -> "Şarj oluyor"
+            AppLocale.PT_BR -> "Carregando"
+            AppLocale.ZH_HANS -> "正在充电"
+            AppLocale.ZH_HANT -> "正在充電"
+            AppLocale.KO -> "충전 중"
+            AppLocale.EN -> "Charging"
+        }
+    }
+
+    private fun chargingInfoFullText(context: Context): String {
+        return when (appLocale(context)) {
+            AppLocale.RU -> "Заряжено"
+            AppLocale.TR -> "Dolu"
+            AppLocale.PT_BR -> "Completo"
+            AppLocale.ZH_HANS -> "已充满"
+            AppLocale.ZH_HANT -> "已充滿"
+            AppLocale.KO -> "완충됨"
+            AppLocale.EN -> "Full"
+        }
+    }
+
+    private fun chargingInfoUntilFullText(context: Context, remainingMinutes: Int): String {
+        return when (appLocale(context)) {
+            AppLocale.RU -> "$remainingMinutes мин до полного заряда"
+            AppLocale.TR -> "Dolmaya $remainingMinutes dk"
+            AppLocale.PT_BR -> "$remainingMinutes min até completar"
+            AppLocale.ZH_HANS -> "距离充满还有 $remainingMinutes 分钟"
+            AppLocale.ZH_HANT -> "距離充滿還有 $remainingMinutes 分鐘"
+            AppLocale.KO -> "완충까지 ${remainingMinutes}분"
+            AppLocale.EN -> "$remainingMinutes min until full"
         }
     }
 
@@ -2317,19 +2382,8 @@ object LiveUpdateNotifier {
             MirrorNotificationChannel.NOTIFICATION_CAPSULE ->
                 notificationCapsuleChannelText(context)
 
-            MirrorNotificationChannel.CHARGING_INFO -> {
-                if (isRussian) {
-                    MirrorChannelText(
-                        name = "Charging information",
-                        description = "Battery charge and charging speed on the lock screen"
-                    )
-                } else {
-                    MirrorChannelText(
-                        name = "Charging information",
-                        description = "Battery charge and charging speed on the lock screen"
-                    )
-                }
-            }
+            MirrorNotificationChannel.CHARGING_INFO ->
+                chargingInfoChannelText(context)
 
             MirrorNotificationChannel.BYPASS -> {
                 if (isRussian) {
@@ -4800,7 +4854,14 @@ object LiveUpdateNotifier {
     }
 
     private fun appLocale(context: Context): AppLocale {
+        appLocaleFromLanguageTag(ConverterPrefs(context).getAppLanguageTag())?.let { locale ->
+            return locale
+        }
         val locale = currentLocale(context) ?: return AppLocale.EN
+        return appLocaleFromLocale(locale)
+    }
+
+    private fun appLocaleFromLocale(locale: Locale): AppLocale {
         val language = locale.language.lowercase(Locale.ROOT)
         return when {
             language.startsWith("ru") -> AppLocale.RU
@@ -4811,6 +4872,34 @@ object LiveUpdateNotifier {
             language.startsWith("ko") -> AppLocale.KO
             else -> AppLocale.EN
         }
+    }
+
+    private fun appLocaleFromLanguageTag(languageTag: String?): AppLocale? {
+        val normalized = languageTag
+            ?.trim()
+            ?.replace('_', '-')
+            ?.lowercase(Locale.ROOT)
+            .orEmpty()
+        return when {
+            normalized.isBlank() || normalized == "system" -> null
+            normalized.startsWith("ru") -> AppLocale.RU
+            normalized.startsWith("tr") -> AppLocale.TR
+            normalized.startsWith("pt") -> AppLocale.PT_BR
+            isTraditionalChineseLanguageTag(normalized) -> AppLocale.ZH_HANT
+            normalized.startsWith("zh") -> AppLocale.ZH_HANS
+            normalized.startsWith("ko") -> AppLocale.KO
+            else -> AppLocale.EN
+        }
+    }
+
+    private fun isTraditionalChineseLanguageTag(languageTag: String): Boolean {
+        return languageTag.startsWith("zh") &&
+            (
+                languageTag.contains("hant") ||
+                    languageTag.contains("-tw") ||
+                    languageTag.contains("-hk") ||
+                    languageTag.contains("-mo")
+                )
     }
 
     private fun isTraditionalChinese(locale: Locale): Boolean {
@@ -4852,6 +4941,39 @@ object LiveUpdateNotifier {
             AppLocale.EN -> MirrorChannelText(
                 name = "Notification capsule",
                 description = "Lock screen notification counter capsule"
+            )
+        }
+    }
+
+    private fun chargingInfoChannelText(context: Context): MirrorChannelText {
+        return when (appLocale(context)) {
+            AppLocale.RU -> MirrorChannelText(
+                name = "Информация о зарядке",
+                description = "Заряд батареи, время до полного заряда и скорость зарядки на экране блокировки"
+            )
+            AppLocale.TR -> MirrorChannelText(
+                name = "Şarj bilgisi",
+                description = "Kilit ekranında pil seviyesi, dolmaya kalan süre ve şarj hızı"
+            )
+            AppLocale.PT_BR -> MirrorChannelText(
+                name = "Informações de carregamento",
+                description = "Nível da bateria, tempo até completar e velocidade de carregamento na tela de bloqueio"
+            )
+            AppLocale.ZH_HANS -> MirrorChannelText(
+                name = "充电信息",
+                description = "在锁屏显示电量、充满剩余时间和充电速度"
+            )
+            AppLocale.ZH_HANT -> MirrorChannelText(
+                name = "充電資訊",
+                description = "在鎖定畫面顯示電量、充滿剩餘時間和充電速度"
+            )
+            AppLocale.KO -> MirrorChannelText(
+                name = "충전 정보",
+                description = "잠금 화면에 배터리 잔량, 완충까지 남은 시간, 충전 속도 표시"
+            )
+            AppLocale.EN -> MirrorChannelText(
+                name = "Charging information",
+                description = "Battery charge and charging speed on the lock screen"
             )
         }
     }
