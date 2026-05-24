@@ -272,6 +272,11 @@ object LiveUpdateNotifier {
         val iconRes: Int,
         val color: Int
     ) {
+        CHARGING(
+            label = "Charging",
+            iconRes = R.drawable.ic_charging_bolt,
+            color = CHARGING_INFO_FAST_COLOR
+        ),
         FAST(
             label = "Fast charging",
             iconRes = R.drawable.ic_charging_bolt,
@@ -833,6 +838,7 @@ object LiveUpdateNotifier {
     private fun resolveChargingInfoSpeed(batteryIntent: Intent): ChargingInfoSpeed {
         chargingPowerWatts(batteryIntent)?.let { watts ->
             return when {
+                watts <= 10f -> ChargingInfoSpeed.CHARGING
                 watts >= 40f -> ChargingInfoSpeed.SUPER_FAST_2
                 watts >= 22f -> ChargingInfoSpeed.SUPER_FAST
                 else -> ChargingInfoSpeed.FAST
