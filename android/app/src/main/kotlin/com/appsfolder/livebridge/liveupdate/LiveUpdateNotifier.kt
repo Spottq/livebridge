@@ -552,6 +552,7 @@ object LiveUpdateNotifier {
                     R.drawable.ic_notification_capsule
                 ),
                 largeIcon = appIconAssets?.largeIconBitmap,
+                contentIntent = notificationCapsuleSourceContentIntent(groupSources),
                 clearSourceKeys = groupSources.map { sbn -> sbn.key },
                 showClearAction = prefs.getNotificationCapsuleClearActionEnabled()
             )
@@ -2477,6 +2478,14 @@ object LiveUpdateNotifier {
         )
     }
 
+    private fun notificationCapsuleSourceContentIntent(
+        sources: List<StatusBarNotification>
+    ): PendingIntent? {
+        return sources
+            .sortedByDescending { sbn -> notificationCapsuleRecencyTime(sbn) }
+            .firstNotNullOfOrNull { sbn -> sbn.notification.contentIntent }
+    }
+
     private fun buildNotificationCapsuleClearAction(
         context: Context,
         notificationId: Int,
@@ -2519,6 +2528,7 @@ object LiveUpdateNotifier {
         notificationId: Int,
         smallIcon: IconCompat,
         largeIcon: Bitmap?,
+        contentIntent: PendingIntent? = null,
         clearSourceKeys: List<String>,
         showClearAction: Boolean
     ): Notification {
@@ -2543,7 +2553,8 @@ object LiveUpdateNotifier {
             .setSmallIcon(smallIcon)
 
         largeIcon?.let(builder::setLargeIcon)
-        notificationCapsuleContentIntent(context, notificationId)?.let(builder::setContentIntent)
+        (contentIntent ?: notificationCapsuleContentIntent(context, notificationId))
+            ?.let(builder::setContentIntent)
 
         if (description.isNotBlank()) {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(description))

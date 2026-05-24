@@ -38,7 +38,7 @@ internal class FlashlightNotificationBuilder(
             FlashlightController.DEFAULT_LEVEL_INDEX
         }
         val secondaryText = secondaryText(capability)
-        val nowBarCollapsedText = title
+        val nowBarCollapsedText = chipText()
         val contentIntent = PendingIntent.getActivity(
             context,
             0,
@@ -341,6 +341,10 @@ internal class FlashlightNotificationBuilder(
         } else {
             "Flashlight on"
         }
+    }
+
+    private fun chipText(): String {
+        return "Flashlight"
     }
 
     private fun disableButtonText(): String {
