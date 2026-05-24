@@ -71,8 +71,8 @@ object LiveUpdateNotifier {
     private const val NOTIFICATION_CAPSULE_KEY_PREFIX = "notification_capsule:"
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
     private const val CHARGING_INFO_FAST_COLOR = 0xFF65DE6B.toInt()
-    private const val CHARGING_INFO_SUPER_FAST_COLOR = 0xFF5AAEF7.toInt()
-    private const val CHARGING_INFO_SUPER_FAST_2_COLOR = 0xFF49D6CF.toInt()
+    private const val CHARGING_INFO_SUPER_FAST_COLOR = 0xFF24D9C7.toInt()
+    private const val CHARGING_INFO_SUPER_FAST_2_COLOR = 0xFF35BDF7.toInt()
     private const val BATTERY_EXTRA_MAX_CHARGING_CURRENT = "max_charging_current"
     private const val BATTERY_EXTRA_MAX_CHARGING_VOLTAGE = "max_charging_voltage"
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
@@ -273,17 +273,17 @@ object LiveUpdateNotifier {
         val color: Int
     ) {
         FAST(
-            label = "fast charging",
+            label = "Fast charging",
             iconRes = R.drawable.ic_charging_bolt,
             color = CHARGING_INFO_FAST_COLOR
         ),
         SUPER_FAST(
-            label = "super fast charging",
+            label = "Super fast charging",
             iconRes = R.drawable.ic_charging_double_bolt,
             color = CHARGING_INFO_SUPER_FAST_COLOR
         ),
         SUPER_FAST_2(
-            label = "super fast charging 2.0",
+            label = "Super fast charging 2.0",
             iconRes = R.drawable.ic_charging_double_bolt,
             color = CHARGING_INFO_SUPER_FAST_2_COLOR
         )
@@ -677,6 +677,7 @@ object LiveUpdateNotifier {
         val title = "${snapshot.percent}%"
         val collapsedText = chargingInfoRemainingText(snapshot.remainingMinutes)
         val speed = snapshot.speed
+        val expandedText = chargingInfoExpandedText(speed.label, collapsedText)
         val icon = IconCompat.createWithResource(context, speed.iconRes)
         val builder = NotificationCompat.Builder(
             context,
@@ -685,7 +686,7 @@ object LiveUpdateNotifier {
             .setSmallIcon(speed.iconRes)
             .setContentTitle(title)
             .setContentText(collapsedText)
-            .setStyle(NotificationCompat.BigTextStyle().bigText(speed.label))
+            .setStyle(NotificationCompat.BigTextStyle().bigText(expandedText))
             .setColor(speed.color)
             .setOngoing(true)
             .setAutoCancel(false)
@@ -699,7 +700,6 @@ object LiveUpdateNotifier {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setRequestPromotedOngoing(true)
             .setShortCriticalText(title)
-            .setProgress(100, snapshot.percent, false)
 
         notificationCapsuleContentIntent(context, CHARGING_INFO_ID)?.let(builder::setContentIntent)
 
@@ -713,7 +713,7 @@ object LiveUpdateNotifier {
             source = bridgeSource,
             sourcePackageName = context.packageName,
             primaryText = title,
-            secondaryText = speed.label,
+            secondaryText = expandedText,
             nowBarPrimaryText = title,
             nowBarSecondaryText = collapsedText,
             chipText = title,
@@ -722,15 +722,26 @@ object LiveUpdateNotifier {
             rightIcon = null,
             suppressSourceRemoteViews = true,
             suppressSourceNowBarRemoteView = true,
-            hasProgress = true,
-            progressValue = snapshot.percent,
-            progressMax = 100,
+            hasProgress = false,
+            progressValue = 0,
+            progressMax = 0,
             showSecondaryInNowBar = collapsedText.isNotBlank(),
             disableNowBarRemoteView = true,
             reuseNotificationRemoteViews = false,
             lockscreenOnly = true
         )
         return SamsungOneUi7NowBarCompat.markEligible(builder.build())
+    }
+
+    private fun chargingInfoExpandedText(
+        speedLabel: String,
+        remainingText: String
+    ): String {
+        return if (remainingText.isBlank()) {
+            speedLabel
+        } else {
+            "$speedLabel\n$remainingText"
+        }
     }
 
     private fun chargingInfoRemainingText(remainingMinutes: Int?): String {
