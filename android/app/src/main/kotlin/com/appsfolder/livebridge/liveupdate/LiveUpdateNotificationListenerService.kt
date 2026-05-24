@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.hardware.camera2.CameraManager
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -16,6 +17,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.NotificationListenerService.RankingMap
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import java.util.Locale
 import kotlin.math.min
 
 class LiveUpdateNotificationListenerService : NotificationListenerService() {
@@ -33,6 +35,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private var snapshotSyncScheduled = false
     private var lockscreenStateReceiverRegistered = false
     private var chargingInfoReceiverRegistered = false
+    private var chargingInfoAppearanceScheduled = false
+    private var chargingInfoAppearanceGeneration = 0L
+    private var chargingInfoSystemCapsuleSeen = false
+    private var chargingInfoAppearanceStartedAtMs = 0L
 
     private val lockscreenPrivacyRefreshRunnable = Runnable {
         requestImmediateSnapshotSync()
@@ -51,6 +57,12 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private val chargingInfoReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             handleChargingInfoBatteryChanged(intent)
+        }
+    }
+
+    private val chargingInfoAppearanceRunnable = object : Runnable {
+        override fun run() {
+            handleChargingInfoAppearancePoll()
         }
     }
 
@@ -492,8 +504,13 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             !isUnsupportedDevice()
         ) {
             ensureChargingInfoReceiverRegistered()
-            LiveUpdateNotifier.refreshChargingInfo(applicationContext, prefs)
+            if (LiveUpdateNotifier.isChargingInfoActive(applicationContext)) {
+                LiveUpdateNotifier.refreshChargingInfo(applicationContext, prefs)
+            } else {
+                scheduleChargingInfoAppearance()
+            }
         } else {
+            cancelChargingInfoAppearance()
             unregisterChargingInfoReceiverIfNeeded()
             LiveUpdateNotifier.cancelChargingInfo(applicationContext)
         }
@@ -576,12 +593,142 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     private fun handleChargingInfoBatteryChanged(intent: Intent?) {
-        val batteryIntent = intent?.takeIf { it.action == Intent.ACTION_BATTERY_CHANGED }
-        LiveUpdateNotifier.refreshChargingInfo(
-            context = applicationContext,
-            prefs = prefs,
-            batteryIntent = batteryIntent
-        )
+        when (intent?.action) {
+            Intent.ACTION_POWER_DISCONNECTED -> {
+                cancelChargingInfoAppearance()
+                LiveUpdateNotifier.cancelChargingInfo(applicationContext)
+                return
+            }
+            Intent.ACTION_BATTERY_CHANGED -> {
+                if (!isChargingBatteryIntent(intent)) {
+                    cancelChargingInfoAppearance()
+                    LiveUpdateNotifier.cancelChargingInfo(applicationContext)
+                    return
+                }
+            }
+        }
+        if (LiveUpdateNotifier.isChargingInfoActive(applicationContext)) {
+            LiveUpdateNotifier.refreshChargingInfo(
+                context = applicationContext,
+                prefs = prefs,
+                batteryIntent = intent?.takeIf { it.action == Intent.ACTION_BATTERY_CHANGED }
+            )
+        } else {
+            scheduleChargingInfoAppearance()
+        }
+    }
+
+    private fun scheduleChargingInfoAppearance() {
+        if (
+            !prefs.getSmartChargingInfoEnabled() ||
+            !prefs.getConverterEnabled() ||
+            isUnsupportedDevice()
+        ) {
+            cancelChargingInfoAppearance()
+            LiveUpdateNotifier.cancelChargingInfo(applicationContext)
+            return
+        }
+        if (chargingInfoAppearanceScheduled) {
+            return
+        }
+        chargingInfoAppearanceScheduled = true
+        chargingInfoAppearanceGeneration += 1
+        chargingInfoSystemCapsuleSeen = false
+        chargingInfoAppearanceStartedAtMs = SystemClock.elapsedRealtime()
+        mainHandler.post(chargingInfoAppearanceRunnable)
+    }
+
+    private fun cancelChargingInfoAppearance() {
+        if (chargingInfoAppearanceScheduled) {
+            mainHandler.removeCallbacks(chargingInfoAppearanceRunnable)
+        }
+        chargingInfoAppearanceScheduled = false
+        chargingInfoAppearanceGeneration += 1
+        chargingInfoSystemCapsuleSeen = false
+        chargingInfoAppearanceStartedAtMs = 0L
+    }
+
+    private fun handleChargingInfoAppearancePoll() {
+        if (!chargingInfoAppearanceScheduled) {
+            return
+        }
+        if (
+            !prefs.getSmartChargingInfoEnabled() ||
+            !prefs.getConverterEnabled() ||
+            isUnsupportedDevice()
+        ) {
+            cancelChargingInfoAppearance()
+            LiveUpdateNotifier.cancelChargingInfo(applicationContext)
+            return
+        }
+
+        val systemCapsuleActive = hasSystemChargingCapsule()
+        if (systemCapsuleActive) {
+            chargingInfoSystemCapsuleSeen = true
+            mainHandler.postDelayed(
+                chargingInfoAppearanceRunnable,
+                CHARGING_INFO_SYSTEM_CAPSULE_POLL_MS
+            )
+            return
+        }
+
+        val elapsedMs = SystemClock.elapsedRealtime() - chargingInfoAppearanceStartedAtMs
+        if (
+            !chargingInfoSystemCapsuleSeen &&
+            elapsedMs < CHARGING_INFO_SYSTEM_CAPSULE_FALLBACK_MS
+        ) {
+            mainHandler.postDelayed(
+                chargingInfoAppearanceRunnable,
+                CHARGING_INFO_SYSTEM_CAPSULE_POLL_MS
+            )
+            return
+        }
+
+        cancelChargingInfoAppearance()
+        LiveUpdateNotifier.refreshChargingInfo(applicationContext, prefs)
+    }
+
+    private fun hasSystemChargingCapsule(): Boolean {
+        val snapshots = try {
+            activeNotifications?.toList().orEmpty()
+        } catch (error: Throwable) {
+            Log.w(TAG, "Unable to read notifications while waiting for charging capsule", error)
+            emptyList()
+        }
+        return snapshots.any(::isSystemChargingCapsuleNotification)
+    }
+
+    private fun isSystemChargingCapsuleNotification(sbn: StatusBarNotification): Boolean {
+        if (sbn.packageName == packageName) {
+            return false
+        }
+        val normalizedPackage = sbn.packageName.lowercase(Locale.ROOT)
+        if (normalizedPackage !in SYSTEM_CHARGING_CAPSULE_PACKAGES) {
+            return false
+        }
+        val notification = sbn.notification
+        val extras = notification.extras
+        val parts = listOfNotNull(
+            sbn.tag,
+            sbn.groupKey,
+            notification.channelId,
+            notification.category,
+            notification.tickerText?.toString(),
+            extras.getCharSequence(Notification.EXTRA_TITLE)?.toString(),
+            extras.getCharSequence(Notification.EXTRA_TEXT)?.toString(),
+            extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString(),
+            extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString(),
+            extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString()
+        ).joinToString(" ")
+        return SYSTEM_CHARGING_CAPSULE_PATTERN.containsMatchIn(parts)
+    }
+
+    private fun isChargingBatteryIntent(intent: Intent): Boolean {
+        val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
+        return status == BatteryManager.BATTERY_STATUS_CHARGING ||
+            status == BatteryManager.BATTERY_STATUS_FULL ||
+            plugged != 0
     }
 
     private fun handleLockscreenStateChanged(action: String?) {
@@ -1229,6 +1376,17 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val FLASHLIGHT_SOURCE_PACKAGE = "com.android.systemui"
         private const val FLASHLIGHT_SOURCE_CHANNEL_ID = "FLASHLIGHT_ONGOING"
         private const val FLASHLIGHT_SOURCE_TAG = "Flashlight"
+        private const val CHARGING_INFO_SYSTEM_CAPSULE_POLL_MS = 150L
+        private const val CHARGING_INFO_SYSTEM_CAPSULE_FALLBACK_MS = 3_000L
+        private val SYSTEM_CHARGING_CAPSULE_PACKAGES = setOf(
+            "android",
+            "com.android.systemui",
+            "com.samsung.android.app.aodservice"
+        )
+        private val SYSTEM_CHARGING_CAPSULE_PATTERN = Regex(
+            "(charging|charge|battery|super\\s*fast|fast\\s*charging|заряд|зарядк)",
+            setOf(RegexOption.IGNORE_CASE)
+        )
 
         @Volatile
         private var activeInstance: LiveUpdateNotificationListenerService? = null

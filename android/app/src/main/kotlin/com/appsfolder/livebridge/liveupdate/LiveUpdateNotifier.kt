@@ -75,7 +75,6 @@ object LiveUpdateNotifier {
     private const val CHARGING_INFO_SUPER_FAST_2_COLOR = 0xFF35BDF7.toInt()
     private const val BATTERY_EXTRA_MAX_CHARGING_CURRENT = "max_charging_current"
     private const val BATTERY_EXTRA_MAX_CHARGING_VOLTAGE = "max_charging_voltage"
-    private const val CHARGING_INFO_APPEAR_DELAY_MS = 3_000L
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
     private const val NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES = 2
     private const val NOTIFICATION_CAPSULE_SINGLE_LINE_GRAPHEME_LIMIT = 40
@@ -240,8 +239,6 @@ object LiveUpdateNotifier {
     private val userDismissedMirrorKeys = mutableSetOf<String>()
     private val programmaticMirrorCancelDeadlines = mutableMapOf<Int, Long>()
     private val notificationCapsuleIds = mutableSetOf<Int>()
-    private var chargingInfoDelayScheduled = false
-    private var chargingInfoDelayGeneration = 0L
     private var chargingInfoVisible = false
     private var callMirrorGenerationCounter = 0L
 
@@ -382,8 +379,6 @@ object LiveUpdateNotifier {
             userDismissedMirrorKeys.clear()
             programmaticMirrorCancelDeadlines.clear()
             notificationCapsuleIds.clear()
-            chargingInfoDelayScheduled = false
-            chargingInfoDelayGeneration += 1
             chargingInfoVisible = false
         }
         synchronized(appIconCacheLock) {
@@ -645,8 +640,7 @@ object LiveUpdateNotifier {
     fun refreshChargingInfo(
         context: Context,
         prefs: ConverterPrefs,
-        batteryIntent: Intent? = null,
-        delayAppearance: Boolean = true
+        batteryIntent: Intent? = null
     ): Boolean {
         if (
             !prefs.getSmartChargingInfoEnabled() ||
@@ -666,18 +660,11 @@ object LiveUpdateNotifier {
             return false
         }
 
-        if (delayAppearance && !isChargingInfoActive(context)) {
-            scheduleChargingInfoAppearance(context)
-            return false
-        }
-
         ensureChannel(context)
         val notification = buildChargingInfoNotification(context, snapshot)
         return runCatching {
             NotificationManagerCompat.from(context).notify(CHARGING_INFO_ID, notification)
             synchronized(stateLock) {
-                chargingInfoDelayScheduled = false
-                chargingInfoDelayGeneration += 1
                 chargingInfoVisible = true
             }
         }.onFailure { error ->
@@ -687,8 +674,6 @@ object LiveUpdateNotifier {
 
     fun cancelChargingInfo(context: Context) {
         synchronized(stateLock) {
-            chargingInfoDelayScheduled = false
-            chargingInfoDelayGeneration += 1
             chargingInfoVisible = false
         }
         runCatching {
@@ -698,39 +683,7 @@ object LiveUpdateNotifier {
         }
     }
 
-    private fun scheduleChargingInfoAppearance(context: Context) {
-        val appContext = context.applicationContext
-        val generation = synchronized(stateLock) {
-            if (chargingInfoDelayScheduled) {
-                return
-            }
-            chargingInfoDelayScheduled = true
-            chargingInfoDelayGeneration += 1
-            chargingInfoDelayGeneration
-        }
-        mainHandler.postDelayed(
-            {
-                val shouldRun = synchronized(stateLock) {
-                    chargingInfoDelayScheduled && chargingInfoDelayGeneration == generation
-                }
-                if (!shouldRun) {
-                    return@postDelayed
-                }
-                synchronized(stateLock) {
-                    chargingInfoDelayScheduled = false
-                }
-                refreshChargingInfo(
-                    context = appContext,
-                    prefs = ConverterPrefs(appContext),
-                    batteryIntent = null,
-                    delayAppearance = false
-                )
-            },
-            CHARGING_INFO_APPEAR_DELAY_MS
-        )
-    }
-
-    private fun isChargingInfoActive(context: Context): Boolean {
+    fun isChargingInfoActive(context: Context): Boolean {
         synchronized(stateLock) {
             if (chargingInfoVisible) {
                 return true

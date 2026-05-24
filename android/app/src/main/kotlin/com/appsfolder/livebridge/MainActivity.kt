@@ -930,7 +930,6 @@ class MainActivity : FlutterActivity() {
             prefs.getConverterEnabled() &&
             !DeviceBlocker.isBlockedDevice()
         ) {
-            LiveUpdateNotifier.refreshChargingInfo(applicationContext, prefs)
             LiveUpdateNotificationListenerService.requestChargingInfoSync()
             requestNotificationListenerRebind()
         } else {
