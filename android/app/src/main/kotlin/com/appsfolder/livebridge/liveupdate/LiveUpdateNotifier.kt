@@ -10,6 +10,7 @@ import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -30,6 +31,7 @@ import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.Build
 import android.os.Bundle
+import android.os.BatteryManager
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -65,8 +67,14 @@ object LiveUpdateNotifier {
     private const val AOSP_ISLAND_TEXT_LIMIT = 7
     private const val CALL_DURATION_REFRESH_MS = 1_000L
     private const val NOTIFICATION_CAPSULE_ID = 41242
+    private const val CHARGING_INFO_ID = 41243
     private const val NOTIFICATION_CAPSULE_KEY_PREFIX = "notification_capsule:"
     private const val NOTIFICATION_CAPSULE_CHIP_COLOR = 0xFF5E5867.toInt()
+    private const val CHARGING_INFO_FAST_COLOR = 0xFF65DE6B.toInt()
+    private const val CHARGING_INFO_SUPER_FAST_COLOR = 0xFF5AAEF7.toInt()
+    private const val CHARGING_INFO_SUPER_FAST_2_COLOR = 0xFF49D6CF.toInt()
+    private const val BATTERY_EXTRA_MAX_CHARGING_CURRENT = "max_charging_current"
+    private const val BATTERY_EXTRA_MAX_CHARGING_VOLTAGE = "max_charging_voltage"
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
     private const val NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES = 2
     private const val NOTIFICATION_CAPSULE_SINGLE_LINE_GRAPHEME_LIMIT = 40
@@ -252,6 +260,34 @@ object LiveUpdateNotifier {
         val sourceKey: String,
         val messageIndex: Int
     )
+
+    private data class ChargingInfoSnapshot(
+        val percent: Int,
+        val remainingMinutes: Int?,
+        val speed: ChargingInfoSpeed
+    )
+
+    private enum class ChargingInfoSpeed(
+        val label: String,
+        val iconRes: Int,
+        val color: Int
+    ) {
+        FAST(
+            label = "fast charging",
+            iconRes = R.drawable.ic_charging_bolt,
+            color = CHARGING_INFO_FAST_COLOR
+        ),
+        SUPER_FAST(
+            label = "super fast charging",
+            iconRes = R.drawable.ic_charging_double_bolt,
+            color = CHARGING_INFO_SUPER_FAST_COLOR
+        ),
+        SUPER_FAST_2(
+            label = "super fast charging 2.0",
+            iconRes = R.drawable.ic_charging_double_bolt,
+            color = CHARGING_INFO_SUPER_FAST_2_COLOR
+        )
+    }
 
     fun ensureChannel(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
@@ -591,6 +627,276 @@ object LiveUpdateNotifier {
             }.onFailure { error ->
                 Log.e(TAG, "Failed to cancel notification capsule", error)
             }
+        }
+    }
+
+    fun refreshChargingInfo(
+        context: Context,
+        prefs: ConverterPrefs,
+        batteryIntent: Intent? = null
+    ): Boolean {
+        if (
+            !prefs.getSmartChargingInfoEnabled() ||
+            !prefs.getConverterEnabled() ||
+            DeviceBlocker.isBlockedDevice()
+        ) {
+            cancelChargingInfo(context)
+            return false
+        }
+
+        val snapshot = resolveChargingInfoSnapshot(
+            context = context,
+            batteryIntent = batteryIntent ?: stickyBatteryIntent(context)
+        )
+        if (snapshot == null) {
+            cancelChargingInfo(context)
+            return false
+        }
+
+        ensureChannel(context)
+        val notification = buildChargingInfoNotification(context, snapshot)
+        return runCatching {
+            NotificationManagerCompat.from(context).notify(CHARGING_INFO_ID, notification)
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to post charging info capsule", error)
+        }.isSuccess
+    }
+
+    fun cancelChargingInfo(context: Context) {
+        runCatching {
+            NotificationManagerCompat.from(context).cancel(CHARGING_INFO_ID)
+        }.onFailure { error ->
+            Log.e(TAG, "Failed to cancel charging info capsule", error)
+        }
+    }
+
+    private fun buildChargingInfoNotification(
+        context: Context,
+        snapshot: ChargingInfoSnapshot
+    ): Notification {
+        val title = "${snapshot.percent}%"
+        val collapsedText = chargingInfoRemainingText(snapshot.remainingMinutes)
+        val speed = snapshot.speed
+        val icon = IconCompat.createWithResource(context, speed.iconRes)
+        val builder = NotificationCompat.Builder(
+            context,
+            MirrorNotificationChannel.CHARGING_INFO.id
+        )
+            .setSmallIcon(speed.iconRes)
+            .setContentTitle(title)
+            .setContentText(collapsedText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(speed.label))
+            .setColor(speed.color)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setDefaults(0)
+            .setWhen(System.currentTimeMillis())
+            .setShowWhen(false)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setCategory(Notification.CATEGORY_STATUS)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setRequestPromotedOngoing(true)
+            .setShortCriticalText(title)
+            .setProgress(100, snapshot.percent, false)
+
+        notificationCapsuleContentIntent(context, CHARGING_INFO_ID)?.let(builder::setContentIntent)
+
+        @Suppress("DEPRECATION")
+        val bridgeSource = Notification().apply {
+            color = speed.color
+            extras = Bundle()
+        }
+        SamsungLiveUpdateReparser(context).applyNowBarBridge(
+            builder = builder,
+            source = bridgeSource,
+            sourcePackageName = context.packageName,
+            primaryText = title,
+            secondaryText = speed.label,
+            nowBarPrimaryText = title,
+            nowBarSecondaryText = collapsedText,
+            chipText = title,
+            chipIcon = icon,
+            nowBarIcon = icon,
+            rightIcon = null,
+            suppressSourceRemoteViews = true,
+            suppressSourceNowBarRemoteView = true,
+            hasProgress = true,
+            progressValue = snapshot.percent,
+            progressMax = 100,
+            showSecondaryInNowBar = collapsedText.isNotBlank(),
+            disableNowBarRemoteView = true,
+            reuseNotificationRemoteViews = false,
+            lockscreenOnly = true
+        )
+        return SamsungOneUi7NowBarCompat.markEligible(builder.build())
+    }
+
+    private fun chargingInfoRemainingText(remainingMinutes: Int?): String {
+        return when {
+            remainingMinutes == null -> "Charging"
+            remainingMinutes <= 0 -> "Full"
+            else -> "$remainingMinutes m until full"
+        }
+    }
+
+    private fun resolveChargingInfoSnapshot(
+        context: Context,
+        batteryIntent: Intent?
+    ): ChargingInfoSnapshot? {
+        batteryIntent ?: return null
+        val level = batteryIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+        val scale = batteryIntent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)
+            .takeIf { it > 0 }
+            ?: 100
+        if (level < 0) {
+            return null
+        }
+        val percent = ((level * 100f) / scale).roundToInt().coerceIn(0, 100)
+        val status = batteryIntent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+        val plugged = batteryIntent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
+        val isCharging =
+            status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL ||
+                plugged != 0
+        if (!isCharging) {
+            return null
+        }
+
+        return ChargingInfoSnapshot(
+            percent = percent,
+            remainingMinutes = remainingChargingMinutes(context, batteryIntent, percent),
+            speed = resolveChargingInfoSpeed(batteryIntent)
+        )
+    }
+
+    private fun stickyBatteryIntent(context: Context): Intent? {
+        return runCatching {
+            @Suppress("DEPRECATION")
+            context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        }.getOrNull()
+    }
+
+    private fun remainingChargingMinutes(
+        context: Context,
+        batteryIntent: Intent,
+        percent: Int
+    ): Int? {
+        if (percent >= 100) {
+            return 0
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as? BatteryManager
+            val millis = runCatching {
+                batteryManager?.computeChargeTimeRemaining() ?: -1L
+            }.getOrDefault(-1L)
+            if (millis > 0L) {
+                return ((millis + 59_999L) / 60_000L).toInt().coerceAtLeast(1)
+            }
+        }
+
+        batteryLongExtra(batteryIntent, "remain")?.let { seconds ->
+            if (seconds >= 0L) {
+                return ((seconds + 59L) / 60L).toInt().coerceAtLeast(1)
+            }
+        }
+        batteryLongExtra(batteryIntent, "remaining_charging_time")?.let { seconds ->
+            if (seconds >= 0L) {
+                return ((seconds + 59L) / 60L).toInt().coerceAtLeast(1)
+            }
+        }
+        batteryLongExtra(batteryIntent, "charge_time_remaining")?.let { seconds ->
+            if (seconds >= 0L) {
+                return ((seconds + 59L) / 60L).toInt().coerceAtLeast(1)
+            }
+        }
+        batteryLongExtra(batteryIntent, "charge_time_remaining_ms")?.let { millis ->
+            if (millis >= 0L) {
+                return ((millis + 59_999L) / 60_000L).toInt().coerceAtLeast(1)
+            }
+        }
+        return null
+    }
+
+    private fun resolveChargingInfoSpeed(batteryIntent: Intent): ChargingInfoSpeed {
+        chargingPowerWatts(batteryIntent)?.let { watts ->
+            return when {
+                watts >= 40f -> ChargingInfoSpeed.SUPER_FAST_2
+                watts >= 22f -> ChargingInfoSpeed.SUPER_FAST
+                else -> ChargingInfoSpeed.FAST
+            }
+        }
+
+        val chargerType = batteryIntExtra(batteryIntent, "charger_type")
+        if (chargerType != null && chargerType >= 4) {
+            return ChargingInfoSpeed.SUPER_FAST_2
+        }
+        if (
+            batteryBooleanExtra(batteryIntent, "hvc") == true ||
+            (chargerType != null && chargerType >= 3)
+        ) {
+            return ChargingInfoSpeed.SUPER_FAST
+        }
+        return ChargingInfoSpeed.FAST
+    }
+
+    private fun chargingPowerWatts(batteryIntent: Intent): Float? {
+        val currentUa = batteryIntent.getIntExtra(
+            BATTERY_EXTRA_MAX_CHARGING_CURRENT,
+            -1
+        ).takeIf { it > 0 } ?: return null
+        val maxVoltageUv = batteryIntent.getIntExtra(
+            BATTERY_EXTRA_MAX_CHARGING_VOLTAGE,
+            -1
+        ).takeIf { it > 0 }
+        val currentVoltageMv = batteryIntent.getIntExtra(
+            BatteryManager.EXTRA_VOLTAGE,
+            -1
+        ).takeIf { it > 0 }
+        val voltageUv = maxVoltageUv ?: currentVoltageMv?.let { it * 1000 }
+        if (voltageUv == null || voltageUv <= 0) {
+            return null
+        }
+        return (currentUa.toDouble() * voltageUv.toDouble() / 1_000_000_000_000.0)
+            .toFloat()
+            .takeIf { it > 0f }
+    }
+
+    private fun batteryIntExtra(intent: Intent, key: String): Int? {
+        return when (val value = intent.extras?.get(key)) {
+            is Int -> value
+            is Long -> value.toInt()
+            is Float -> value.toInt()
+            is Double -> value.toInt()
+            is Number -> value.toInt()
+            is String -> value.trim().toIntOrNull()
+            else -> null
+        }
+    }
+
+    private fun batteryLongExtra(intent: Intent, key: String): Long? {
+        return when (val value = intent.extras?.get(key)) {
+            is Long -> value
+            is Int -> value.toLong()
+            is Float -> value.toLong()
+            is Double -> value.toLong()
+            is Number -> value.toLong()
+            is String -> value.trim().toLongOrNull()
+            else -> null
+        }
+    }
+
+    private fun batteryBooleanExtra(intent: Intent, key: String): Boolean? {
+        return when (val value = intent.extras?.get(key)) {
+            is Boolean -> value
+            is Number -> value.toInt() != 0
+            is String -> when (value.trim().lowercase(Locale.ROOT)) {
+                "true", "1", "yes", "on" -> true
+                "false", "0", "no", "off" -> false
+                else -> null
+            }
+            else -> null
         }
     }
 
@@ -1919,6 +2225,20 @@ object LiveUpdateNotifier {
 
             MirrorNotificationChannel.NOTIFICATION_CAPSULE ->
                 notificationCapsuleChannelText(context)
+
+            MirrorNotificationChannel.CHARGING_INFO -> {
+                if (isRussian) {
+                    MirrorChannelText(
+                        name = "Charging information",
+                        description = "Battery charge and charging speed on the lock screen"
+                    )
+                } else {
+                    MirrorChannelText(
+                        name = "Charging information",
+                        description = "Battery charge and charging speed on the lock screen"
+                    )
+                }
+            }
 
             MirrorNotificationChannel.BYPASS -> {
                 if (isRussian) {
@@ -6963,6 +7283,7 @@ object LiveUpdateNotifier {
         NETWORK_CONNECTIONS("livebridge_network_connections"),
         MISCELLANEOUS("livebridge_miscellaneous_conversions"),
         NOTIFICATION_CAPSULE("livebridge_notification_capsule"),
+        CHARGING_INFO("livebridge_charging_info"),
         BYPASS("livebridge_bypass_applications")
     }
 

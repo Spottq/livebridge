@@ -32,6 +32,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private var rebindScheduled = false
     private var snapshotSyncScheduled = false
     private var lockscreenStateReceiverRegistered = false
+    private var chargingInfoReceiverRegistered = false
 
     private val lockscreenPrivacyRefreshRunnable = Runnable {
         requestImmediateSnapshotSync()
@@ -44,6 +45,12 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                 Intent.ACTION_SCREEN_ON,
                 Intent.ACTION_USER_PRESENT -> handleLockscreenStateChanged(intent.action)
             }
+        }
+    }
+
+    private val chargingInfoReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            handleChargingInfoBatteryChanged(intent)
         }
     }
 
@@ -118,6 +125,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             }
 
             syncFlashlightMirror(snapshots)
+            syncChargingInfoMonitoring()
 
             if (!prefs.getConverterEnabled()) {
                 LiveUpdateNotifier.cancelAllMirrored(applicationContext)
@@ -158,6 +166,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
         registerLockscreenStateReceiver()
         syncTorchMonitoring()
+        syncChargingInfoMonitoring()
         LiveUpdateNotifier.ensureChannel(applicationContext)
         syncNetworkSpeedService()
         scheduleSnapshotSync()
@@ -178,6 +187,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
         syncNetworkSpeedService()
         syncTorchMonitoring()
+        syncChargingInfoMonitoring()
         val snapshots = try {
             activeNotifications?.toList().orEmpty()
         } catch (error: Throwable) {
@@ -413,6 +423,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     override fun onDestroy() {
         unregisterLockscreenStateReceiver()
         unregisterTorchCallbackIfNeeded()
+        unregisterChargingInfoReceiverIfNeeded()
         mainHandler.removeCallbacksAndMessages(null)
         rebindScheduled = false
         snapshotSyncScheduled = false
@@ -474,6 +485,20 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
     }
 
+    private fun syncChargingInfoMonitoring() {
+        if (
+            prefs.getSmartChargingInfoEnabled() &&
+            prefs.getConverterEnabled() &&
+            !isUnsupportedDevice()
+        ) {
+            ensureChargingInfoReceiverRegistered()
+            LiveUpdateNotifier.refreshChargingInfo(applicationContext, prefs)
+        } else {
+            unregisterChargingInfoReceiverIfNeeded()
+            LiveUpdateNotifier.cancelChargingInfo(applicationContext)
+        }
+    }
+
     private fun registerLockscreenStateReceiver() {
         if (lockscreenStateReceiverRegistered) {
             return
@@ -510,6 +535,53 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
                 Log.w(TAG, "Failed to unregister lockscreen state receiver", error)
             }
         lockscreenStateReceiverRegistered = false
+    }
+
+    private fun ensureChargingInfoReceiverRegistered() {
+        if (chargingInfoReceiverRegistered) {
+            return
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_BATTERY_CHANGED)
+            addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
+        }
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(
+                    chargingInfoReceiver,
+                    filter,
+                    Context.RECEIVER_NOT_EXPORTED
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                registerReceiver(chargingInfoReceiver, filter)
+            }
+        }.onSuccess {
+            chargingInfoReceiverRegistered = true
+        }.onFailure { error ->
+            Log.w(TAG, "Failed to register charging info receiver", error)
+        }
+    }
+
+    private fun unregisterChargingInfoReceiverIfNeeded() {
+        if (!chargingInfoReceiverRegistered) {
+            return
+        }
+        runCatching { unregisterReceiver(chargingInfoReceiver) }
+            .onFailure { error ->
+                Log.w(TAG, "Failed to unregister charging info receiver", error)
+            }
+        chargingInfoReceiverRegistered = false
+    }
+
+    private fun handleChargingInfoBatteryChanged(intent: Intent?) {
+        val batteryIntent = intent?.takeIf { it.action == Intent.ACTION_BATTERY_CHANGED }
+        LiveUpdateNotifier.refreshChargingInfo(
+            context = applicationContext,
+            prefs = prefs,
+            batteryIntent = batteryIntent
+        )
     }
 
     private fun handleLockscreenStateChanged(action: String?) {
@@ -626,6 +698,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
         snapshotSyncScheduled = true
         mainHandler.post(snapshotSyncRunnable)
+    }
+
+    fun requestImmediateChargingInfoSync() {
+        syncChargingInfoMonitoring()
     }
 
     fun requestImmediateSnapshotSync() {
@@ -1163,6 +1239,10 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
         fun requestSnapshotSync() {
             activeInstance?.requestImmediateSnapshotSync()
+        }
+
+        fun requestChargingInfoSync() {
+            activeInstance?.requestImmediateChargingInfoSync()
         }
 
         fun requestClearPackageNotifications(packageName: String) {

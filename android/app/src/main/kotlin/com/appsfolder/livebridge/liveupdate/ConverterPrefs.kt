@@ -587,6 +587,14 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_SMART_WEATHER_LOCKSCREEN_ONLY, value).apply()
     }
 
+    fun getSmartChargingInfoEnabled(): Boolean {
+        return prefs.getBoolean(KEY_SMART_CHARGING_INFO_ENABLED, false)
+    }
+
+    fun setSmartChargingInfoEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_CHARGING_INFO_ENABLED, value).apply()
+    }
+
     fun getSmartNotificationCapsuleEnabled(): Boolean {
         return prefs.getBoolean(KEY_SMART_NOTIFICATION_CAPSULE_ENABLED, false)
     }
@@ -1017,6 +1025,7 @@ class ConverterPrefs(context: Context) {
             .put("smart_navigation_enabled", getSmartNavigationEnabled())
             .put("smart_weather_enabled", getSmartWeatherEnabled())
             .put("smart_weather_lockscreen_only", getSmartWeatherLockscreenOnly())
+            .put("smart_charging_info_enabled", getSmartChargingInfoEnabled())
             .put("smart_notification_capsule_enabled", getSmartNotificationCapsuleEnabled())
             .put(
                 "notification_capsule_smart_enabled",
@@ -1154,6 +1163,7 @@ class ConverterPrefs(context: Context) {
         bool(settings, "smart_weather_enabled")?.let(::setSmartWeatherEnabled)
         bool(settings, "smart_weather_lockscreen_only")
             ?.let(::setSmartWeatherLockscreenOnly)
+        bool(settings, "smart_charging_info_enabled")?.let(::setSmartChargingInfoEnabled)
         bool(settings, "smart_notification_capsule_enabled")
             ?.let(::setSmartNotificationCapsuleEnabled)
         bool(settings, "notification_capsule_smart_enabled")
@@ -1458,6 +1468,7 @@ class ConverterPrefs(context: Context) {
         private const val KEY_SMART_NAVIGATION_ENABLED = "smart_navigation_enabled"
         private const val KEY_SMART_WEATHER_ENABLED = "smart_weather_enabled"
         private const val KEY_SMART_WEATHER_LOCKSCREEN_ONLY = "smart_weather_lockscreen_only"
+        private const val KEY_SMART_CHARGING_INFO_ENABLED = "smart_charging_info_enabled"
         private const val KEY_SMART_NOTIFICATION_CAPSULE_ENABLED =
             "smart_notification_capsule_enabled"
         private const val KEY_NOTIFICATION_CAPSULE_SMART_ENABLED =

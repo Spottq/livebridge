@@ -2129,6 +2129,14 @@ class AppStrings {
     zhHant: '裝置解鎖時隱藏天氣。',
   );
 
+  String get smartChargingInfoTitle =>
+      tr(en: 'Charging information', ru: 'Charging information');
+
+  String get smartChargingInfoSubtitle => tr(
+    en: 'Shows battery level, time until full, and charging speed in a lock screen Now Bar capsule.',
+    ru: 'Shows battery level, time until full, and charging speed in a lock screen Now Bar capsule.',
+  );
+
   String get smartNotificationCapsuleTitle => tr(
     en: 'Notification capsule',
     ru: 'Капсула уведомлений',
