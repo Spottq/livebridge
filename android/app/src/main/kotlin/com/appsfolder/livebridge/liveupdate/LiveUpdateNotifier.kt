@@ -75,7 +75,7 @@ object LiveUpdateNotifier {
     private const val CHARGING_INFO_SUPER_FAST_2_COLOR = 0xFF35BDF7.toInt()
     private const val BATTERY_EXTRA_MAX_CHARGING_CURRENT = "max_charging_current"
     private const val BATTERY_EXTRA_MAX_CHARGING_VOLTAGE = "max_charging_voltage"
-    private const val CHARGING_INFO_APPEAR_DELAY_MS = 4_000L
+    private const val CHARGING_INFO_APPEAR_DELAY_MS = 3_000L
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
     private const val NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES = 2
     private const val NOTIFICATION_CAPSULE_SINGLE_LINE_GRAPHEME_LIMIT = 40
