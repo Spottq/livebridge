@@ -2140,14 +2140,14 @@ class AppStrings {
   );
 
   String get smartChargingInfoSubtitle => tr(
-    en: 'Shows battery level, time until full, and charging speed in a lock screen Now Bar capsule.',
-    ru: 'Показывает уровень батареи, время до полного заряда и скорость зарядки в капсуле Now Bar на экране блокировки.',
-    tr: 'Pil seviyesini, dolmaya kalan süreyi ve şarj hızını kilit ekranındaki Now Bar kapsülünde gösterir.',
+    en: 'Shows battery level, time until full, charging speed, and low-battery warnings in a lock screen Now Bar capsule.',
+    ru: 'Показывает уровень батареи, время до полного заряда, скорость зарядки и предупреждение о разрядке в капсуле Now Bar на экране блокировки.',
+    tr: 'Pil seviyesini, dolmaya kalan süreyi, şarj hızını ve düşük pil uyarılarını kilit ekranındaki Now Bar kapsülünde gösterir.',
     ptBr:
-        'Mostra o nível da bateria, o tempo até completar e a velocidade de carregamento em uma cápsula Now Bar na tela de bloqueio.',
-    zhHans: '在锁屏 Now Bar 胶囊中显示电量、充满剩余时间和充电速度。',
-    zhHant: '在鎖定畫面的 Now Bar 膠囊中顯示電量、充滿剩餘時間和充電速度。',
-    ko: '잠금 화면 Now Bar 캡슐에 배터리 잔량, 완충까지 남은 시간, 충전 속도를 표시합니다.',
+        'Mostra o nível da bateria, o tempo até completar, a velocidade de carregamento e alertas de bateria fraca em uma cápsula Now Bar na tela de bloqueio.',
+    zhHans: '在锁屏 Now Bar 胶囊中显示电量、充满剩余时间、充电速度和低电量提醒。',
+    zhHant: '在鎖定畫面的 Now Bar 膠囊中顯示電量、充滿剩餘時間、充電速度和低電量提醒。',
+    ko: '잠금 화면 Now Bar 캡슐에 배터리 잔량, 완충까지 남은 시간, 충전 속도와 배터리 부족 알림을 표시합니다.',
   );
 
   String get smartNotificationCapsuleTitle => tr(

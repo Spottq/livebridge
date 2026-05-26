@@ -125,7 +125,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             }
 
             syncFlashlightMirror(snapshots)
-            syncChargingInfoMonitoring()
+            syncChargingInfoMonitoring(snapshots)
 
             if (!prefs.getConverterEnabled()) {
                 LiveUpdateNotifier.cancelAllMirrored(applicationContext)
@@ -187,7 +187,6 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
         syncNetworkSpeedService()
         syncTorchMonitoring()
-        syncChargingInfoMonitoring()
         val snapshots = try {
             activeNotifications?.toList().orEmpty()
         } catch (error: Throwable) {
@@ -195,6 +194,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             emptyList()
         }
 
+        syncChargingInfoMonitoring(snapshots)
         syncFlashlightMirror(snapshots)
 
         if (!prefs.getConverterEnabled()) {
@@ -243,9 +243,11 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
         if (isFlashlightSourceNotification(sbn)) {
             syncFlashlightMirror(listOf(sbn))
+            refreshChargingInfoFromActiveNotifications()
             refreshNotificationCapsuleFromActiveNotifications()
             return
         }
+        refreshChargingInfoFromActiveNotifications()
         if (!prefs.getConverterEnabled()) {
             LiveUpdateNotifier.cancelMirrored(applicationContext, sbn)
             refreshNotificationCapsuleFromActiveNotifications()
@@ -284,6 +286,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             LiveUpdateNotifier.handleMirroredRemoved(applicationContext, sbn)
             return
         }
+        refreshChargingInfoFromActiveNotifications()
         if (consumeSelfDismissedSource(sbn)) {
             refreshNotificationCapsuleFromActiveNotifications()
             return
@@ -485,17 +488,43 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
     }
 
-    private fun syncChargingInfoMonitoring() {
+    private fun syncChargingInfoMonitoring(
+        snapshots: Collection<StatusBarNotification>? = null
+    ) {
         if (
             prefs.getSmartChargingInfoEnabled() &&
             prefs.getConverterEnabled() &&
             !isUnsupportedDevice()
         ) {
             ensureChargingInfoReceiverRegistered()
-            LiveUpdateNotifier.refreshChargingInfo(applicationContext, prefs)
+            LiveUpdateNotifier.refreshChargingInfo(
+                context = applicationContext,
+                prefs = prefs,
+                activeNotifications = snapshots ?: activeNotificationSnapshotsForChargingInfo()
+            )
         } else {
             unregisterChargingInfoReceiverIfNeeded()
             LiveUpdateNotifier.cancelChargingInfo(applicationContext)
+        }
+    }
+
+    private fun refreshChargingInfoFromActiveNotifications() {
+        if (!prefs.getSmartChargingInfoEnabled()) {
+            return
+        }
+        LiveUpdateNotifier.refreshChargingInfo(
+            context = applicationContext,
+            prefs = prefs,
+            activeNotifications = activeNotificationSnapshotsForChargingInfo()
+        )
+    }
+
+    private fun activeNotificationSnapshotsForChargingInfo(): List<StatusBarNotification> {
+        return try {
+            activeNotifications?.toList().orEmpty()
+        } catch (error: Throwable) {
+            Log.w(TAG, "Unable to read active notifications for charging info", error)
+            emptyList()
         }
     }
 
@@ -580,7 +609,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         LiveUpdateNotifier.refreshChargingInfo(
             context = applicationContext,
             prefs = prefs,
-            batteryIntent = batteryIntent
+            batteryIntent = batteryIntent,
+            activeNotifications = activeNotificationSnapshotsForChargingInfo()
         )
     }
 

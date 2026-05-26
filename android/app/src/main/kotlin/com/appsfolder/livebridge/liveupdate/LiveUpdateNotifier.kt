@@ -73,9 +73,14 @@ object LiveUpdateNotifier {
     private const val CHARGING_INFO_FAST_COLOR = 0xFF65DE6B.toInt()
     private const val CHARGING_INFO_SUPER_FAST_COLOR = 0xFF24D9C7.toInt()
     private const val CHARGING_INFO_SUPER_FAST_2_COLOR = 0xFF35BDF7.toInt()
+    private const val CHARGING_INFO_LOW_BATTERY_COLOR = 0xFFE53935.toInt()
     private const val BATTERY_EXTRA_MAX_CHARGING_CURRENT = "max_charging_current"
     private const val BATTERY_EXTRA_MAX_CHARGING_VOLTAGE = "max_charging_voltage"
     private const val CHARGING_INFO_APPEAR_DELAY_MS = 3_000L
+    private const val LOW_BATTERY_THRESHOLD_PERCENT = 15
+    private const val SYSTEMUI_PACKAGE = "com.android.systemui"
+    private const val LOW_BATTERY_TAG = "low_battery"
+    private const val LOW_BATTERY_CHANNEL_ID = "LOWBAT"
     private const val NOTIFICATION_CAPSULE_MAX_APP_NAMES = 25
     private const val NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES = 2
     private const val NOTIFICATION_CAPSULE_SINGLE_LINE_GRAPHEME_LIMIT = 40
@@ -267,8 +272,18 @@ object LiveUpdateNotifier {
 
     private data class ChargingInfoSnapshot(
         val percent: Int,
-        val remainingMinutes: Int?,
-        val speed: ChargingInfoSpeed
+        val title: String,
+        val collapsedText: String,
+        val expandedText: String,
+        val iconRes: Int,
+        val color: Int,
+        val lowBattery: Boolean
+    )
+
+    private data class LowBatterySystemText(
+        val title: String?,
+        val collapsedText: String,
+        val expandedText: String
     )
 
     private enum class ChargingInfoSpeed(
@@ -641,6 +656,7 @@ object LiveUpdateNotifier {
         context: Context,
         prefs: ConverterPrefs,
         batteryIntent: Intent? = null,
+        activeNotifications: Collection<StatusBarNotification> = emptyList(),
         delayAppearance: Boolean = true
     ): Boolean {
         if (
@@ -654,14 +670,15 @@ object LiveUpdateNotifier {
 
         val snapshot = resolveChargingInfoSnapshot(
             context = context,
-            batteryIntent = batteryIntent ?: stickyBatteryIntent(context)
+            batteryIntent = batteryIntent ?: stickyBatteryIntent(context),
+            activeNotifications = activeNotifications
         )
         if (snapshot == null) {
             cancelChargingInfo(context)
             return false
         }
 
-        if (delayAppearance && !isChargingInfoActive(context)) {
+        if (delayAppearance && !snapshot.lowBattery && !isChargingInfoActive(context)) {
             scheduleChargingInfoAppearance(context)
             return false
         }
@@ -748,21 +765,19 @@ object LiveUpdateNotifier {
         context: Context,
         snapshot: ChargingInfoSnapshot
     ): Notification {
-        val title = "${snapshot.percent}%"
-        val collapsedText = chargingInfoRemainingText(context, snapshot.remainingMinutes)
-        val speed = snapshot.speed
-        val speedLabel = chargingInfoSpeedLabel(context, speed)
-        val expandedText = chargingInfoExpandedText(speedLabel, collapsedText)
-        val icon = IconCompat.createWithResource(context, speed.iconRes)
+        val title = snapshot.title
+        val collapsedText = snapshot.collapsedText
+        val expandedText = snapshot.expandedText
+        val icon = IconCompat.createWithResource(context, snapshot.iconRes)
         val builder = NotificationCompat.Builder(
             context,
             MirrorNotificationChannel.CHARGING_INFO.id
         )
-            .setSmallIcon(speed.iconRes)
+            .setSmallIcon(snapshot.iconRes)
             .setContentTitle(title)
             .setContentText(collapsedText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(expandedText))
-            .setColor(speed.color)
+            .setColor(snapshot.color)
             .setOngoing(true)
             .setAutoCancel(false)
             .setOnlyAlertOnce(true)
@@ -780,7 +795,7 @@ object LiveUpdateNotifier {
 
         @Suppress("DEPRECATION")
         val bridgeSource = Notification().apply {
-            color = speed.color
+            color = snapshot.color
             extras = Bundle()
         }
         SamsungLiveUpdateReparser(context).applyNowBarBridge(
@@ -791,7 +806,7 @@ object LiveUpdateNotifier {
             secondaryText = expandedText,
             nowBarPrimaryText = title,
             nowBarSecondaryText = collapsedText,
-            chipText = title,
+            chipText = if (snapshot.lowBattery) expandedText else title,
             chipIcon = icon,
             nowBarIcon = icon,
             rightIcon = null,
@@ -898,7 +913,8 @@ object LiveUpdateNotifier {
 
     private fun resolveChargingInfoSnapshot(
         context: Context,
-        batteryIntent: Intent?
+        batteryIntent: Intent?,
+        activeNotifications: Collection<StatusBarNotification>
     ): ChargingInfoSnapshot? {
         batteryIntent ?: return null
         val level = batteryIntent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
@@ -915,15 +931,142 @@ object LiveUpdateNotifier {
             status == BatteryManager.BATTERY_STATUS_CHARGING ||
                 status == BatteryManager.BATTERY_STATUS_FULL ||
                 plugged != 0
-        if (!isCharging) {
-            return null
+        if (isCharging) {
+            return chargingInfoSnapshot(
+                context = context,
+                batteryIntent = batteryIntent,
+                percent = percent
+            )
         }
 
+        if (percent > LOW_BATTERY_THRESHOLD_PERCENT) {
+            return null
+        }
+        val lowBatteryText = lowBatterySystemText(activeNotifications, percent) ?: return null
         return ChargingInfoSnapshot(
             percent = percent,
-            remainingMinutes = remainingChargingMinutes(context, batteryIntent, percent),
-            speed = resolveChargingInfoSpeed(batteryIntent)
+            title = lowBatteryText.title ?: lowBatteryFallbackTitle(percent),
+            collapsedText = lowBatteryText.collapsedText,
+            expandedText = lowBatteryText.expandedText,
+            iconRes = R.drawable.ic_charging_bolt,
+            color = CHARGING_INFO_LOW_BATTERY_COLOR,
+            lowBattery = true
         )
+    }
+
+    private fun chargingInfoSnapshot(
+        context: Context,
+        batteryIntent: Intent,
+        percent: Int
+    ): ChargingInfoSnapshot {
+        val remainingText = chargingInfoRemainingText(
+            context = context,
+            remainingMinutes = remainingChargingMinutes(context, batteryIntent, percent)
+        )
+        val speed = resolveChargingInfoSpeed(batteryIntent)
+        val speedLabel = chargingInfoSpeedLabel(context, speed)
+        return ChargingInfoSnapshot(
+            percent = percent,
+            title = "$percent%",
+            collapsedText = remainingText,
+            expandedText = chargingInfoExpandedText(speedLabel, remainingText),
+            iconRes = speed.iconRes,
+            color = speed.color,
+            lowBattery = false
+        )
+    }
+
+    private fun lowBatterySystemText(
+        activeNotifications: Collection<StatusBarNotification>,
+        percent: Int
+    ): LowBatterySystemText? {
+        return activeNotifications
+            .asSequence()
+            .filter(::isLowBatterySystemNotification)
+            .sortedByDescending { sbn -> sbn.postTime }
+            .firstNotNullOfOrNull { sbn -> parseLowBatterySystemText(sbn, percent) }
+    }
+
+    private fun isLowBatterySystemNotification(sbn: StatusBarNotification): Boolean {
+        if (sbn.packageName != SYSTEMUI_PACKAGE) {
+            return false
+        }
+        if (sbn.tag == LOW_BATTERY_TAG) {
+            return true
+        }
+        if (sbn.notification.channelId?.equals(LOW_BATTERY_CHANNEL_ID, ignoreCase = true) == true) {
+            return true
+        }
+        val title = NotificationTextNormalizer.normalize(
+            sbn.notification.extras.getCharSequence(Notification.EXTRA_TITLE)
+                ?: sbn.notification.extras.getCharSequence(Notification.EXTRA_TITLE_BIG)
+        ) ?: return false
+        return title.contains("battery power", ignoreCase = true) ||
+            title.contains("low battery", ignoreCase = true)
+    }
+
+    private fun parseLowBatterySystemText(
+        sbn: StatusBarNotification,
+        percent: Int
+    ): LowBatterySystemText? {
+        val notification = sbn.notification
+        val extras = notification.extras
+        val title = NotificationTextNormalizer.normalize(
+            extras.getCharSequence(Notification.EXTRA_TITLE)
+                ?: extras.getCharSequence(Notification.EXTRA_TITLE_BIG)
+        )?.takeIf { text -> text.contains("$percent%") || text.isNotBlank() }
+        val body = lowBatteryBodyText(notification) ?: return null
+        val actionText = notification.actions
+            ?.firstNotNullOfOrNull { action ->
+                NotificationTextNormalizer.normalize(action.title)
+            }
+        val (collapsedText, expandedText) = splitLowBatteryBodyText(body, actionText)
+            ?: return null
+        return LowBatterySystemText(
+            title = title,
+            collapsedText = collapsedText,
+            expandedText = expandedText
+        )
+    }
+
+    private fun lowBatteryBodyText(notification: Notification): String? {
+        val extras = notification.extras
+        val directText = listOf(
+            extras.getCharSequence(Notification.EXTRA_BIG_TEXT),
+            extras.getCharSequence(Notification.EXTRA_TEXT),
+            extras.getCharSequence(Notification.EXTRA_SUB_TEXT),
+            extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)
+        ).firstNotNullOfOrNull(NotificationTextNormalizer::normalize)
+        if (directText != null) {
+            return directText
+        }
+        return extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+            ?.mapNotNull(NotificationTextNormalizer::normalize)
+            ?.joinToString(" ")
+            ?.takeIf { it.isNotBlank() }
+    }
+
+    private fun splitLowBatteryBodyText(
+        body: String,
+        actionText: String?
+    ): Pair<String, String>? {
+        val normalizedBody = NotificationTextNormalizer.normalize(body) ?: return null
+        val normalizedAction = actionText?.trim()?.takeIf { it.isNotEmpty() }
+        val actionIndex = normalizedAction
+            ?.let { normalizedBody.indexOf(it, ignoreCase = true) }
+            ?.takeIf { it > 0 }
+        if (actionIndex != null) {
+            val collapsedText = normalizedBody.substring(0, actionIndex).trim()
+            val actionLine = normalizedBody.substring(actionIndex).trim()
+            if (collapsedText.isNotEmpty() && actionLine.isNotEmpty()) {
+                return collapsedText to "$collapsedText\n$actionLine"
+            }
+        }
+        return normalizedBody to normalizedBody
+    }
+
+    private fun lowBatteryFallbackTitle(percent: Int): String {
+        return "Battery power $percent%"
     }
 
     private fun stickyBatteryIntent(context: Context): Intent? {
@@ -4949,31 +5092,31 @@ object LiveUpdateNotifier {
         return when (appLocale(context)) {
             AppLocale.RU -> MirrorChannelText(
                 name = "Информация о зарядке",
-                description = "Заряд батареи, время до полного заряда и скорость зарядки на экране блокировки"
+                description = "Заряд батареи, время до полного заряда, скорость зарядки и предупреждения о разрядке"
             )
             AppLocale.TR -> MirrorChannelText(
                 name = "Şarj bilgisi",
-                description = "Kilit ekranında pil seviyesi, dolmaya kalan süre ve şarj hızı"
+                description = "Kilit ekranında pil seviyesi, kalan süre, şarj hızı ve düşük pil uyarıları"
             )
             AppLocale.PT_BR -> MirrorChannelText(
                 name = "Informações de carregamento",
-                description = "Nível da bateria, tempo até completar e velocidade de carregamento na tela de bloqueio"
+                description = "Nível da bateria, tempo restante, velocidade de carregamento e alertas de bateria fraca"
             )
             AppLocale.ZH_HANS -> MirrorChannelText(
                 name = "充电信息",
-                description = "在锁屏显示电量、充满剩余时间和充电速度"
+                description = "在锁屏显示电量、剩余时间、充电速度和低电量提醒"
             )
             AppLocale.ZH_HANT -> MirrorChannelText(
                 name = "充電資訊",
-                description = "在鎖定畫面顯示電量、充滿剩餘時間和充電速度"
+                description = "在鎖定畫面顯示電量、剩餘時間、充電速度和低電量提醒"
             )
             AppLocale.KO -> MirrorChannelText(
                 name = "충전 정보",
-                description = "잠금 화면에 배터리 잔량, 완충까지 남은 시간, 충전 속도 표시"
+                description = "잠금 화면에 배터리 잔량, 남은 시간, 충전 속도와 배터리 부족 알림 표시"
             )
             AppLocale.EN -> MirrorChannelText(
                 name = "Charging information",
-                description = "Battery charge and charging speed on the lock screen"
+                description = "Battery charge, charging speed, and low-battery warnings on the lock screen"
             )
         }
     }
