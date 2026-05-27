@@ -3751,8 +3751,11 @@ object LiveUpdateNotifier {
         val aospCuttingEnabled = runtimePrefs.getAospCuttingEnabled()
         val aospCuttingLength = runtimePrefs.getAospCuttingLength()
         val hyperBridgeEnabled = runtimePrefs.getHyperBridgeEnabled()
-        val weatherLockscreenOnly =
-            smartRuleId == "weather" && runtimePrefs.getSmartWeatherLockscreenOnly()
+        val smartLockscreenOnly = when (smartRuleId) {
+            "weather" -> runtimePrefs.getSmartWeatherLockscreenOnly()
+            "vpn" -> runtimePrefs.getSmartVpnLockscreenOnly()
+            else -> false
+        }
         val callChronometerStart = callChronometerStartWallClockMs
             ?.takeIf { callMirrorActive && it > 0L }
             ?.coerceAtMost(System.currentTimeMillis())
@@ -3930,7 +3933,7 @@ object LiveUpdateNotifier {
                     suppressChipExpandedText = false,
                     suppressSourceRemoteViews = true,
                     suppressSourceNowBarRemoteView = true,
-                    lockscreenOnly = weatherLockscreenOnly,
+                    lockscreenOnly = smartLockscreenOnly,
                     hasProgress = false,
                     progressValue = 0,
                     progressMax = 0
@@ -4159,7 +4162,7 @@ object LiveUpdateNotifier {
                 suppressChipExpandedText = suppressSamsungChipExpandedText,
                 suppressSourceRemoteViews = suppressSamsungSourceRemoteViews,
                 suppressSourceNowBarRemoteView = suppressSamsungNowBarRemoteView,
-                lockscreenOnly = weatherLockscreenOnly,
+                lockscreenOnly = smartLockscreenOnly,
                 hasProgress = samsungNowBarHasProgress,
                 progressValue = samsungNowBarProgressValue,
                 progressMax = samsungNowBarProgressMax

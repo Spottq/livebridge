@@ -30,6 +30,7 @@ class _RulesNetworkConnectionsScreenState
   static const int _thresholdMaxBytesPerSecond = 1024 * 1024;
 
   bool _vpnEnabled = true;
+  bool _vpnLockscreenOnly = false;
   bool _externalDevicesEnabled = true;
   bool _ignoreDebuggingDevices = false;
   bool _networkSpeedEnabled = false;
@@ -59,6 +60,8 @@ class _RulesNetworkConnectionsScreenState
     try {
       final Future<bool> vpnEnabledFuture =
           LiveBridgePlatform.getSmartVpnEnabled();
+      final Future<bool> vpnLockscreenOnlyFuture =
+          LiveBridgePlatform.getSmartVpnLockscreenOnly();
       final Future<bool> externalDevicesEnabledFuture =
           LiveBridgePlatform.getSmartExternalDevicesEnabled();
       final Future<bool> ignoreDebuggingFuture =
@@ -85,6 +88,7 @@ class _RulesNetworkConnectionsScreenState
           LiveBridgePlatform.getNetworkSpeedNotificationColorArgb();
 
       final bool vpnEnabled = await vpnEnabledFuture;
+      final bool vpnLockscreenOnly = await vpnLockscreenOnlyFuture;
       final bool externalDevicesEnabled = await externalDevicesEnabledFuture;
       final bool ignoreDebuggingDevices = await ignoreDebuggingFuture;
       final bool networkSpeedEnabled = await networkSpeedEnabledFuture;
@@ -117,6 +121,7 @@ class _RulesNetworkConnectionsScreenState
 
       setState(() {
         _vpnEnabled = vpnEnabled;
+        _vpnLockscreenOnly = vpnLockscreenOnly;
         _externalDevicesEnabled = externalDevicesEnabled;
         _ignoreDebuggingDevices = ignoreDebuggingDevices;
         _networkSpeedEnabled = networkSpeedEnabled;
@@ -150,6 +155,14 @@ class _RulesNetworkConnectionsScreenState
     }
     setState(() => _vpnEnabled = value);
     await LiveBridgePlatform.setSmartVpnEnabled(value);
+  }
+
+  Future<void> _setVpnLockscreenOnly(bool value) async {
+    if (value == _vpnLockscreenOnly) {
+      return;
+    }
+    setState(() => _vpnLockscreenOnly = value);
+    await LiveBridgePlatform.setSmartVpnLockscreenOnly(value);
   }
 
   Future<void> _setExternalDevicesEnabled(bool value) async {
@@ -488,6 +501,25 @@ class _RulesNetworkConnectionsScreenState
           unawaited(LiveBridgeHaptics.toggle(nextValue));
           unawaited(_setVpnEnabled(nextValue));
         },
+      ),
+      LbListItemData(
+        title: strings.smartVpnLockscreenOnlyTitle,
+        description: strings.smartVpnLockscreenOnlySubtitle,
+        showChevron: false,
+        enabled: _vpnEnabled,
+        toggleValue: _vpnLockscreenOnly,
+        onToggle: _vpnEnabled
+            ? (bool value) {
+                unawaited(_setVpnLockscreenOnly(value));
+              }
+            : null,
+        onTap: _vpnEnabled
+            ? () {
+                final bool nextValue = !_vpnLockscreenOnly;
+                unawaited(LiveBridgeHaptics.toggle(nextValue));
+                unawaited(_setVpnLockscreenOnly(nextValue));
+              }
+            : null,
       ),
       LbListItemData(
         title: strings.externalDevicesTitle,

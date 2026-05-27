@@ -667,6 +667,14 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_SMART_VPN_ENABLED, value).apply()
     }
 
+    fun getSmartVpnLockscreenOnly(): Boolean {
+        return prefs.getBoolean(KEY_SMART_VPN_LOCKSCREEN_ONLY, false)
+    }
+
+    fun setSmartVpnLockscreenOnly(value: Boolean) {
+        prefs.edit().putBoolean(KEY_SMART_VPN_LOCKSCREEN_ONLY, value).apply()
+    }
+
     fun getSmartFlashlightEnabled(): Boolean {
         return prefs.getBoolean(KEY_SMART_FLASHLIGHT_ENABLED, false)
     }
@@ -1042,6 +1050,7 @@ class ConverterPrefs(context: Context) {
                 getSmartExternalDevicesIgnoreDebugging()
             )
             .put("smart_vpn_enabled", getSmartVpnEnabled())
+            .put("smart_vpn_lockscreen_only", getSmartVpnLockscreenOnly())
             .put("smart_flashlight_enabled", getSmartFlashlightEnabled())
             .put("smart_flashlight_level", getSmartFlashlightLevel())
             .put(
@@ -1176,6 +1185,7 @@ class ConverterPrefs(context: Context) {
         bool(settings, "smart_external_devices_ignore_debugging")
             ?.let(::setSmartExternalDevicesIgnoreDebugging)
         bool(settings, "smart_vpn_enabled")?.let(::setSmartVpnEnabled)
+        bool(settings, "smart_vpn_lockscreen_only")?.let(::setSmartVpnLockscreenOnly)
         bool(settings, "smart_flashlight_enabled")?.let(::setSmartFlashlightEnabled)
         int(settings, "smart_flashlight_level")?.let(::setSmartFlashlightLevel)
         bool(settings, "smart_remove_original_message_enabled")
@@ -1482,6 +1492,7 @@ class ConverterPrefs(context: Context) {
         private const val KEY_SMART_EXTERNAL_DEVICES_IGNORE_DEBUGGING =
             "smart_external_devices_ignore_debugging"
         private const val KEY_SMART_VPN_ENABLED = "smart_vpn_enabled"
+        private const val KEY_SMART_VPN_LOCKSCREEN_ONLY = "smart_vpn_lockscreen_only"
         private const val KEY_SMART_FLASHLIGHT_ENABLED = "smart_flashlight_enabled"
         private const val KEY_SMART_FLASHLIGHT_LEVEL = "smart_flashlight_level"
         private const val KEY_SMART_REMOVE_ORIGINAL_MESSAGE_ENABLED =

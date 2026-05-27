@@ -157,6 +157,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
     final Future<bool> smartExternalDevicesIgnoreDebuggingFuture =
         LiveBridgePlatform.getSmartExternalDevicesIgnoreDebugging();
     final Future<bool> smartVpnFuture = LiveBridgePlatform.getSmartVpnEnabled();
+    final Future<bool> smartVpnLockscreenOnlyFuture =
+        LiveBridgePlatform.getSmartVpnLockscreenOnly();
     final Future<bool> smartFlashlightEnabledFuture =
         LiveBridgePlatform.getSmartFlashlightEnabled();
     final Future<int> smartFlashlightLevelFuture =
@@ -303,6 +305,7 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         'smart_external_devices_ignore_debugging':
             await smartExternalDevicesIgnoreDebuggingFuture,
         'smart_vpn_enabled': await smartVpnFuture,
+        'smart_vpn_lockscreen_only': await smartVpnLockscreenOnlyFuture,
         'smart_flashlight_enabled': await smartFlashlightEnabledFuture,
         'smart_flashlight_level': await smartFlashlightLevelFuture,
         'otp_detection_enabled': await otpDetectionFuture,

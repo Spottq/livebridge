@@ -2329,6 +2329,18 @@ class AppStrings {
     zhHant: '以 *b/s 格式顯示傳入/傳出流量速度。',
   );
 
+  String get smartVpnLockscreenOnlyTitle => smartWeatherLockscreenOnlyTitle;
+
+  String get smartVpnLockscreenOnlySubtitle => tr(
+    en: 'Hide VPN traffic while the device is unlocked.',
+    ru: 'Скрывать VPN-трафик при разблокированном устройстве.',
+    tr: 'Cihaz kilidi açıkken VPN trafiğini gizle.',
+    ptBr: 'Ocultar o tráfego VPN quando o dispositivo estiver desbloqueado.',
+    zhHans: '设备解锁时隐藏 VPN 流量。',
+    zhHant: '裝置解鎖時隱藏 VPN 流量。',
+    ko: '기기가 잠금 해제되어 있을 때 VPN 트래픽을 숨깁니다.',
+  );
+
   String get smartExternalDevicesSubtitle => tr(
     en: 'Shows connected/connecting status and device name in island.',
     ru: 'Показывает статус подключения и имя устройства в острове.',

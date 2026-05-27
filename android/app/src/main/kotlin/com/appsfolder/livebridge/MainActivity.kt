@@ -755,6 +755,12 @@ class MainActivity : FlutterActivity() {
                 prefs.setSmartVpnEnabled(call.argument<Boolean>("value") ?: true)
                 res.success(true)
             }
+            "getSmartVpnLockscreenOnly" -> res.success(prefs.getSmartVpnLockscreenOnly())
+            "setSmartVpnLockscreenOnly" -> {
+                prefs.setSmartVpnLockscreenOnly(call.argument<Boolean>("value") ?: false)
+                LiveUpdateNotificationListenerService.requestSnapshotSync()
+                res.success(true)
+            }
             "getSmartFlashlightEnabled" -> res.success(prefs.getSmartFlashlightEnabled())
             "setSmartFlashlightEnabled" -> {
                 prefs.setSmartFlashlightEnabled(call.argument<Boolean>("value") ?: false)
