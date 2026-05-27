@@ -855,7 +855,7 @@ object LiveUpdateNotifier {
         action: LowBatteryPowerSavingAction
     ): NotificationCompat.Action {
         return NotificationCompat.Action.Builder(
-            IconCompat.createWithResource(context, R.drawable.ic_power_saving_subtract),
+            transparentActionIcon,
             action.title,
             action.pendingIntent
         ).addExtras(
