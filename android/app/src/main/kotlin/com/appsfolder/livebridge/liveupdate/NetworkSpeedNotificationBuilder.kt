@@ -32,8 +32,15 @@ internal class NetworkSpeedNotificationBuilder(
             !regularNotificationOnly &&
                 sample.totalBytesPerSecond >=
                 prefs.getNetworkSpeedMinThresholdBytesPerSecond().coerceAtLeast(0L)
-        val statusIconCompat = buildStatusIcon(prefs, sample)
         val chipIconCompat = IconCompat.createWithResource(context, R.drawable.ic_speed)
+        val samsungNowBarEligible =
+            shouldPromote && SamsungLiveUpdateReparser.isSamsungDevice()
+        val notificationSmallIcon =
+            if (samsungNowBarEligible) {
+                chipIconCompat
+            } else {
+                buildStatusIcon(prefs, sample)
+            }
         val contentIntent = PendingIntent.getActivity(
             context,
             0,
@@ -44,7 +51,7 @@ internal class NetworkSpeedNotificationBuilder(
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(statusIconCompat)
+            .setSmallIcon(notificationSmallIcon)
             .setContentTitle(title)
             .setContentText(contentText)
             .setContentIntent(contentIntent)
@@ -60,8 +67,6 @@ internal class NetworkSpeedNotificationBuilder(
             builder.setRequestPromotedOngoing(true)
             builder.setShortCriticalText(totalText)
         }
-        val samsungNowBarEligible =
-            shouldPromote && SamsungLiveUpdateReparser.isSamsungDevice()
         if (samsungNowBarEligible) {
             builder.addExtras(
                 buildSamsungExtras(
