@@ -205,6 +205,7 @@
         "clash",
         "v2ray",
         "hiddify",
+        "llc.itdev.incy",
         "tailscale",
         "zerotier",
         "shadowsocks"
@@ -328,6 +329,7 @@
     "v2ray",
     "hysteria",
     "singbox",
+    "llc.itdev.incy",
     "tailscale",
     "zerotier",
     "shadowsocks",
