@@ -10,6 +10,7 @@ import android.hardware.camera2.CameraManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
@@ -247,7 +248,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             refreshNotificationCapsuleFromActiveNotifications()
             return
         }
-        refreshChargingInfoFromActiveNotifications()
+        refreshChargingInfoFromActiveNotifications(sbn)
         if (!prefs.getConverterEnabled()) {
             LiveUpdateNotifier.cancelMirrored(applicationContext, sbn)
             refreshNotificationCapsuleFromActiveNotifications()
@@ -508,24 +509,30 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         }
     }
 
-    private fun refreshChargingInfoFromActiveNotifications() {
+    private fun refreshChargingInfoFromActiveNotifications(
+        removedNotification: StatusBarNotification? = null
+    ) {
         if (!prefs.getSmartChargingInfoEnabled()) {
             return
         }
         LiveUpdateNotifier.refreshChargingInfo(
             context = applicationContext,
             prefs = prefs,
-            activeNotifications = activeNotificationSnapshotsForChargingInfo()
+            activeNotifications = activeNotificationSnapshotsForChargingInfo(removedNotification)
         )
     }
 
-    private fun activeNotificationSnapshotsForChargingInfo(): List<StatusBarNotification> {
-        return try {
+    private fun activeNotificationSnapshotsForChargingInfo(
+        extraNotification: StatusBarNotification? = null
+    ): List<StatusBarNotification> {
+        val snapshots = try {
             activeNotifications?.toList().orEmpty()
         } catch (error: Throwable) {
             Log.w(TAG, "Unable to read active notifications for charging info", error)
             emptyList()
         }
+        extraNotification ?: return snapshots
+        return (snapshots + extraNotification).distinctBy { sbn -> sbn.key }
     }
 
     private fun registerLockscreenStateReceiver() {
@@ -574,6 +581,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             addAction(Intent.ACTION_BATTERY_CHANGED)
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
+            addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
         }
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

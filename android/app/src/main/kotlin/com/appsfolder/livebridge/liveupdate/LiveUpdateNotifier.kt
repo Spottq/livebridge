@@ -34,6 +34,7 @@ import android.os.Bundle
 import android.os.BatteryManager
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
 import android.service.notification.StatusBarNotification
 import android.util.Log
@@ -136,6 +137,7 @@ object LiveUpdateNotifier {
         setOf(RegexOption.IGNORE_CASE)
     )
     private val TEXT_PROGRESS_PERCENT_PATTERN = Regex("(?<!\\d)(\\d{1,3})\\s*%")
+    private val LOW_BATTERY_TITLE_PERCENT_PATTERN = Regex("(?<!\\d)\\d{1,3}\\s*%")
     private val TEXT_PROGRESS_DISCOUNT_CONTEXT_PATTERN = Regex(
         "(скид|акци|промокод|промо|купон|распрод|кэшб[еэ]к|кешб[еэ]к|discount|promo|coupon|sale|cashback|off\\b|выгод|bonus|бонус|save|deal|special\\s+offer|limited\\s+time|дарим|подар)",
         setOf(RegexOption.IGNORE_CASE)
@@ -224,6 +226,7 @@ object LiveUpdateNotifier {
     private const val NOWBAR_EXTRA_DISMISSIBLE = "com.nowbar.ongoing.DISMISSIBLE"
     private const val NOWBAR_ACTION_SEMANTIC_DELETE = "DELETE"
     private const val NOTIFICATION_CAPSULE_CLEAR_ACTION_ID = "notification_capsule_clear"
+    private const val CHARGING_INFO_POWER_SAVE_ACTION_ID = "charging_info_power_save"
     private val mainHandler = Handler(Looper.getMainLooper())
     private val appIconCacheLock = Any()
     private val appIconCache = mutableMapOf<String, AppIconAssets>()
@@ -248,6 +251,7 @@ object LiveUpdateNotifier {
     private var chargingInfoDelayScheduled = false
     private var chargingInfoDelayGeneration = 0L
     private var chargingInfoVisible = false
+    private var retainedLowBatterySnapshot: RetainedLowBatterySnapshot? = null
     private var callMirrorGenerationCounter = 0L
 
     private data class AppIconAssets(
@@ -277,13 +281,27 @@ object LiveUpdateNotifier {
         val expandedText: String,
         val iconRes: Int,
         val color: Int,
-        val lowBattery: Boolean
+        val lowBattery: Boolean,
+        val lowBatteryPowerSavingAction: LowBatteryPowerSavingAction? = null
     )
 
     private data class LowBatterySystemText(
         val title: String?,
         val collapsedText: String,
-        val expandedText: String
+        val expandedText: String,
+        val powerSavingAction: LowBatteryPowerSavingAction?
+    )
+
+    private data class RetainedLowBatterySnapshot(
+        val titleTemplate: String?,
+        val collapsedText: String,
+        val expandedText: String,
+        val powerSavingAction: LowBatteryPowerSavingAction?
+    )
+
+    private data class LowBatteryPowerSavingAction(
+        val title: String,
+        val pendingIntent: PendingIntent
     )
 
     private enum class ChargingInfoSpeed(
@@ -395,6 +413,7 @@ object LiveUpdateNotifier {
             chargingInfoDelayScheduled = false
             chargingInfoDelayGeneration += 1
             chargingInfoVisible = false
+            retainedLowBatterySnapshot = null
         }
         synchronized(appIconCacheLock) {
             appIconCache.clear()
@@ -702,6 +721,7 @@ object LiveUpdateNotifier {
             chargingInfoDelayScheduled = false
             chargingInfoDelayGeneration += 1
             chargingInfoVisible = false
+            retainedLowBatterySnapshot = null
         }
         runCatching {
             NotificationManagerCompat.from(context).cancel(CHARGING_INFO_ID)
@@ -791,6 +811,13 @@ object LiveUpdateNotifier {
             .setRequestPromotedOngoing(true)
             .setShortCriticalText(title)
 
+        if (snapshot.lowBattery && !isPowerSaveMode(context)) {
+            snapshot.lowBatteryPowerSavingAction?.let { action ->
+                builder.addAction(buildLowBatteryPowerSavingAction(context, action))
+                builder.addExtras(buildChargingInfoActionExtras())
+            }
+        }
+
         notificationCapsuleContentIntent(context, CHARGING_INFO_ID)?.let(builder::setContentIntent)
 
         @Suppress("DEPRECATION")
@@ -821,6 +848,34 @@ object LiveUpdateNotifier {
             lockscreenOnly = true
         )
         return SamsungOneUi7NowBarCompat.markEligible(builder.build())
+    }
+
+    private fun buildLowBatteryPowerSavingAction(
+        context: Context,
+        action: LowBatteryPowerSavingAction
+    ): NotificationCompat.Action {
+        return NotificationCompat.Action.Builder(
+            IconCompat.createWithResource(context, R.drawable.ic_power_saving_subtract),
+            action.title,
+            action.pendingIntent
+        ).addExtras(
+            Bundle().apply {
+                putString(NOWBAR_EXTRA_ACTION_ID, CHARGING_INFO_POWER_SAVE_ACTION_ID)
+            }
+        ).build()
+    }
+
+    private fun buildChargingInfoActionExtras(): Bundle {
+        return Bundle().apply {
+            putInt(SAMSUNG_EXTRA_ACTION_TYPE, 1)
+            putInt(SAMSUNG_EXTRA_ACTION_PRIMARY_SET, 0)
+        }
+    }
+
+    private fun isPowerSaveMode(context: Context): Boolean {
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+            ?: return false
+        return powerManager.isPowerSaveMode
     }
 
     private fun chargingInfoExpandedText(
@@ -932,6 +987,7 @@ object LiveUpdateNotifier {
                 status == BatteryManager.BATTERY_STATUS_FULL ||
                 plugged != 0
         if (isCharging) {
+            clearRetainedLowBatterySnapshot()
             return chargingInfoSnapshot(
                 context = context,
                 batteryIntent = batteryIntent,
@@ -940,18 +996,16 @@ object LiveUpdateNotifier {
         }
 
         if (percent > LOW_BATTERY_THRESHOLD_PERCENT) {
+            clearRetainedLowBatterySnapshot()
             return null
         }
-        val lowBatteryText = lowBatterySystemText(activeNotifications, percent) ?: return null
-        return ChargingInfoSnapshot(
-            percent = percent,
-            title = lowBatteryText.title ?: lowBatteryFallbackTitle(percent),
-            collapsedText = lowBatteryText.collapsedText,
-            expandedText = lowBatteryText.expandedText,
-            iconRes = R.drawable.ic_charging_bolt,
-            color = CHARGING_INFO_LOW_BATTERY_COLOR,
-            lowBattery = true
-        )
+        lowBatterySystemText(activeNotifications, percent)?.let { lowBatteryText ->
+            rememberRetainedLowBatterySnapshot(lowBatteryText)
+            return lowBatterySnapshot(percent, lowBatteryText)
+        }
+        return retainedLowBatterySnapshot()?.let { retained ->
+            lowBatterySnapshot(percent, retained)
+        }
     }
 
     private fun chargingInfoSnapshot(
@@ -974,6 +1028,71 @@ object LiveUpdateNotifier {
             color = speed.color,
             lowBattery = false
         )
+    }
+
+    private fun lowBatterySnapshot(
+        percent: Int,
+        lowBatteryText: LowBatterySystemText
+    ): ChargingInfoSnapshot {
+        return ChargingInfoSnapshot(
+            percent = percent,
+            title = lowBatteryTitleForPercent(lowBatteryText.title, percent),
+            collapsedText = lowBatteryText.collapsedText,
+            expandedText = lowBatteryText.expandedText,
+            iconRes = R.drawable.ic_charging_bolt,
+            color = CHARGING_INFO_LOW_BATTERY_COLOR,
+            lowBattery = true,
+            lowBatteryPowerSavingAction = lowBatteryText.powerSavingAction
+        )
+    }
+
+    private fun lowBatterySnapshot(
+        percent: Int,
+        retained: RetainedLowBatterySnapshot
+    ): ChargingInfoSnapshot {
+        return ChargingInfoSnapshot(
+            percent = percent,
+            title = lowBatteryTitleForPercent(retained.titleTemplate, percent),
+            collapsedText = retained.collapsedText,
+            expandedText = retained.expandedText,
+            iconRes = R.drawable.ic_charging_bolt,
+            color = CHARGING_INFO_LOW_BATTERY_COLOR,
+            lowBattery = true,
+            lowBatteryPowerSavingAction = retained.powerSavingAction
+        )
+    }
+
+    private fun rememberRetainedLowBatterySnapshot(lowBatteryText: LowBatterySystemText) {
+        synchronized(stateLock) {
+            retainedLowBatterySnapshot = RetainedLowBatterySnapshot(
+                titleTemplate = lowBatteryText.title,
+                collapsedText = lowBatteryText.collapsedText,
+                expandedText = lowBatteryText.expandedText,
+                powerSavingAction = lowBatteryText.powerSavingAction
+            )
+        }
+    }
+
+    private fun retainedLowBatterySnapshot(): RetainedLowBatterySnapshot? {
+        return synchronized(stateLock) {
+            retainedLowBatterySnapshot
+        }
+    }
+
+    private fun clearRetainedLowBatterySnapshot() {
+        synchronized(stateLock) {
+            retainedLowBatterySnapshot = null
+        }
+    }
+
+    private fun lowBatteryTitleForPercent(titleTemplate: String?, percent: Int): String {
+        val fallback = lowBatteryFallbackTitle(percent)
+        val title = titleTemplate?.trim()?.takeIf { it.isNotEmpty() } ?: return fallback
+        val percentText = "$percent%"
+        if (LOW_BATTERY_TITLE_PERCENT_PATTERN.containsMatchIn(title)) {
+            return LOW_BATTERY_TITLE_PERCENT_PATTERN.replace(title, percentText)
+        }
+        return "$title $percentText"
     }
 
     private fun lowBatterySystemText(
@@ -1025,7 +1144,38 @@ object LiveUpdateNotifier {
         return LowBatterySystemText(
             title = title,
             collapsedText = collapsedText,
-            expandedText = expandedText
+            expandedText = expandedText,
+            powerSavingAction = lowBatteryPowerSavingAction(notification)
+        )
+    }
+
+    private fun lowBatteryPowerSavingAction(
+        notification: Notification
+    ): LowBatteryPowerSavingAction? {
+        val actions = notification.actions?.filter { action ->
+            action.actionIntent != null &&
+                !NotificationTextNormalizer.normalize(action.title).isNullOrBlank()
+        }.orEmpty()
+        if (actions.isEmpty()) {
+            return null
+        }
+        val action = actions.firstOrNull { action ->
+            val title = NotificationTextNormalizer.normalize(action.title)
+                ?.lowercase(Locale.ROOT)
+                .orEmpty()
+            title.contains("power") ||
+                title.contains("saving") ||
+                title.contains("энерг") ||
+                title.contains("эконом") ||
+                title.contains("省电") ||
+                title.contains("省電") ||
+                title.contains("절전")
+        } ?: actions.first()
+        val title = NotificationTextNormalizer.normalize(action.title) ?: return null
+        val pendingIntent = action.actionIntent ?: return null
+        return LowBatteryPowerSavingAction(
+            title = title,
+            pendingIntent = pendingIntent
         )
     }
 
