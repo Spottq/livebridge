@@ -238,6 +238,16 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND, value).apply()
     }
 
+    fun getNetworkSpeedRegularNotificationEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NETWORK_SPEED_REGULAR_NOTIFICATION_ENABLED, false)
+    }
+
+    fun setNetworkSpeedRegularNotificationEnabled(value: Boolean) {
+        prefs.edit()
+            .putBoolean(KEY_NETWORK_SPEED_REGULAR_NOTIFICATION_ENABLED, value)
+            .apply()
+    }
+
     fun getNetworkSpeedNotificationColorArgb(): Int {
         return normalizeNotificationColor(
             prefs.getInt(
@@ -994,6 +1004,10 @@ class ConverterPrefs(context: Context) {
                 getNetworkSpeedChipBackgroundDisabled()
             )
             .put(
+                "network_speed_regular_notification_enabled",
+                getNetworkSpeedRegularNotificationEnabled()
+            )
+            .put(
                 "network_speed_notification_color",
                 formatNotificationColor(getNetworkSpeedNotificationColorArgb())
             )
@@ -1137,6 +1151,8 @@ class ConverterPrefs(context: Context) {
             ?.let(::setNetworkSpeedChipBackgroundDisabled)
         bool(settings, "network_speed_disable_chip_background")
             ?.let(::setNetworkSpeedChipBackgroundDisabled)
+        bool(settings, "network_speed_regular_notification_enabled")
+            ?.let(::setNetworkSpeedRegularNotificationEnabled)
         parseNotificationColor(settings, "network_speed_notification_color")
             ?.let(::setNetworkSpeedNotificationColorArgb)
         parseNotificationColor(settings, "network_speed_color")
@@ -1434,6 +1450,8 @@ class ConverterPrefs(context: Context) {
         private const val KEY_NETWORK_SPEED_LOCKSCREEN_ONLY = "network_speed_lockscreen_only"
         private const val KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND =
             "network_speed_disable_chip_background"
+        private const val KEY_NETWORK_SPEED_REGULAR_NOTIFICATION_ENABLED =
+            "network_speed_regular_notification_enabled"
         private const val KEY_NETWORK_SPEED_NOTIFICATION_COLOR =
             "network_speed_notification_color"
         private const val KEY_CONVERTER_ENABLED = "converter_enabled"

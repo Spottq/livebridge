@@ -46,6 +46,7 @@ class _RulesNetworkConnectionsScreenState
   bool _networkSpeedPrioritizeUpload = false;
   bool _networkSpeedLockscreenOnly = false;
   bool _networkSpeedChipBackgroundDisabled = false;
+  bool _networkSpeedRegularNotificationEnabled = false;
   int _networkSpeedNotificationColorArgb = defaultNotificationColorArgb;
 
   @override
@@ -84,6 +85,8 @@ class _RulesNetworkConnectionsScreenState
           LiveBridgePlatform.getNetworkSpeedLockscreenOnly();
       final Future<bool> networkSpeedChipBackgroundDisabledFuture =
           LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
+      final Future<bool> networkSpeedRegularNotificationFuture =
+          LiveBridgePlatform.getNetworkSpeedRegularNotificationEnabled();
       final Future<int> networkSpeedNotificationColorFuture =
           LiveBridgePlatform.getNetworkSpeedNotificationColorArgb();
 
@@ -107,6 +110,8 @@ class _RulesNetworkConnectionsScreenState
           await networkSpeedLockscreenOnlyFuture;
       final bool networkSpeedChipBackgroundDisabled =
           await networkSpeedChipBackgroundDisabledFuture;
+      final bool networkSpeedRegularNotificationEnabled =
+          await networkSpeedRegularNotificationFuture;
       final int networkSpeedNotificationColor =
           await networkSpeedNotificationColorFuture;
 
@@ -142,6 +147,8 @@ class _RulesNetworkConnectionsScreenState
         _networkSpeedLockscreenOnly = networkSpeedLockscreenOnly;
         _networkSpeedChipBackgroundDisabled =
             networkSpeedChipBackgroundDisabled;
+        _networkSpeedRegularNotificationEnabled =
+            networkSpeedRegularNotificationEnabled;
         _networkSpeedNotificationColorArgb = _opaqueNotificationColor(
           networkSpeedNotificationColor,
         );
@@ -263,6 +270,14 @@ class _RulesNetworkConnectionsScreenState
     }
     setState(() => _networkSpeedChipBackgroundDisabled = value);
     await LiveBridgePlatform.setNetworkSpeedChipBackgroundDisabled(value);
+  }
+
+  Future<void> _setNetworkSpeedRegularNotificationEnabled(bool value) async {
+    if (value == _networkSpeedRegularNotificationEnabled) {
+      return;
+    }
+    setState(() => _networkSpeedRegularNotificationEnabled = value);
+    await LiveBridgePlatform.setNetworkSpeedRegularNotificationEnabled(value);
   }
 
   Future<void> _setNetworkSpeedNotificationColorArgb(int value) async {
@@ -703,6 +718,27 @@ class _RulesNetworkConnectionsScreenState
                 final bool nextValue = !_networkSpeedChipBackgroundDisabled;
                 unawaited(LiveBridgeHaptics.toggle(nextValue));
                 unawaited(_setNetworkSpeedChipBackgroundDisabled(nextValue));
+              }
+            : null,
+      ),
+      LbListItemData(
+        title: strings.networkSpeedRegularNotificationTitle,
+        description: strings.networkSpeedRegularNotificationSubtitle,
+        showChevron: false,
+        enabled: _networkSpeedEnabled,
+        toggleValue: _networkSpeedRegularNotificationEnabled,
+        onToggle: _networkSpeedEnabled
+            ? (bool value) {
+                unawaited(_setNetworkSpeedRegularNotificationEnabled(value));
+              }
+            : null,
+        onTap: _networkSpeedEnabled
+            ? () {
+                final bool nextValue = !_networkSpeedRegularNotificationEnabled;
+                unawaited(LiveBridgeHaptics.toggle(nextValue));
+                unawaited(
+                  _setNetworkSpeedRegularNotificationEnabled(nextValue),
+                );
               }
             : null,
       ),

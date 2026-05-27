@@ -22,8 +22,10 @@ internal class NetworkSpeedNotificationBuilder(
         val totalText = NetworkSpeedFormatter.totalText(sample, prefs)
         val contentText = NetworkSpeedFormatter.contentText(sample, prefs)
         val notificationColor = prefs.getNetworkSpeedNotificationColorArgb()
+        val regularNotificationOnly = prefs.getNetworkSpeedRegularNotificationEnabled()
         val shouldPromote =
-            sample.totalBytesPerSecond >=
+            !regularNotificationOnly &&
+                sample.totalBytesPerSecond >=
                 prefs.getNetworkSpeedMinThresholdBytesPerSecond().coerceAtLeast(0L)
         val chipIconCompat = IconCompat.createWithResource(context, R.drawable.ic_speed)
         val contentIntent = PendingIntent.getActivity(

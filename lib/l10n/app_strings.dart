@@ -2544,6 +2544,27 @@ class AppStrings {
     zhHant: '移除 Now Bar 中網速膠囊的藥丸背景。',
   );
 
+  String get networkSpeedRegularNotificationTitle => tr(
+    en: 'Show as regular notification',
+    ru: 'Показывать как обычное уведомление',
+    tr: 'Normal bildirim olarak göster',
+    ptBr: 'Mostrar como notificação comum',
+    zhHans: '显示为普通通知',
+    zhHant: '顯示為一般通知',
+    ko: '일반 알림으로 표시',
+  );
+
+  String get networkSpeedRegularNotificationSubtitle => tr(
+    en: 'Keep the speed monitor in the notification shade and do not promote it to Now Bar.',
+    ru: 'Оставлять скорость сети в шторке уведомлений и не выводить её в Now Bar.',
+    tr: 'Hız göstergesini bildirim panelinde tutar ve Now Bar\'a yükseltmez.',
+    ptBr:
+        'Mantém o monitor de velocidade na área de notificações e não o promove para a Now Bar.',
+    zhHans: '将网速监视器保留在通知栏中，不提升到 Now Bar。',
+    zhHant: '將網速監視器保留在通知欄中，不提升到 Now Bar。',
+    ko: '속도 표시를 알림 창에만 두고 Now Bar로 올리지 않습니다.',
+  );
+
   String get textProgressTitle => tr(
     en: 'Text progress',
     ru: 'Текстовые прогрессы',
