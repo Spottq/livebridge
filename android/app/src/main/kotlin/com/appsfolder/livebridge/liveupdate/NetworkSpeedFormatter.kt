@@ -53,6 +53,13 @@ internal object NetworkSpeedFormatter {
         return "$value$unit"
     }
 
+    fun statusIconText(
+        sample: NetworkSpeedSample,
+        prefs: ConverterPrefs
+    ): Pair<String, String> {
+        return formatSpeedText(sample.totalBytesPerSecond, prefs.getNetworkSpeedUnit())
+    }
+
     private fun formatSpeedText(
         bytesPerSecond: Long,
         rawUnit: String?

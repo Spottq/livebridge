@@ -4,12 +4,17 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Typeface
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.kakao.taxi.MainActivity
 import com.kakao.taxi.R
+import kotlin.math.roundToInt
 
 internal class NetworkSpeedNotificationBuilder(
     private val context: Context
@@ -27,6 +32,7 @@ internal class NetworkSpeedNotificationBuilder(
             !regularNotificationOnly &&
                 sample.totalBytesPerSecond >=
                 prefs.getNetworkSpeedMinThresholdBytesPerSecond().coerceAtLeast(0L)
+        val statusIconCompat = buildStatusIcon(prefs, sample)
         val chipIconCompat = IconCompat.createWithResource(context, R.drawable.ic_speed)
         val contentIntent = PendingIntent.getActivity(
             context,
@@ -38,7 +44,7 @@ internal class NetworkSpeedNotificationBuilder(
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_speed)
+            .setSmallIcon(statusIconCompat)
             .setContentTitle(title)
             .setContentText(contentText)
             .setContentIntent(contentIntent)
@@ -118,6 +124,59 @@ internal class NetworkSpeedNotificationBuilder(
         }
     }
 
+    private fun buildStatusIcon(
+        prefs: ConverterPrefs,
+        sample: NetworkSpeedSample
+    ): IconCompat {
+        val size = (context.resources.displayMetrics.density * STATUS_ICON_DP)
+            .roundToInt()
+            .coerceAtLeast(STATUS_ICON_MIN_PX)
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val (valueText, unitText) = NetworkSpeedFormatter.statusIconText(sample, prefs)
+        val maxTextWidth = size * STATUS_ICON_MAX_WIDTH_FACTOR
+        val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+            fitTextSize(valueText, size * STATUS_ICON_VALUE_TEXT_FACTOR, maxTextWidth)
+        }
+        val unitPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textAlign = Paint.Align.CENTER
+            typeface = Typeface.DEFAULT_BOLD
+            fitTextSize(unitText, size * STATUS_ICON_UNIT_TEXT_FACTOR, maxTextWidth)
+        }
+
+        drawCenteredText(canvas, valueText, size * STATUS_ICON_VALUE_CENTER_Y_FACTOR, valuePaint)
+        drawCenteredText(canvas, unitText, size * STATUS_ICON_UNIT_CENTER_Y_FACTOR, unitPaint)
+        return IconCompat.createWithBitmap(bitmap)
+    }
+
+    private fun Paint.fitTextSize(
+        text: String,
+        preferredSize: Float,
+        maxWidth: Float
+    ) {
+        var nextSize = preferredSize
+        textSize = nextSize
+        while (nextSize > STATUS_ICON_MIN_TEXT_SIZE && measureText(text) > maxWidth) {
+            nextSize -= STATUS_ICON_TEXT_SHRINK_STEP
+            textSize = nextSize
+        }
+    }
+
+    private fun drawCenteredText(
+        canvas: Canvas,
+        text: String,
+        centerY: Float,
+        paint: Paint
+    ) {
+        val metrics = paint.fontMetrics
+        val baseline = centerY - (metrics.ascent + metrics.descent) / 2f
+        canvas.drawText(text, canvas.width / 2f, baseline, paint)
+    }
+
     private fun notificationTitle(): String = if (isRussianLocale()) TITLE_RU else TITLE_EN
 
     private fun isRussianLocale(): Boolean {
@@ -132,6 +191,16 @@ internal class NetworkSpeedNotificationBuilder(
         private const val TITLE_EN = "Network speed"
         private const val TITLE_RU =
             "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430"
+
+        private const val STATUS_ICON_DP = 24f
+        private const val STATUS_ICON_MIN_PX = 48
+        private const val STATUS_ICON_MAX_WIDTH_FACTOR = 0.9f
+        private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.58f
+        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.34f
+        private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.36f
+        private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.76f
+        private const val STATUS_ICON_MIN_TEXT_SIZE = 6f
+        private const val STATUS_ICON_TEXT_SHRINK_STEP = 1f
 
         private const val ONGOING_PREFIX = "android.ongoingActivityNoti."
         private const val KEY_STYLE = "${ONGOING_PREFIX}style"
