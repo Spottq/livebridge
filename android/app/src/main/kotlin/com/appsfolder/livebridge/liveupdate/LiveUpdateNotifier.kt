@@ -138,10 +138,6 @@ object LiveUpdateNotifier {
     )
     private val TEXT_PROGRESS_PERCENT_PATTERN = Regex("(?<!\\d)(\\d{1,3})\\s*%")
     private val LOW_BATTERY_TITLE_PERCENT_PATTERN = Regex("(?<!\\d)\\d{1,3}\\s*%")
-    private val VPN_BODY_LABEL_PREFIX_PATTERN = Regex(
-        "^\\s*(?:speed|total|time)\\s*[:：-]?\\s*",
-        setOf(RegexOption.IGNORE_CASE)
-    )
     private val TEXT_PROGRESS_DISCOUNT_CONTEXT_PATTERN = Regex(
         "(скид|акци|промокод|промо|купон|распрод|кэшб[еэ]к|кешб[еэ]к|discount|promo|coupon|sale|cashback|off\\b|выгод|bonus|бонус|save|deal|special\\s+offer|limited\\s+time|дарим|подар)",
         setOf(RegexOption.IGNORE_CASE)
@@ -3647,11 +3643,7 @@ object LiveUpdateNotifier {
                 samsungReparse?.title?.takeIf { it.isNotBlank() }
                     ?: sourceNotificationTitle
             }
-        val sourceNotificationText = if (smartRuleId == "vpn") {
-            stripVpnBodyLabels(extractExpandedText(source, allowRemoteViewTextFallback))
-        } else {
-            extractText(source, allowRemoteViewTextFallback)
-        }
+        val sourceNotificationText = extractText(source, allowRemoteViewTextFallback)
         val baseText = textOverride?.takeIf { it.isNotBlank() }
             ?: if (smartRuleId == "vpn") {
                 sourceNotificationText
@@ -7108,37 +7100,6 @@ object LiveUpdateNotifier {
         }
         val remoteText = extractRemoteViewTexts(notification).firstOrNull()
         return remoteText ?: "Live update in progress"
-    }
-
-    private fun extractExpandedText(
-        notification: Notification,
-        allowRemoteViewFallback: Boolean
-    ): String {
-        val extras = notification.extras
-        val text = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)
-            ?: extras.getCharSequence(Notification.EXTRA_TEXT)
-            ?: extras.getCharSequence(Notification.EXTRA_SUB_TEXT)
-        val normalized = NotificationTextNormalizer.normalize(text)
-        if (normalized != null) {
-            return normalized
-        }
-        if (!allowRemoteViewFallback) {
-            return "Live update in progress"
-        }
-        val remoteText = extractRemoteViewTexts(notification).firstOrNull()
-        return remoteText ?: "Live update in progress"
-    }
-
-    private fun stripVpnBodyLabels(text: String): String {
-        val stripped = text
-            .lineSequence()
-            .map { line ->
-                line.replaceFirst(VPN_BODY_LABEL_PREFIX_PATTERN, "")
-                    .trimStart()
-            }
-            .joinToString(separator = "\n")
-            .trim()
-        return stripped.ifBlank { text.trim() }
     }
 
     private fun resolveCallMirrorBodyText(
