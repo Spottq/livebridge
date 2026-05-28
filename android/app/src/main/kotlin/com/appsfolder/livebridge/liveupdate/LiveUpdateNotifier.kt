@@ -3643,9 +3643,21 @@ object LiveUpdateNotifier {
                 samsungReparse?.title?.takeIf { it.isNotBlank() }
                     ?: sourceNotificationTitle
             }
+        val sourceNotificationText = if (smartRuleId == "vpn") {
+            extractExpandedText(source, allowRemoteViewTextFallback)
+        } else {
+            extractText(source, allowRemoteViewTextFallback)
+        }
         val baseText = textOverride?.takeIf { it.isNotBlank() }
-            ?: samsungReparse?.text?.takeIf { it.isNotBlank() }
-            ?: extractText(source, allowRemoteViewTextFallback)
+            ?: if (smartRuleId == "vpn") {
+                sourceNotificationText
+                    .takeIf { !isGeneratedCallBodyFallback(it) }
+                    ?: samsungReparse?.text?.takeIf { it.isNotBlank() }
+                    ?: sourceNotificationText
+            } else {
+                samsungReparse?.text?.takeIf { it.isNotBlank() }
+                    ?: sourceNotificationText
+            }
         val nonSamsungTwoGisTextPair = if (
             !samsungBridge.enabled &&
             isTwoGisPackage
@@ -4042,7 +4054,7 @@ object LiveUpdateNotifier {
         } else {
             builder.setStyle(NotificationCompat.BigTextStyle().bigText(callMirrorBodyText ?: text))
         }
-        if (smartShortTextOverride != null && !hasProgress) {
+        if (smartShortTextOverride != null && !hasProgress && smartRuleId != "vpn") {
             if (!preferSmartShortTextAsPrimary) {
                 builder.setContentText(smartShortTextOverride)
             }
@@ -7082,6 +7094,25 @@ object LiveUpdateNotifier {
         val extras = notification.extras
         val text = extras.getCharSequence(Notification.EXTRA_TEXT)
             ?: extras.getCharSequence(Notification.EXTRA_BIG_TEXT)
+            ?: extras.getCharSequence(Notification.EXTRA_SUB_TEXT)
+        val normalized = NotificationTextNormalizer.normalize(text)
+        if (normalized != null) {
+            return normalized
+        }
+        if (!allowRemoteViewFallback) {
+            return "Live update in progress"
+        }
+        val remoteText = extractRemoteViewTexts(notification).firstOrNull()
+        return remoteText ?: "Live update in progress"
+    }
+
+    private fun extractExpandedText(
+        notification: Notification,
+        allowRemoteViewFallback: Boolean
+    ): String {
+        val extras = notification.extras
+        val text = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)
+            ?: extras.getCharSequence(Notification.EXTRA_TEXT)
             ?: extras.getCharSequence(Notification.EXTRA_SUB_TEXT)
         val normalized = NotificationTextNormalizer.normalize(text)
         if (normalized != null) {
