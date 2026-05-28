@@ -47,6 +47,7 @@ internal object SamsungBridgeContentPolicy {
         twoGisVisibleSecondaryText: String?,
         preferSmartShortTextAsPrimary: Boolean = false
     ): SamsungBridgeTexts {
+        val isVpnRule = smartRuleId == "vpn"
         val isTwoGisPackage = sourcePackageName == TWO_GIS_PACKAGE
         val isYandexMapsLikePackage =
             sourcePackageName == YANDEX_MAPS_PACKAGE ||
@@ -72,6 +73,7 @@ internal object SamsungBridgeContentPolicy {
                     !useTextOnlyMiniNowBar &&
                     smartShortTextOverride != null &&
                     !hasProgress &&
+                    !isVpnRule &&
                     smartRuleId != "weather"
         val secondaryText = if (useSmartShortTextAsPrimary) {
             displayText
@@ -86,6 +88,12 @@ internal object SamsungBridgeContentPolicy {
         }
         val chipText = if (useSmartShortTextAsPrimary) {
             preferredSmartText
+        } else if (isVpnRule) {
+            sequenceOf(
+                smartShortTextOverride?.trim(),
+                samsungReparseChipText?.trim(),
+                compactPrimaryText.trim()
+            ).firstOrNull { !it.isNullOrEmpty() }
         } else {
             sequenceOf(
                 twoGisPrimaryText?.trim()?.takeIf { isTwoGisPackage && it.isNotEmpty() },
@@ -114,6 +122,8 @@ internal object SamsungBridgeContentPolicy {
                 ?.takeIf { it.isNotEmpty() }
                 ?: compactPrimaryText.trim()
         }
+        val showGenericSecondaryInNowBar =
+            smartRuleId != "navigation" && !isVpnRule && !hasCustomRemoteCard
         val nowBarSecondaryText = when {
             useSmartShortTextAsPrimary -> null
             isTwoGisPackage -> twoGisVisibleSecondaryText
@@ -125,7 +135,7 @@ internal object SamsungBridgeContentPolicy {
             remoteViewMiniTextPair != null -> remoteViewMiniTextPair.secondaryText
                 ?.trim()
                 ?.takeIf { it.isNotEmpty() }
-            smartRuleId != "navigation" && !hasCustomRemoteCard -> secondaryText
+            showGenericSecondaryInNowBar -> secondaryText
                 .trim()
                 .takeIf { it.isNotEmpty() }
             else -> null
@@ -139,7 +149,7 @@ internal object SamsungBridgeContentPolicy {
             nowBarSecondaryText = nowBarSecondaryText,
             showSecondaryInNowBar = !useSmartShortTextAsPrimary && (
                 remoteViewMiniTextPair != null ||
-                        (smartRuleId != "navigation" && !hasCustomRemoteCard)
+                        showGenericSecondaryInNowBar
             ),
             preferCompactNowBarRemoteView =
                 !useSmartShortTextAsPrimary &&

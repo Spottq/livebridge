@@ -3633,9 +3633,16 @@ object LiveUpdateNotifier {
         }
         val appName = resolveAppName(context, sbn.packageName)
         val allowRemoteViewTextFallback = shouldTryNavigationArrowIcon
+        val sourceNotificationTitle = extractTitle(source, appName, allowRemoteViewTextFallback)
         val baseTitle = titleOverride?.takeIf { it.isNotBlank() }
-            ?: samsungReparse?.title?.takeIf { it.isNotBlank() }
-            ?: extractTitle(source, appName, allowRemoteViewTextFallback)
+            ?: if (smartRuleId == "vpn") {
+                sourceNotificationTitle.takeIf { it.isNotBlank() }
+                    ?: samsungReparse?.title?.takeIf { it.isNotBlank() }
+                    ?: appName
+            } else {
+                samsungReparse?.title?.takeIf { it.isNotBlank() }
+                    ?: sourceNotificationTitle
+            }
         val baseText = textOverride?.takeIf { it.isNotBlank() }
             ?: samsungReparse?.text?.takeIf { it.isNotBlank() }
             ?: extractText(source, allowRemoteViewTextFallback)
