@@ -138,6 +138,10 @@ object LiveUpdateNotifier {
     )
     private val TEXT_PROGRESS_PERCENT_PATTERN = Regex("(?<!\\d)(\\d{1,3})\\s*%")
     private val LOW_BATTERY_TITLE_PERCENT_PATTERN = Regex("(?<!\\d)\\d{1,3}\\s*%")
+    private val VPN_BODY_LABEL_PREFIX_PATTERN = Regex(
+        "^\\s*(?:speed|total|time)\\s*[:：-]?\\s*",
+        setOf(RegexOption.IGNORE_CASE)
+    )
     private val TEXT_PROGRESS_DISCOUNT_CONTEXT_PATTERN = Regex(
         "(скид|акци|промокод|промо|купон|распрод|кэшб[еэ]к|кешб[еэ]к|discount|promo|coupon|sale|cashback|off\\b|выгод|bonus|бонус|save|deal|special\\s+offer|limited\\s+time|дарим|подар)",
         setOf(RegexOption.IGNORE_CASE)
@@ -3644,7 +3648,7 @@ object LiveUpdateNotifier {
                     ?: sourceNotificationTitle
             }
         val sourceNotificationText = if (smartRuleId == "vpn") {
-            extractExpandedText(source, allowRemoteViewTextFallback)
+            stripVpnBodyLabels(extractExpandedText(source, allowRemoteViewTextFallback))
         } else {
             extractText(source, allowRemoteViewTextFallback)
         }
@@ -7123,6 +7127,18 @@ object LiveUpdateNotifier {
         }
         val remoteText = extractRemoteViewTexts(notification).firstOrNull()
         return remoteText ?: "Live update in progress"
+    }
+
+    private fun stripVpnBodyLabels(text: String): String {
+        val stripped = text
+            .lineSequence()
+            .map { line ->
+                line.replaceFirst(VPN_BODY_LABEL_PREFIX_PATTERN, "")
+                    .trimStart()
+            }
+            .joinToString(separator = "\n")
+            .trim()
+        return stripped.ifBlank { text.trim() }
     }
 
     private fun resolveCallMirrorBodyText(
