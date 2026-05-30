@@ -177,9 +177,6 @@ enum NetworkSpeedDisplayMode { total, upload, download }
 
 enum NotificationCapsuleMode { general, perApp }
 
-const String kDefaultNetworkSpeedUploadPrefix = '\u25B2 ';
-const String kDefaultNetworkSpeedDownloadPrefix = '\u25BC ';
-
 extension NetworkSpeedDisplayModeId on NetworkSpeedDisplayMode {
   String get id {
     switch (this) {
@@ -220,101 +217,6 @@ extension NotificationCapsuleModeId on NotificationCapsuleMode {
         return NotificationCapsuleMode.perApp;
       default:
         return NotificationCapsuleMode.general;
-    }
-  }
-}
-
-enum NetworkSpeedUnit { auto, bytes, kilobytes, megabytes, gigabytes }
-
-const List<NetworkSpeedUnit> kNetworkSpeedUnitValues = <NetworkSpeedUnit>[
-  NetworkSpeedUnit.auto,
-  NetworkSpeedUnit.bytes,
-  NetworkSpeedUnit.kilobytes,
-  NetworkSpeedUnit.megabytes,
-  NetworkSpeedUnit.gigabytes,
-];
-
-extension NetworkSpeedUnitId on NetworkSpeedUnit {
-  String get id {
-    switch (this) {
-      case NetworkSpeedUnit.auto:
-        return 'auto';
-      case NetworkSpeedUnit.bytes:
-        return 'b';
-      case NetworkSpeedUnit.kilobytes:
-        return 'kb';
-      case NetworkSpeedUnit.megabytes:
-        return 'mb';
-      case NetworkSpeedUnit.gigabytes:
-        return 'gb';
-    }
-  }
-
-  static NetworkSpeedUnit from(String? value) {
-    switch (value) {
-      case 'b':
-        return NetworkSpeedUnit.bytes;
-      case 'kb':
-        return NetworkSpeedUnit.kilobytes;
-      case 'mb':
-        return NetworkSpeedUnit.megabytes;
-      case 'gb':
-        return NetworkSpeedUnit.gigabytes;
-      default:
-        return NetworkSpeedUnit.auto;
-    }
-  }
-}
-
-class NetworkSpeedUnitSelection {
-  const NetworkSpeedUnitSelection._();
-
-  static Set<NetworkSpeedUnit> parse(String? raw) {
-    final Set<NetworkSpeedUnit> selected = <NetworkSpeedUnit>{};
-    for (final String token in (raw ?? '').split(',')) {
-      final NetworkSpeedUnit? unit = tryParse(token.trim());
-      if (unit != null) {
-        selected.add(unit);
-      }
-    }
-    return selected;
-  }
-
-  static String encode(Iterable<NetworkSpeedUnit> units) {
-    final Set<NetworkSpeedUnit> selected = units.toSet();
-    if (selected.isEmpty) {
-      return '';
-    }
-    if (selected.contains(NetworkSpeedUnit.auto)) {
-      return NetworkSpeedUnit.auto.id;
-    }
-    return kNetworkSpeedUnitValues
-        .where(
-          (NetworkSpeedUnit unit) =>
-              unit != NetworkSpeedUnit.auto && selected.contains(unit),
-        )
-        .map((NetworkSpeedUnit unit) => unit.id)
-        .join(',');
-  }
-
-  static bool usesAuto(Set<NetworkSpeedUnit> units) {
-    return units.isEmpty || units.contains(NetworkSpeedUnit.auto);
-  }
-
-  static NetworkSpeedUnit? tryParse(String? value) {
-    switch (value) {
-      case 'auto':
-        return NetworkSpeedUnit.auto;
-      case 'b':
-        return NetworkSpeedUnit.bytes;
-      case 'kb':
-        return NetworkSpeedUnit.kilobytes;
-      case 'mb':
-        return NetworkSpeedUnit.megabytes;
-      case 'gb':
-        return NetworkSpeedUnit.gigabytes;
-      default:
-        return null;
     }
   }
 }

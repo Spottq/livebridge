@@ -25,7 +25,7 @@ internal class NetworkSpeedNotificationBuilder(
         dailyUsage: NetworkDailyUsage
     ): Notification {
         val title = notificationTitle()
-        val totalText = NetworkSpeedFormatter.totalText(sample, prefs)
+        val totalText = NetworkSpeedFormatter.totalText(sample)
         val contentText = NetworkSpeedFormatter.contentText(sample, prefs)
         val regularContentText =
             NetworkSpeedFormatter.regularNotificationContentText(sample, prefs)
@@ -60,7 +60,7 @@ internal class NetworkSpeedNotificationBuilder(
             if (samsungNowBarEligible) {
                 chipIconCompat
             } else {
-                buildStatusIcon(prefs, sample)
+                buildStatusIcon(sample)
             }
         val contentIntent = PendingIntent.getActivity(
             context,
@@ -96,7 +96,6 @@ internal class NetworkSpeedNotificationBuilder(
         if (samsungNowBarEligible) {
             builder.addExtras(
                 buildSamsungExtras(
-                    lockscreenOnly = prefs.getNetworkSpeedLockscreenOnly(),
                     chipBackgroundDisabled = prefs.getNetworkSpeedChipBackgroundDisabled(),
                     chipBackgroundColor = notificationColor,
                     title = title,
@@ -122,7 +121,6 @@ internal class NetworkSpeedNotificationBuilder(
     }
 
     private fun buildSamsungExtras(
-        lockscreenOnly: Boolean,
         chipBackgroundDisabled: Boolean,
         chipBackgroundColor: Int,
         title: String,
@@ -132,7 +130,7 @@ internal class NetworkSpeedNotificationBuilder(
     ): Bundle {
         val icon = runCatching { chipIcon.toIcon(context) }.getOrNull()
         return Bundle().apply {
-            putInt(KEY_STYLE, if (lockscreenOnly) STYLE_NOW_BAR_ONLY else STYLE_DEFAULT)
+            putInt(KEY_STYLE, STYLE_DEFAULT)
             putCharSequence(KEY_PRIMARY_INFO, title)
             putCharSequence(KEY_SECONDARY_INFO, contentText)
             putCharSequence(KEY_CHIP_EXPANDED_TEXT, chipText)
@@ -161,16 +159,13 @@ internal class NetworkSpeedNotificationBuilder(
         }
     }
 
-    private fun buildStatusIcon(
-        prefs: ConverterPrefs,
-        sample: NetworkSpeedSample
-    ): IconCompat {
+    private fun buildStatusIcon(sample: NetworkSpeedSample): IconCompat {
         val size = (context.resources.displayMetrics.density * STATUS_ICON_DP)
             .roundToInt()
             .coerceAtLeast(STATUS_ICON_MIN_PX)
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        val (valueText, unitText) = NetworkSpeedFormatter.statusIconText(sample, prefs)
+        val (valueText, unitText) = NetworkSpeedFormatter.statusIconText(sample)
         val maxTextWidth = size * STATUS_ICON_MAX_WIDTH_FACTOR
         val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
@@ -256,6 +251,5 @@ internal class NetworkSpeedNotificationBuilder(
         private const val KEY_SHOW_SMALL_ICON = "android.showSmallIcon"
 
         private const val STYLE_DEFAULT = 1
-        private const val STYLE_NOW_BAR_ONLY = 2
     }
 }

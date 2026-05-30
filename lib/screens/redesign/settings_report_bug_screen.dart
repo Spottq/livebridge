@@ -101,16 +101,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getNetworkSpeedMinThresholdBytesPerSecond();
     final Future<String> networkSpeedDisplayModeFuture =
         LiveBridgePlatform.getNetworkSpeedDisplayMode();
-    final Future<String> networkSpeedUploadPrefixFuture =
-        LiveBridgePlatform.getNetworkSpeedUploadPrefix();
-    final Future<String> networkSpeedDownloadPrefixFuture =
-        LiveBridgePlatform.getNetworkSpeedDownloadPrefix();
-    final Future<String> networkSpeedUnitFuture =
-        LiveBridgePlatform.getNetworkSpeedUnit();
     final Future<bool> networkSpeedPrioritizeUploadFuture =
         LiveBridgePlatform.getNetworkSpeedPrioritizeUpload();
-    final Future<bool> networkSpeedLockscreenOnlyFuture =
-        LiveBridgePlatform.getNetworkSpeedLockscreenOnly();
     final Future<bool> networkSpeedChipBackgroundDisabledFuture =
         LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
     final Future<bool> networkSpeedRegularNotificationFuture =
@@ -272,12 +264,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         'network_speed_min_threshold_bytes_per_second':
             await networkSpeedThresholdFuture,
         'network_speed_display_mode': await networkSpeedDisplayModeFuture,
-        'network_speed_upload_prefix': await networkSpeedUploadPrefixFuture,
-        'network_speed_download_prefix': await networkSpeedDownloadPrefixFuture,
-        'network_speed_unit': await networkSpeedUnitFuture,
         'network_speed_prioritize_upload':
             await networkSpeedPrioritizeUploadFuture,
-        'network_speed_lockscreen_only': await networkSpeedLockscreenOnlyFuture,
         'network_speed_chip_background_disabled':
             await networkSpeedChipBackgroundDisabledFuture,
         'network_speed_regular_notification_enabled':

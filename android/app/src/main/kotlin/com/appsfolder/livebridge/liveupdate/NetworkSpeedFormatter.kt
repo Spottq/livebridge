@@ -16,8 +16,8 @@ internal data class NetworkSpeedSample(
 }
 
 internal object NetworkSpeedFormatter {
-    fun totalText(sample: NetworkSpeedSample, prefs: ConverterPrefs): String {
-        return formatSpeedLine(sample.totalBytesPerSecond, prefs.getNetworkSpeedUnit())
+    fun totalText(sample: NetworkSpeedSample): String {
+        return formatSpeedLine(sample.totalBytesPerSecond)
     }
 
     fun contentText(
@@ -37,15 +37,10 @@ internal object NetworkSpeedFormatter {
     private fun contentText(
         sample: NetworkSpeedSample,
         prefs: ConverterPrefs,
-        formatLine: (Long, String?) -> String
+        formatLine: (Long) -> String
     ): String {
-        val speedUnit = prefs.getNetworkSpeedUnit()
-        val uploadText =
-            prefs.getNetworkSpeedUploadPrefix() +
-                formatLine(sample.uploadBytesPerSecond, speedUnit)
-        val downloadText =
-            prefs.getNetworkSpeedDownloadPrefix() +
-                formatLine(sample.downloadBytesPerSecond, speedUnit)
+        val uploadText = UPLOAD_PREFIX + formatLine(sample.uploadBytesPerSecond)
+        val downloadText = DOWNLOAD_PREFIX + formatLine(sample.downloadBytesPerSecond)
 
         return when (NetworkSpeedDisplayMode.from(prefs.getNetworkSpeedDisplayMode())) {
             NetworkSpeedDisplayMode.UPLOAD -> uploadText
@@ -60,119 +55,73 @@ internal object NetworkSpeedFormatter {
         }
     }
 
-    fun formatSpeedLine(
-        bytesPerSecond: Long,
-        rawUnit: String?
-    ): String {
-        val (value, unit) = formatSpeedText(bytesPerSecond, rawUnit)
+    fun formatSpeedLine(bytesPerSecond: Long): String {
+        val (value, unit) = formatSpeedText(bytesPerSecond)
         return "$value$unit"
     }
 
-    private fun formatRegularNotificationSpeedLine(
-        bytesPerSecond: Long,
-        rawUnit: String?
-    ): String {
-        val (value, unit) = formatRegularNotificationSpeedText(bytesPerSecond, rawUnit)
+    private fun formatRegularNotificationSpeedLine(bytesPerSecond: Long): String {
+        val (value, unit) = formatRegularNotificationSpeedText(bytesPerSecond)
         return "$value$unit"
     }
 
-    fun statusIconText(
-        sample: NetworkSpeedSample,
-        prefs: ConverterPrefs
-    ): Pair<String, String> {
-        return formatSpeedText(sample.totalBytesPerSecond, prefs.getNetworkSpeedUnit())
+    fun statusIconText(sample: NetworkSpeedSample): Pair<String, String> {
+        return formatSpeedText(sample.totalBytesPerSecond)
     }
 
-    private fun formatSpeedText(
-        bytesPerSecond: Long,
-        rawUnit: String?
-    ): Pair<String, String> {
+    private fun formatSpeedText(bytesPerSecond: Long): Pair<String, String> {
         return formatSpeedText(
             bytesPerSecond = bytesPerSecond,
-            unitToUse = resolveSpeedUnit(bytesPerSecond, rawUnit)
+            unitToUse = resolveSpeedUnit(bytesPerSecond)
         )
     }
 
-    private fun formatRegularNotificationSpeedText(
-        bytesPerSecond: Long,
-        rawUnit: String?
-    ): Pair<String, String> {
-        return when (val unitToUse = resolveSpeedUnit(bytesPerSecond, rawUnit)) {
-            NetworkSpeedUnit.BYTES -> bytesPerSecond.toString() to "B/s"
-            NetworkSpeedUnit.KILOBYTES -> {
+    private fun formatRegularNotificationSpeedText(bytesPerSecond: Long): Pair<String, String> {
+        return when (resolveSpeedUnit(bytesPerSecond)) {
+            SpeedUnit.BYTES -> bytesPerSecond.toString() to "B/s"
+            SpeedUnit.KILOBYTES -> {
                 "%.0f".format(
                     Locale.getDefault(),
                     bytesPerSecond / KILOBYTE.toDouble()
                 ) to "KB/s"
             }
 
-            NetworkSpeedUnit.MEGABYTES -> {
+            SpeedUnit.MEGABYTES -> {
                 "%.1f".format(
                     Locale.getDefault(),
                     bytesPerSecond / MEGABYTE.toDouble()
                 ) to "MB/s"
             }
 
-            NetworkSpeedUnit.GIGABYTES -> {
+            SpeedUnit.GIGABYTES -> {
                 "%.1f".format(
                     Locale.getDefault(),
                     bytesPerSecond / GIGABYTE.toDouble()
                 ) to "GB/s"
             }
-
-            NetworkSpeedUnit.AUTO -> formatSpeedText(bytesPerSecond, unitToUse)
         }
     }
 
-    private fun resolveSpeedUnit(
-        bytesPerSecond: Long,
-        rawUnit: String?
-    ): NetworkSpeedUnit {
-        val selectedUnits = NetworkSpeedUnit.parseSelection(rawUnit)
-        val useAuto =
-            selectedUnits.isEmpty() || selectedUnits.contains(NetworkSpeedUnit.AUTO)
-
-        if (useAuto) {
-            return when {
-                bytesPerSecond >= GIGABYTE -> NetworkSpeedUnit.GIGABYTES
-                bytesPerSecond >= MEGABYTE -> NetworkSpeedUnit.MEGABYTES
-                bytesPerSecond >= KILOBYTE -> NetworkSpeedUnit.KILOBYTES
-                else -> NetworkSpeedUnit.BYTES
-            }
+    private fun resolveSpeedUnit(bytesPerSecond: Long): SpeedUnit {
+        return when {
+            bytesPerSecond >= GIGABYTE -> SpeedUnit.GIGABYTES
+            bytesPerSecond >= MEGABYTE -> SpeedUnit.MEGABYTES
+            bytesPerSecond >= KILOBYTE -> SpeedUnit.KILOBYTES
+            else -> SpeedUnit.BYTES
         }
-
-        val sortedAvailable = selectedUnits
-            .filter { it != NetworkSpeedUnit.AUTO }
-            .sortedByDescending { it.ordinal }
-        var best = sortedAvailable.last()
-        for (unit in sortedAvailable) {
-            val threshold =
-                when (unit) {
-                    NetworkSpeedUnit.GIGABYTES -> 1000L * 1024L * 1024L
-                    NetworkSpeedUnit.MEGABYTES -> 1000L * 1024L
-                    NetworkSpeedUnit.KILOBYTES -> KILOBYTE
-                    NetworkSpeedUnit.BYTES,
-                    NetworkSpeedUnit.AUTO -> 0L
-                }
-            if (bytesPerSecond >= threshold) {
-                best = unit
-                break
-            }
-        }
-        return best
     }
 
     private fun formatSpeedText(
         bytesPerSecond: Long,
-        unitToUse: NetworkSpeedUnit
+        unitToUse: SpeedUnit
     ): Pair<String, String> {
         return when (unitToUse) {
-            NetworkSpeedUnit.BYTES -> bytesPerSecond.toString() to "B/s"
-            NetworkSpeedUnit.KILOBYTES -> {
+            SpeedUnit.BYTES -> bytesPerSecond.toString() to "B/s"
+            SpeedUnit.KILOBYTES -> {
                 formatFixedValue(bytesPerSecond / KILOBYTE.toDouble()) to "KB/s"
             }
 
-            NetworkSpeedUnit.MEGABYTES -> {
+            SpeedUnit.MEGABYTES -> {
                 val value = bytesPerSecond / MEGABYTE.toDouble()
                 val text = if (value >= 10.0) {
                     value.roundToLong().toString()
@@ -182,11 +131,9 @@ internal object NetworkSpeedFormatter {
                 text to "MB/s"
             }
 
-            NetworkSpeedUnit.GIGABYTES -> {
+            SpeedUnit.GIGABYTES -> {
                 formatFixedValue(bytesPerSecond / GIGABYTE.toDouble()) to "GB/s"
             }
-
-            NetworkSpeedUnit.AUTO -> bytesPerSecond.toString() to "B/s"
         }
     }
 
@@ -200,6 +147,15 @@ internal object NetworkSpeedFormatter {
         return pattern.format(Locale.getDefault(), value)
     }
 
+    private enum class SpeedUnit {
+        BYTES,
+        KILOBYTES,
+        MEGABYTES,
+        GIGABYTES
+    }
+
+    private const val UPLOAD_PREFIX = "\u25B2 "
+    private const val DOWNLOAD_PREFIX = "\u25BC "
     private const val KILOBYTE = 1024L
     private const val MEGABYTE = 1024L * 1024L
     private const val GIGABYTE = 1024L * 1024L * 1024L

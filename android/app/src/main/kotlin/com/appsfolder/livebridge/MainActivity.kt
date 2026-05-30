@@ -329,37 +329,9 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
-            "getNetworkSpeedUploadPrefix" -> res.success(prefs.getNetworkSpeedUploadPrefix())
-            "setNetworkSpeedUploadPrefix" -> {
-                prefs.setNetworkSpeedUploadPrefix(call.argument<String>("value"))
-                syncNetworkSpeedService(prefs)
-                res.success(true)
-            }
-
-            "getNetworkSpeedDownloadPrefix" -> res.success(prefs.getNetworkSpeedDownloadPrefix())
-            "setNetworkSpeedDownloadPrefix" -> {
-                prefs.setNetworkSpeedDownloadPrefix(call.argument<String>("value"))
-                syncNetworkSpeedService(prefs)
-                res.success(true)
-            }
-
-            "getNetworkSpeedUnit" -> res.success(prefs.getNetworkSpeedUnit())
-            "setNetworkSpeedUnit" -> {
-                prefs.setNetworkSpeedUnit(call.argument<String>("value"))
-                syncNetworkSpeedService(prefs)
-                res.success(true)
-            }
-
             "getNetworkSpeedPrioritizeUpload" -> res.success(prefs.getNetworkSpeedPrioritizeUpload())
             "setNetworkSpeedPrioritizeUpload" -> {
                 prefs.setNetworkSpeedPrioritizeUpload(call.argument<Boolean>("value") ?: false)
-                syncNetworkSpeedService(prefs)
-                res.success(true)
-            }
-
-            "getNetworkSpeedLockscreenOnly" -> res.success(prefs.getNetworkSpeedLockscreenOnly())
-            "setNetworkSpeedLockscreenOnly" -> {
-                prefs.setNetworkSpeedLockscreenOnly(call.argument<Boolean>("value") ?: false)
                 syncNetworkSpeedService(prefs)
                 res.success(true)
             }

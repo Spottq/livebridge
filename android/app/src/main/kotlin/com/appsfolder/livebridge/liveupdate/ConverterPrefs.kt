@@ -170,64 +170,12 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putString(KEY_NETWORK_SPEED_DISPLAY_MODE, mode.id).apply()
     }
 
-    fun getNetworkSpeedUploadPrefix(): String {
-        return prefs.getString(KEY_NETWORK_SPEED_UPLOAD_PREFIX, DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX)
-            ?: DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX
-    }
-
-    fun setNetworkSpeedUploadPrefix(value: String?) {
-        prefs.edit()
-            .putString(
-                KEY_NETWORK_SPEED_UPLOAD_PREFIX,
-                value ?: DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX
-            )
-            .apply()
-    }
-
-    fun getNetworkSpeedDownloadPrefix(): String {
-        return prefs.getString(
-            KEY_NETWORK_SPEED_DOWNLOAD_PREFIX,
-            DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX
-        ) ?: DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX
-    }
-
-    fun setNetworkSpeedDownloadPrefix(value: String?) {
-        prefs.edit()
-            .putString(
-                KEY_NETWORK_SPEED_DOWNLOAD_PREFIX,
-                value ?: DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX
-            )
-            .apply()
-    }
-
-    fun getNetworkSpeedUnit(): String {
-        val raw = prefs.getString(KEY_NETWORK_SPEED_UNIT, null)
-        return if (raw == null) {
-            NetworkSpeedUnit.AUTO.id
-        } else {
-            NetworkSpeedUnit.normalizeSelection(raw)
-        }
-    }
-
-    fun setNetworkSpeedUnit(value: String?) {
-        val normalized = NetworkSpeedUnit.normalizeSelection(value)
-        prefs.edit().putString(KEY_NETWORK_SPEED_UNIT, normalized).apply()
-    }
-
     fun getNetworkSpeedPrioritizeUpload(): Boolean {
         return prefs.getBoolean(KEY_NETWORK_SPEED_PRIORITIZE_UPLOAD, false)
     }
 
     fun setNetworkSpeedPrioritizeUpload(value: Boolean) {
         prefs.edit().putBoolean(KEY_NETWORK_SPEED_PRIORITIZE_UPLOAD, value).apply()
-    }
-
-    fun getNetworkSpeedLockscreenOnly(): Boolean {
-        return prefs.getBoolean(KEY_NETWORK_SPEED_LOCKSCREEN_ONLY, false)
-    }
-
-    fun setNetworkSpeedLockscreenOnly(value: Boolean) {
-        prefs.edit().putBoolean(KEY_NETWORK_SPEED_LOCKSCREEN_ONLY, value).apply()
     }
 
     fun getNetworkSpeedChipBackgroundDisabled(): Boolean {
@@ -1004,11 +952,7 @@ class ConverterPrefs(context: Context) {
                 getNetworkSpeedMinThresholdBytesPerSecond()
             )
             .put("network_speed_display_mode", getNetworkSpeedDisplayMode())
-            .put("network_speed_upload_prefix", getNetworkSpeedUploadPrefix())
-            .put("network_speed_download_prefix", getNetworkSpeedDownloadPrefix())
-            .put("network_speed_unit", getNetworkSpeedUnit())
             .put("network_speed_prioritize_upload", getNetworkSpeedPrioritizeUpload())
-            .put("network_speed_lockscreen_only", getNetworkSpeedLockscreenOnly())
             .put(
                 "network_speed_chip_background_disabled",
                 getNetworkSpeedChipBackgroundDisabled()
@@ -1155,12 +1099,8 @@ class ConverterPrefs(context: Context) {
         long(settings, "network_speed_min_threshold_bytes_per_second")
             ?.let(::setNetworkSpeedMinThresholdBytesPerSecond)
         string(settings, "network_speed_display_mode")?.let(::setNetworkSpeedDisplayMode)
-        string(settings, "network_speed_upload_prefix")?.let(::setNetworkSpeedUploadPrefix)
-        string(settings, "network_speed_download_prefix")?.let(::setNetworkSpeedDownloadPrefix)
-        string(settings, "network_speed_unit")?.let(::setNetworkSpeedUnit)
         bool(settings, "network_speed_prioritize_upload")
             ?.let(::setNetworkSpeedPrioritizeUpload)
-        bool(settings, "network_speed_lockscreen_only")?.let(::setNetworkSpeedLockscreenOnly)
         bool(settings, "network_speed_chip_background_disabled")
             ?.let(::setNetworkSpeedChipBackgroundDisabled)
         bool(settings, "network_speed_disable_chip_background")
@@ -1458,12 +1398,8 @@ class ConverterPrefs(context: Context) {
         private const val KEY_NETWORK_SPEED_MIN_THRESHOLD_BYTES_PER_SECOND =
             "network_speed_min_threshold_bytes_per_second"
         private const val KEY_NETWORK_SPEED_DISPLAY_MODE = "network_speed_display_mode"
-        private const val KEY_NETWORK_SPEED_UPLOAD_PREFIX = "network_speed_upload_prefix"
-        private const val KEY_NETWORK_SPEED_DOWNLOAD_PREFIX = "network_speed_download_prefix"
-        private const val KEY_NETWORK_SPEED_UNIT = "network_speed_unit"
         private const val KEY_NETWORK_SPEED_PRIORITIZE_UPLOAD =
             "network_speed_prioritize_upload"
-        private const val KEY_NETWORK_SPEED_LOCKSCREEN_ONLY = "network_speed_lockscreen_only"
         private const val KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND =
             "network_speed_disable_chip_background"
         private const val KEY_NETWORK_SPEED_REGULAR_NOTIFICATION_ENABLED =
@@ -1558,8 +1494,6 @@ class ConverterPrefs(context: Context) {
             "parser_dictionary_zh_override"
 
         private const val KEY_PACKAGE_FILTER_LEGACY = "package_filter"
-        private const val DEFAULT_NETWORK_SPEED_UPLOAD_PREFIX = "\u25B2 "
-        private const val DEFAULT_NETWORK_SPEED_DOWNLOAD_PREFIX = "\u25BC "
         private const val DEFAULT_NETWORK_SPEED_NOTIFICATION_COLOR = 0xFF0F766E.toInt()
         private const val DEFAULT_SMART_FLASHLIGHT_LEVEL = 4
         private const val MIN_AOSP_CUTTING_LENGTH = 7

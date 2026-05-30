@@ -2435,59 +2435,6 @@ class AppStrings {
     zhHant: '僅下載',
   );
 
-  String get networkSpeedUploadPrefixTitle => tr(
-    en: 'Upload prefix',
-    ru: 'Префикс отдачи',
-    tr: 'Yükleme ön eki',
-    ptBr: 'Prefixo de upload',
-    zhHans: '上传前缀',
-    zhHant: '上傳前綴',
-  );
-
-  String get networkSpeedDownloadPrefixTitle => tr(
-    en: 'Download prefix',
-    ru: 'Префикс загрузки',
-    tr: 'İndirme ön eki',
-    ptBr: 'Prefixo de download',
-    zhHans: '下载前缀',
-    zhHant: '下載前綴',
-  );
-
-  String get networkSpeedUnitTitle => tr(
-    en: 'Speed unit',
-    ru: 'Единица скорости',
-    tr: 'Hız birimi',
-    ptBr: 'Unidade de velocidade',
-    zhHans: '速度单位',
-    zhHant: '速度單位',
-  );
-
-  String get networkSpeedUnitAuto => tr(
-    en: 'Auto',
-    ru: 'Авто',
-    tr: 'Otomatik',
-    ptBr: 'Automático',
-    zhHans: '自动',
-    zhHant: '自動',
-  );
-
-  String get networkSpeedUnitBytes => 'B/s';
-
-  String get networkSpeedUnitKilobytes => 'KB/s';
-
-  String get networkSpeedUnitMegabytes => 'MB/s';
-
-  String get networkSpeedUnitGigabytes => 'GB/s';
-
-  String networkSpeedCurrentValue(String value) => tr(
-    en: 'Current: "$value"',
-    ru: 'Сейчас: "$value"',
-    tr: 'Geçerli: "$value"',
-    ptBr: 'Atual: "$value"',
-    zhHans: '当前："$value"',
-    zhHant: '目前："$value"',
-  );
-
   String get networkSpeedPrioritizeUploadTitle => tr(
     en: 'Prioritize upload speed',
     ru: 'Сначала показывать отдачу',
@@ -2504,25 +2451,6 @@ class AppStrings {
     ptBr: 'No modo total, a velocidade de upload aparece antes do download.',
     zhHans: '在总速度模式下，上传速度会显示在下载速度之前。',
     zhHant: '在總速度模式下，上傳速度會顯示在下載速度之前。',
-  );
-
-  String get networkSpeedLockscreenOnlyTitle => tr(
-    en: 'Display only on lock screen',
-    ru: 'Показывать только на экране блокировки',
-    tr: 'Yalnızca kilit ekranında göster',
-    ptBr: 'Exibir somente na tela de bloqueio',
-    zhHans: '仅在锁屏显示',
-    zhHant: '僅在鎖定畫面顯示',
-  );
-
-  String get networkSpeedLockscreenOnlySubtitle => tr(
-    en: 'Hide the network speed chip while the device is unlocked.',
-    ru: 'Скрывать индикатор скорости при разблокированном устройстве.',
-    tr: 'Cihaz kilidi açıkken ağ hızı çipini gizle.',
-    ptBr:
-        'Ocultar o chip de velocidade da rede quando o dispositivo estiver desbloqueado.',
-    zhHans: '设备解锁时隐藏网速胶囊。',
-    zhHant: '裝置解鎖時隱藏網速膠囊。',
   );
 
   String get networkSpeedDisableChipBackgroundTitle => tr(

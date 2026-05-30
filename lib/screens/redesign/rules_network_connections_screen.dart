@@ -38,13 +38,7 @@ class _RulesNetworkConnectionsScreenState
   double _networkSpeedSliderValue = 0;
   NetworkSpeedDisplayMode _networkSpeedDisplayMode =
       NetworkSpeedDisplayMode.total;
-  String _networkSpeedUploadPrefix = kDefaultNetworkSpeedUploadPrefix;
-  String _networkSpeedDownloadPrefix = kDefaultNetworkSpeedDownloadPrefix;
-  Set<NetworkSpeedUnit> _networkSpeedUnits = <NetworkSpeedUnit>{
-    NetworkSpeedUnit.auto,
-  };
   bool _networkSpeedPrioritizeUpload = false;
-  bool _networkSpeedLockscreenOnly = false;
   bool _networkSpeedChipBackgroundDisabled = false;
   bool _networkSpeedRegularNotificationEnabled = false;
   bool _networkSpeedDailyUsageEnabled = false;
@@ -74,16 +68,8 @@ class _RulesNetworkConnectionsScreenState
           LiveBridgePlatform.getNetworkSpeedMinThresholdBytesPerSecond();
       final Future<String> networkSpeedDisplayModeFuture =
           LiveBridgePlatform.getNetworkSpeedDisplayMode();
-      final Future<String> networkSpeedUploadPrefixFuture =
-          LiveBridgePlatform.getNetworkSpeedUploadPrefix();
-      final Future<String> networkSpeedDownloadPrefixFuture =
-          LiveBridgePlatform.getNetworkSpeedDownloadPrefix();
-      final Future<String> networkSpeedUnitFuture =
-          LiveBridgePlatform.getNetworkSpeedUnit();
       final Future<bool> networkSpeedPrioritizeUploadFuture =
           LiveBridgePlatform.getNetworkSpeedPrioritizeUpload();
-      final Future<bool> networkSpeedLockscreenOnlyFuture =
-          LiveBridgePlatform.getNetworkSpeedLockscreenOnly();
       final Future<bool> networkSpeedChipBackgroundDisabledFuture =
           LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
       final Future<bool> networkSpeedRegularNotificationFuture =
@@ -102,15 +88,8 @@ class _RulesNetworkConnectionsScreenState
           await networkSpeedThresholdFuture;
       final String networkSpeedDisplayMode =
           await networkSpeedDisplayModeFuture;
-      final String networkSpeedUploadPrefix =
-          await networkSpeedUploadPrefixFuture;
-      final String networkSpeedDownloadPrefix =
-          await networkSpeedDownloadPrefixFuture;
-      final String networkSpeedUnit = await networkSpeedUnitFuture;
       final bool networkSpeedPrioritizeUpload =
           await networkSpeedPrioritizeUploadFuture;
-      final bool networkSpeedLockscreenOnly =
-          await networkSpeedLockscreenOnlyFuture;
       final bool networkSpeedChipBackgroundDisabled =
           await networkSpeedChipBackgroundDisabledFuture;
       final bool networkSpeedRegularNotificationEnabled =
@@ -142,14 +121,7 @@ class _RulesNetworkConnectionsScreenState
         _networkSpeedDisplayMode = NetworkSpeedDisplayModeId.from(
           networkSpeedDisplayMode,
         );
-        _networkSpeedUploadPrefix = networkSpeedUploadPrefix;
-        _networkSpeedDownloadPrefix = networkSpeedDownloadPrefix;
-        _networkSpeedUnits = NetworkSpeedUnitSelection.parse(networkSpeedUnit);
-        if (_networkSpeedUnits.isEmpty) {
-          _networkSpeedUnits = <NetworkSpeedUnit>{NetworkSpeedUnit.auto};
-        }
         _networkSpeedPrioritizeUpload = networkSpeedPrioritizeUpload;
-        _networkSpeedLockscreenOnly = networkSpeedLockscreenOnly;
         _networkSpeedChipBackgroundDisabled =
             networkSpeedChipBackgroundDisabled;
         _networkSpeedRegularNotificationEnabled =
@@ -222,52 +194,12 @@ class _RulesNetworkConnectionsScreenState
     await LiveBridgePlatform.setNetworkSpeedDisplayMode(value.id);
   }
 
-  Future<void> _setNetworkSpeedPrefix({
-    required bool forUpload,
-    required String value,
-  }) async {
-    if (forUpload) {
-      if (value == _networkSpeedUploadPrefix) {
-        return;
-      }
-      setState(() => _networkSpeedUploadPrefix = value);
-      await LiveBridgePlatform.setNetworkSpeedUploadPrefix(value);
-      return;
-    }
-    if (value == _networkSpeedDownloadPrefix) {
-      return;
-    }
-    setState(() => _networkSpeedDownloadPrefix = value);
-    await LiveBridgePlatform.setNetworkSpeedDownloadPrefix(value);
-  }
-
-  Future<void> _setNetworkSpeedUnits(Set<NetworkSpeedUnit> values) async {
-    final Set<NetworkSpeedUnit> normalized = values.isEmpty
-        ? <NetworkSpeedUnit>{NetworkSpeedUnit.auto}
-        : values;
-    if (_sameUnitSelection(_networkSpeedUnits, normalized)) {
-      return;
-    }
-    setState(() => _networkSpeedUnits = Set<NetworkSpeedUnit>.from(normalized));
-    await LiveBridgePlatform.setNetworkSpeedUnit(
-      NetworkSpeedUnitSelection.encode(normalized),
-    );
-  }
-
   Future<void> _setNetworkSpeedPrioritizeUpload(bool value) async {
     if (value == _networkSpeedPrioritizeUpload) {
       return;
     }
     setState(() => _networkSpeedPrioritizeUpload = value);
     await LiveBridgePlatform.setNetworkSpeedPrioritizeUpload(value);
-  }
-
-  Future<void> _setNetworkSpeedLockscreenOnly(bool value) async {
-    if (value == _networkSpeedLockscreenOnly) {
-      return;
-    }
-    setState(() => _networkSpeedLockscreenOnly = value);
-    await LiveBridgePlatform.setNetworkSpeedLockscreenOnly(value);
   }
 
   Future<void> _setNetworkSpeedChipBackgroundDisabled(bool value) async {
@@ -363,57 +295,6 @@ class _RulesNetworkConnectionsScreenState
     unawaited(_setNetworkSpeedDisplayMode(selected));
   }
 
-  Future<void> _openPrefixSheet({
-    required AppStrings strings,
-    required bool forUpload,
-  }) async {
-    final String currentValue = forUpload
-        ? _networkSpeedUploadPrefix
-        : _networkSpeedDownloadPrefix;
-    final String? updated = await showLbModalBottomSheet<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return _NetworkSpeedPrefixSheet(
-          title: forUpload
-              ? strings.networkSpeedUploadPrefixTitle
-              : strings.networkSpeedDownloadPrefixTitle,
-          initialValue: currentValue,
-          defaultValue: forUpload
-              ? kDefaultNetworkSpeedUploadPrefix
-              : kDefaultNetworkSpeedDownloadPrefix,
-          resetLabel: strings.resetToDefault,
-          saveLabel: strings.save,
-        );
-      },
-    );
-    if (updated == null) {
-      return;
-    }
-    unawaited(LiveBridgeHaptics.confirm());
-    unawaited(_setNetworkSpeedPrefix(forUpload: forUpload, value: updated));
-  }
-
-  Future<void> _openUnitsSheet(AppStrings strings) async {
-    final Set<NetworkSpeedUnit>? updated =
-        await showLbModalBottomSheet<Set<NetworkSpeedUnit>>(
-          context: context,
-          builder: (BuildContext context) {
-            return _NetworkSpeedUnitSheet(
-              title: strings.networkSpeedUnitTitle,
-              initialValues: _networkSpeedUnits,
-              optionLabelBuilder: (NetworkSpeedUnit unit) =>
-                  _networkSpeedUnitLabel(unit, strings),
-              confirmLabel: MaterialLocalizations.of(context).okButtonLabel,
-            );
-          },
-        );
-    if (updated == null) {
-      return;
-    }
-    unawaited(LiveBridgeHaptics.confirm());
-    unawaited(_setNetworkSpeedUnits(updated));
-  }
-
   int _snapThresholdBytesPerSecond(double sliderValue) {
     return (sliderValue.round() * _thresholdStepBytesPerSecond)
         .clamp(0, _thresholdMaxBytesPerSecond)
@@ -424,13 +305,6 @@ class _RulesNetworkConnectionsScreenState
     return (bytesPerSecond / _thresholdStepBytesPerSecond)
         .clamp(0, _thresholdMaxBytesPerSecond / _thresholdStepBytesPerSecond)
         .toDouble();
-  }
-
-  bool _sameUnitSelection(Set<NetworkSpeedUnit> a, Set<NetworkSpeedUnit> b) {
-    if (a.length != b.length) {
-      return false;
-    }
-    return a.containsAll(b);
   }
 
   String _formatNetworkSpeedBytesPerSecond(int bytesPerSecond) {
@@ -478,35 +352,6 @@ class _RulesNetworkConnectionsScreenState
       case NetworkSpeedDisplayMode.download:
         return strings.networkSpeedDisplayModeDownload;
     }
-  }
-
-  String _networkSpeedUnitLabel(NetworkSpeedUnit unit, AppStrings strings) {
-    switch (unit) {
-      case NetworkSpeedUnit.auto:
-        return strings.networkSpeedUnitAuto;
-      case NetworkSpeedUnit.bytes:
-        return strings.networkSpeedUnitBytes;
-      case NetworkSpeedUnit.kilobytes:
-        return strings.networkSpeedUnitKilobytes;
-      case NetworkSpeedUnit.megabytes:
-        return strings.networkSpeedUnitMegabytes;
-      case NetworkSpeedUnit.gigabytes:
-        return strings.networkSpeedUnitGigabytes;
-    }
-  }
-
-  String _networkSpeedUnitsSummary(AppStrings strings) {
-    if (NetworkSpeedUnitSelection.usesAuto(_networkSpeedUnits)) {
-      return strings.networkSpeedUnitAuto;
-    }
-    return kNetworkSpeedUnitValues
-        .where(
-          (NetworkSpeedUnit unit) =>
-              unit != NetworkSpeedUnit.auto &&
-              _networkSpeedUnits.contains(unit),
-        )
-        .map((NetworkSpeedUnit unit) => _networkSpeedUnitLabel(unit, strings))
-        .join(', ');
   }
 
   @override
@@ -614,36 +459,6 @@ class _RulesNetworkConnectionsScreenState
             : null,
       ),
       LbListItemData(
-        title: strings.networkSpeedUploadPrefixTitle,
-        subtitle: strings.networkSpeedCurrentValue(_networkSpeedUploadPrefix),
-        enabled: _networkSpeedEnabled,
-        onTap: _networkSpeedEnabled
-            ? () {
-                unawaited(_openPrefixSheet(strings: strings, forUpload: true));
-              }
-            : null,
-      ),
-      LbListItemData(
-        title: strings.networkSpeedDownloadPrefixTitle,
-        subtitle: strings.networkSpeedCurrentValue(_networkSpeedDownloadPrefix),
-        enabled: _networkSpeedEnabled,
-        onTap: _networkSpeedEnabled
-            ? () {
-                unawaited(_openPrefixSheet(strings: strings, forUpload: false));
-              }
-            : null,
-      ),
-      LbListItemData(
-        title: strings.networkSpeedUnitTitle,
-        subtitle: _networkSpeedUnitsSummary(strings),
-        enabled: _networkSpeedEnabled,
-        onTap: _networkSpeedEnabled
-            ? () {
-                unawaited(_openUnitsSheet(strings));
-              }
-            : null,
-      ),
-      LbListItemData(
         title: strings.notificationColorTitle,
         subtitle: _formatNotificationColorHex(
           _networkSpeedNotificationColorArgb,
@@ -694,25 +509,6 @@ class _RulesNetworkConnectionsScreenState
                 final bool nextValue = !_networkSpeedPrioritizeUpload;
                 unawaited(LiveBridgeHaptics.toggle(nextValue));
                 unawaited(_setNetworkSpeedPrioritizeUpload(nextValue));
-              }
-            : null,
-      ),
-      LbListItemData(
-        title: strings.networkSpeedLockscreenOnlyTitle,
-        description: strings.networkSpeedLockscreenOnlySubtitle,
-        showChevron: false,
-        enabled: _networkSpeedEnabled,
-        toggleValue: _networkSpeedLockscreenOnly,
-        onToggle: _networkSpeedEnabled
-            ? (bool value) {
-                unawaited(_setNetworkSpeedLockscreenOnly(value));
-              }
-            : null,
-        onTap: _networkSpeedEnabled
-            ? () {
-                final bool nextValue = !_networkSpeedLockscreenOnly;
-                unawaited(LiveBridgeHaptics.toggle(nextValue));
-                unawaited(_setNetworkSpeedLockscreenOnly(nextValue));
               }
             : null,
       ),
@@ -964,210 +760,6 @@ class _SingleSelectSheet<T> extends StatelessWidget {
             ),
         ],
       ],
-    );
-  }
-}
-
-class _NetworkSpeedUnitSheet extends StatefulWidget {
-  const _NetworkSpeedUnitSheet({
-    required this.title,
-    required this.initialValues,
-    required this.optionLabelBuilder,
-    required this.confirmLabel,
-  });
-
-  final String title;
-  final Set<NetworkSpeedUnit> initialValues;
-  final String Function(NetworkSpeedUnit unit) optionLabelBuilder;
-  final String confirmLabel;
-
-  @override
-  State<_NetworkSpeedUnitSheet> createState() => _NetworkSpeedUnitSheetState();
-}
-
-class _NetworkSpeedUnitSheetState extends State<_NetworkSpeedUnitSheet> {
-  late Set<NetworkSpeedUnit> _selectedValues = widget.initialValues.isEmpty
-      ? <NetworkSpeedUnit>{NetworkSpeedUnit.auto}
-      : Set<NetworkSpeedUnit>.from(widget.initialValues);
-
-  void _toggleUnit(NetworkSpeedUnit unit) {
-    final bool checked = _selectedValues.contains(unit);
-    final Set<NetworkSpeedUnit> next;
-    if (checked) {
-      next = Set<NetworkSpeedUnit>.from(_selectedValues)..remove(unit);
-    } else if (unit == NetworkSpeedUnit.auto) {
-      next = <NetworkSpeedUnit>{NetworkSpeedUnit.auto};
-    } else {
-      next = Set<NetworkSpeedUnit>.from(_selectedValues)
-        ..remove(NetworkSpeedUnit.auto)
-        ..add(unit);
-    }
-    setState(() {
-      _selectedValues = next.isEmpty
-          ? <NetworkSpeedUnit>{NetworkSpeedUnit.auto}
-          : next;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final LbPalette palette = LbPalette.of(context);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Text(
-          widget.title,
-          style: LbTextStyles.title.copyWith(color: palette.textPrimary),
-        ),
-        const SizedBox(height: LbSpacing.lg),
-        for (
-          int index = 0;
-          index < kNetworkSpeedUnitValues.length;
-          index += 1
-        ) ...<Widget>[
-          InkWell(
-            borderRadius: BorderRadius.circular(LbRadius.card),
-            onTap: () {
-              unawaited(LiveBridgeHaptics.selection());
-              _toggleUnit(kNetworkSpeedUnitValues[index]);
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: LbSpacing.xs,
-                vertical: LbSpacing.sm,
-              ),
-              child: Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                      widget.optionLabelBuilder(kNetworkSpeedUnitValues[index]),
-                      style: LbTextStyles.body.copyWith(
-                        color: palette.textPrimary,
-                      ),
-                    ),
-                  ),
-                  LbSelectionIndicator(
-                    selected: _selectedValues.contains(
-                      kNetworkSpeedUnitValues[index],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (index != kNetworkSpeedUnitValues.length - 1)
-            Divider(
-              height: LbSpacing.recentSeparatorThickness * 2,
-              thickness: LbSpacing.recentSeparatorThickness,
-              color: palette.recentSeparator,
-            ),
-        ],
-        const SizedBox(height: LbSpacing.lg),
-        Align(
-          alignment: Alignment.centerRight,
-          child: FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop<Set<NetworkSpeedUnit>>(
-                Set<NetworkSpeedUnit>.from(_selectedValues),
-              );
-            },
-            child: Text(widget.confirmLabel),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _NetworkSpeedPrefixSheet extends StatefulWidget {
-  const _NetworkSpeedPrefixSheet({
-    required this.title,
-    required this.initialValue,
-    required this.defaultValue,
-    required this.resetLabel,
-    required this.saveLabel,
-  });
-
-  final String title;
-  final String initialValue;
-  final String defaultValue;
-  final String resetLabel;
-  final String saveLabel;
-
-  @override
-  State<_NetworkSpeedPrefixSheet> createState() =>
-      _NetworkSpeedPrefixSheetState();
-}
-
-class _NetworkSpeedPrefixSheetState extends State<_NetworkSpeedPrefixSheet> {
-  late final TextEditingController _controller = TextEditingController(
-    text: widget.initialValue,
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final LbPalette palette = LbPalette.of(context);
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            widget.title,
-            style: LbTextStyles.title.copyWith(color: palette.textPrimary),
-          ),
-          const SizedBox(height: LbSpacing.lg),
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            style: LbTextStyles.body.copyWith(color: palette.textPrimary),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: palette.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(LbRadius.card),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(LbRadius.card),
-                borderSide: BorderSide(color: palette.recentSeparator),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(LbRadius.card),
-                borderSide: BorderSide(color: palette.accent),
-              ),
-            ),
-          ),
-          const SizedBox(height: LbSpacing.lg),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop<String>(widget.defaultValue);
-                },
-                child: Text(widget.resetLabel),
-              ),
-              const SizedBox(width: LbSpacing.sm),
-              FilledButton(
-                onPressed: () {
-                  Navigator.of(context).pop<String>(_controller.text);
-                },
-                child: Text(widget.saveLabel),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }
