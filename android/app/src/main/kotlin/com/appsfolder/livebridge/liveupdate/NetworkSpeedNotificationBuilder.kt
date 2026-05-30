@@ -27,6 +27,8 @@ internal class NetworkSpeedNotificationBuilder(
         val title = notificationTitle()
         val totalText = NetworkSpeedFormatter.totalText(sample, prefs)
         val contentText = NetworkSpeedFormatter.contentText(sample, prefs)
+        val regularContentText =
+            NetworkSpeedFormatter.regularNotificationContentText(sample, prefs)
         val dailyUsageText =
             if (prefs.getNetworkSpeedDailyUsageEnabled()) {
                 buildDailyUsageText(dailyUsage)
@@ -39,6 +41,8 @@ internal class NetworkSpeedNotificationBuilder(
             } else {
                 "$contentText\n$dailyUsageText"
             }
+        val regularNotificationTitle = dailyUsageText?.let { regularContentText } ?: title
+        val regularNotificationText = dailyUsageText ?: regularContentText
         val notificationColor = prefs.getNetworkSpeedNotificationColorArgb()
         val regularNotificationOnly = prefs.getNetworkSpeedRegularNotificationEnabled()
         val shouldPromote =
@@ -64,8 +68,8 @@ internal class NetworkSpeedNotificationBuilder(
         )
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(notificationSmallIcon)
-            .setContentTitle(title)
-            .setContentText(liveContentText)
+            .setContentTitle(regularNotificationTitle)
+            .setContentText(regularNotificationText)
             .setContentIntent(contentIntent)
             .setColor(notificationColor)
             .setOngoing(true)
@@ -75,12 +79,6 @@ internal class NetworkSpeedNotificationBuilder(
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-        if (dailyUsageText != null) {
-            builder.setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(liveContentText)
-            )
-        }
         if (shouldPromote) {
             builder.setRequestPromotedOngoing(true)
             builder.setShortCriticalText(totalText)
@@ -110,7 +108,7 @@ internal class NetworkSpeedNotificationBuilder(
     private fun buildDailyUsageText(dailyUsage: NetworkDailyUsage): String {
         val wifiText = NetworkDailyUsageFormatter.formatBytes(dailyUsage.wifiBytes)
         val mobileText = NetworkDailyUsageFormatter.formatBytes(dailyUsage.mobileBytes)
-        return "WiFi:$wifiText  Mobile:$mobileText"
+        return "WiFi: $wifiText  Mobile: $mobileText"
     }
 
     private fun buildSamsungExtras(
