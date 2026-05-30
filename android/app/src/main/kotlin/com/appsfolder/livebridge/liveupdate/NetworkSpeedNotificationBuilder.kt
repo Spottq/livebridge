@@ -176,12 +176,14 @@ internal class NetworkSpeedNotificationBuilder(
             color = Color.WHITE
             textAlign = Paint.Align.CENTER
             typeface = Typeface.DEFAULT_BOLD
+            textScaleX = STATUS_ICON_VALUE_TEXT_SCALE_X
             fitTextSize(valueText, size * STATUS_ICON_VALUE_TEXT_FACTOR, maxTextWidth)
         }
         val unitPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             textAlign = Paint.Align.CENTER
             typeface = Typeface.DEFAULT_BOLD
+            textScaleX = STATUS_ICON_UNIT_TEXT_SCALE_X
             fitTextSize(unitText, size * STATUS_ICON_UNIT_TEXT_FACTOR, maxTextWidth)
         }
 
@@ -232,10 +234,12 @@ internal class NetworkSpeedNotificationBuilder(
         private const val STATUS_ICON_DP = 64f
         private const val STATUS_ICON_MIN_PX = 128
         private const val STATUS_ICON_MAX_WIDTH_FACTOR = 0.98f
-        private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.72f
-        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.42f
-        private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.36f
-        private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.76f
+        private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.88f
+        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.46f
+        private const val STATUS_ICON_VALUE_TEXT_SCALE_X = 0.68f
+        private const val STATUS_ICON_UNIT_TEXT_SCALE_X = 0.78f
+        private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.34f
+        private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.82f
         private const val STATUS_ICON_MIN_TEXT_SIZE = 8f
         private const val STATUS_ICON_TEXT_SHRINK_STEP = 1f
 
