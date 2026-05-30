@@ -78,7 +78,6 @@ internal object NetworkSpeedFormatter {
 
     private fun formatRegularNotificationSpeedText(bytesPerSecond: Long): Pair<String, String> {
         return when (resolveSpeedUnit(bytesPerSecond)) {
-            SpeedUnit.BYTES -> bytesPerSecond.toString() to "B/s"
             SpeedUnit.KILOBYTES -> {
                 "%.0f".format(
                     Locale.getDefault(),
@@ -106,8 +105,7 @@ internal object NetworkSpeedFormatter {
         return when {
             bytesPerSecond >= GIGABYTE -> SpeedUnit.GIGABYTES
             bytesPerSecond >= MEGABYTE -> SpeedUnit.MEGABYTES
-            bytesPerSecond >= KILOBYTE -> SpeedUnit.KILOBYTES
-            else -> SpeedUnit.BYTES
+            else -> SpeedUnit.KILOBYTES
         }
     }
 
@@ -116,7 +114,6 @@ internal object NetworkSpeedFormatter {
         unitToUse: SpeedUnit
     ): Pair<String, String> {
         return when (unitToUse) {
-            SpeedUnit.BYTES -> bytesPerSecond.toString() to "B/s"
             SpeedUnit.KILOBYTES -> {
                 formatFixedValue(bytesPerSecond / KILOBYTE.toDouble()) to "KB/s"
             }
@@ -148,7 +145,6 @@ internal object NetworkSpeedFormatter {
     }
 
     private enum class SpeedUnit {
-        BYTES,
         KILOBYTES,
         MEGABYTES,
         GIGABYTES
