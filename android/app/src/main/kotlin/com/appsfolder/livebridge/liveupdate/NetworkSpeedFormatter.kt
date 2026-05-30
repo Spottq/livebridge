@@ -66,7 +66,7 @@ internal object NetworkSpeedFormatter {
     }
 
     fun statusIconText(sample: NetworkSpeedSample): Pair<String, String> {
-        return formatSpeedText(sample.totalBytesPerSecond)
+        return formatRegularNotificationSpeedText(sample.totalBytesPerSecond)
     }
 
     private fun formatSpeedText(bytesPerSecond: Long): Pair<String, String> {
