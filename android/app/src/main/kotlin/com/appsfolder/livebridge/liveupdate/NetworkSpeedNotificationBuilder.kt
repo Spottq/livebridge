@@ -229,8 +229,8 @@ internal class NetworkSpeedNotificationBuilder(
         private const val TITLE_RU =
             "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430"
 
-        private const val STATUS_ICON_DP = 24f
-        private const val STATUS_ICON_MIN_PX = 48
+        private const val STATUS_ICON_DP = 32f
+        private const val STATUS_ICON_MIN_PX = 64
         private const val STATUS_ICON_MAX_WIDTH_FACTOR = 0.98f
         private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.72f
         private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.42f
