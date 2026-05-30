@@ -41,8 +41,12 @@ internal class NetworkSpeedNotificationBuilder(
             } else {
                 "$contentText\n$dailyUsageText"
             }
-        val regularNotificationTitle = dailyUsageText?.let { regularContentText } ?: title
-        val regularNotificationText = dailyUsageText ?: regularContentText
+        val regularNotificationText =
+            if (dailyUsageText == null) {
+                regularContentText
+            } else {
+                "$regularContentText\n$dailyUsageText"
+            }
         val notificationColor = prefs.getNetworkSpeedNotificationColorArgb()
         val regularNotificationOnly = prefs.getNetworkSpeedRegularNotificationEnabled()
         val shouldPromote =
@@ -68,7 +72,7 @@ internal class NetworkSpeedNotificationBuilder(
         )
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(notificationSmallIcon)
-            .setContentTitle(regularNotificationTitle)
+            .setContentTitle(title)
             .setContentText(regularNotificationText)
             .setContentIntent(contentIntent)
             .setColor(notificationColor)
@@ -79,6 +83,12 @@ internal class NetworkSpeedNotificationBuilder(
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+        if (dailyUsageText != null) {
+            builder.setStyle(
+                NotificationCompat.BigTextStyle()
+                    .bigText(regularNotificationText)
+            )
+        }
         if (shouldPromote) {
             builder.setRequestPromotedOngoing(true)
             builder.setShortCriticalText(totalText)
@@ -219,8 +229,8 @@ internal class NetworkSpeedNotificationBuilder(
         private const val TITLE_RU =
             "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430"
 
-        private const val STATUS_ICON_DP = 32f
-        private const val STATUS_ICON_MIN_PX = 64
+        private const val STATUS_ICON_DP = 24f
+        private const val STATUS_ICON_MIN_PX = 48
         private const val STATUS_ICON_MAX_WIDTH_FACTOR = 0.98f
         private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.72f
         private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.42f
