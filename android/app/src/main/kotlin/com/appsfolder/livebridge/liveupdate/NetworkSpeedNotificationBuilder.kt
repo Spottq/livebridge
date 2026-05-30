@@ -235,7 +235,7 @@ internal class NetworkSpeedNotificationBuilder(
         private const val STATUS_ICON_MIN_PX = 128
         private const val STATUS_ICON_MAX_WIDTH_FACTOR = 0.98f
         private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.88f
-        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.46f
+        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.42f
         private const val STATUS_ICON_VALUE_TEXT_SCALE_X = 0.68f
         private const val STATUS_ICON_UNIT_TEXT_SCALE_X = 0.78f
         private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.34f
