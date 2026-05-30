@@ -11,13 +11,26 @@ import java.util.concurrent.ConcurrentHashMap
 
 internal data class NetworkTrafficSnapshot(
     val rxBytes: Long,
-    val txBytes: Long
+    val txBytes: Long,
+    val interfaces: Map<String, NetworkInterfaceTraffic>
 )
+
+internal data class NetworkInterfaceTraffic(
+    val rxBytes: Long,
+    val txBytes: Long,
+    val transport: NetworkTransport
+)
+
+internal enum class NetworkTransport {
+    WIFI,
+    MOBILE,
+    ETHERNET
+}
 
 internal class NetworkSpeedMonitor(context: Context) {
     private val connectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    private val validInterfaces = ConcurrentHashMap<Network, String>()
+    private val validInterfaces = ConcurrentHashMap<Network, TrackedNetworkInterface>()
     private var started = false
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
@@ -78,21 +91,28 @@ internal class NetworkSpeedMonitor(context: Context) {
     }
 
     fun readSnapshot(): NetworkTrafficSnapshot {
-        var totalRx = 0L
-        var totalTx = 0L
+        val interfaces = linkedMapOf<String, NetworkInterfaceTraffic>()
 
-        validInterfaces.values.distinct().forEach { interfaceName ->
-            val rxBytes = TrafficStats.getRxBytes(interfaceName)
-            val txBytes = TrafficStats.getTxBytes(interfaceName)
-            if (rxBytes != TrafficStats.UNSUPPORTED.toLong()) {
-                totalRx += rxBytes
+        validInterfaces.values.distinctBy { it.name }.forEach { trackedInterface ->
+            val rxBytes = TrafficStats.getRxBytes(trackedInterface.name)
+            val txBytes = TrafficStats.getTxBytes(trackedInterface.name)
+            if (rxBytes == TrafficStats.UNSUPPORTED.toLong() &&
+                txBytes == TrafficStats.UNSUPPORTED.toLong()
+            ) {
+                return@forEach
             }
-            if (txBytes != TrafficStats.UNSUPPORTED.toLong()) {
-                totalTx += txBytes
-            }
+            interfaces[trackedInterface.name] = NetworkInterfaceTraffic(
+                rxBytes = rxBytes.coerceAtLeast(0L),
+                txBytes = txBytes.coerceAtLeast(0L),
+                transport = trackedInterface.transport
+            )
         }
 
-        return NetworkTrafficSnapshot(rxBytes = totalRx, txBytes = totalTx)
+        return NetworkTrafficSnapshot(
+            rxBytes = interfaces.values.sumOf { it.rxBytes },
+            txBytes = interfaces.values.sumOf { it.txBytes },
+            interfaces = interfaces
+        )
     }
 
     private fun updateNetwork(
@@ -110,12 +130,16 @@ internal class NetworkSpeedMonitor(context: Context) {
             return
         }
 
-        val isPhysicalTransport =
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-
-        if (!isPhysicalTransport) {
+        val transport = when {
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ->
+                NetworkTransport.WIFI
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ->
+                NetworkTransport.MOBILE
+            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ->
+                NetworkTransport.ETHERNET
+            else -> null
+        }
+        if (transport == null) {
             validInterfaces.remove(network)
             return
         }
@@ -126,6 +150,14 @@ internal class NetworkSpeedMonitor(context: Context) {
             return
         }
 
-        validInterfaces[network] = interfaceName
+        validInterfaces[network] = TrackedNetworkInterface(
+            name = interfaceName,
+            transport = transport
+        )
     }
+
+    private data class TrackedNetworkInterface(
+        val name: String,
+        val transport: NetworkTransport
+    )
 }

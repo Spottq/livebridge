@@ -4,12 +4,15 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.os.Bundle
+import android.view.View
+import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.kakao.taxi.MainActivity
@@ -21,7 +24,8 @@ internal class NetworkSpeedNotificationBuilder(
 ) {
     fun build(
         prefs: ConverterPrefs,
-        sample: NetworkSpeedSample
+        sample: NetworkSpeedSample,
+        dailyUsage: NetworkDailyUsage
     ): Notification {
         val title = notificationTitle()
         val totalText = NetworkSpeedFormatter.totalText(sample, prefs)
@@ -63,6 +67,17 @@ internal class NetworkSpeedNotificationBuilder(
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+        if (prefs.getNetworkSpeedDailyUsageEnabled()) {
+            val dailyUsageView = buildDailyUsageRemoteViews(
+                title = title,
+                contentText = contentText,
+                dailyUsage = dailyUsage
+            )
+            builder
+                .setCustomContentView(dailyUsageView)
+                .setCustomBigContentView(dailyUsageView)
+                .setStyle(NotificationCompat.DecoratedCustomViewStyle())
+        }
         if (shouldPromote) {
             builder.setRequestPromotedOngoing(true)
             builder.setShortCriticalText(totalText)
@@ -86,6 +101,42 @@ internal class NetworkSpeedNotificationBuilder(
             SamsungOneUi7NowBarCompat.markEligible(notification)
         } else {
             notification
+        }
+    }
+
+    private fun buildDailyUsageRemoteViews(
+        title: String,
+        contentText: String,
+        dailyUsage: NetworkDailyUsage
+    ): RemoteViews {
+        val textColor = remoteViewTextColor()
+        return RemoteViews(context.packageName, R.layout.notification_network_speed).apply {
+            setInt(R.id.network_speed_notification_root, "setLayoutDirection", View.LAYOUT_DIRECTION_LTR)
+            setTextViewText(R.id.network_speed_title, title)
+            setTextViewText(R.id.network_speed_content, contentText)
+            setTextViewText(
+                R.id.network_speed_wifi_usage,
+                ":${NetworkDailyUsageFormatter.formatBytes(dailyUsage.wifiBytes)}"
+            )
+            setTextViewText(
+                R.id.network_speed_mobile_usage,
+                ":${NetworkDailyUsageFormatter.formatBytes(dailyUsage.mobileBytes)}"
+            )
+            setTextColor(R.id.network_speed_title, textColor)
+            setTextColor(R.id.network_speed_content, textColor)
+            setTextColor(R.id.network_speed_wifi_usage, textColor)
+            setTextColor(R.id.network_speed_mobile_usage, textColor)
+            setInt(R.id.network_speed_wifi_icon, "setColorFilter", textColor)
+            setInt(R.id.network_speed_mobile_icon, "setColorFilter", textColor)
+        }
+    }
+
+    private fun remoteViewTextColor(): Int {
+        val nightMode = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+        return if (nightMode == Configuration.UI_MODE_NIGHT_YES) {
+            DARK_THEME_TEXT_COLOR
+        } else {
+            LIGHT_THEME_TEXT_COLOR
         }
     }
 
@@ -221,5 +272,7 @@ internal class NetworkSpeedNotificationBuilder(
 
         private const val STYLE_DEFAULT = 1
         private const val STYLE_NOW_BAR_ONLY = 2
+        private const val DARK_THEME_TEXT_COLOR = 0xFFF5F7FA.toInt()
+        private const val LIGHT_THEME_TEXT_COLOR = 0xFF111827.toInt()
     }
 }

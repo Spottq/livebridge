@@ -248,6 +248,16 @@ class ConverterPrefs(context: Context) {
             .apply()
     }
 
+    fun getNetworkSpeedDailyUsageEnabled(): Boolean {
+        return prefs.getBoolean(KEY_NETWORK_SPEED_DAILY_USAGE_ENABLED, false)
+    }
+
+    fun setNetworkSpeedDailyUsageEnabled(value: Boolean) {
+        prefs.edit()
+            .putBoolean(KEY_NETWORK_SPEED_DAILY_USAGE_ENABLED, value)
+            .apply()
+    }
+
     fun getNetworkSpeedNotificationColorArgb(): Int {
         return normalizeNotificationColor(
             prefs.getInt(
@@ -1008,6 +1018,10 @@ class ConverterPrefs(context: Context) {
                 getNetworkSpeedRegularNotificationEnabled()
             )
             .put(
+                "network_speed_daily_usage_enabled",
+                getNetworkSpeedDailyUsageEnabled()
+            )
+            .put(
                 "network_speed_notification_color",
                 formatNotificationColor(getNetworkSpeedNotificationColorArgb())
             )
@@ -1153,6 +1167,8 @@ class ConverterPrefs(context: Context) {
             ?.let(::setNetworkSpeedChipBackgroundDisabled)
         bool(settings, "network_speed_regular_notification_enabled")
             ?.let(::setNetworkSpeedRegularNotificationEnabled)
+        bool(settings, "network_speed_daily_usage_enabled")
+            ?.let(::setNetworkSpeedDailyUsageEnabled)
         parseNotificationColor(settings, "network_speed_notification_color")
             ?.let(::setNetworkSpeedNotificationColorArgb)
         parseNotificationColor(settings, "network_speed_color")
@@ -1452,6 +1468,8 @@ class ConverterPrefs(context: Context) {
             "network_speed_disable_chip_background"
         private const val KEY_NETWORK_SPEED_REGULAR_NOTIFICATION_ENABLED =
             "network_speed_regular_notification_enabled"
+        private const val KEY_NETWORK_SPEED_DAILY_USAGE_ENABLED =
+            "network_speed_daily_usage_enabled"
         private const val KEY_NETWORK_SPEED_NOTIFICATION_COLOR =
             "network_speed_notification_color"
         private const val KEY_CONVERTER_ENABLED = "converter_enabled"

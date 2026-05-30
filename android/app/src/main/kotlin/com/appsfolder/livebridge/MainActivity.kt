@@ -380,6 +380,13 @@ class MainActivity : FlutterActivity() {
                 syncNetworkSpeedService(prefs)
                 res.success(true)
             }
+            "getNetworkSpeedDailyUsageEnabled" ->
+                res.success(prefs.getNetworkSpeedDailyUsageEnabled())
+            "setNetworkSpeedDailyUsageEnabled" -> {
+                prefs.setNetworkSpeedDailyUsageEnabled(call.argument<Boolean>("value") ?: false)
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
             "getNetworkSpeedNotificationColorArgb" ->
                 res.success(prefs.getNetworkSpeedNotificationColorArgb().toLong() and 0xFFFFFFFFL)
             "setNetworkSpeedNotificationColorArgb" -> {

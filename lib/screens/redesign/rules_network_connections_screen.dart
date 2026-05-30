@@ -47,6 +47,7 @@ class _RulesNetworkConnectionsScreenState
   bool _networkSpeedLockscreenOnly = false;
   bool _networkSpeedChipBackgroundDisabled = false;
   bool _networkSpeedRegularNotificationEnabled = false;
+  bool _networkSpeedDailyUsageEnabled = false;
   int _networkSpeedNotificationColorArgb = defaultNotificationColorArgb;
 
   @override
@@ -87,6 +88,8 @@ class _RulesNetworkConnectionsScreenState
           LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
       final Future<bool> networkSpeedRegularNotificationFuture =
           LiveBridgePlatform.getNetworkSpeedRegularNotificationEnabled();
+      final Future<bool> networkSpeedDailyUsageFuture =
+          LiveBridgePlatform.getNetworkSpeedDailyUsageEnabled();
       final Future<int> networkSpeedNotificationColorFuture =
           LiveBridgePlatform.getNetworkSpeedNotificationColorArgb();
 
@@ -112,6 +115,8 @@ class _RulesNetworkConnectionsScreenState
           await networkSpeedChipBackgroundDisabledFuture;
       final bool networkSpeedRegularNotificationEnabled =
           await networkSpeedRegularNotificationFuture;
+      final bool networkSpeedDailyUsageEnabled =
+          await networkSpeedDailyUsageFuture;
       final int networkSpeedNotificationColor =
           await networkSpeedNotificationColorFuture;
 
@@ -149,6 +154,7 @@ class _RulesNetworkConnectionsScreenState
             networkSpeedChipBackgroundDisabled;
         _networkSpeedRegularNotificationEnabled =
             networkSpeedRegularNotificationEnabled;
+        _networkSpeedDailyUsageEnabled = networkSpeedDailyUsageEnabled;
         _networkSpeedNotificationColorArgb = _opaqueNotificationColor(
           networkSpeedNotificationColor,
         );
@@ -278,6 +284,14 @@ class _RulesNetworkConnectionsScreenState
     }
     setState(() => _networkSpeedRegularNotificationEnabled = value);
     await LiveBridgePlatform.setNetworkSpeedRegularNotificationEnabled(value);
+  }
+
+  Future<void> _setNetworkSpeedDailyUsageEnabled(bool value) async {
+    if (value == _networkSpeedDailyUsageEnabled) {
+      return;
+    }
+    setState(() => _networkSpeedDailyUsageEnabled = value);
+    await LiveBridgePlatform.setNetworkSpeedDailyUsageEnabled(value);
   }
 
   Future<void> _setNetworkSpeedNotificationColorArgb(int value) async {
@@ -739,6 +753,25 @@ class _RulesNetworkConnectionsScreenState
                 unawaited(
                   _setNetworkSpeedRegularNotificationEnabled(nextValue),
                 );
+              }
+            : null,
+      ),
+      LbListItemData(
+        title: strings.networkSpeedDailyUsageTitle,
+        description: strings.networkSpeedDailyUsageSubtitle,
+        showChevron: false,
+        enabled: _networkSpeedEnabled,
+        toggleValue: _networkSpeedDailyUsageEnabled,
+        onToggle: _networkSpeedEnabled
+            ? (bool value) {
+                unawaited(_setNetworkSpeedDailyUsageEnabled(value));
+              }
+            : null,
+        onTap: _networkSpeedEnabled
+            ? () {
+                final bool nextValue = !_networkSpeedDailyUsageEnabled;
+                unawaited(LiveBridgeHaptics.toggle(nextValue));
+                unawaited(_setNetworkSpeedDailyUsageEnabled(nextValue));
               }
             : null,
       ),

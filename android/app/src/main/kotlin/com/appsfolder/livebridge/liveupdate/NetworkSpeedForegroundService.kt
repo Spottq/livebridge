@@ -30,6 +30,9 @@ class NetworkSpeedForegroundService : Service() {
     private var lastSnapshot: NetworkTrafficSnapshot? = null
     private var lastSampleAtElapsedMs: Long = 0L
     private var latestSample = NetworkSpeedSample.ZERO
+    private var latestDailyUsage = NetworkDailyUsage.ZERO
+    private var dailyUsageTracker: NetworkDailyUsageTracker? = null
+    private var wasDailyUsageEnabled = false
     private var initialized = false
     private var isForegroundActive = false
 
@@ -39,6 +42,7 @@ class NetworkSpeedForegroundService : Service() {
             val nowElapsedMs = SystemClock.elapsedRealtime()
             val previousSnapshot = lastSnapshot
             val previousElapsedMs = lastSampleAtElapsedMs
+            refreshDailyUsage(snapshot)
 
             latestSample =
                 if (previousSnapshot == null || previousElapsedMs <= 0L) {
@@ -122,6 +126,8 @@ class NetworkSpeedForegroundService : Service() {
         workerThread = null
         workerHandler = null
         speedMonitor.stop()
+        dailyUsageTracker?.flush()
+        dailyUsageTracker = null
         hideNotification()
         super.onDestroy()
     }
@@ -129,8 +135,33 @@ class NetworkSpeedForegroundService : Service() {
     private fun buildNotification(): Notification {
         return notificationBuilder.build(
             prefs = prefs,
-            sample = latestSample
+            sample = latestSample,
+            dailyUsage = latestDailyUsage
         )
+    }
+
+    private fun refreshDailyUsage(snapshot: NetworkTrafficSnapshot) {
+        val enabled = prefs.getNetworkSpeedDailyUsageEnabled()
+        if (!enabled) {
+            if (wasDailyUsageEnabled) {
+                dailyUsageTracker?.flush()
+                dailyUsageTracker = null
+            }
+            latestDailyUsage = NetworkDailyUsage.ZERO
+            wasDailyUsageEnabled = false
+            return
+        }
+
+        val tracker = dailyUsageTracker ?: NetworkDailyUsageTracker(applicationContext).also {
+            dailyUsageTracker = it
+        }
+        latestDailyUsage =
+            if (wasDailyUsageEnabled) {
+                tracker.record(snapshot)
+            } else {
+                tracker.start(snapshot)
+            }
+        wasDailyUsageEnabled = true
     }
 
     private fun refreshServiceState() {

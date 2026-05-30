@@ -155,6 +155,10 @@ class LiveBridgePlatform {
       _askBool('getNetworkSpeedRegularNotificationEnabled');
   static Future<bool> setNetworkSpeedRegularNotificationEnabled(bool value) =>
       _askBool('setNetworkSpeedRegularNotificationEnabled', {'value': value});
+  static Future<bool> getNetworkSpeedDailyUsageEnabled() =>
+      _askBool('getNetworkSpeedDailyUsageEnabled');
+  static Future<bool> setNetworkSpeedDailyUsageEnabled(bool value) =>
+      _askBool('setNetworkSpeedDailyUsageEnabled', {'value': value});
   static Future<int> getNetworkSpeedNotificationColorArgb() =>
       _askInt('getNetworkSpeedNotificationColorArgb');
   static Future<bool> setNetworkSpeedNotificationColorArgb(int value) =>

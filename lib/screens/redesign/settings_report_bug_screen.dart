@@ -115,6 +115,8 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
     final Future<bool> networkSpeedRegularNotificationFuture =
         LiveBridgePlatform.getNetworkSpeedRegularNotificationEnabled();
+    final Future<bool> networkSpeedDailyUsageFuture =
+        LiveBridgePlatform.getNetworkSpeedDailyUsageEnabled();
     final Future<bool> syncDndFuture = LiveBridgePlatform.getSyncDndEnabled();
     final Future<bool> preventDismissingFuture =
         LiveBridgePlatform.getPreventMirrorDismissEnabled();
@@ -280,6 +282,7 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
             await networkSpeedChipBackgroundDisabledFuture,
         'network_speed_regular_notification_enabled':
             await networkSpeedRegularNotificationFuture,
+        'network_speed_daily_usage_enabled': await networkSpeedDailyUsageFuture,
         'sync_dnd_enabled': await syncDndFuture,
         'prevent_mirror_dismiss_enabled': await preventDismissingFuture,
         'hide_lockscreen_content_enabled': await hideLockscreenContentFuture,

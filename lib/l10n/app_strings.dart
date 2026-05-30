@@ -2565,6 +2565,16 @@ class AppStrings {
     ko: '속도 표시를 알림 창에만 두고 Now Bar로 올리지 않습니다.',
   );
 
+  String get networkSpeedDailyUsageTitle => tr(
+    en: 'Show daily internet usage',
+    ru: '\u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c \u0434\u043d\u0435\u0432\u043d\u043e\u0439 \u0442\u0440\u0430\u0444\u0438\u043a',
+  );
+
+  String get networkSpeedDailyUsageSubtitle => tr(
+    en: 'Adds a third notification line with today\'s Wi-Fi and mobile data usage.',
+    ru: '\u0414\u043e\u0431\u0430\u0432\u043b\u044f\u0435\u0442 \u0442\u0440\u0435\u0442\u044c\u044e \u0441\u0442\u0440\u043e\u043a\u0443 \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f \u0441 \u0434\u043d\u0435\u0432\u043d\u044b\u043c \u0442\u0440\u0430\u0444\u0438\u043a\u043e\u043c Wi-Fi \u0438 \u043c\u043e\u0431\u0438\u043b\u044c\u043d\u043e\u0439 \u0441\u0435\u0442\u0438.',
+  );
+
   String get textProgressTitle => tr(
     en: 'Text progress',
     ru: 'Текстовые прогрессы',
