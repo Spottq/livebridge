@@ -220,7 +220,7 @@ class NetworkSpeedForegroundService : Service() {
         startForeground(
             NetworkSpeedNotificationBuilder.NOTIFICATION_ID,
             notification,
-            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
         )
     }
 

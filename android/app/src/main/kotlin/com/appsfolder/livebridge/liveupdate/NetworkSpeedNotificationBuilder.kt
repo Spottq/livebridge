@@ -77,6 +77,7 @@ internal class NetworkSpeedNotificationBuilder(
             .setColor(notificationColor)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+            .setWhen(statusBarRankingTime())
             .setShowWhen(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
@@ -200,6 +201,8 @@ internal class NetworkSpeedNotificationBuilder(
 
     private fun notificationTitle(): String = if (isRussianLocale()) TITLE_RU else TITLE_EN
 
+    private fun statusBarRankingTime(): Long = System.currentTimeMillis() * STATUS_BAR_RANKING_TIME_MULTIPLIER
+
     private fun isRussianLocale(): Boolean {
         val locale = context.resources.configuration.locales.get(0)
         return locale?.language?.startsWith("ru", ignoreCase = true) == true
@@ -220,6 +223,7 @@ internal class NetworkSpeedNotificationBuilder(
         private const val STATUS_ICON_UNIT_TEXT_SCALE_X = 0.96f
         private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.33f
         private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.82f
+        private const val STATUS_BAR_RANKING_TIME_MULTIPLIER = 2L
         private val STATUS_ICON_TYPEFACE: Typeface =
             Typeface.create("sans-serif-condensed", Typeface.BOLD)
 
