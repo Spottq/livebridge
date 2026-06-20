@@ -163,9 +163,9 @@ internal object NetworkDailyUsageFormatter {
     fun formatBytes(bytes: Long, text: NetworkSpeedNotificationText): String {
         val safeBytes = bytes.coerceAtLeast(0L)
         return if (safeBytes >= GIGABYTE) {
-            formatValue(safeBytes / GIGABYTE.toDouble(), text.gigabytesUnit, DAILY_USAGE_NUMBER_LOCALE)
+            formatValue(safeBytes / GIGABYTE.toDouble(), text.gigabytesUnit, text.numberLocale)
         } else {
-            formatValue(safeBytes / MEGABYTE.toDouble(), text.megabytesUnit, DAILY_USAGE_NUMBER_LOCALE)
+            formatValue(safeBytes / MEGABYTE.toDouble(), text.megabytesUnit, text.numberLocale)
         }
     }
 
@@ -181,5 +181,4 @@ internal object NetworkDailyUsageFormatter {
 
     private const val MEGABYTE = 1024L * 1024L
     private const val GIGABYTE = 1024L * 1024L * 1024L
-    private val DAILY_USAGE_NUMBER_LOCALE = Locale.US
 }
