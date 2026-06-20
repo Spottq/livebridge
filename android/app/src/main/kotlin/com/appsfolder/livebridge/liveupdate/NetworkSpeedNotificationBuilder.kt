@@ -214,11 +214,11 @@ internal class NetworkSpeedNotificationBuilder(
 
         private const val STATUS_ICON_SIZE_PX = 192
         private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.76f
-        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.38f
+        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.40f
         private const val STATUS_ICON_VALUE_TEXT_SCALE_X = 0.90f
         private const val STATUS_ICON_UNIT_TEXT_SCALE_X = 0.96f
         private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.33f
-        private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.78f
+        private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.82f
         private val STATUS_ICON_TYPEFACE: Typeface =
             Typeface.create("sans-serif-condensed", Typeface.BOLD)
 
