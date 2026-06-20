@@ -55,12 +55,7 @@ internal class NetworkSpeedNotificationBuilder(
         val chipIconCompat = IconCompat.createWithResource(context, R.drawable.ic_speed)
         val samsungNowBarEligible =
             shouldPromote && SamsungLiveUpdateReparser.isSamsungDevice()
-        val notificationSmallIcon =
-            if (samsungNowBarEligible) {
-                chipIconCompat
-            } else {
-                buildStatusIcon(sample)
-            }
+        val notificationSmallIcon = buildStatusIcon(sample)
         val contentIntent = PendingIntent.getActivity(
             context,
             0,
