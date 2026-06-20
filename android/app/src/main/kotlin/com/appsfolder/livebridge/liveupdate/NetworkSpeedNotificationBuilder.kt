@@ -23,14 +23,15 @@ internal class NetworkSpeedNotificationBuilder(
         sample: NetworkSpeedSample,
         dailyUsage: NetworkDailyUsage
     ): Notification {
-        val title = notificationTitle()
-        val totalText = NetworkSpeedFormatter.totalText(sample)
-        val contentText = NetworkSpeedFormatter.contentText(sample, prefs)
+        val notificationText = NetworkSpeedNotificationLocalizer.resolve(context, prefs)
+        val title = notificationText.title
+        val totalText = NetworkSpeedFormatter.totalText(sample, notificationText)
+        val contentText = NetworkSpeedFormatter.contentText(sample, prefs, notificationText)
         val regularContentText =
-            NetworkSpeedFormatter.regularNotificationContentText(sample, prefs)
+            NetworkSpeedFormatter.regularNotificationContentText(sample, prefs, notificationText)
         val dailyUsageText =
             if (prefs.getNetworkSpeedDailyUsageEnabled()) {
-                buildDailyUsageText(dailyUsage)
+                buildDailyUsageText(dailyUsage, notificationText)
             } else {
                 null
             }
@@ -114,10 +115,13 @@ internal class NetworkSpeedNotificationBuilder(
         }
     }
 
-    private fun buildDailyUsageText(dailyUsage: NetworkDailyUsage): String {
-        val wifiText = NetworkDailyUsageFormatter.formatBytes(dailyUsage.wifiBytes)
-        val mobileText = NetworkDailyUsageFormatter.formatBytes(dailyUsage.mobileBytes)
-        return "WiFi: $wifiText  Mobile: $mobileText"
+    private fun buildDailyUsageText(
+        dailyUsage: NetworkDailyUsage,
+        text: NetworkSpeedNotificationText
+    ): String {
+        val wifiText = NetworkDailyUsageFormatter.formatBytes(dailyUsage.wifiBytes, text)
+        val mobileText = NetworkDailyUsageFormatter.formatBytes(dailyUsage.mobileBytes, text)
+        return "${text.wifiLabel}: $wifiText  ${text.mobileLabel}: $mobileText"
     }
 
     private fun buildSamsungExtras(
@@ -199,22 +203,11 @@ internal class NetworkSpeedNotificationBuilder(
         canvas.drawText(text, canvas.width / 2f, baseline, paint)
     }
 
-    private fun notificationTitle(): String = if (isRussianLocale()) TITLE_RU else TITLE_EN
-
     private fun statusBarRankingTime(): Long = System.currentTimeMillis() * STATUS_BAR_RANKING_TIME_MULTIPLIER
-
-    private fun isRussianLocale(): Boolean {
-        val locale = context.resources.configuration.locales.get(0)
-        return locale?.language?.startsWith("ru", ignoreCase = true) == true
-    }
 
     companion object {
         const val CHANNEL_ID = "livebridge_network_speed_max_priority"
         const val NOTIFICATION_ID = 41240
-
-        private const val TITLE_EN = "Network speed"
-        private const val TITLE_RU =
-            "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430"
 
         private const val STATUS_ICON_SIZE_PX = 192
         private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.741f

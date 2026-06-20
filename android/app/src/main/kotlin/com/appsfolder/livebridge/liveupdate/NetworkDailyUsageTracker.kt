@@ -157,20 +157,26 @@ internal class NetworkDailyUsageTracker(context: Context) {
 
 internal object NetworkDailyUsageFormatter {
     fun formatBytes(bytes: Long): String {
+        return formatBytes(bytes, NetworkSpeedNotificationLocalizer.ENGLISH)
+    }
+
+    fun formatBytes(bytes: Long, text: NetworkSpeedNotificationText): String {
         val safeBytes = bytes.coerceAtLeast(0L)
         return if (safeBytes >= GIGABYTE) {
-            formatValue(safeBytes / GIGABYTE.toDouble(), "Gb")
+            formatValue(safeBytes / GIGABYTE.toDouble(), text.gigabytesUnit, text.numberLocale)
         } else {
-            formatValue(safeBytes / MEGABYTE.toDouble(), "Mb")
+            formatValue(safeBytes / MEGABYTE.toDouble(), text.megabytesUnit, text.numberLocale)
         }
     }
 
-    private fun formatValue(value: Double, suffix: String): String {
+    private fun formatValue(value: Double, suffix: String, locale: Locale): String {
         if (value < 0.1) {
             return "0$suffix"
         }
         val pattern = if (value >= 10.0) "%.0f" else "%.1f"
-        return pattern.format(Locale.US, value).removeSuffix(".0") + suffix
+        return pattern.format(locale, value)
+            .removeSuffix(".0")
+            .removeSuffix(",0") + suffix
     }
 
     private const val MEGABYTE = 1024L * 1024L

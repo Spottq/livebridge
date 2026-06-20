@@ -228,13 +228,11 @@ class NetworkSpeedForegroundService : Service() {
         private const val TAG = "NetworkSpeedService"
         private const val ACTION_REFRESH = "com.kakao.taxi.liveupdate.NETWORK_SPEED_REFRESH"
         private const val SAMPLE_INTERVAL_MS = 1000L
-        private const val CHANNEL_NAME_EN = "Network Speed"
-        private const val CHANNEL_NAME_RU =
-            "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430"
-        private const val CHANNEL_DESCRIPTION_EN =
-            "Shows current network speed in the notification and Now Bar"
-        private const val CHANNEL_DESCRIPTION_RU =
-            "\u041f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u0435\u0442 \u0442\u0435\u043a\u0443\u0449\u0443\u044e \u0441\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0441\u0435\u0442\u0438 \u0432 Now Bar"
+        private val LEGACY_CHANNEL_IDS = listOf(
+            "livebridge_network_speed",
+            "livebridge_network_speed_priority",
+            "livebridge_network_speed_meter"
+        )
 
         fun sync(context: Context) {
             val prefs = ConverterPrefs(context)
@@ -260,14 +258,17 @@ class NetworkSpeedForegroundService : Service() {
         private fun ensureChannel(context: Context) {
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val existing = manager.getNotificationChannel(NetworkSpeedNotificationBuilder.CHANNEL_ID)
-            val channelName = if (isRussianLocale(context)) CHANNEL_NAME_RU else CHANNEL_NAME_EN
-            val channelDescription = if (isRussianLocale(context)) {
-                CHANNEL_DESCRIPTION_RU
-            } else {
-                CHANNEL_DESCRIPTION_EN
-            }
+            val notificationText = NetworkSpeedNotificationLocalizer.resolve(
+                context,
+                ConverterPrefs(context)
+            )
+            val channelName = notificationText.title
+            val channelDescription = notificationText.channelDescription
+
+            deleteLegacyChannels(manager)
 
             if (existing != null) {
+                existing.name = channelName
                 existing.description = channelDescription
                 existing.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 existing.setSound(null, null)
@@ -291,9 +292,12 @@ class NetworkSpeedForegroundService : Service() {
             )
         }
 
-        private fun isRussianLocale(context: Context): Boolean {
-            val locale = context.resources.configuration.locales.get(0)
-            return locale?.language?.startsWith("ru", ignoreCase = true) == true
+        private fun deleteLegacyChannels(manager: NotificationManager) {
+            LEGACY_CHANNEL_IDS.forEach { channelId ->
+                if (channelId != NetworkSpeedNotificationBuilder.CHANNEL_ID) {
+                    manager.deleteNotificationChannel(channelId)
+                }
+            }
         }
     }
 }

@@ -17,21 +17,52 @@ internal data class NetworkSpeedSample(
 
 internal object NetworkSpeedFormatter {
     fun totalText(sample: NetworkSpeedSample): String {
-        return formatSpeedLine(sample.totalBytesPerSecond)
+        return totalText(sample, NetworkSpeedNotificationLocalizer.ENGLISH)
+    }
+
+    fun totalText(
+        sample: NetworkSpeedSample,
+        text: NetworkSpeedNotificationText
+    ): String {
+        return formatSpeedLine(sample.totalBytesPerSecond, text)
     }
 
     fun contentText(
         sample: NetworkSpeedSample,
         prefs: ConverterPrefs
     ): String {
-        return contentText(sample, prefs, ::formatSpeedLine)
+        return contentText(sample, prefs, NetworkSpeedNotificationLocalizer.ENGLISH)
+    }
+
+    fun contentText(
+        sample: NetworkSpeedSample,
+        prefs: ConverterPrefs,
+        text: NetworkSpeedNotificationText
+    ): String {
+        return contentText(sample, prefs) { bytesPerSecond ->
+            formatSpeedLine(bytesPerSecond, text)
+        }
     }
 
     fun regularNotificationContentText(
         sample: NetworkSpeedSample,
         prefs: ConverterPrefs
     ): String {
-        return contentText(sample, prefs, ::formatRegularNotificationSpeedLine)
+        return regularNotificationContentText(
+            sample,
+            prefs,
+            NetworkSpeedNotificationLocalizer.ENGLISH
+        )
+    }
+
+    fun regularNotificationContentText(
+        sample: NetworkSpeedSample,
+        prefs: ConverterPrefs,
+        text: NetworkSpeedNotificationText
+    ): String {
+        return contentText(sample, prefs) { bytesPerSecond ->
+            formatRegularNotificationSpeedLine(bytesPerSecond, text)
+        }
     }
 
     private fun contentText(
@@ -56,12 +87,22 @@ internal object NetworkSpeedFormatter {
     }
 
     fun formatSpeedLine(bytesPerSecond: Long): String {
-        val (value, unit) = formatSpeedText(bytesPerSecond)
+        return formatSpeedLine(bytesPerSecond, NetworkSpeedNotificationLocalizer.ENGLISH)
+    }
+
+    private fun formatSpeedLine(
+        bytesPerSecond: Long,
+        text: NetworkSpeedNotificationText
+    ): String {
+        val (value, unit) = formatSpeedText(bytesPerSecond, text)
         return "$value$unit"
     }
 
-    private fun formatRegularNotificationSpeedLine(bytesPerSecond: Long): String {
-        val (value, unit) = formatRegularNotificationSpeedText(bytesPerSecond)
+    private fun formatRegularNotificationSpeedLine(
+        bytesPerSecond: Long,
+        text: NetworkSpeedNotificationText
+    ): String {
+        val (value, unit) = formatRegularNotificationSpeedText(bytesPerSecond, text)
         return "$value$unit"
     }
 
@@ -69,34 +110,41 @@ internal object NetworkSpeedFormatter {
         return formatStatusIconSpeedText(sample.totalBytesPerSecond)
     }
 
-    private fun formatSpeedText(bytesPerSecond: Long): Pair<String, String> {
+    private fun formatSpeedText(
+        bytesPerSecond: Long,
+        text: NetworkSpeedNotificationText
+    ): Pair<String, String> {
         return formatSpeedText(
             bytesPerSecond = bytesPerSecond,
-            unitToUse = resolveSpeedUnit(bytesPerSecond)
+            unitToUse = resolveSpeedUnit(bytesPerSecond),
+            text = text
         )
     }
 
-    private fun formatRegularNotificationSpeedText(bytesPerSecond: Long): Pair<String, String> {
+    private fun formatRegularNotificationSpeedText(
+        bytesPerSecond: Long,
+        text: NetworkSpeedNotificationText
+    ): Pair<String, String> {
         return when (resolveSpeedUnit(bytesPerSecond)) {
             SpeedUnit.KILOBYTES -> {
                 "%.0f".format(
-                    Locale.getDefault(),
+                    text.numberLocale,
                     bytesPerSecond / KILOBYTE.toDouble()
-                ) to "KB/s"
+                ) to text.kilobytesPerSecondUnit
             }
 
             SpeedUnit.MEGABYTES -> {
                 "%.1f".format(
-                    Locale.getDefault(),
+                    text.numberLocale,
                     bytesPerSecond / MEGABYTE.toDouble()
-                ) to "MB/s"
+                ) to text.megabytesPerSecondUnit
             }
 
             SpeedUnit.GIGABYTES -> {
                 "%.1f".format(
-                    Locale.getDefault(),
+                    text.numberLocale,
                     bytesPerSecond / GIGABYTE.toDouble()
-                ) to "GB/s"
+                ) to text.gigabytesPerSecondUnit
             }
         }
     }
@@ -143,37 +191,44 @@ internal object NetworkSpeedFormatter {
 
     private fun formatSpeedText(
         bytesPerSecond: Long,
-        unitToUse: SpeedUnit
+        unitToUse: SpeedUnit,
+        text: NetworkSpeedNotificationText
     ): Pair<String, String> {
         return when (unitToUse) {
             SpeedUnit.KILOBYTES -> {
-                formatFixedValue(bytesPerSecond / KILOBYTE.toDouble()) to "KB/s"
+                formatFixedValue(
+                    bytesPerSecond / KILOBYTE.toDouble(),
+                    text.numberLocale
+                ) to text.kilobytesPerSecondUnit
             }
 
             SpeedUnit.MEGABYTES -> {
                 val value = bytesPerSecond / MEGABYTE.toDouble()
-                val text = if (value >= 10.0) {
+                val valueText = if (value >= 10.0) {
                     value.roundToLong().toString()
                 } else {
-                    "%.1f".format(Locale.getDefault(), value)
+                    "%.1f".format(text.numberLocale, value)
                 }
-                text to "MB/s"
+                valueText to text.megabytesPerSecondUnit
             }
 
             SpeedUnit.GIGABYTES -> {
-                formatFixedValue(bytesPerSecond / GIGABYTE.toDouble()) to "GB/s"
+                formatFixedValue(
+                    bytesPerSecond / GIGABYTE.toDouble(),
+                    text.numberLocale
+                ) to text.gigabytesPerSecondUnit
             }
         }
     }
 
-    private fun formatFixedValue(value: Double): String {
+    private fun formatFixedValue(value: Double, locale: Locale): String {
         val pattern =
             when {
                 value >= 100.0 -> "%.0f"
                 value >= 10.0 -> "%.1f"
                 else -> "%.2f"
             }
-        return pattern.format(Locale.getDefault(), value)
+        return pattern.format(locale, value)
     }
 
     private enum class SpeedUnit {
