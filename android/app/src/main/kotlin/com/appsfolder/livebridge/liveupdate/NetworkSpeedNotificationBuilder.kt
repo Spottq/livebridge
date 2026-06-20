@@ -79,7 +79,8 @@ internal class NetworkSpeedNotificationBuilder(
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
         if (dailyUsageText != null) {
             builder.setStyle(
@@ -205,7 +206,7 @@ internal class NetworkSpeedNotificationBuilder(
     }
 
     companion object {
-        const val CHANNEL_ID = "livebridge_network_speed_meter"
+        const val CHANNEL_ID = "livebridge_network_speed_max_priority"
         const val NOTIFICATION_ID = 41240
 
         private const val TITLE_EN = "Network speed"
