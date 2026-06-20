@@ -280,7 +280,7 @@ class NetworkSpeedForegroundService : Service() {
                 NotificationChannel(
                     NetworkSpeedNotificationBuilder.CHANNEL_ID,
                     channelName,
-                    NotificationManager.IMPORTANCE_LOW
+                    NotificationManager.IMPORTANCE_HIGH
                 ).apply {
                     description = channelDescription
                     lockscreenVisibility = Notification.VISIBILITY_PUBLIC

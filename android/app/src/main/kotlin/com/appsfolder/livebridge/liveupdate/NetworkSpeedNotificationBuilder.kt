@@ -80,8 +80,8 @@ internal class NetworkSpeedNotificationBuilder(
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
         if (dailyUsageText != null) {
             builder.setStyle(
@@ -166,38 +166,24 @@ internal class NetworkSpeedNotificationBuilder(
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         val (valueText, unitText) = NetworkSpeedFormatter.statusIconText(sample)
-        val maxTextWidth = size * STATUS_ICON_MAX_WIDTH_FACTOR
         val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             textAlign = Paint.Align.CENTER
-            typeface = Typeface.DEFAULT_BOLD
+            typeface = STATUS_ICON_TYPEFACE
             textScaleX = STATUS_ICON_VALUE_TEXT_SCALE_X
-            fitTextSize(valueText, size * STATUS_ICON_VALUE_TEXT_FACTOR, maxTextWidth)
+            textSize = size * STATUS_ICON_VALUE_TEXT_FACTOR
         }
         val unitPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             textAlign = Paint.Align.CENTER
-            typeface = Typeface.DEFAULT_BOLD
+            typeface = STATUS_ICON_TYPEFACE
             textScaleX = STATUS_ICON_UNIT_TEXT_SCALE_X
-            fitTextSize(unitText, size * STATUS_ICON_UNIT_TEXT_FACTOR, maxTextWidth)
+            textSize = size * STATUS_ICON_UNIT_TEXT_FACTOR
         }
 
         drawCenteredText(canvas, valueText, size * STATUS_ICON_VALUE_CENTER_Y_FACTOR, valuePaint)
         drawCenteredText(canvas, unitText, size * STATUS_ICON_UNIT_CENTER_Y_FACTOR, unitPaint)
         return IconCompat.createWithBitmap(bitmap)
-    }
-
-    private fun Paint.fitTextSize(
-        text: String,
-        preferredSize: Float,
-        maxWidth: Float
-    ) {
-        var nextSize = preferredSize
-        textSize = nextSize
-        while (nextSize > STATUS_ICON_MIN_TEXT_SIZE && measureText(text) > maxWidth) {
-            nextSize -= STATUS_ICON_TEXT_SHRINK_STEP
-            textSize = nextSize
-        }
     }
 
     private fun drawCenteredText(
@@ -219,7 +205,7 @@ internal class NetworkSpeedNotificationBuilder(
     }
 
     companion object {
-        const val CHANNEL_ID = "livebridge_network_speed"
+        const val CHANNEL_ID = "livebridge_network_speed_priority"
         const val NOTIFICATION_ID = 41240
 
         private const val TITLE_EN = "Network speed"
@@ -228,15 +214,14 @@ internal class NetworkSpeedNotificationBuilder(
 
         private const val STATUS_ICON_DP = 64f
         private const val STATUS_ICON_MIN_PX = 128
-        private const val STATUS_ICON_MAX_WIDTH_FACTOR = 0.98f
-        private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.82f
-        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.42f
-        private const val STATUS_ICON_VALUE_TEXT_SCALE_X = 0.68f
-        private const val STATUS_ICON_UNIT_TEXT_SCALE_X = 0.78f
-        private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.34f
-        private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.82f
-        private const val STATUS_ICON_MIN_TEXT_SIZE = 8f
-        private const val STATUS_ICON_TEXT_SHRINK_STEP = 1f
+        private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.74f
+        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.36f
+        private const val STATUS_ICON_VALUE_TEXT_SCALE_X = 0.92f
+        private const val STATUS_ICON_UNIT_TEXT_SCALE_X = 0.95f
+        private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.36f
+        private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.80f
+        private val STATUS_ICON_TYPEFACE: Typeface =
+            Typeface.create("sans-serif-condensed", Typeface.BOLD)
 
         private const val ONGOING_PREFIX = "android.ongoingActivityNoti."
         private const val KEY_STYLE = "${ONGOING_PREFIX}style"

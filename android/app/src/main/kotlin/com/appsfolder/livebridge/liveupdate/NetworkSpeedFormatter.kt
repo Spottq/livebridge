@@ -66,7 +66,7 @@ internal object NetworkSpeedFormatter {
     }
 
     fun statusIconText(sample: NetworkSpeedSample): Pair<String, String> {
-        return formatRegularNotificationSpeedText(sample.totalBytesPerSecond)
+        return formatStatusIconSpeedText(sample.totalBytesPerSecond)
     }
 
     private fun formatSpeedText(bytesPerSecond: Long): Pair<String, String> {
@@ -99,6 +99,38 @@ internal object NetworkSpeedFormatter {
                 ) to "GB/s"
             }
         }
+    }
+
+    private fun formatStatusIconSpeedText(bytesPerSecond: Long): Pair<String, String> {
+        return when (resolveSpeedUnit(bytesPerSecond)) {
+            SpeedUnit.KILOBYTES -> {
+                (bytesPerSecond / KILOBYTE.toDouble())
+                    .roundToLong()
+                    .coerceIn(0L, STATUS_ICON_MAX_VALUE)
+                    .toString() to "KB/s"
+            }
+
+            SpeedUnit.MEGABYTES -> {
+                formatStatusIconValue(bytesPerSecond / MEGABYTE.toDouble()) to "MB/s"
+            }
+
+            SpeedUnit.GIGABYTES -> {
+                formatStatusIconValue(bytesPerSecond / GIGABYTE.toDouble()) to "GB/s"
+            }
+        }
+    }
+
+    private fun formatStatusIconValue(value: Double): String {
+        if (value < 10.0) {
+            val roundedTenths = (value * 10.0).roundToLong() / 10.0
+            if (roundedTenths < 10.0) {
+                return "%.1f".format(Locale.getDefault(), roundedTenths)
+            }
+        }
+
+        return value.roundToLong()
+            .coerceIn(0L, STATUS_ICON_MAX_VALUE)
+            .toString()
     }
 
     private fun resolveSpeedUnit(bytesPerSecond: Long): SpeedUnit {
@@ -155,4 +187,5 @@ internal object NetworkSpeedFormatter {
     private const val KILOBYTE = 1024L
     private const val MEGABYTE = 1024L * 1024L
     private const val GIGABYTE = 1024L * 1024L * 1024L
+    private const val STATUS_ICON_MAX_VALUE = 999L
 }
