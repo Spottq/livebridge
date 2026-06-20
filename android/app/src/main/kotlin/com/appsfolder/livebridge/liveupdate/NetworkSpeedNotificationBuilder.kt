@@ -14,7 +14,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
 import com.kakao.taxi.MainActivity
 import com.kakao.taxi.R
-import kotlin.math.roundToInt
 
 internal class NetworkSpeedNotificationBuilder(
     private val context: Context
@@ -80,8 +79,7 @@ internal class NetworkSpeedNotificationBuilder(
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setCategory(NotificationCompat.CATEGORY_STATUS)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
         if (dailyUsageText != null) {
             builder.setStyle(
@@ -160,11 +158,13 @@ internal class NetworkSpeedNotificationBuilder(
     }
 
     private fun buildStatusIcon(sample: NetworkSpeedSample): IconCompat {
-        val size = (context.resources.displayMetrics.density * STATUS_ICON_DP)
-            .roundToInt()
-            .coerceAtLeast(STATUS_ICON_MIN_PX)
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(
+            STATUS_ICON_SIZE_PX,
+            STATUS_ICON_SIZE_PX,
+            Bitmap.Config.ARGB_8888
+        )
         val canvas = Canvas(bitmap)
+        val size = STATUS_ICON_SIZE_PX.toFloat()
         val (valueText, unitText) = NetworkSpeedFormatter.statusIconText(sample)
         val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
@@ -205,21 +205,20 @@ internal class NetworkSpeedNotificationBuilder(
     }
 
     companion object {
-        const val CHANNEL_ID = "livebridge_network_speed_priority"
+        const val CHANNEL_ID = "livebridge_network_speed_meter"
         const val NOTIFICATION_ID = 41240
 
         private const val TITLE_EN = "Network speed"
         private const val TITLE_RU =
             "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430"
 
-        private const val STATUS_ICON_DP = 64f
-        private const val STATUS_ICON_MIN_PX = 128
-        private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.74f
-        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.36f
-        private const val STATUS_ICON_VALUE_TEXT_SCALE_X = 0.92f
-        private const val STATUS_ICON_UNIT_TEXT_SCALE_X = 0.95f
-        private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.36f
-        private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.80f
+        private const val STATUS_ICON_SIZE_PX = 192
+        private const val STATUS_ICON_VALUE_TEXT_FACTOR = 0.76f
+        private const val STATUS_ICON_UNIT_TEXT_FACTOR = 0.38f
+        private const val STATUS_ICON_VALUE_TEXT_SCALE_X = 0.90f
+        private const val STATUS_ICON_UNIT_TEXT_SCALE_X = 0.96f
+        private const val STATUS_ICON_VALUE_CENTER_Y_FACTOR = 0.33f
+        private const val STATUS_ICON_UNIT_CENTER_Y_FACTOR = 0.78f
         private val STATUS_ICON_TYPEFACE: Typeface =
             Typeface.create("sans-serif-condensed", Typeface.BOLD)
 
