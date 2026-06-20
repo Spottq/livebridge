@@ -128,21 +128,21 @@ internal object NetworkSpeedFormatter {
         return when (resolveSpeedUnit(bytesPerSecond)) {
             SpeedUnit.KILOBYTES -> {
                 "%.0f".format(
-                    text.numberLocale,
+                    SPEED_NUMBER_LOCALE,
                     bytesPerSecond / KILOBYTE.toDouble()
                 ) to text.kilobytesPerSecondUnit
             }
 
             SpeedUnit.MEGABYTES -> {
                 "%.1f".format(
-                    text.numberLocale,
+                    SPEED_NUMBER_LOCALE,
                     bytesPerSecond / MEGABYTE.toDouble()
                 ) to text.megabytesPerSecondUnit
             }
 
             SpeedUnit.GIGABYTES -> {
                 "%.1f".format(
-                    text.numberLocale,
+                    SPEED_NUMBER_LOCALE,
                     bytesPerSecond / GIGABYTE.toDouble()
                 ) to text.gigabytesPerSecondUnit
             }
@@ -172,7 +172,7 @@ internal object NetworkSpeedFormatter {
         if (value < 10.0) {
             val roundedTenths = (value * 10.0).roundToLong() / 10.0
             if (roundedTenths < 10.0) {
-                return "%.1f".format(Locale.getDefault(), roundedTenths)
+                return "%.1f".format(SPEED_NUMBER_LOCALE, roundedTenths)
             }
         }
 
@@ -198,7 +198,7 @@ internal object NetworkSpeedFormatter {
             SpeedUnit.KILOBYTES -> {
                 formatFixedValue(
                     bytesPerSecond / KILOBYTE.toDouble(),
-                    text.numberLocale
+                    SPEED_NUMBER_LOCALE
                 ) to text.kilobytesPerSecondUnit
             }
 
@@ -207,7 +207,7 @@ internal object NetworkSpeedFormatter {
                 val valueText = if (value >= 10.0) {
                     value.roundToLong().toString()
                 } else {
-                    "%.1f".format(text.numberLocale, value)
+                    "%.1f".format(SPEED_NUMBER_LOCALE, value)
                 }
                 valueText to text.megabytesPerSecondUnit
             }
@@ -215,7 +215,7 @@ internal object NetworkSpeedFormatter {
             SpeedUnit.GIGABYTES -> {
                 formatFixedValue(
                     bytesPerSecond / GIGABYTE.toDouble(),
-                    text.numberLocale
+                    SPEED_NUMBER_LOCALE
                 ) to text.gigabytesPerSecondUnit
             }
         }
@@ -243,4 +243,5 @@ internal object NetworkSpeedFormatter {
     private const val MEGABYTE = 1024L * 1024L
     private const val GIGABYTE = 1024L * 1024L * 1024L
     private const val STATUS_ICON_MAX_VALUE = 999L
+    private val SPEED_NUMBER_LOCALE = Locale.US
 }
