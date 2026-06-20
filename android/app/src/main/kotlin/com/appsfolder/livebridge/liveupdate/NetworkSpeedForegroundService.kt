@@ -227,7 +227,7 @@ class NetworkSpeedForegroundService : Service() {
     companion object {
         private const val TAG = "NetworkSpeedService"
         private const val ACTION_REFRESH = "com.kakao.taxi.liveupdate.NETWORK_SPEED_REFRESH"
-        private const val SAMPLE_INTERVAL_MS = 250L
+        private const val SAMPLE_INTERVAL_MS = 1000L
         private const val CHANNEL_NAME_EN = "Network Speed"
         private const val CHANNEL_NAME_RU =
             "\u0421\u043a\u043e\u0440\u043e\u0441\u0442\u044c \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442\u0430"
