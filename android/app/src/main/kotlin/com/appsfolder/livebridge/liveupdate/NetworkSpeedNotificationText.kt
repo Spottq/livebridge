@@ -44,11 +44,11 @@ internal object NetworkSpeedNotificationLocalizer {
                         "\u0438 Now Bar",
                 wifiLabel = "Wi-Fi",
                 mobileLabel = "\u041c\u043e\u0431",
-                kilobytesPerSecondUnit = "\u043a\u0431/\u0441",
-                megabytesPerSecondUnit = "\u043c\u0431/\u0441",
-                gigabytesPerSecondUnit = "\u0433\u0431/\u0441",
-                megabytesUnit = "\u041c\u0411",
-                gigabytesUnit = "\u0413\u0411"
+                kilobytesPerSecondUnit = "\u041a\u0431/\u0441",
+                megabytesPerSecondUnit = "\u041c\u0431/\u0441",
+                gigabytesPerSecondUnit = "\u0413\u0431/\u0441",
+                megabytesUnit = "\u041c\u0431",
+                gigabytesUnit = "\u0413\u0431"
             )
 
             LocaleKey.TR -> NetworkSpeedNotificationText(

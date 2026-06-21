@@ -163,20 +163,29 @@ internal object NetworkDailyUsageFormatter {
     fun formatBytes(bytes: Long, text: NetworkSpeedNotificationText): String {
         val safeBytes = bytes.coerceAtLeast(0L)
         return if (safeBytes >= GIGABYTE) {
-            formatValue(safeBytes / GIGABYTE.toDouble(), text.gigabytesUnit, text.numberLocale)
+            formatValue(
+                safeBytes / GIGABYTE.toDouble(),
+                text.gigabytesUnit,
+                text.numberLocale,
+                fractionDigits = 2
+            )
         } else {
-            formatValue(safeBytes / MEGABYTE.toDouble(), text.megabytesUnit, text.numberLocale)
+            formatValue(
+                safeBytes / MEGABYTE.toDouble(),
+                text.megabytesUnit,
+                text.numberLocale,
+                fractionDigits = 1
+            )
         }
     }
 
-    private fun formatValue(value: Double, suffix: String, locale: Locale): String {
-        if (value < 0.1) {
-            return "0$suffix"
-        }
-        val pattern = if (value >= 10.0) "%.0f" else "%.1f"
-        return pattern.format(locale, value)
-            .removeSuffix(".0")
-            .removeSuffix(",0") + suffix
+    private fun formatValue(
+        value: Double,
+        suffix: String,
+        locale: Locale,
+        fractionDigits: Int
+    ): String {
+        return "%.${fractionDigits}f".format(locale, value) + suffix
     }
 
     private const val MEGABYTE = 1024L * 1024L
