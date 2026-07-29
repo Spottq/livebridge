@@ -3339,13 +3339,12 @@ object LiveUpdateNotifier {
         clearSourceKeys: List<String>,
         showClearAction: Boolean
     ): Notification {
-        val contentText = description.ifBlank { expandedDescription }
         val builder = NotificationCompat.Builder(
             context,
             MirrorNotificationChannel.NOTIFICATION_CAPSULE.id
         )
             .setContentTitle(title)
-            .setContentText(contentText)
+            .setContentText(description)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setDefaults(0)
@@ -3364,8 +3363,8 @@ object LiveUpdateNotifier {
         (contentIntent ?: notificationCapsuleContentIntent(context, notificationId))
             ?.let(builder::setContentIntent)
 
-        if (contentText.isNotBlank()) {
-            builder.setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
+        if (description.isNotBlank()) {
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(description))
         }
         val expandedRightIcon = expandedImage?.let { image ->
             runCatching { IconCompat.createWithBitmap(image) }.getOrNull()
