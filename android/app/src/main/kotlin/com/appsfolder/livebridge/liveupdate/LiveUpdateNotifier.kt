@@ -610,11 +610,7 @@ object LiveUpdateNotifier {
                 notificationCapsuleItemCount(sbn.notification)
             }
             val appName = notificationCapsuleAppLabel(context, packageName)
-            val countText = if (count > 1) {
-                notificationCapsuleTitle(context, count)
-            } else {
-                ""
-            }
+            val countText = notificationCapsuleTitle(context, count)
             val expandedContent = notificationCapsuleExpandedContent(
                 context = context,
                 sources = groupSources,
