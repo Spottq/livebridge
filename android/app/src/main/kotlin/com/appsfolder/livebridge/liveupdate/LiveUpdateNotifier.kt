@@ -123,6 +123,11 @@ object LiveUpdateNotifier {
         "com.samsung.android.app.aodservice",
         "com.samsung.android.providers.context"
     )
+    private val TIKTOK_PACKAGES = setOf(
+        "com.zhiliaoapp.musically",
+        "com.ss.android.ugc.aweme",
+        "com.ss.android.ugc.trill"
+    )
     private val NAVIGATION_DISTANCE_PATTERN = Regex(
         "(?<!\\d)\\d{1,4}(?:[\\s.,]\\d{1,2})?\\s*(?:км|km|м|m|mi|ft|миль|фут)\\b",
         setOf(RegexOption.IGNORE_CASE)
@@ -605,7 +610,11 @@ object LiveUpdateNotifier {
                 notificationCapsuleItemCount(sbn.notification)
             }
             val appName = notificationCapsuleAppLabel(context, packageName)
-            val countText = notificationCapsuleTitle(context, count)
+            val countText = if (count > 1) {
+                notificationCapsuleTitle(context, count)
+            } else {
+                ""
+            }
             val expandedContent = notificationCapsuleExpandedContent(
                 context = context,
                 sources = groupSources,
@@ -2906,6 +2915,44 @@ object LiveUpdateNotifier {
             normalize(value)?.let(bodyCandidates::add)
         }
 
+        val titleLines = sequenceOf(
+            extras.getCharSequence(Notification.EXTRA_TITLE),
+            extras.getCharSequence(Notification.EXTRA_TITLE_BIG)
+        ).flatMap { value ->
+            value?.toString()?.lineSequence() ?: emptySequence()
+        }.mapNotNull(::normalize)
+            .distinct()
+            .toList()
+        val hasExplicitBody = sequenceOf(
+            extras.getCharSequence(Notification.EXTRA_TEXT),
+            extras.getCharSequence(Notification.EXTRA_BIG_TEXT),
+            extras.getCharSequence(Notification.EXTRA_SUB_TEXT),
+            extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT),
+            extras.getCharSequence(Notification.EXTRA_INFO_TEXT)
+        ).any { value -> normalize(value) != null } ||
+            extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+                ?.any { value -> normalize(value) != null } == true ||
+            notificationCapsuleMessages(source).isNotEmpty()
+
+        var usedStructuredTitle = false
+        if (!hasExplicitBody && titleLines.size >= 2) {
+            titleCandidates.add(titleLines.first())
+            bodyCandidates.add(titleLines.drop(1).joinToString("\n"))
+            usedStructuredTitle = true
+        } else if (
+            !hasExplicitBody &&
+            titleLines.size == 1 &&
+            sbn.packageName.lowercase(Locale.ROOT) in TIKTOK_PACKAGES
+        ) {
+            val tickerTitle = normalize(source.tickerText)
+            val actionText = titleLines.first()
+            if (!tickerTitle.isNullOrBlank() && !isEquivalentText(tickerTitle, actionText)) {
+                titleCandidates.add(tickerTitle)
+                bodyCandidates.add(actionText)
+                usedStructuredTitle = true
+            }
+        }
+
         val latestMessage = latestNotificationCapsuleMessage(source)
         latestMessage?.let { message ->
             val sender = notificationCapsuleMessageSender(message)
@@ -2921,8 +2968,10 @@ object LiveUpdateNotifier {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             addTitle(extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE))
         }
-        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE))
-        addTitle(extras.getCharSequence(Notification.EXTRA_TITLE_BIG))
+        if (!usedStructuredTitle) {
+            addTitle(extras.getCharSequence(Notification.EXTRA_TITLE))
+            addTitle(extras.getCharSequence(Notification.EXTRA_TITLE_BIG))
+        }
 
         extras.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
             ?.asList()
