@@ -3339,12 +3339,13 @@ object LiveUpdateNotifier {
         clearSourceKeys: List<String>,
         showClearAction: Boolean
     ): Notification {
+        val contentText = description.ifBlank { expandedDescription }
         val builder = NotificationCompat.Builder(
             context,
             MirrorNotificationChannel.NOTIFICATION_CAPSULE.id
         )
             .setContentTitle(title)
-            .setContentText(description)
+            .setContentText(contentText)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setDefaults(0)
@@ -3363,8 +3364,8 @@ object LiveUpdateNotifier {
         (contentIntent ?: notificationCapsuleContentIntent(context, notificationId))
             ?.let(builder::setContentIntent)
 
-        if (description.isNotBlank()) {
-            builder.setStyle(NotificationCompat.BigTextStyle().bigText(description))
+        if (contentText.isNotBlank()) {
+            builder.setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
         }
         val expandedRightIcon = expandedImage?.let { image ->
             runCatching { IconCompat.createWithBitmap(image) }.getOrNull()
@@ -3408,7 +3409,7 @@ object LiveUpdateNotifier {
             hasProgress = false,
             progressValue = 0,
             progressMax = 0,
-            showSecondaryInNowBar = description.isNotBlank(),
+            showSecondaryInNowBar = expandedDescription.isNotBlank(),
             disableNowBarRemoteView = true,
             reuseNotificationRemoteViews = false,
             lockscreenOnly = true
