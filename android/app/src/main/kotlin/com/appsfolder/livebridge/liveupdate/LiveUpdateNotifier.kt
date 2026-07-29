@@ -86,7 +86,6 @@ object LiveUpdateNotifier {
     private const val NOTIFICATION_CAPSULE_MAX_MESSAGE_LINES = 2
     private const val NOTIFICATION_CAPSULE_SINGLE_LINE_GRAPHEME_LIMIT = 40
     private const val NOTIFICATION_CAPSULE_IMAGE_MAX_EDGE = 768
-    private const val NOTIFICATION_CAPSULE_EMPTY_COLLAPSED_TEXT = "\u2060"
     private const val NOTIFICATION_EXTRA_PICTURE_ICON = "android.pictureIcon"
     private val KNOWN_NAVIGATION_PACKAGES = setOf(
         YANDEX_MAPS_PACKAGE,
@@ -3399,9 +3398,7 @@ object LiveUpdateNotifier {
             primaryText = expandedTitle,
             secondaryText = expandedDescription,
             nowBarPrimaryText = title,
-            nowBarSecondaryText = description.ifBlank {
-                NOTIFICATION_CAPSULE_EMPTY_COLLAPSED_TEXT
-            },
+            nowBarSecondaryText = description,
             chipText = title,
             chipIcon = smallIcon,
             nowBarIcon = smallIcon,

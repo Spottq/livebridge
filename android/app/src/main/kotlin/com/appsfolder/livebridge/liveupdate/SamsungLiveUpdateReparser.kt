@@ -46,9 +46,7 @@ internal class SamsungLiveUpdateReparser(private val context: Context) {
         }
         val normalizedSecondary = secondaryText.trim()
         val normalizedNowBarPrimary = nowBarPrimaryText.trim().ifEmpty { normalizedPrimary }
-        val normalizedNowBarSecondary = nowBarSecondaryText
-            ?.trim()
-            ?.takeIf { it.isNotEmpty() }
+        val normalizedNowBarSecondary = nowBarSecondaryText?.trim()
         val normalizedChipText = chipText?.trim()?.takeIf { it.isNotEmpty() } ?: normalizedPrimary
 
         val nowBarRemoteView =
