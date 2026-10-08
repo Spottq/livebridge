@@ -15,6 +15,7 @@ import '../../widgets/redesign/lb_list_component.dart';
 import '../../widgets/redesign/lb_modal_bottom_sheet.dart';
 import '../../widgets/redesign/lb_selection_indicator.dart';
 import '../../widgets/redesign/lb_slider.dart';
+import '../../widgets/redesign/lb_toast.dart';
 
 class RulesNetworkConnectionsScreen extends StatefulWidget {
   const RulesNetworkConnectionsScreen({super.key});
@@ -34,13 +35,14 @@ class _RulesNetworkConnectionsScreenState
   bool _externalDevicesEnabled = true;
   bool _ignoreDebuggingDevices = false;
   bool _networkSpeedEnabled = false;
+  bool _networkSpeedHideWhenLocked = false;
+  bool _savingHideWhenLocked = false;
   int _networkSpeedThresholdBytesPerSecond = 0;
   double _networkSpeedSliderValue = 0;
   NetworkSpeedDisplayMode _networkSpeedDisplayMode =
       NetworkSpeedDisplayMode.total;
   bool _networkSpeedPrioritizeUpload = false;
   bool _networkSpeedChipBackgroundDisabled = false;
-  bool _networkSpeedRegularNotificationEnabled = false;
   bool _networkSpeedDailyUsageEnabled = false;
   int _networkSpeedNotificationColorArgb = defaultNotificationColorArgb;
 
@@ -64,6 +66,8 @@ class _RulesNetworkConnectionsScreenState
           LiveBridgePlatform.getSmartExternalDevicesIgnoreDebugging();
       final Future<bool> networkSpeedEnabledFuture =
           LiveBridgePlatform.getNetworkSpeedEnabled();
+      final hideWhenLockedFuture =
+          LiveBridgePlatform.getNetworkSpeedHideWhenLocked();
       final Future<int> networkSpeedThresholdFuture =
           LiveBridgePlatform.getNetworkSpeedMinThresholdBytesPerSecond();
       final Future<String> networkSpeedDisplayModeFuture =
@@ -72,8 +76,6 @@ class _RulesNetworkConnectionsScreenState
           LiveBridgePlatform.getNetworkSpeedPrioritizeUpload();
       final Future<bool> networkSpeedChipBackgroundDisabledFuture =
           LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
-      final Future<bool> networkSpeedRegularNotificationFuture =
-          LiveBridgePlatform.getNetworkSpeedRegularNotificationEnabled();
       final Future<bool> networkSpeedDailyUsageFuture =
           LiveBridgePlatform.getNetworkSpeedDailyUsageEnabled();
       final Future<int> networkSpeedNotificationColorFuture =
@@ -84,6 +86,7 @@ class _RulesNetworkConnectionsScreenState
       final bool externalDevicesEnabled = await externalDevicesEnabledFuture;
       final bool ignoreDebuggingDevices = await ignoreDebuggingFuture;
       final bool networkSpeedEnabled = await networkSpeedEnabledFuture;
+      final hideWhenLocked = await hideWhenLockedFuture;
       final int networkSpeedThresholdBytesPerSecond =
           await networkSpeedThresholdFuture;
       final String networkSpeedDisplayMode =
@@ -92,8 +95,6 @@ class _RulesNetworkConnectionsScreenState
           await networkSpeedPrioritizeUploadFuture;
       final bool networkSpeedChipBackgroundDisabled =
           await networkSpeedChipBackgroundDisabledFuture;
-      final bool networkSpeedRegularNotificationEnabled =
-          await networkSpeedRegularNotificationFuture;
       final bool networkSpeedDailyUsageEnabled =
           await networkSpeedDailyUsageFuture;
       final int networkSpeedNotificationColor =
@@ -114,6 +115,7 @@ class _RulesNetworkConnectionsScreenState
         _externalDevicesEnabled = externalDevicesEnabled;
         _ignoreDebuggingDevices = ignoreDebuggingDevices;
         _networkSpeedEnabled = networkSpeedEnabled;
+        _networkSpeedHideWhenLocked = hideWhenLocked;
         _networkSpeedThresholdBytesPerSecond = normalizedThreshold;
         _networkSpeedSliderValue = _sliderPositionForBytesPerSecond(
           normalizedThreshold,
@@ -124,8 +126,6 @@ class _RulesNetworkConnectionsScreenState
         _networkSpeedPrioritizeUpload = networkSpeedPrioritizeUpload;
         _networkSpeedChipBackgroundDisabled =
             networkSpeedChipBackgroundDisabled;
-        _networkSpeedRegularNotificationEnabled =
-            networkSpeedRegularNotificationEnabled;
         _networkSpeedDailyUsageEnabled = networkSpeedDailyUsageEnabled;
         _networkSpeedNotificationColorArgb = _opaqueNotificationColor(
           networkSpeedNotificationColor,
@@ -174,6 +174,26 @@ class _RulesNetworkConnectionsScreenState
     await LiveBridgePlatform.setNetworkSpeedEnabled(value);
   }
 
+  Future<void> _setHideWhenLocked(bool value) async {
+    if (_savingHideWhenLocked || value == _networkSpeedHideWhenLocked) return;
+    setState(() => _savingHideWhenLocked = true);
+    try {
+      final saved = await LiveBridgePlatform.setNetworkSpeedHideWhenLocked(
+        value,
+      );
+      if (!saved) {
+        throw StateError("Setting was not saved");
+      }
+      if (mounted) setState(() => _networkSpeedHideWhenLocked = value);
+    } catch (_) {
+      if (mounted) {
+        showLbToast(context, message: AppStrings.of(context).settingsSaveError);
+      }
+    } finally {
+      if (mounted) setState(() => _savingHideWhenLocked = false);
+    }
+  }
+
   Future<void> _setNetworkSpeedThresholdBytesPerSecond(int value) async {
     final int normalized = value.clamp(0, _thresholdMaxBytesPerSecond);
     if (_networkSpeedThresholdBytesPerSecond != normalized && mounted) {
@@ -208,14 +228,6 @@ class _RulesNetworkConnectionsScreenState
     }
     setState(() => _networkSpeedChipBackgroundDisabled = value);
     await LiveBridgePlatform.setNetworkSpeedChipBackgroundDisabled(value);
-  }
-
-  Future<void> _setNetworkSpeedRegularNotificationEnabled(bool value) async {
-    if (value == _networkSpeedRegularNotificationEnabled) {
-      return;
-    }
-    setState(() => _networkSpeedRegularNotificationEnabled = value);
-    await LiveBridgePlatform.setNetworkSpeedRegularNotificationEnabled(value);
   }
 
   Future<void> _setNetworkSpeedDailyUsageEnabled(bool value) async {
@@ -532,25 +544,19 @@ class _RulesNetworkConnectionsScreenState
             : null,
       ),
       LbListItemData(
-        title: strings.networkSpeedRegularNotificationTitle,
-        description: strings.networkSpeedRegularNotificationSubtitle,
+        title: strings.networkSpeedHideWhenLocked,
+        description: strings.networkSpeedHideWhenLockedHelp,
         showChevron: false,
-        enabled: _networkSpeedEnabled,
-        toggleValue: _networkSpeedRegularNotificationEnabled,
-        onToggle: _networkSpeedEnabled
-            ? (bool value) {
-                unawaited(_setNetworkSpeedRegularNotificationEnabled(value));
-              }
-            : null,
-        onTap: _networkSpeedEnabled
-            ? () {
-                final bool nextValue = !_networkSpeedRegularNotificationEnabled;
-                unawaited(LiveBridgeHaptics.toggle(nextValue));
-                unawaited(
-                  _setNetworkSpeedRegularNotificationEnabled(nextValue),
-                );
-              }
-            : null,
+        enabled: !_savingHideWhenLocked,
+        toggleValue: _networkSpeedHideWhenLocked,
+        onToggle: (bool value) {
+          unawaited(_setHideWhenLocked(value));
+        },
+        onTap: () {
+          final bool nextValue = !_networkSpeedHideWhenLocked;
+          unawaited(LiveBridgeHaptics.toggle(nextValue));
+          unawaited(_setHideWhenLocked(nextValue));
+        },
       ),
       LbListItemData(
         title: strings.networkSpeedDailyUsageTitle,

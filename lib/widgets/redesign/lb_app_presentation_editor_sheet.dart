@@ -136,260 +136,252 @@ class _LbAppPresentationEditorSheetState
     final LbPalette palette = LbPalette.of(context);
     final Color groupedBackground = palette.surfaceSoft;
 
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              if (widget.app != null)
-                LbInstalledAppAvatar(app: widget.app!, size: 42)
-              else
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: palette.accent,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: LbIcon(
-                      symbol: LbIconSymbol.defaultsFlow,
-                      size: 18,
-                      color: palette.background,
-                    ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            if (widget.app != null)
+              LbInstalledAppAvatar(app: widget.app!, size: 42)
+            else
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: palette.accent,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: LbIcon(
+                    symbol: LbIconSymbol.defaultsFlow,
+                    size: 18,
+                    color: palette.background,
                   ),
                 ),
-              const SizedBox(width: LbSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
+              ),
+            const SizedBox(width: LbSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    widget.title,
+                    style: LbTextStyles.title.copyWith(
+                      color: palette.textPrimary,
+                    ),
+                  ),
+                  if (widget.app != null) ...<Widget>[
+                    const SizedBox(height: 2),
                     Text(
-                      widget.title,
-                      style: LbTextStyles.title.copyWith(
-                        color: palette.textPrimary,
+                      widget.app!.packageName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: LbTextStyles.body.copyWith(
+                        color: palette.textSecondary,
                       ),
                     ),
-                    if (widget.app != null) ...<Widget>[
-                      const SizedBox(height: 2),
-                      Text(
-                        widget.app!.packageName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: LbTextStyles.body.copyWith(
-                          color: palette.textSecondary,
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: LbSpacing.detailSectionGap),
-          LbListComponent(
-            items: <LbListItemData>[
-              LbListItemData(
-                title: strings.removeOriginalMessageTitle,
-                titleSuffix: strings.experimentalSuffix,
-                showChevron: false,
-                toggleValue: _removeOriginalMessage,
-                toggleTriggerHaptics: false,
-                onToggle: (bool value) {
-                  unawaited(_setRemoveOriginalMessage(value));
-                },
-                onTap: () {
-                  unawaited(_setRemoveOriginalMessage(!_removeOriginalMessage));
-                },
+            ),
+          ],
+        ),
+        const SizedBox(height: LbSpacing.detailSectionGap),
+        LbListComponent(
+          items: <LbListItemData>[
+            LbListItemData(
+              title: strings.removeOriginalMessageTitle,
+              titleSuffix: strings.experimentalSuffix,
+              showChevron: false,
+              toggleValue: _removeOriginalMessage,
+              toggleTriggerHaptics: false,
+              onToggle: (bool value) {
+                unawaited(_setRemoveOriginalMessage(value));
+              },
+              onTap: () {
+                unawaited(_setRemoveOriginalMessage(!_removeOriginalMessage));
+              },
+            ),
+          ],
+          backgroundColor: groupedBackground,
+          rowHeight: LbSpacing.recentRowHeight,
+          extendDividersToEnd: true,
+        ),
+        const SizedBox(height: LbSpacing.xl),
+        Text(
+          strings.appPresentationIconSourceLabel,
+          style: LbTextStyles.title.copyWith(color: palette.textSecondary),
+        ),
+        const SizedBox(height: LbSpacing.sm),
+        LbListComponent(
+          items: <LbListItemData>[
+            LbListItemData(
+              title: strings.appPresentationIconApp,
+              showChevron: false,
+              trailingWidget: LbSelectionIndicator(
+                selected: _iconSource == AppNotificationIconSource.app,
               ),
-            ],
-            backgroundColor: groupedBackground,
-            rowHeight: LbSpacing.recentRowHeight,
-            extendDividersToEnd: true,
-          ),
-          const SizedBox(height: LbSpacing.xl),
-          Text(
-            strings.appPresentationIconSourceLabel,
-            style: LbTextStyles.title.copyWith(color: palette.textSecondary),
-          ),
-          const SizedBox(height: LbSpacing.sm),
-          LbListComponent(
-            items: <LbListItemData>[
-              LbListItemData(
-                title: strings.appPresentationIconApp,
-                showChevron: false,
-                trailingWidget: LbSelectionIndicator(
-                  selected: _iconSource == AppNotificationIconSource.app,
-                ),
-                onTap: () {
-                  unawaited(_setIconSource(AppNotificationIconSource.app));
-                },
+              onTap: () {
+                unawaited(_setIconSource(AppNotificationIconSource.app));
+              },
+            ),
+            LbListItemData(
+              title: strings.appPresentationIconNotification,
+              showChevron: false,
+              trailingWidget: LbSelectionIndicator(
+                selected: _iconSource == AppNotificationIconSource.notification,
               ),
-              LbListItemData(
-                title: strings.appPresentationIconNotification,
-                showChevron: false,
-                trailingWidget: LbSelectionIndicator(
-                  selected:
-                      _iconSource == AppNotificationIconSource.notification,
-                ),
-                onTap: () {
-                  unawaited(
-                    _setIconSource(AppNotificationIconSource.notification),
-                  );
-                },
-              ),
-            ],
-            backgroundColor: groupedBackground,
-            rowHeight: LbSpacing.recentRowHeight,
-            extendDividersToEnd: true,
-          ),
-          const SizedBox(height: LbSpacing.xl),
-          Text(
-            strings.notificationColorTitle,
-            style: LbTextStyles.title.copyWith(color: palette.textSecondary),
-          ),
-          const SizedBox(height: LbSpacing.sm),
-          LbListComponent(
-            items: <LbListItemData>[
-              LbListItemData(
-                title: strings.customNotificationColorTitle,
-                showChevron: false,
-                toggleValue: _notificationColorEnabled,
-                toggleTriggerHaptics: false,
-                onToggle: (bool value) {
-                  unawaited(_setCustomNotificationColorEnabled(value));
-                },
-                onTap: () {
-                  unawaited(
-                    _setCustomNotificationColorEnabled(
-                      !_notificationColorEnabled,
-                    ),
-                  );
-                },
-              ),
-              if (_notificationColorArgb != null)
-                LbListItemData(
-                  title: _formatNotificationColorHex(_notificationColorArgb!),
-                  showChevron: false,
-                  leadingChild: NotificationColorSwatch(
-                    colorArgb: _notificationColorArgb!,
+              onTap: () {
+                unawaited(
+                  _setIconSource(AppNotificationIconSource.notification),
+                );
+              },
+            ),
+          ],
+          backgroundColor: groupedBackground,
+          rowHeight: LbSpacing.recentRowHeight,
+          extendDividersToEnd: true,
+        ),
+        const SizedBox(height: LbSpacing.xl),
+        Text(
+          strings.notificationColorTitle,
+          style: LbTextStyles.title.copyWith(color: palette.textSecondary),
+        ),
+        const SizedBox(height: LbSpacing.sm),
+        LbListComponent(
+          items: <LbListItemData>[
+            LbListItemData(
+              title: strings.customNotificationColorTitle,
+              showChevron: false,
+              toggleValue: _notificationColorEnabled,
+              toggleTriggerHaptics: false,
+              onToggle: (bool value) {
+                unawaited(_setCustomNotificationColorEnabled(value));
+              },
+              onTap: () {
+                unawaited(
+                  _setCustomNotificationColorEnabled(
+                    !_notificationColorEnabled,
                   ),
-                  trailingWidgetWidth: 44,
-                  trailingWidget: IconButton(
-                    tooltip: strings.resetToDefault,
-                    onPressed: _resetNotificationColor,
-                    icon: LbIcon(
-                      symbol: LbIconSymbol.restore,
-                      size: 20,
-                      color: palette.textSecondary,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 40,
-                      height: 40,
-                    ),
+                );
+              },
+            ),
+            if (_notificationColorArgb != null)
+              LbListItemData(
+                title: _formatNotificationColorHex(_notificationColorArgb!),
+                showChevron: false,
+                leadingChild: NotificationColorSwatch(
+                  colorArgb: _notificationColorArgb!,
+                ),
+                trailingWidgetWidth: 44,
+                trailingWidget: IconButton(
+                  tooltip: strings.resetToDefault,
+                  onPressed: _resetNotificationColor,
+                  icon: LbIcon(
+                    symbol: LbIconSymbol.restore,
+                    size: 20,
+                    color: palette.textSecondary,
                   ),
-                  onTap: () {
-                    unawaited(_openNotificationColorPicker());
-                  },
-                ),
-            ],
-            backgroundColor: groupedBackground,
-            rowHeight: LbSpacing.recentRowHeight,
-            extendDividersToEnd: true,
-          ),
-          const SizedBox(height: LbSpacing.xl),
-          Text(
-            strings.titleSourceTitle,
-            style: LbTextStyles.title.copyWith(color: palette.textSecondary),
-          ),
-          const SizedBox(height: LbSpacing.sm),
-          LbListComponent(
-            items: <LbListItemData>[
-              LbListItemData(
-                title: strings.notificationTitleOption,
-                showChevron: false,
-                trailingWidget: LbSelectionIndicator(
-                  selected:
-                      _titleSource ==
-                      AppPresentationTitleSource.notificationTitle,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 40,
+                    height: 40,
+                  ),
                 ),
                 onTap: () {
-                  unawaited(
-                    _setTitleSource(
-                      AppPresentationTitleSource.notificationTitle,
-                    ),
-                  );
+                  unawaited(_openNotificationColorPicker());
                 },
               ),
-              LbListItemData(
-                title: strings.appTitleOption,
-                showChevron: false,
-                trailingWidget: LbSelectionIndicator(
-                  selected: _titleSource == AppPresentationTitleSource.appTitle,
-                ),
-                onTap: () {
-                  unawaited(
-                    _setTitleSource(AppPresentationTitleSource.appTitle),
-                  );
-                },
+          ],
+          backgroundColor: groupedBackground,
+          rowHeight: LbSpacing.recentRowHeight,
+          extendDividersToEnd: true,
+        ),
+        const SizedBox(height: LbSpacing.xl),
+        Text(
+          strings.titleSourceTitle,
+          style: LbTextStyles.title.copyWith(color: palette.textSecondary),
+        ),
+        const SizedBox(height: LbSpacing.sm),
+        LbListComponent(
+          items: <LbListItemData>[
+            LbListItemData(
+              title: strings.notificationTitleOption,
+              showChevron: false,
+              trailingWidget: LbSelectionIndicator(
+                selected:
+                    _titleSource ==
+                    AppPresentationTitleSource.notificationTitle,
               ),
-            ],
-            backgroundColor: groupedBackground,
-            rowHeight: LbSpacing.recentRowHeight,
-            extendDividersToEnd: true,
-          ),
-          const SizedBox(height: LbSpacing.detailSectionGap),
-          Text(
-            strings.contentSourceTitle,
-            style: LbTextStyles.title.copyWith(color: palette.textSecondary),
-          ),
-          const SizedBox(height: LbSpacing.sm),
-          LbListComponent(
-            items: <LbListItemData>[
-              LbListItemData(
-                title: strings.notificationTextOption,
-                showChevron: false,
-                trailingWidget: LbSelectionIndicator(
-                  selected:
-                      _contentSource ==
-                      AppPresentationContentSource.notificationText,
-                ),
-                onTap: () {
-                  unawaited(
-                    _setContentSource(
-                      AppPresentationContentSource.notificationText,
-                    ),
-                  );
-                },
+              onTap: () {
+                unawaited(
+                  _setTitleSource(AppPresentationTitleSource.notificationTitle),
+                );
+              },
+            ),
+            LbListItemData(
+              title: strings.appTitleOption,
+              showChevron: false,
+              trailingWidget: LbSelectionIndicator(
+                selected: _titleSource == AppPresentationTitleSource.appTitle,
               ),
-              LbListItemData(
-                title: strings.notificationTitleOption,
-                showChevron: false,
-                trailingWidget: LbSelectionIndicator(
-                  selected:
-                      _contentSource ==
-                      AppPresentationContentSource.notificationTitle,
-                ),
-                onTap: () {
-                  unawaited(
-                    _setContentSource(
-                      AppPresentationContentSource.notificationTitle,
-                    ),
-                  );
-                },
+              onTap: () {
+                unawaited(_setTitleSource(AppPresentationTitleSource.appTitle));
+              },
+            ),
+          ],
+          backgroundColor: groupedBackground,
+          rowHeight: LbSpacing.recentRowHeight,
+          extendDividersToEnd: true,
+        ),
+        const SizedBox(height: LbSpacing.detailSectionGap),
+        Text(
+          strings.contentSourceTitle,
+          style: LbTextStyles.title.copyWith(color: palette.textSecondary),
+        ),
+        const SizedBox(height: LbSpacing.sm),
+        LbListComponent(
+          items: <LbListItemData>[
+            LbListItemData(
+              title: strings.notificationTextOption,
+              showChevron: false,
+              trailingWidget: LbSelectionIndicator(
+                selected:
+                    _contentSource ==
+                    AppPresentationContentSource.notificationText,
               ),
-            ],
-            backgroundColor: groupedBackground,
-            rowHeight: LbSpacing.recentRowHeight,
-            extendDividersToEnd: true,
-          ),
-        ],
-      ),
+              onTap: () {
+                unawaited(
+                  _setContentSource(
+                    AppPresentationContentSource.notificationText,
+                  ),
+                );
+              },
+            ),
+            LbListItemData(
+              title: strings.notificationTitleOption,
+              showChevron: false,
+              trailingWidget: LbSelectionIndicator(
+                selected:
+                    _contentSource ==
+                    AppPresentationContentSource.notificationTitle,
+              ),
+              onTap: () {
+                unawaited(
+                  _setContentSource(
+                    AppPresentationContentSource.notificationTitle,
+                  ),
+                );
+              },
+            ),
+          ],
+          backgroundColor: groupedBackground,
+          rowHeight: LbSpacing.recentRowHeight,
+          extendDividersToEnd: true,
+        ),
+      ],
     );
   }
 }

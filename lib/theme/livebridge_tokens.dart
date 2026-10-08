@@ -114,7 +114,7 @@ class LbPalette {
     pressedOverlay: Color(0x12000000),
     warningSurface: Color(0xFFF7ECEC),
     textPrimary: Color(0xFF0A0D0C),
-    textSecondary: Color(0xFFC4C4C4),
+    textSecondary: Color(0xFF65716B),
     textMuted: Color(0xFFC4C4C4),
     accent: LbColors.accent,
     accentStrong: LbColors.accent,

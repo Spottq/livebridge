@@ -85,8 +85,7 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.isNotificationListenerEnabled();
     final Future<bool> notificationsGrantedFuture =
         LiveBridgePlatform.isNotificationPermissionGranted();
-    final Future<bool> canPostPromotedFuture =
-        LiveBridgePlatform.canPostPromotedNotifications();
+    final promotedFuture = LiveBridgePlatform.getPromotedNotificationAccess();
     final Future<bool> converterEnabledFuture =
         LiveBridgePlatform.getConverterEnabled();
     final Future<bool> keepAliveFuture =
@@ -105,8 +104,6 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getNetworkSpeedPrioritizeUpload();
     final Future<bool> networkSpeedChipBackgroundDisabledFuture =
         LiveBridgePlatform.getNetworkSpeedChipBackgroundDisabled();
-    final Future<bool> networkSpeedRegularNotificationFuture =
-        LiveBridgePlatform.getNetworkSpeedRegularNotificationEnabled();
     final Future<bool> networkSpeedDailyUsageFuture =
         LiveBridgePlatform.getNetworkSpeedDailyUsageEnabled();
     final Future<bool> syncDndFuture = LiveBridgePlatform.getSyncDndEnabled();
@@ -114,6 +111,10 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
         LiveBridgePlatform.getPreventMirrorDismissEnabled();
     final Future<bool> hideLockscreenContentFuture =
         LiveBridgePlatform.getHideLockscreenContentEnabled();
+    final Future<bool> convertedNotificationVibrationFuture =
+        LiveBridgePlatform.getConvertedNotificationVibrationEnabled();
+    final Future<bool> convertedNotificationSoundFuture =
+        LiveBridgePlatform.getConvertedNotificationSoundEnabled();
     final Future<bool> hintsDisabledFuture =
         LiveBridgePlatform.getHintsDisabled();
     final Future<bool> updateChecksFuture =
@@ -253,14 +254,23 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
       'permissions': <String, dynamic>{
         'listener_enabled': await listenerEnabledFuture,
         'notifications_granted': await notificationsGrantedFuture,
-        'can_post_promoted': await canPostPromotedFuture,
+        'can_post_promoted': (await promotedFuture).granted,
+        'promoted_access': (await promotedFuture).toMap(),
       },
       'settings': <String, dynamic>{
         'converter_enabled': await converterEnabledFuture,
         'keep_alive_foreground_enabled': await keepAliveFuture,
+        'hide_from_recents_enabled':
+            await LiveBridgePlatform.getHideFromRecentsEnabled(),
         'conversion_log_enabled': await conversionLogEnabledFuture,
         'conversion_log_max_bytes': await conversionLogMaxBytesFuture,
         'network_speed_enabled': await networkSpeedEnabledFuture,
+        'wear_os_live_updates_available':
+            await LiveBridgePlatform.isWearOsLiveUpdatesAvailable(),
+        'wear_os_live_updates_enabled':
+            await LiveBridgePlatform.getWearOsLiveUpdatesEnabled(),
+        'network_speed_hide_when_locked':
+            await LiveBridgePlatform.getNetworkSpeedHideWhenLocked(),
         'network_speed_min_threshold_bytes_per_second':
             await networkSpeedThresholdFuture,
         'network_speed_display_mode': await networkSpeedDisplayModeFuture,
@@ -268,12 +278,14 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
             await networkSpeedPrioritizeUploadFuture,
         'network_speed_chip_background_disabled':
             await networkSpeedChipBackgroundDisabledFuture,
-        'network_speed_regular_notification_enabled':
-            await networkSpeedRegularNotificationFuture,
         'network_speed_daily_usage_enabled': await networkSpeedDailyUsageFuture,
         'sync_dnd_enabled': await syncDndFuture,
         'prevent_mirror_dismiss_enabled': await preventDismissingFuture,
         'hide_lockscreen_content_enabled': await hideLockscreenContentFuture,
+        'converted_notification_vibration_enabled':
+            await convertedNotificationVibrationFuture,
+        'converted_notification_sound_enabled':
+            await convertedNotificationSoundFuture,
         'hints_disabled': await hintsDisabledFuture,
         'update_checks_enabled': await updateChecksFuture,
         'app_language': await appLanguageFuture,
@@ -319,6 +331,9 @@ class _SettingsReportBugScreenState extends State<SettingsReportBugScreen> {
       },
       'rules': <String, dynamic>{
         'package_mode': await packageModeFuture,
+        'source_channels': jsonDecode(
+          await LiveBridgePlatform.getSourceChannels(),
+        ),
         'package_rules': _parseRulesText(await packageRulesFuture),
         'bypass_package_rules': _parseRulesText(await bypassPackageRulesFuture),
         'notification_capsule_excluded_package_rules': _parseRulesText(

@@ -80,9 +80,12 @@ class LbModalBottomSheetSurface extends StatelessWidget {
                 onVerticalDragStart: onHandleDragStart,
                 onVerticalDragUpdate: onHandleDragUpdate,
                 onVerticalDragEnd: onHandleDragEnd,
-                behavior: HitTestBehavior.translucent,
+                behavior: HitTestBehavior.opaque,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: LbSpacing.xs),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: LbSpacing.xl,
+                    vertical: LbSpacing.xs,
+                  ),
                   child: Container(
                     width: LbSpacing.modalSheetHandleWidth,
                     height: LbSpacing.modalSheetHandleHeight,
@@ -94,7 +97,12 @@ class LbModalBottomSheetSurface extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: LbSpacing.modalSheetContentTopGap),
-              Flexible(child: child),
+              Flexible(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: child,
+                ),
+              ),
             ],
           ),
         ),

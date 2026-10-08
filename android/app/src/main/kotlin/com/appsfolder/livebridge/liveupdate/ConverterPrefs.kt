@@ -8,6 +8,74 @@ import java.util.Locale
 class ConverterPrefs(context: Context) {
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    internal fun runtimeSettingsSnapshot(): Map<String, *> = prefs.all
+
+    fun getDictionaryWordAdditionsRaw(): String = prefs.getString("dictionary_word_additions", "{}") ?: "{}"
+
+    fun setDictionaryWordAdditionsRaw(raw: String) {
+        val json = JSONObject(raw)
+        val allowed = setOf("otp_strong_triggers", "known_navigation_packages", "navigation_package_markers",
+            "weather_package_hints", "vpn_package_markers", "order_context_hints", "progress_words", "weather_words",
+            "food_words", "food_packages", "taxi_words", "taxi_packages")
+        for (key in json.keys()) {
+            require(key in allowed)
+            val words = json.getJSONArray(key)
+            require(words.length() <= 100)
+            for (i in 0 until words.length()) require(words.getString(i).length <= 200)
+        }
+        prefs.edit().putString("dictionary_word_additions", json.toString()).apply()
+    }
+
+    fun getNotificationTextFiltersRaw(): String = prefs.getString("notification_text_filters", "{}") ?: "{}"
+
+    fun setNotificationTextFiltersRaw(raw: String) {
+        val json = JSONObject(raw)
+        for (pkg in json.keys()) {
+            require(pkg.isNotBlank())
+            val rule = json.getJSONObject(pkg)
+            for (key in listOf("allow", "deny")) {
+                val terms = rule.optJSONArray(key) ?: continue
+                require(terms.length() <= 100)
+                for (i in 0 until terms.length()) require(terms.getString(i).length <= 200)
+            }
+            if (rule.has("all")) rule.getBoolean("all")
+            if (rule.has("template")) require(rule.getString("template").length <= 200)
+        }
+        prefs.edit().putString("notification_text_filters", json.toString()).apply()
+    }
+
+    fun isNotificationTextAllowed(pkg: String, text: String): Boolean =
+        NotificationTextFilters.allows(getNotificationTextFiltersRaw(), pkg, text)
+
+    fun getHideFromRecentsEnabled(): Boolean = prefs.getBoolean("hide_from_recents_enabled", false)
+
+    fun setHideFromRecentsEnabled(value: Boolean) {
+        prefs.edit().putBoolean("hide_from_recents_enabled", value).apply()
+    }
+
+    fun getBlockedSourceChannelsRaw(): String = prefs.getString("blocked_source_channels", "{}") ?: "{}"
+
+    fun setBlockedSourceChannelsRaw(value: String) {
+        // Reject malformed backups/bridge calls rather than silently changing filtering.
+        val parsed = JSONObject(value)
+        val normalized = JSONObject()
+        for (pkg in parsed.keys()) {
+            require(pkg.isNotBlank()) { "Package name is required" }
+            val ids = parsed.getJSONArray(pkg)
+            val values = linkedSetOf<String>()
+            for (i in 0 until ids.length()) {
+                val id = ids.getString(i)
+                require(id.isNotEmpty()) { "Channel id is required" }
+                values.add(id)
+            }
+            if (values.isNotEmpty()) normalized.put(pkg, JSONArray(values.toList()))
+        }
+        prefs.edit().putString("blocked_source_channels", normalized.toString()).apply()
+    }
+
+    fun isSourceChannelAllowed(packageName: String, channelId: String?): Boolean =
+        SourceChannelRules.isAllowed(getBlockedSourceChannelsRaw(), packageName, channelId)
+
     fun getPackageRulesRaw(): String {
         val current = prefs.getString(KEY_PACKAGE_RULES, "") ?: ""
         if (current.isNotBlank()) {
@@ -86,6 +154,21 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_HIDE_LOCKSCREEN_CONTENT_ENABLED, value).apply()
     }
 
+    fun getConvertedNotificationSoundEnabled(): Boolean {
+        return prefs.getBoolean(KEY_CONVERTED_NOTIFICATION_SOUND_ENABLED, false)
+    }
+
+    fun setConvertedNotificationSoundEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_CONVERTED_NOTIFICATION_SOUND_ENABLED, value).apply()
+    }
+
+    fun getConvertedNotificationVibrationEnabled(): Boolean =
+        prefs.getBoolean(KEY_CONVERTED_NOTIFICATION_VIBRATION_ENABLED, false)
+
+    fun setConvertedNotificationVibrationEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_CONVERTED_NOTIFICATION_VIBRATION_ENABLED, value).apply()
+    }
+
     fun getHintsDisabled(): Boolean {
         return prefs.getBoolean(KEY_HINTS_DISABLED, false)
     }
@@ -145,6 +228,20 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_NETWORK_SPEED_ENABLED, value).apply()
     }
 
+    fun getWearOsLiveUpdatesEnabled(): Boolean =
+        prefs.getBoolean(KEY_WEAR_OS_LIVE_UPDATES_ENABLED, false)
+
+    fun setWearOsLiveUpdatesEnabled(value: Boolean) {
+        prefs.edit().putBoolean(KEY_WEAR_OS_LIVE_UPDATES_ENABLED, value).apply()
+    }
+
+    fun getNetworkSpeedHideWhenLocked(): Boolean =
+        prefs.getBoolean(KEY_NETWORK_SPEED_HIDE_WHEN_LOCKED, false)
+
+    fun setNetworkSpeedHideWhenLocked(value: Boolean) {
+        prefs.edit().putBoolean(KEY_NETWORK_SPEED_HIDE_WHEN_LOCKED, value).apply()
+    }
+
     fun getNetworkSpeedMinThresholdBytesPerSecond(): Long {
         return prefs.getLong(KEY_NETWORK_SPEED_MIN_THRESHOLD_BYTES_PER_SECOND, 0L)
             .coerceAtLeast(0L)
@@ -184,16 +281,6 @@ class ConverterPrefs(context: Context) {
 
     fun setNetworkSpeedChipBackgroundDisabled(value: Boolean) {
         prefs.edit().putBoolean(KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND, value).apply()
-    }
-
-    fun getNetworkSpeedRegularNotificationEnabled(): Boolean {
-        return prefs.getBoolean(KEY_NETWORK_SPEED_REGULAR_NOTIFICATION_ENABLED, false)
-    }
-
-    fun setNetworkSpeedRegularNotificationEnabled(value: Boolean) {
-        prefs.edit()
-            .putBoolean(KEY_NETWORK_SPEED_REGULAR_NOTIFICATION_ENABLED, value)
-            .apply()
     }
 
     fun getNetworkSpeedDailyUsageEnabled(): Boolean {
@@ -770,8 +857,10 @@ class ConverterPrefs(context: Context) {
             .putString(KEY_USER_PARSER_DICTIONARY, normalized.ifBlank { null })
             .remove(KEY_CUSTOM_PARSER_DICTIONARY_LEGACY)
             .remove(KEY_PARSER_DICTIONARY_EN_OVERRIDE)
+            .remove(KEY_PARSER_DICTIONARY_PT_BR_OVERRIDE)
             .remove(KEY_PARSER_DICTIONARY_RU_OVERRIDE)
             .remove(KEY_PARSER_DICTIONARY_ZH_OVERRIDE)
+            .remove(KEY_PARSER_DICTIONARY_KO_OVERRIDE)
             .apply()
     }
 
@@ -804,14 +893,15 @@ class ConverterPrefs(context: Context) {
         return value.ifBlank { null }
     }
 
-    fun setParserDictionaryLanguageOverrideRaw(languageId: String, value: String?) {
-        val key = parserDictionaryOverrideKey(languageId) ?: return
+    fun setParserDictionaryLanguageOverrideRaw(languageId: String, value: String?): Boolean {
+        val key = parserDictionaryOverrideKey(languageId) ?: return false
         val normalized = value?.trim().orEmpty()
         prefs.edit()
             .putString(key, normalized.ifBlank { null })
             .remove(KEY_USER_PARSER_DICTIONARY)
             .remove(KEY_CUSTOM_PARSER_DICTIONARY_LEGACY)
             .apply()
+        return true
     }
 
     fun clearCustomParserDictionary() {
@@ -819,8 +909,10 @@ class ConverterPrefs(context: Context) {
             .remove(KEY_USER_PARSER_DICTIONARY)
             .remove(KEY_CUSTOM_PARSER_DICTIONARY_LEGACY)
             .remove(KEY_PARSER_DICTIONARY_EN_OVERRIDE)
+            .remove(KEY_PARSER_DICTIONARY_PT_BR_OVERRIDE)
             .remove(KEY_PARSER_DICTIONARY_RU_OVERRIDE)
             .remove(KEY_PARSER_DICTIONARY_ZH_OVERRIDE)
+            .remove(KEY_PARSER_DICTIONARY_KO_OVERRIDE)
             .apply()
     }
 
@@ -938,15 +1030,20 @@ class ConverterPrefs(context: Context) {
         return JSONObject()
             .put("converter_enabled", getConverterEnabled())
             .put("keep_alive_foreground_enabled", getKeepAliveForegroundEnabled())
+            .put("hide_from_recents_enabled", getHideFromRecentsEnabled())
             .put("spring_transitions_enabled", getSpringTransitionsEnabled())
             .put("prevent_mirror_dismiss_enabled", getPreventMirrorDismissEnabled())
             .put("hide_lockscreen_content_enabled", getHideLockscreenContentEnabled())
+            .put("converted_notification_sound_enabled", getConvertedNotificationSoundEnabled())
+            .put("converted_notification_vibration_enabled", getConvertedNotificationVibrationEnabled())
             .put("hints_disabled", getHintsDisabled())
             .put("conversion_log_enabled", getConversionLogEnabled())
             .put("conversion_log_max_bytes", getConversionLogMaxBytes())
             .put("bug_report_auto_copy_enabled", getBugReportAutoCopyEnabled())
             .put("app_language", getAppLanguageTag())
             .put("network_speed_enabled", getNetworkSpeedEnabled())
+            .put("wear_os_live_updates_enabled", getWearOsLiveUpdatesEnabled())
+            .put("network_speed_hide_when_locked", getNetworkSpeedHideWhenLocked())
             .put(
                 "network_speed_min_threshold_bytes_per_second",
                 getNetworkSpeedMinThresholdBytesPerSecond()
@@ -956,10 +1053,6 @@ class ConverterPrefs(context: Context) {
             .put(
                 "network_speed_chip_background_disabled",
                 getNetworkSpeedChipBackgroundDisabled()
-            )
-            .put(
-                "network_speed_regular_notification_enabled",
-                getNetworkSpeedRegularNotificationEnabled()
             )
             .put(
                 "network_speed_daily_usage_enabled",
@@ -1037,6 +1130,8 @@ class ConverterPrefs(context: Context) {
 
     private fun buildRulesJson(): JSONObject {
         return JSONObject()
+            .put("notification_text_filters", JSONObject(getNotificationTextFiltersRaw()))
+            .put("blocked_source_channels", JSONObject(getBlockedSourceChannelsRaw()))
             .put("package_mode", getPackageMode())
             .put("package_rules", jsonArrayFromRules(getPackageRulesRaw()))
             .put("bypass_package_rules", jsonArrayFromRules(getBypassPackageRulesRaw()))
@@ -1057,6 +1152,7 @@ class ConverterPrefs(context: Context) {
 
     private fun buildDictionaryJson(): JSONObject {
         val dictionary = JSONObject()
+            .put("word_additions", JSONObject(getDictionaryWordAdditionsRaw()))
             .put(
                 "parser_dictionary_enabled_languages",
                 JSONArray(getParserDictionaryEnabledLanguageIds().sorted())
@@ -1086,9 +1182,14 @@ class ConverterPrefs(context: Context) {
     private fun applySettingsJson(settings: JSONObject) {
         bool(settings, "converter_enabled")?.let(::setConverterEnabled)
         bool(settings, "keep_alive_foreground_enabled")?.let(::setKeepAliveForegroundEnabled)
+        bool(settings, "hide_from_recents_enabled")?.let(::setHideFromRecentsEnabled)
         bool(settings, "spring_transitions_enabled")?.let(::setSpringTransitionsEnabled)
         bool(settings, "prevent_mirror_dismiss_enabled")?.let(::setPreventMirrorDismissEnabled)
         bool(settings, "hide_lockscreen_content_enabled")?.let(::setHideLockscreenContentEnabled)
+        bool(settings, "converted_notification_sound_enabled")
+            ?.let(::setConvertedNotificationSoundEnabled)
+        bool(settings, "converted_notification_vibration_enabled")
+            ?.let(::setConvertedNotificationVibrationEnabled)
         bool(settings, "hints_disabled")?.let(::setHintsDisabled)
         bool(settings, "conversion_log_enabled")?.let(::setConversionLogEnabled)
         int(settings, "conversion_log_max_bytes")?.let(::setConversionLogMaxBytes)
@@ -1096,6 +1197,8 @@ class ConverterPrefs(context: Context) {
         string(settings, "app_language")?.let(::setAppLanguageTag)
         string(settings, "app_language_tag")?.let(::setAppLanguageTag)
         bool(settings, "network_speed_enabled")?.let(::setNetworkSpeedEnabled)
+        bool(settings, "wear_os_live_updates_enabled")?.let(::setWearOsLiveUpdatesEnabled)
+        bool(settings, "network_speed_hide_when_locked")?.let(::setNetworkSpeedHideWhenLocked)
         long(settings, "network_speed_min_threshold_bytes_per_second")
             ?.let(::setNetworkSpeedMinThresholdBytesPerSecond)
         string(settings, "network_speed_display_mode")?.let(::setNetworkSpeedDisplayMode)
@@ -1105,8 +1208,6 @@ class ConverterPrefs(context: Context) {
             ?.let(::setNetworkSpeedChipBackgroundDisabled)
         bool(settings, "network_speed_disable_chip_background")
             ?.let(::setNetworkSpeedChipBackgroundDisabled)
-        bool(settings, "network_speed_regular_notification_enabled")
-            ?.let(::setNetworkSpeedRegularNotificationEnabled)
         bool(settings, "network_speed_daily_usage_enabled")
             ?.let(::setNetworkSpeedDailyUsageEnabled)
         parseNotificationColor(settings, "network_speed_notification_color")
@@ -1171,6 +1272,8 @@ class ConverterPrefs(context: Context) {
 
     private fun applyRulesJson(rules: JSONObject) {
         string(rules, "package_mode")?.let(::setPackageMode)
+        rules.optJSONObject("notification_text_filters")?.let { setNotificationTextFiltersRaw(it.toString()) }
+        rules.optJSONObject("blocked_source_channels")?.let { setBlockedSourceChannelsRaw(it.toString()) }
         rulesValue(rules, "package_rules")?.let(::setPackageRulesRaw)
         rulesValue(rules, "bypass_package_rules")?.let(::setBypassPackageRulesRaw)
         rulesValue(rules, "notification_capsule_excluded_package_rules")
@@ -1186,6 +1289,7 @@ class ConverterPrefs(context: Context) {
     }
 
     private fun applyDictionaryJson(dictionary: JSONObject) {
+        dictionary.optJSONObject("word_additions")?.let { setDictionaryWordAdditionsRaw(it.toString()) }
         stringSet(dictionary, "parser_dictionary_enabled_languages")
             ?.let(::setParserDictionaryEnabledLanguageIds)
         SUPPORTED_PARSER_DICTIONARY_LANGUAGE_IDS.forEach { languageId ->
@@ -1347,8 +1451,10 @@ class ConverterPrefs(context: Context) {
     private fun parserDictionaryOverrideKey(languageId: String): String? {
         return when (languageId.trim().lowercase(Locale.ROOT)) {
             "en" -> KEY_PARSER_DICTIONARY_EN_OVERRIDE
+            "pt-br" -> KEY_PARSER_DICTIONARY_PT_BR_OVERRIDE
             "ru" -> KEY_PARSER_DICTIONARY_RU_OVERRIDE
             "zh" -> KEY_PARSER_DICTIONARY_ZH_OVERRIDE
+            "ko" -> KEY_PARSER_DICTIONARY_KO_OVERRIDE
             else -> null
         }
     }
@@ -1395,6 +1501,8 @@ class ConverterPrefs(context: Context) {
         private const val KEY_ONLY_WITH_PROGRESS = "only_with_progress"
         private const val KEY_TEXT_PROGRESS_ENABLED = "text_progress_enabled"
         private const val KEY_NETWORK_SPEED_ENABLED = "network_speed_enabled"
+        private const val KEY_WEAR_OS_LIVE_UPDATES_ENABLED = "wear_os_live_updates_enabled"
+        private const val KEY_NETWORK_SPEED_HIDE_WHEN_LOCKED = "network_speed_hide_when_locked"
         private const val KEY_NETWORK_SPEED_MIN_THRESHOLD_BYTES_PER_SECOND =
             "network_speed_min_threshold_bytes_per_second"
         private const val KEY_NETWORK_SPEED_DISPLAY_MODE = "network_speed_display_mode"
@@ -1402,8 +1510,6 @@ class ConverterPrefs(context: Context) {
             "network_speed_prioritize_upload"
         private const val KEY_NETWORK_SPEED_DISABLE_CHIP_BACKGROUND =
             "network_speed_disable_chip_background"
-        private const val KEY_NETWORK_SPEED_REGULAR_NOTIFICATION_ENABLED =
-            "network_speed_regular_notification_enabled"
         private const val KEY_NETWORK_SPEED_DAILY_USAGE_ENABLED =
             "network_speed_daily_usage_enabled"
         private const val KEY_NETWORK_SPEED_NOTIFICATION_COLOR =
@@ -1415,6 +1521,10 @@ class ConverterPrefs(context: Context) {
             "prevent_mirror_dismiss_enabled"
         private const val KEY_HIDE_LOCKSCREEN_CONTENT_ENABLED =
             "hide_lockscreen_content_enabled"
+        private const val KEY_CONVERTED_NOTIFICATION_SOUND_ENABLED =
+            "converted_notification_sound_enabled"
+        private const val KEY_CONVERTED_NOTIFICATION_VIBRATION_ENABLED =
+            "converted_notification_vibration_enabled"
         private const val KEY_HINTS_DISABLED = "hints_disabled"
         private const val KEY_CONVERSION_LOG_ENABLED = "conversion_log_enabled"
         private const val KEY_BUG_REPORT_AUTO_COPY_ENABLED = "bug_report_auto_copy_enabled"
@@ -1488,10 +1598,14 @@ class ConverterPrefs(context: Context) {
             "parser_dictionary_enabled_languages"
         private const val KEY_PARSER_DICTIONARY_EN_OVERRIDE =
             "parser_dictionary_en_override"
+        private const val KEY_PARSER_DICTIONARY_PT_BR_OVERRIDE =
+            "parser_dictionary_pt_br_override"
         private const val KEY_PARSER_DICTIONARY_RU_OVERRIDE =
             "parser_dictionary_ru_override"
         private const val KEY_PARSER_DICTIONARY_ZH_OVERRIDE =
             "parser_dictionary_zh_override"
+        private const val KEY_PARSER_DICTIONARY_KO_OVERRIDE =
+            "parser_dictionary_ko_override"
 
         private const val KEY_PACKAGE_FILTER_LEGACY = "package_filter"
         private const val DEFAULT_NETWORK_SPEED_NOTIFICATION_COLOR = 0xFF0F766E.toInt()
@@ -1506,7 +1620,8 @@ class ConverterPrefs(context: Context) {
         private const val MAX_CONVERSION_LOG_MAX_BYTES = 25 * 1024 * 1024
         private const val DEFAULT_CONVERSION_LOG_MAX_BYTES = 5 * 1024 * 1024
         private val SUPPORTED_PARSER_DICTIONARY_LANGUAGE_IDS =
-            setOf("en", "ru", "zh")
-        private val DEFAULT_PARSER_DICTIONARY_LANGUAGE_IDS = setOf("en", "ru", "zh")
+            setOf("en", "pt-br", "ru", "zh", "ko")
+        private val DEFAULT_PARSER_DICTIONARY_LANGUAGE_IDS =
+            SUPPORTED_PARSER_DICTIONARY_LANGUAGE_IDS
     }
 }

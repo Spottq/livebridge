@@ -1,7 +1,7 @@
 name: livebridge
 description: "Bridge regular Android notifications into Live Updates."
 publish_to: "none"
-version: 2.1.4+12129
+version: 2.2.1+14130
 
 environment:
   sdk: ^3.9.2
@@ -16,6 +16,8 @@ dependencies:
   ming_cute_icons: ^0.0.7
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   flutter_launcher_icons: ^0.14.4
   flutter_lints: ^5.0.0
 

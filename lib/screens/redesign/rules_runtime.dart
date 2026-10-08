@@ -5,6 +5,9 @@ import '../../models/app_models.dart';
 import '../../platform/livebridge_platform.dart';
 import '../../utils/livebridge_haptics.dart';
 import '../../widgets/redesign/lb_toast.dart';
+import '../../widgets/redesign/lb_list_component.dart';
+import '../../widgets/redesign/lb_modal_bottom_sheet.dart';
+import '../../theme/livebridge_tokens.dart';
 
 enum LbRulesConversionMode { allApps, onlySelected, excludeSelected }
 
@@ -124,29 +127,43 @@ Future<bool> lbEnsureAppListAccess(BuildContext context) async {
 
   final AppStrings strings = AppStrings.of(context);
   final bool granted =
-      await showDialog<bool>(
+      await showLbModalBottomSheet<bool>(
         context: context,
         builder: (BuildContext dialogContext) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            title: Text(strings.appsAccessTitle),
-            content: Text(strings.appsAccessMessage),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  LiveBridgeHaptics.selection();
-                  Navigator.of(dialogContext).pop(false);
-                },
-                child: Text(strings.cancel),
+          final palette = LbPalette.of(dialogContext);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                strings.appsAccessTitle,
+                style: LbTextStyles.title.copyWith(color: palette.textPrimary),
               ),
-              FilledButton(
-                onPressed: () {
-                  LiveBridgeHaptics.confirm();
-                  Navigator.of(dialogContext).pop(true);
-                },
-                child: Text(strings.allow),
+              const SizedBox(height: LbSpacing.md),
+              Text(
+                strings.appsAccessMessage,
+                style: LbTextStyles.body.copyWith(color: palette.textSecondary),
+              ),
+              const SizedBox(height: LbSpacing.md),
+              LbListComponent(
+                items: [
+                  LbListItemData(
+                    title: strings.allow,
+                    showChevron: false,
+                    onTap: () {
+                      LiveBridgeHaptics.confirm();
+                      Navigator.of(dialogContext).pop(true);
+                    },
+                  ),
+                  LbListItemData(
+                    title: strings.cancel,
+                    showChevron: false,
+                    onTap: () {
+                      LiveBridgeHaptics.selection();
+                      Navigator.of(dialogContext).pop(false);
+                    },
+                  ),
+                ],
               ),
             ],
           );

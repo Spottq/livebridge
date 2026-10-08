@@ -55,15 +55,15 @@ class LiveBridgeTileService : TileService() {
         tile.label = "LiveBridge"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             tile.subtitle = when {
-                unsupported -> {
-                    if (isRussianLocale()) {
-                        "\u0422\u043e\u043b\u044c\u043a\u043e Samsung"
-                    } else {
-                        "Samsung only"
-                    }
-                }
-                enabled -> if (isRussianLocale()) "\u0412\u043a\u043b\u044e\u0447\u0435\u043d\u043e" else "Enabled"
-                else -> if (isRussianLocale()) "\u0412\u044b\u043a\u043b\u044e\u0447\u0435\u043d\u043e" else "Disabled"
+                unsupported -> NativeAppStrings.text(
+                    this,
+                    "Samsung only",
+                    "Только Samsung",
+                    "Solo Samsung",
+                    "Nur Samsung"
+                )
+                enabled -> NativeAppStrings.text(this, "Enabled", "Включено", "Activado", "Aktiviert")
+                else -> NativeAppStrings.text(this, "Disabled", "Выключено", "Desactivado", "Deaktiviert")
             }
         }
         tile.updateTile()
@@ -124,16 +124,6 @@ class LiveBridgeTileService : TileService() {
         return enabled.split(":")
             .mapNotNull(ComponentName::unflattenFromString)
             .any { it == service }
-    }
-
-    private fun isRussianLocale(): Boolean {
-        val locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            resources.configuration.locales.get(0)
-        } else {
-            @Suppress("DEPRECATION")
-            resources.configuration.locale
-        }
-        return locale?.language?.startsWith("ru", ignoreCase = true) == true
     }
 
     companion object {

@@ -1,15 +1,19 @@
 package com.kakao.taxi.liveupdate
 
+import android.app.KeyguardManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationManagerCompat
@@ -35,6 +39,14 @@ class NetworkSpeedForegroundService : Service() {
     private var wasDailyUsageEnabled = false
     private var initialized = false
     private var isForegroundActive = false
+    @Volatile private var screenOff = false
+    private var screenReceiverRegistered = false
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            screenOff = intent?.action == Intent.ACTION_SCREEN_OFF || !isInteractive()
+            workerHandler?.post { refreshServiceState() }
+        }
+    }
 
     private val sampler = object : Runnable {
         override fun run() {
@@ -99,6 +111,7 @@ class NetworkSpeedForegroundService : Service() {
             stopSelfSafely()
             return START_NOT_STICKY
         }
+        syncScreenReceiver()
 
         val startResult = runCatching {
             startSamplingIfNeeded()
@@ -121,6 +134,10 @@ class NetworkSpeedForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        if (screenReceiverRegistered) {
+            runCatching { unregisterReceiver(screenReceiver) }
+            screenReceiverRegistered = false
+        }
         workerHandler?.removeCallbacksAndMessages(null)
         workerThread?.quitSafely()
         workerThread = null
@@ -136,8 +153,43 @@ class NetworkSpeedForegroundService : Service() {
         return notificationBuilder.build(
             prefs = prefs,
             sample = latestSample,
-            dailyUsage = latestDailyUsage
+            dailyUsage = latestDailyUsage,
+            allowPromotion = NetworkSpeedVisibilityPolicy.allowPromotion(
+                hideWhenLocked = prefs.getNetworkSpeedHideWhenLocked(),
+                screenOff = screenOff,
+                keyguardLocked = isKeyguardLocked()
+            )
         )
+    }
+
+    private fun syncScreenReceiver() {
+        val needed = prefs.getNetworkSpeedHideWhenLocked()
+        if (needed != screenReceiverRegistered) {
+            if (needed) {
+                ContextCompat.registerReceiver(
+                    this,
+                    screenReceiver,
+                    IntentFilter().apply {
+                        addAction(Intent.ACTION_SCREEN_OFF)
+                        addAction(Intent.ACTION_SCREEN_ON)
+                        addAction(Intent.ACTION_USER_PRESENT)
+                    },
+                    ContextCompat.RECEIVER_NOT_EXPORTED
+                )
+            } else {
+                runCatching { unregisterReceiver(screenReceiver) }
+            }
+            screenReceiverRegistered = needed
+        }
+        screenOff = !isInteractive()
+    }
+
+    private fun isInteractive(): Boolean {
+        return (getSystemService(Context.POWER_SERVICE) as PowerManager).isInteractive
+    }
+
+    private fun isKeyguardLocked(): Boolean {
+        return (getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager).isKeyguardLocked
     }
 
     private fun refreshDailyUsage(snapshot: NetworkTrafficSnapshot) {
@@ -241,12 +293,18 @@ class NetworkSpeedForegroundService : Service() {
                 return
             }
 
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, NetworkSpeedForegroundService::class.java).apply {
-                    action = ACTION_REFRESH
-                }
-            )
+            try {
+                ContextCompat.startForegroundService(
+                    context,
+                    Intent(context, NetworkSpeedForegroundService::class.java).apply {
+                        action = ACTION_REFRESH
+                    }
+                )
+            } catch (error: IllegalStateException) {
+                Log.w(TAG, "System deferred network monitor start", error)
+            } catch (error: SecurityException) {
+                Log.w(TAG, "System denied network monitor start", error)
+            }
         }
 
         fun stop(context: Context) {

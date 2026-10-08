@@ -624,6 +624,7 @@ internal object LiveParserDictionaryLoader {
 
     private val languagePacks = listOf(
         DictionaryLanguagePack("en", "liveupdate_dictionary_en.json"),
+        DictionaryLanguagePack("pt-br", "liveupdate_dictionary_pt-BR.json"),
         DictionaryLanguagePack("ru", "liveupdate_dictionary_ru.json"),
         DictionaryLanguagePack("zh", "liveupdate_dictionary_zh.json"),
         DictionaryLanguagePack("ko", "liveupdate_dictionary_ko.json")
@@ -640,6 +641,7 @@ internal object LiveParserDictionaryLoader {
             .filter { languageId -> languagePacks.any { it.id == languageId } }
             .sorted()
         val legacyCustomRaw = prefs.getCustomParserDictionaryRaw()
+        val wordAdditionsRaw = prefs.getDictionaryWordAdditionsRaw()
         val overridePairs = languagePacks.mapNotNull { pack ->
             prefs.getParserDictionaryLanguageOverrideRaw(pack.id)?.let { raw ->
                 "${pack.id}:$raw"
@@ -647,6 +649,7 @@ internal object LiveParserDictionaryLoader {
         }
         val sourceKey = buildString {
             append(ASSET_CACHE_KEY)
+            append(wordAdditionsRaw)
             append('|')
             append(enabledLanguageIds.joinToString(","))
             if (!legacyCustomRaw.isNullOrBlank()) {
@@ -672,30 +675,23 @@ internal object LiveParserDictionaryLoader {
                 }
             }
 
-            var bundledDictionary = LiveParserDictionary.default()
+            var loaded = LiveParserDictionary.default()
             for (pack in languagePacks) {
                 if (pack.id !in enabledLanguageIds) {
                     continue
                 }
-                val loadedFromAssets = loadFromAssets(
-                    context = context,
-                    assetFileName = pack.assetFileName
-                ) ?: continue
-                bundledDictionary = bundledDictionary.mergedWith(loadedFromAssets)
+                val overrideRaw = prefs.getParserDictionaryLanguageOverrideRaw(pack.id)
+                val languageDictionary = overrideRaw
+                    ?.let { raw -> LiveParserDictionary.fromJson(raw) }
+                    ?: loadFromAssets(
+                        context = context,
+                        assetFileName = pack.assetFileName
+                    )
+                    ?: continue
+                loaded = loaded.mergedWith(languageDictionary)
             }
 
-            val loaded = languagePacks.fold(bundledDictionary) { current, pack ->
-                if (pack.id !in enabledLanguageIds) {
-                    return@fold current
-                }
-                val overrideRaw = prefs.getParserDictionaryLanguageOverrideRaw(pack.id)
-                if (overrideRaw.isNullOrBlank()) {
-                    return@fold current
-                }
-                LiveParserDictionary.fromJson(overrideRaw)
-                    ?.let(current::mergedWith)
-                    ?: current
-            }.let { merged ->
+            loaded = loaded.let { merged ->
                 if (legacyCustomRaw.isNullOrBlank()) {
                     merged
                 } else {
@@ -704,6 +700,33 @@ internal object LiveParserDictionaryLoader {
                 }
             }
 
+            val additions = JSONObject(wordAdditionsRaw)
+            fun words(key: String): Set<String> {
+                val array = additions.optJSONArray(key) ?: return emptySet()
+                return (0 until array.length()).map { array.getString(it).trim().lowercase(Locale.ROOT) }
+                    .filter { it.isNotEmpty() }.toSet()
+            }
+            fun withWords(pattern: Regex, key: String): Regex {
+                val extra = words(key)
+                return if (extra.isEmpty()) pattern else mergeRegex(pattern,
+                    Regex(extra.joinToString("|") { Regex.escape(it) }, RegexOption.IGNORE_CASE))
+            }
+            loaded = loaded.copy(
+                otpStrongTriggers = loaded.otpStrongTriggers + words("otp_strong_triggers"),
+                knownNavigationPackages = loaded.knownNavigationPackages + words("known_navigation_packages"),
+                navigationPackageMarkers = loaded.navigationPackageMarkers + words("navigation_package_markers"),
+                weatherPackageHints = loaded.weatherPackageHints + words("weather_package_hints"),
+                vpnPackageMarkers = loaded.vpnPackageMarkers + words("vpn_package_markers"),
+                orderContextHints = loaded.orderContextHints + words("order_context_hints"),
+                textProgressIncludeContextPattern = withWords(loaded.textProgressIncludeContextPattern, "progress_words"),
+                weatherContextPattern = withWords(loaded.weatherContextPattern, "weather_words"),
+                smartRules = loaded.smartRules.map { rule ->
+                    if (rule.id !in setOf("food", "taxi")) rule else rule.copy(
+                        textTriggers = rule.textTriggers + words("${rule.id}_words"),
+                        packageHints = rule.packageHints + words("${rule.id}_packages")
+                    )
+                }
+            )
             cachedSourceKey = sourceKey
             cachedDictionary = loaded
             return loaded

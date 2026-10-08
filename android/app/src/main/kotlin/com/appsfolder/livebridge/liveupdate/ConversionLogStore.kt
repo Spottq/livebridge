@@ -3,6 +3,10 @@ package com.kakao.taxi.liveupdate
 import android.app.Notification
 import android.content.Context
 import android.service.notification.StatusBarNotification
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.Process
+import android.util.AtomicFile
 import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
@@ -15,29 +19,39 @@ object ConversionLogStore {
     private const val TAG = "ConversionLogStore"
     private const val CONTINUOUS_NOTIFICATION_UPDATE_WINDOW_MS = 2L * 60L * 1000L
 
+    private var cachedPath: String? = null
+    private var cachedEntries: MutableList<ConversionLogEntryRecord>? = null
+    private var flushScheduled = false
+    private val diskHandler by lazy {
+        HandlerThread("LiveBridge-log", Process.THREAD_PRIORITY_BACKGROUND).let {
+            it.start()
+            Handler(it.looper)
+        }
+    }
+
     @Synchronized
     fun getEntriesRaw(context: Context): String {
-        return readArray(context).toString()
+        return encodeEntries(readEntries(context))
     }
 
     @Synchronized
     fun getEntriesPageRaw(context: Context, offset: Int, limit: Int): String {
         val normalizedOffset = offset.coerceAtLeast(0)
         val normalizedLimit = limit.coerceIn(1, 100)
-        val entries = readArray(context)
+        val entries = readEntries(context)
         val page = JSONArray()
-        val endExclusive = minOf(entries.length(), normalizedOffset + normalizedLimit)
+        val endExclusive = minOf(entries.size, normalizedOffset + normalizedLimit)
 
-        if (normalizedOffset < entries.length()) {
+        if (normalizedOffset < entries.size) {
             for (index in normalizedOffset until endExclusive) {
-                entries.optJSONObject(index)?.let(page::put)
+                page.put(entries[index].toJson())
             }
         }
 
         return JSONObject().apply {
             put("entries", page)
-            put("has_more", endExclusive < entries.length())
-            put("total_count", entries.length())
+            put("has_more", endExclusive < entries.size)
+            put("total_count", entries.size)
         }.toString()
     }
 
@@ -68,6 +82,19 @@ object ConversionLogStore {
             emptyList()
         }
         val logKey = continuousSessionEntries.firstOrNull()?.logKey ?: buildLogKey(sbn)
+        val appLabel = AppMetadataCache.get(context, sbn.packageName).label
+        val record = ConversionLogEntryRecord(
+            logKey = logKey,
+            sourceKey = sourceKey,
+            packageName = sbn.packageName,
+            appLabel = appLabel,
+            postedAtMs = sbn.postTime,
+            title = title,
+            text = text,
+            payloadJson = buildPayloadJson(sbn, logKey, title, text, appLabel)
+        )
+        // Recovery/media polling must not write an identical log record again.
+        if (entries.any { it == record }) return
 
         if (continuousSessionEntries.isNotEmpty()) {
             val staleLogKeys = continuousSessionEntries.mapTo(mutableSetOf()) { it.logKey }
@@ -79,25 +106,7 @@ object ConversionLogStore {
             }
         }
 
-        entries.add(
-            0,
-            ConversionLogEntryRecord(
-                logKey = logKey,
-                sourceKey = sourceKey,
-                packageName = sbn.packageName,
-                appLabel = resolveAppLabel(context, sbn.packageName),
-                postedAtMs = sbn.postTime,
-                title = title,
-                text = text,
-                payloadJson = buildPayloadJson(
-                    context = context,
-                    sbn = sbn,
-                    logKey = logKey,
-                    title = title,
-                    text = text
-                )
-            )
-        )
+        entries.add(0, record)
         trimToMaxBytes(entries, prefs.getConversionLogMaxBytes())
         writeEntries(context, entries)
     }
@@ -160,22 +169,12 @@ object ConversionLogStore {
         }
     }
 
-    private fun resolveAppLabel(context: Context, packageName: String): String {
-        return try {
-            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
-            context.packageManager.getApplicationLabel(appInfo)?.toString()?.trim()
-                .takeUnless { it.isNullOrBlank() } ?: packageName
-        } catch (_: Throwable) {
-            packageName
-        }
-    }
-
     private fun buildPayloadJson(
-        context: Context,
         sbn: StatusBarNotification,
         logKey: String,
         title: String,
-        text: String
+        text: String,
+        appLabel: String
     ): String {
         val notification = sbn.notification
         val extras = notification.extras
@@ -183,7 +182,7 @@ object ConversionLogStore {
             put("log_key", logKey)
             put("source_key", sbn.key)
             put("package_name", sbn.packageName)
-            put("app_label", resolveAppLabel(context, sbn.packageName))
+            put("app_label", appLabel)
             put("posted_at_ms", sbn.postTime)
             put("notification_when_ms", resolveEventTime(sbn))
             put("notification_id", sbn.id)
@@ -237,46 +236,57 @@ object ConversionLogStore {
     }
 
     private fun readEntries(context: Context): MutableList<ConversionLogEntryRecord> {
-        val rawEntries = readArray(context)
+        val path = fileFor(context).absolutePath
+        if (cachedPath == path) cachedEntries?.let { return it }
         val entries = mutableListOf<ConversionLogEntryRecord>()
-        for (index in 0 until rawEntries.length()) {
-            val item = rawEntries.optJSONObject(index) ?: continue
-            ConversionLogEntryRecord.fromJson(item)?.let(entries::add)
+        val file = AtomicFile(fileFor(context))
+        if (file.baseFile.exists()) {
+            try {
+                val raw = JSONArray(file.openRead().bufferedReader(StandardCharsets.UTF_8).use { it.readText() })
+                for (index in 0 until raw.length()) {
+                    raw.optJSONObject(index)?.let(ConversionLogEntryRecord::fromJson)?.let(entries::add)
+                }
+            } catch (error: Exception) {
+                Log.e(TAG, "Failed to read conversion log", error)
+            }
         }
+        cachedPath = path
+        cachedEntries = entries
         return entries
     }
 
+    private fun encodeEntries(entries: List<ConversionLogEntryRecord>): String =
+        entries.joinToString(separator = ",", prefix = "[", postfix = "]") { it.encodedJson }
+
     private fun writeEntries(context: Context, entries: List<ConversionLogEntryRecord>) {
-        val payload = JSONArray()
-        entries.forEach { payload.put(it.toJson()) }
-        fileFor(context).writeText(payload.toString(), StandardCharsets.UTF_8)
+        check(entries === cachedEntries)
+        if (flushScheduled) return
+        flushScheduled = true
+        val appContext = context.applicationContext
+        // Coalesce bursts, without delaying the first flush indefinitely under continuous updates.
+        diskHandler.postDelayed({
+            val snapshot = synchronized(this) {
+                flushScheduled = false
+                readEntries(appContext).toList()
+            }
+            // Records are immutable: encode outside the lock so pages/events can proceed.
+            val payload = encodeEntries(snapshot)
+            val file = AtomicFile(fileFor(appContext))
+            var stream: java.io.FileOutputStream? = null
+            try {
+                stream = file.startWrite()
+                stream.write(payload.toByteArray(StandardCharsets.UTF_8))
+                file.finishWrite(stream)
+            } catch (error: Exception) {
+                file.failWrite(stream)
+                Log.e(TAG, "Failed to persist conversion log", error)
+            }
+        }, 500L)
     }
 
     private fun trimToMaxBytes(entries: MutableList<ConversionLogEntryRecord>, maxBytes: Int) {
-        while (entries.isNotEmpty() &&
-            encodedSizeBytes(entries) > maxBytes
-        ) {
-            entries.removeLast()
-        }
-    }
-
-    private fun encodedSizeBytes(entries: List<ConversionLogEntryRecord>): Int {
-        val payload = JSONArray()
-        entries.forEach { payload.put(it.toJson()) }
-        return payload.toString().toByteArray(StandardCharsets.UTF_8).size
-    }
-
-    private fun readArray(context: Context): JSONArray {
-        val file = fileFor(context)
-        if (!file.exists()) {
-            return JSONArray()
-        }
-        return try {
-            JSONArray(file.readText(StandardCharsets.UTF_8))
-        } catch (error: Throwable) {
-            Log.e(TAG, "Failed to read conversion log", error)
-            JSONArray()
-        }
+        val count = LogRetention.retainedCount(entries.map { it.encodedSizeBytes }, maxBytes)
+        if (count < entries.size) entries.subList(count, entries.size).clear()
     }
 
     private fun fileFor(context: Context): File {
@@ -293,6 +303,9 @@ object ConversionLogStore {
         val text: String,
         val payloadJson: String
     ) {
+        val encodedJson: String by lazy { toJson().toString() }
+        val encodedSizeBytes: Int by lazy { encodedJson.toByteArray(StandardCharsets.UTF_8).size }
+
         fun toJson(): JSONObject {
             return JSONObject().apply {
                 put("log_key", logKey)

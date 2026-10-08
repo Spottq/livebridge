@@ -39,7 +39,10 @@ import com.kakao.taxi.liveupdate.LiveParserDictionary
 import com.kakao.taxi.liveupdate.LiveParserDictionaryLoader
 import com.kakao.taxi.liveupdate.LiveUpdateNotifier
 import com.kakao.taxi.liveupdate.LiveUpdateNotificationListenerService
+import com.kakao.taxi.liveupdate.NativeAppStrings
 import com.kakao.taxi.liveupdate.NetworkSpeedForegroundService
+import com.kakao.taxi.liveupdate.PromotedAccessPolicy
+import com.kakao.taxi.liveupdate.WearOsLiveUpdatesPolicy
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
@@ -53,6 +56,23 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        syncRecentsVisibility()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        syncRecentsVisibility()
+        val prefs = ConverterPrefs(applicationContext)
+        if (prefs.getConverterEnabled() && !LiveUpdateNotificationListenerService.isConnected()) {
+            LiveUpdateNotificationListenerService.requestRebindIfEnabled(applicationContext, "app_resumed")
+        }
+        LiveUpdateNotificationListenerService.invalidateSnapshotCache()
+    }
+
+    private fun syncRecentsVisibility() {
+        val hidden = ConverterPrefs(applicationContext).getHideFromRecentsEnabled()
+        val manager = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        manager.appTasks.firstOrNull { it.taskInfo.taskId == taskId }?.setExcludeFromRecents(hidden)
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -103,6 +123,7 @@ class MainActivity : FlutterActivity() {
             "isNotificationPermissionGranted" -> res.success(isNotificationPermissionGranted())
             "requestNotificationPermission" -> requestNotificationPermission(res)
             "canPostPromotedNotifications" -> res.success(canPostPromotedNotifications())
+            "getPromotedNotificationAccess" -> res.success(getPromotedNotificationAccess())
             "openPromotedNotificationSettings" -> res.success(openPromotedNotificationSettings())
             "openAppNotificationSettings" -> res.success(openAppNotificationSettings())
             "getInstalledApps" -> loadInstalledAppsAsync(
@@ -132,6 +153,7 @@ class MainActivity : FlutterActivity() {
                 val imported = prefs.importSettingsBackupJson(raw)
                 if (imported) {
                     afterSettingsBackupImported(prefs)
+                    syncRecentsVisibility()
                 }
                 res.success(imported)
             }
@@ -234,12 +256,14 @@ class MainActivity : FlutterActivity() {
                 }
                 prefs.setCustomParserDictionaryRaw(raw)
                 LiveParserDictionaryLoader.invalidate()
+                LiveUpdateNotificationListenerService.invalidateSnapshotCache()
                 res.success(true)
             }
 
             "clearCustomParserDictionary" -> {
                 prefs.clearCustomParserDictionary()
                 LiveParserDictionaryLoader.invalidate()
+                LiveUpdateNotificationListenerService.invalidateSnapshotCache()
                 res.success(true)
             }
 
@@ -265,8 +289,62 @@ class MainActivity : FlutterActivity() {
                     res.error("invalid_dictionary", "Dictionary JSON is invalid", null)
                     return
                 }
-                prefs.setParserDictionaryLanguageOverrideRaw(languageId, raw)
-                LiveParserDictionaryLoader.invalidate()
+                val saved = prefs.setParserDictionaryLanguageOverrideRaw(languageId, raw)
+                if (saved) {
+                    LiveParserDictionaryLoader.invalidate()
+                }
+                res.success(saved)
+            }
+
+            "getHideFromRecentsEnabled" -> res.success(prefs.getHideFromRecentsEnabled())
+            "setHideFromRecentsEnabled" -> {
+                prefs.setHideFromRecentsEnabled(call.argument<Boolean>("value") ?: false)
+                syncRecentsVisibility()
+                res.success(true)
+            }
+            "getNotificationTextFilters" -> res.success(prefs.getNotificationTextFiltersRaw())
+            "setNotificationTextFilters" -> {
+                try {
+                    prefs.setNotificationTextFiltersRaw(call.argument<String>("value") ?: "{}")
+                    LiveUpdateNotificationListenerService.invalidateSnapshotCache()
+                    res.success(true)
+                } catch (error: Exception) {
+                    res.error("invalid_filters", "Invalid notification text filters", null)
+                }
+            }
+            "getDictionaryWordAdditions" -> res.success(prefs.getDictionaryWordAdditionsRaw())
+            "setDictionaryWordAdditions" -> {
+                try {
+                    prefs.setDictionaryWordAdditionsRaw(call.argument<String>("value") ?: "{}")
+                    LiveParserDictionaryLoader.invalidate()
+                    LiveUpdateNotificationListenerService.invalidateSnapshotCache()
+                    res.success(true)
+                } catch (error: Exception) {
+                    res.error("invalid_words", "Invalid dictionary words", null)
+                }
+            }
+            "getSourceChannels" -> appsLoaderExecutor.execute {
+                try {
+                    val json = com.kakao.taxi.liveupdate.SourceChannelStore.listJson(applicationContext, prefs)
+                    runOnUiThread { res.success(json) }
+                } catch (error: Exception) {
+                    runOnUiThread { res.error("channels_failed", "Unable to load channels", null) }
+                }
+            }
+            "setSourceChannelEnabled" -> {
+                val pkg = call.argument<String>("packageName").orEmpty()
+                val id = call.argument<String>("channelId").orEmpty()
+                if (pkg.isBlank() || id.isEmpty()) {
+                    res.error("invalid_channel", "Package and channel are required", null)
+                    return
+                }
+                val blocked = JSONObject(prefs.getBlockedSourceChannelsRaw())
+                val ids = blocked.optJSONArray(pkg) ?: org.json.JSONArray()
+                val values = (0 until ids.length()).map { ids.getString(it) }.toMutableSet()
+                if (call.argument<Boolean>("enabled") == true) values.remove(id) else values.add(id)
+                blocked.put(pkg, org.json.JSONArray(values.toList()))
+                prefs.setBlockedSourceChannelsRaw(blocked.toString())
+                LiveUpdateNotificationListenerService.invalidateSnapshotCache()
                 res.success(true)
             }
 
@@ -343,15 +421,6 @@ class MainActivity : FlutterActivity() {
                 syncNetworkSpeedService(prefs)
                 res.success(true)
             }
-            "getNetworkSpeedRegularNotificationEnabled" ->
-                res.success(prefs.getNetworkSpeedRegularNotificationEnabled())
-            "setNetworkSpeedRegularNotificationEnabled" -> {
-                prefs.setNetworkSpeedRegularNotificationEnabled(
-                    call.argument<Boolean>("value") ?: false
-                )
-                syncNetworkSpeedService(prefs)
-                res.success(true)
-            }
             "getNetworkSpeedDailyUsageEnabled" ->
                 res.success(prefs.getNetworkSpeedDailyUsageEnabled())
             "setNetworkSpeedDailyUsageEnabled" -> {
@@ -410,6 +479,26 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
+            "getConvertedNotificationSoundEnabled" -> {
+                res.success(prefs.getConvertedNotificationSoundEnabled())
+            }
+            "setConvertedNotificationSoundEnabled" -> {
+                prefs.setConvertedNotificationSoundEnabled(
+                    call.argument<Boolean>("value") ?: false
+                )
+                LiveUpdateNotifier.ensureChannel(applicationContext)
+                res.success(true)
+            }
+
+            "getConvertedNotificationVibrationEnabled" -> {
+                res.success(prefs.getConvertedNotificationVibrationEnabled())
+            }
+            "setConvertedNotificationVibrationEnabled" -> {
+                prefs.setConvertedNotificationVibrationEnabled(call.argument<Boolean>("value") ?: false)
+                LiveUpdateNotifier.ensureChannel(applicationContext)
+                res.success(true)
+            }
+
             "getHintsDisabled" -> res.success(prefs.getHintsDisabled())
             "setHintsDisabled" -> {
                 prefs.setHintsDisabled(call.argument<Boolean>("value") ?: false)
@@ -431,23 +520,67 @@ class MainActivity : FlutterActivity() {
             "getAppLanguageTag" -> res.success(prefs.getAppLanguageTag())
             "setAppLanguageTag" -> {
                 prefs.setAppLanguageTag(call.argument<String>("value"))
+                LiveUpdateNotificationListenerService.invalidateSnapshotCache()
+                LiveUpdateNotifier.ensureChannel(applicationContext)
+                syncKeepAliveForegroundService(prefs)
+                syncNetworkSpeedService(prefs)
+                LiveBridgeTileService.requestStateSync(applicationContext)
+                ensureUpdateNotificationChannel()
                 res.success(true)
             }
 
             "getConversionLogMaxBytes" -> res.success(prefs.getConversionLogMaxBytes())
             "setConversionLogMaxBytes" -> {
                 prefs.setConversionLogMaxBytes(call.argument<Number>("value")?.toInt() ?: 0)
-                ConversionLogStore.trimToPrefs(applicationContext, prefs)
-                res.success(true)
+                conversionLogExecutor.execute {
+                    try {
+                        ConversionLogStore.trimToPrefs(applicationContext, prefs)
+                        runOnUiThread { res.success(true) }
+                    } catch (error: Exception) {
+                        runOnUiThread { res.error("conversion_log_trim_failed", error.message, null) }
+                    }
+                }
             }
 
             "getConversionLogEntries" -> {
-                res.success(ConversionLogStore.getEntriesRaw(applicationContext))
+                conversionLogExecutor.execute {
+                    try {
+                        val raw = ConversionLogStore.getEntriesRaw(applicationContext)
+                        runOnUiThread { res.success(raw) }
+                    } catch (error: Exception) {
+                        runOnUiThread { res.error("conversion_log_failed", error.message, null) }
+                    }
+                }
             }
 
             "getConversionLogEntriesPage" -> {
                 loadConversionLogEntriesPageAsync(call, res)
             }
+
+            "isWearOsLiveUpdatesAvailable" -> res.success(WearOsLiveUpdatesPolicy.isAvailable(Build.VERSION.SDK_INT))
+            "getWearOsLiveUpdatesEnabled" -> res.success(
+                !WearOsLiveUpdatesPolicy.isLocalOnly(Build.VERSION.SDK_INT, prefs.getWearOsLiveUpdatesEnabled())
+            )
+            "setWearOsLiveUpdatesEnabled" -> {
+                val value = call.argument<Boolean>("value") ?: false
+                if (value && !WearOsLiveUpdatesPolicy.isAvailable(Build.VERSION.SDK_INT)) {
+                    res.success(false)
+                    return
+                }
+                prefs.setWearOsLiveUpdatesEnabled(value)
+                LiveUpdateNotifier.refreshWearOsBridging(applicationContext)
+                LiveUpdateNotificationListenerService.invalidateSnapshotCache()
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
+            "getNetworkSpeedHideWhenLocked" -> res.success(prefs.getNetworkSpeedHideWhenLocked())
+            "setNetworkSpeedHideWhenLocked" -> {
+                prefs.setNetworkSpeedHideWhenLocked(call.argument<Boolean>("value") ?: false)
+                syncNetworkSpeedService(prefs)
+                res.success(true)
+            }
+
             "getSyncDndEnabled" -> res.success(prefs.getSyncDndEnabled())
             "setSyncDndEnabled" -> {
                 prefs.setSyncDndEnabled(call.argument<Boolean>("value") ?: false)
@@ -850,9 +983,10 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun afterSettingsBackupImported(prefs: ConverterPrefs) {
+        LiveUpdateNotifier.refreshWearOsBridging(applicationContext)
         AppPresentationOverridesLoader.invalidate()
         LiveParserDictionaryLoader.invalidate()
-        ConversionLogStore.trimToPrefs(applicationContext, prefs)
+        conversionLogExecutor.execute { ConversionLogStore.trimToPrefs(applicationContext, prefs) }
         LiveUpdateNotifier.ensureChannel(applicationContext)
         applyConverterEnabled(prefs, prefs.getConverterEnabled())
         syncFlashlightService(prefs)
@@ -1003,17 +1137,8 @@ class MainActivity : FlutterActivity() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val isRuLocale = isRussianLocale()
-        val title = if (isRuLocale) {
-            "Доступно обновление LiveBridge"
-        } else {
-            "LiveBridge update available"
-        }
-        val content = if (isRuLocale) {
-            "Новая версия: $version"
-        } else {
-            "New version: $version"
-        }
+        val title = NativeAppStrings.text(this, "LiveBridge update available", "Доступно обновление LiveBridge", "Actualización de LiveBridge disponible", "LiveBridge-Update verfügbar")
+        val content = NativeAppStrings.text(this, "New version: $version", "Новая версия: $version", "Nueva versión: $version", "Neue Version: $version")
 
         val notification = NotificationCompat.Builder(applicationContext, UPDATE_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_liveupdate)
@@ -1037,30 +1162,16 @@ class MainActivity : FlutterActivity() {
         }
 
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (manager.getNotificationChannel(UPDATE_CHANNEL_ID) != null) {
-            return
-        }
-
-        val channel = NotificationChannel(
-            UPDATE_CHANNEL_ID,
-            UPDATE_CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_HIGH
-        ).apply {
-            description = "LiveBridge app update notifications"
+        val name = NativeAppStrings.text(this, "LiveBridge Updates", "Обновления LiveBridge", "Actualizaciones de LiveBridge", "LiveBridge-Updates")
+        val description = NativeAppStrings.text(this, "LiveBridge app update notifications", "Уведомления об обновлениях LiveBridge", "Notificaciones de actualizaciones de LiveBridge", "Benachrichtigungen über LiveBridge-Updates")
+        val existing = manager.getNotificationChannel(UPDATE_CHANNEL_ID)
+        if (existing != null && existing.name == name && existing.description == description) return
+        val channel = existing ?: NotificationChannel(UPDATE_CHANNEL_ID, name, NotificationManager.IMPORTANCE_HIGH).apply {
             lockscreenVisibility = android.app.Notification.VISIBILITY_PUBLIC
         }
+        channel.name = name
+        channel.description = description
         manager.createNotificationChannel(channel)
-    }
-
-    private fun isRussianLocale(): Boolean {
-        val locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            resources.configuration.locales.get(0)
-        } else {
-            @Suppress("DEPRECATION")
-            resources.configuration.locale
-        }
-        val language = locale?.language?.lowercase(Locale.ROOT).orEmpty()
-        return language.startsWith("ru")
     }
 
     private fun isLikelyChineseDevice(): Boolean {
@@ -1140,20 +1251,35 @@ class MainActivity : FlutterActivity() {
         )
     }
 
-    private fun canPostPromotedNotifications(): Boolean {
-        if (Build.VERSION.SDK_INT < 36) {
-            return false
+    private fun promotionSettingsIntent() =
+        Intent("android.settings.APP_NOTIFICATION_PROMOTION_SETTINGS").apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
         }
 
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        return try {
-            val method = notificationManager.javaClass.getMethod("canPostPromotedNotifications")
-            method.invoke(notificationManager) as? Boolean ?: false
-        } catch (_: Exception) {
-            false
+    private fun getPromotedNotificationAccess(): Map<String, Any> {
+        val settingsAvailable = runCatching {
+            promotionSettingsIntent().resolveActivity(packageManager) != null
+        }.getOrDefault(false)
+        var apiAvailable = false
+        val status = if (Build.VERSION.SDK_INT < 36) "unavailable" else {
+            try {
+                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                val method = manager.javaClass.getMethod("canPostPromotedNotifications")
+                apiAvailable = true
+                PromotedAccessPolicy.status(apiAvailable,
+                    method.invoke(manager) as? Boolean, settingsAvailable)
+            } catch (_: NoSuchMethodException) {
+                "unavailable"
+            } catch (_: Exception) {
+                "unknown"
+            }
         }
+        return mapOf("status" to status, "apiAvailable" to apiAvailable,
+            "settingsAvailable" to settingsAvailable)
     }
+
+    private fun canPostPromotedNotifications(): Boolean =
+        getPromotedNotificationAccess()["status"] == "granted"
 
     private fun openNotificationListenerSettings(): Boolean {
         if (launchSettingsIntent(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))) {
@@ -1176,9 +1302,7 @@ class MainActivity : FlutterActivity() {
     }
 
     private fun openPromotedNotificationSettings(): Boolean {
-        val intent = Intent("android.settings.APP_NOTIFICATION_PROMOTION_SETTINGS").apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-        }
+        val intent = promotionSettingsIntent()
 
         if (launchSettingsIntent(intent)) {
             return true
@@ -1224,7 +1348,7 @@ class MainActivity : FlutterActivity() {
         val offset = call.argument<Number>("offset")?.toInt() ?: 0
         val limit = call.argument<Number>("limit")?.toInt() ?: 10
 
-        appsLoaderExecutor.execute {
+        conversionLogExecutor.execute {
             try {
                 val page = ConversionLogStore.getEntriesPageRaw(
                     context = applicationContext,
@@ -1291,11 +1415,11 @@ class MainActivity : FlutterActivity() {
         private const val REQUEST_POST_NOTIFICATIONS = 2406
         private const val TAG = "MainActivity"
         private const val UPDATE_CHANNEL_ID = "livebridge_update_checks"
-        private const val UPDATE_CHANNEL_NAME = "LiveBridge Updates"
         private const val UPDATE_NOTIFICATION_ID = 32001
         private const val DEFAULT_RELEASES_URL = "https://appsfolder.github.io/livebridge/"
 
         private val appsLoaderExecutor = Executors.newSingleThreadExecutor()
+        private val conversionLogExecutor = Executors.newSingleThreadExecutor()
         private val CHINESE_DEVICE_MARKERS = setOf(
             "xiaomi",
             "redmi",

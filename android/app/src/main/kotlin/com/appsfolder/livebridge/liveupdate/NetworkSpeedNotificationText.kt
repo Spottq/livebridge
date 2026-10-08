@@ -122,6 +122,34 @@ internal object NetworkSpeedNotificationLocalizer {
                 gigabytesUnit = "GB"
             )
 
+            LocaleKey.ES -> NetworkSpeedNotificationText(
+                numberLocale = Locale("es"),
+                title = "Velocidad de red",
+                channelDescription =
+                    "Muestra la velocidad de red actual en la notificación y en Now Bar",
+                wifiLabel = "Wi-Fi",
+                mobileLabel = "Móvil",
+                kilobytesPerSecondUnit = "KB/s",
+                megabytesPerSecondUnit = "MB/s",
+                gigabytesPerSecondUnit = "GB/s",
+                megabytesUnit = "MB",
+                gigabytesUnit = "GB"
+            )
+
+            LocaleKey.DE -> NetworkSpeedNotificationText(
+                numberLocale = Locale.GERMAN,
+                title = "Netzwerkgeschwindigkeit",
+                channelDescription =
+                    "Zeigt die aktuelle Netzwerkgeschwindigkeit in der Benachrichtigung und in der Now Bar an",
+                wifiLabel = "WLAN",
+                mobileLabel = "Mobil",
+                kilobytesPerSecondUnit = "KB/s",
+                megabytesPerSecondUnit = "MB/s",
+                gigabytesPerSecondUnit = "GB/s",
+                megabytesUnit = "MB",
+                gigabytesUnit = "GB"
+            )
+
             LocaleKey.EN -> ENGLISH
         }
     }
@@ -147,6 +175,8 @@ internal object NetworkSpeedNotificationLocalizer {
             language.startsWith("ru") -> LocaleKey.RU
             language.startsWith("tr") -> LocaleKey.TR
             language.startsWith("pt") -> LocaleKey.PT_BR
+            language.startsWith("es") -> LocaleKey.ES
+            language.startsWith("de") -> LocaleKey.DE
             language.startsWith("zh") && isTraditionalChinese(locale) -> LocaleKey.ZH_HANT
             language.startsWith("zh") -> LocaleKey.ZH_HANS
             language.startsWith("ko") -> LocaleKey.KO
@@ -165,6 +195,8 @@ internal object NetworkSpeedNotificationLocalizer {
             normalized.startsWith("ru") -> LocaleKey.RU
             normalized.startsWith("tr") -> LocaleKey.TR
             normalized.startsWith("pt") -> LocaleKey.PT_BR
+            normalized.startsWith("es") -> LocaleKey.ES
+            normalized.startsWith("de") -> LocaleKey.DE
             isTraditionalChineseLanguageTag(normalized) -> LocaleKey.ZH_HANT
             normalized.startsWith("zh") -> LocaleKey.ZH_HANS
             normalized.startsWith("ko") -> LocaleKey.KO
@@ -193,6 +225,8 @@ internal object NetworkSpeedNotificationLocalizer {
         RU,
         TR,
         PT_BR,
+        ES,
+        DE,
         ZH_HANS,
         ZH_HANT,
         KO

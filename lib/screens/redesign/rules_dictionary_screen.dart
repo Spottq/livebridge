@@ -16,6 +16,7 @@ import '../../widgets/redesign/lb_list_component.dart';
 import '../../widgets/redesign/lb_modal_bottom_sheet.dart';
 import '../../widgets/redesign/lb_toast.dart';
 import 'dictionary_runtime.dart';
+import 'dictionary_word_editor_screen.dart';
 
 class RulesDictionaryScreen extends StatefulWidget {
   const RulesDictionaryScreen({super.key});
@@ -204,12 +205,15 @@ class _RulesDictionaryScreenState extends State<RulesDictionaryScreen> {
             ),
             LbListItemData(
               title: strings.dictionaryEditorTitle,
-              titleSuffix: strings.dictionaryComingSoon,
               description: strings.dictionaryEditorDescription,
               showChevron: false,
               trailingIcon: LbIconSymbol.quillPen,
-              trailingIconColor: palette.textMuted,
-              enabled: false,
+              trailingIconColor: palette.textPrimary,
+              onTap: () => Navigator.of(context).push<void>(
+                MaterialPageRoute<void>(
+                  builder: (_) => const DictionaryWordEditorScreen(),
+                ),
+              ),
             ),
           ],
           rowHeight: LbSpacing.recentRowHeight,

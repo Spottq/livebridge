@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.os.Build
 import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -21,7 +22,8 @@ internal class NetworkSpeedNotificationBuilder(
     fun build(
         prefs: ConverterPrefs,
         sample: NetworkSpeedSample,
-        dailyUsage: NetworkDailyUsage
+        dailyUsage: NetworkDailyUsage,
+        allowPromotion: Boolean = true
     ): Notification {
         val notificationText = NetworkSpeedNotificationLocalizer.resolve(context, prefs)
         val title = notificationText.title
@@ -48,9 +50,8 @@ internal class NetworkSpeedNotificationBuilder(
                 "$regularContentText\n$dailyUsageText"
             }
         val notificationColor = prefs.getNetworkSpeedNotificationColorArgb()
-        val regularNotificationOnly = prefs.getNetworkSpeedRegularNotificationEnabled()
         val shouldPromote =
-            !regularNotificationOnly &&
+            allowPromotion &&
                 sample.totalBytesPerSecond >=
                 prefs.getNetworkSpeedMinThresholdBytesPerSecond().coerceAtLeast(0L)
         val chipIconCompat = IconCompat.createWithResource(context, R.drawable.ic_speed)
@@ -77,6 +78,12 @@ internal class NetworkSpeedNotificationBuilder(
             .setContentIntent(contentIntent)
             .setColor(notificationColor)
             .setOngoing(true)
+            .setLocalOnly(
+                WearOsLiveUpdatesPolicy.isLocalOnly(
+                    Build.VERSION.SDK_INT,
+                    prefs.getWearOsLiveUpdatesEnabled()
+                )
+            )
             .setOnlyAlertOnce(true)
             .setWhen(statusBarRankingTime())
             .setShowWhen(false)

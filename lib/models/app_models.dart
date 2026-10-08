@@ -110,7 +110,19 @@ class DeviceInfo {
         customRomMarkers.any(all.contains);
   }
 
-  bool get shouldHideLiveUpdatesPromotion => isSamsung || isAospDevice;
+  bool get isVivo {
+    final List<String> vendorNames = <String>[
+      manufacturer.trim().toLowerCase(),
+      brand.trim().toLowerCase(),
+    ];
+    return vendorNames.any((String name) => name == 'vivo' || name == 'iqoo');
+  }
+
+  // vivo firmware can promote notifications without exposing the standard
+  // permission toggle. Keep the raw API result for diagnostics, but do not
+  // treat this unavailable settings control as a missing prerequisite.
+  bool get shouldHideLiveUpdatesPromotion =>
+      isSamsung || isAospDevice || isVivo;
 
   String get label {
     if (marketName.isNotEmpty) return marketName;

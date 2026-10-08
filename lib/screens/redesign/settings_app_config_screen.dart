@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'settings_source_channels_screen.dart';
+import 'settings_text_filters_screen.dart';
 import '../../l10n/app_locale_controller.dart';
 import '../../l10n/app_strings.dart';
 import '../../platform/livebridge_platform.dart';
@@ -16,6 +18,7 @@ import '../../widgets/redesign/lb_list_component.dart';
 import '../../widgets/redesign/lb_modal_bottom_sheet.dart';
 import '../../widgets/redesign/lb_slider.dart';
 import '../../widgets/redesign/lb_toggle.dart';
+import '../../widgets/redesign/lb_toast.dart';
 
 class SettingsAppConfigScreen extends StatefulWidget {
   const SettingsAppConfigScreen({super.key});
@@ -30,10 +33,17 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
   static const int _logLengthMaxMb = 25;
   static const int _bytesPerMb = 1024 * 1024;
 
+  final Set<String> _savingPreferences = {};
+  bool _wearOsAvailable = false;
+  bool _wearOsEnabled = false;
+  bool _wearOsSaving = false;
+  bool _hideFromRecents = false;
   bool _altBackgroundMode = false;
   bool _syncDnd = true;
   bool _preventDismissing = false;
   bool _hideLockscreenContent = false;
+  bool _convertedNotificationSound = false;
+  bool _convertedNotificationVibration = false;
   bool _hintsDisabled = false;
   bool _conversionLogEnabled = false;
   String _appLanguageId = appLanguageSystemId;
@@ -50,6 +60,12 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
 
   Future<void> _loadState() async {
     try {
+      final wearOsAvailableFuture =
+          LiveBridgePlatform.isWearOsLiveUpdatesAvailable();
+      final wearOsEnabledFuture =
+          LiveBridgePlatform.getWearOsLiveUpdatesEnabled();
+      final hideFromRecentsFuture =
+          LiveBridgePlatform.getHideFromRecentsEnabled();
       final Future<bool> altBackgroundFuture =
           LiveBridgePlatform.getKeepAliveForegroundEnabled();
       final Future<bool> syncDndFuture = LiveBridgePlatform.getSyncDndEnabled();
@@ -57,6 +73,10 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
           LiveBridgePlatform.getPreventMirrorDismissEnabled();
       final Future<bool> hideLockscreenContentFuture =
           LiveBridgePlatform.getHideLockscreenContentEnabled();
+      final Future<bool> convertedNotificationSoundFuture =
+          LiveBridgePlatform.getConvertedNotificationSoundEnabled();
+      final Future<bool> convertedNotificationVibrationFuture =
+          LiveBridgePlatform.getConvertedNotificationVibrationEnabled();
       final Future<bool> hintsDisabledFuture =
           LiveBridgePlatform.getHintsDisabled();
       final Future<bool> conversionLogEnabledFuture =
@@ -66,10 +86,17 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
       final Future<String> appLanguageFuture =
           LiveBridgePlatform.getAppLanguageTag();
 
+      final wearOsAvailable = await wearOsAvailableFuture;
+      final wearOsEnabled = await wearOsEnabledFuture;
+      final hideFromRecents = await hideFromRecentsFuture;
       final bool altBackgroundMode = await altBackgroundFuture;
       final bool syncDnd = await syncDndFuture;
       final bool preventDismissing = await preventDismissingFuture;
       final bool hideLockscreenContent = await hideLockscreenContentFuture;
+      final bool convertedNotificationSound =
+          await convertedNotificationSoundFuture;
+      final bool convertedNotificationVibration =
+          await convertedNotificationVibrationFuture;
       final bool hintsDisabled = await hintsDisabledFuture;
       final bool conversionLogEnabled = await conversionLogEnabledFuture;
       final int conversionLogMaxBytes = await conversionLogMaxBytesFuture;
@@ -86,10 +113,15 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
           .clamp(_logLengthMinMb, _logLengthMaxMb);
 
       setState(() {
+        _wearOsAvailable = wearOsAvailable;
+        _wearOsEnabled = wearOsAvailable && wearOsEnabled;
+        _hideFromRecents = hideFromRecents;
         _altBackgroundMode = altBackgroundMode;
         _syncDnd = syncDnd;
         _preventDismissing = preventDismissing;
         _hideLockscreenContent = hideLockscreenContent;
+        _convertedNotificationSound = convertedNotificationSound;
+        _convertedNotificationVibration = convertedNotificationVibration;
         _hintsDisabled = hintsDisabled;
         _conversionLogEnabled = conversionLogEnabled;
         _appLanguageId = appLanguageId;
@@ -99,6 +131,51 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
       LbHintsController.updateLocal(hintsDisabled);
     } catch (_) {}
   }
+
+  Future<void> _setWearOsEnabled(bool value) async {
+    if (!_wearOsAvailable || _wearOsSaving || value == _wearOsEnabled) return;
+    setState(() => _wearOsSaving = true);
+    try {
+      final saved = await LiveBridgePlatform.setWearOsLiveUpdatesEnabled(value);
+      if (!saved) throw StateError('Setting not saved');
+      if (mounted) setState(() => _wearOsEnabled = value);
+    } catch (_) {
+      if (mounted) {
+        showLbToast(context, message: AppStrings.of(context).settingsSaveError);
+      }
+    } finally {
+      if (mounted) setState(() => _wearOsSaving = false);
+    }
+  }
+
+  Future<void> _savePreference({
+    required String key,
+    required bool value,
+    required bool current,
+    required Future<bool> Function(bool) save,
+    required void Function(bool) apply,
+  }) async {
+    if (value == current || _savingPreferences.contains(key)) return;
+    setState(() => _savingPreferences.add(key));
+    try {
+      if (!await save(value)) throw StateError('Setting not saved');
+      if (mounted) setState(() => apply(value));
+    } catch (_) {
+      if (mounted) {
+        showLbToast(context, message: AppStrings.of(context).settingsSaveError);
+      }
+    } finally {
+      if (mounted) setState(() => _savingPreferences.remove(key));
+    }
+  }
+
+  Future<void> _setHideFromRecents(bool value) => _savePreference(
+    key: 'recents',
+    value: value,
+    current: _hideFromRecents,
+    save: LiveBridgePlatform.setHideFromRecentsEnabled,
+    apply: (saved) => _hideFromRecents = saved,
+  );
 
   Future<void> _setAltBackgroundMode(bool value) async {
     if (value == _altBackgroundMode) {
@@ -131,6 +208,23 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
     setState(() => _hideLockscreenContent = value);
     await LiveBridgePlatform.setHideLockscreenContentEnabled(value);
   }
+
+  Future<void> _setConvertedNotificationSound(bool value) async {
+    if (value == _convertedNotificationSound) {
+      return;
+    }
+    setState(() => _convertedNotificationSound = value);
+    await LiveBridgePlatform.setConvertedNotificationSoundEnabled(value);
+  }
+
+  Future<void> _setConvertedNotificationVibration(bool value) =>
+      _savePreference(
+        key: 'vibration',
+        value: value,
+        current: _convertedNotificationVibration,
+        save: LiveBridgePlatform.setConvertedNotificationVibrationEnabled,
+        apply: (saved) => _convertedNotificationVibration = saved,
+      );
 
   Future<void> _setHintsDisabled(bool value) async {
     if (value == _hintsDisabled) {
@@ -208,6 +302,33 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
 
     final List<LbListItemData> primaryItems = <LbListItemData>[
       LbListItemData(
+        title: strings.hideFromRecentsTitle,
+        description: strings.hideFromRecentsDescription,
+        showChevron: false,
+        enabled: !_savingPreferences.contains('recents'),
+        toggleValue: _hideFromRecents,
+        onToggle: (value) => unawaited(_setHideFromRecents(value)),
+        onTap: () => unawaited(_setHideFromRecents(!_hideFromRecents)),
+      ),
+      LbListItemData(
+        title: strings.textFiltersTitle,
+        description: strings.textFiltersDescription,
+        onTap: () => Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (_) => const SettingsTextFiltersScreen(),
+          ),
+        ),
+      ),
+      LbListItemData(
+        title: strings.sourceChannelsTitle,
+        description: strings.sourceChannelsHint,
+        onTap: () => Navigator.of(context).push<void>(
+          MaterialPageRoute<void>(
+            builder: (_) => const SettingsSourceChannelsScreen(),
+          ),
+        ),
+      ),
+      LbListItemData(
         title: strings.appLanguageTitle,
         description: strings.appLanguageDescription,
         subtitle: _languageLabel(strings),
@@ -215,6 +336,22 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
           unawaited(LiveBridgeHaptics.openSurface());
           unawaited(_openAppLanguageSheet());
         },
+      ),
+      LbListItemData(
+        title: strings.wearOsLiveUpdatesTitle,
+        description: strings.wearOsLiveUpdatesDescription,
+        subtitle: _wearOsAvailable
+            ? null
+            : strings.wearOsLiveUpdatesUnavailable,
+        showChevron: false,
+        enabled: _wearOsAvailable && !_wearOsSaving,
+        toggleValue: _wearOsEnabled,
+        onToggle: _wearOsAvailable
+            ? (value) => unawaited(_setWearOsEnabled(value))
+            : null,
+        onTap: _wearOsAvailable
+            ? () => unawaited(_setWearOsEnabled(!_wearOsEnabled))
+            : null,
       ),
       LbListItemData(
         title: strings.keepAliveForegroundTitle,
@@ -270,6 +407,35 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
           final bool nextValue = !_hideLockscreenContent;
           unawaited(LiveBridgeHaptics.toggle(nextValue));
           unawaited(_setHideLockscreenContent(nextValue));
+        },
+      ),
+      LbListItemData(
+        title: strings.convertedNotificationSoundTitle,
+        description: strings.convertedNotificationSoundDescription,
+        showChevron: false,
+        toggleValue: _convertedNotificationSound,
+        onToggle: (bool value) {
+          unawaited(_setConvertedNotificationSound(value));
+        },
+        onTap: () {
+          final bool nextValue = !_convertedNotificationSound;
+          unawaited(LiveBridgeHaptics.toggle(nextValue));
+          unawaited(_setConvertedNotificationSound(nextValue));
+        },
+      ),
+      LbListItemData(
+        title: strings.convertedNotificationVibrationTitle,
+        description: strings.convertedNotificationVibrationDescription,
+        showChevron: false,
+        enabled: !_savingPreferences.contains('vibration'),
+        toggleValue: _convertedNotificationVibration,
+        onToggle: (bool value) {
+          unawaited(_setConvertedNotificationVibration(value));
+        },
+        onTap: () {
+          final bool nextValue = !_convertedNotificationVibration;
+          unawaited(LiveBridgeHaptics.toggle(nextValue));
+          unawaited(_setConvertedNotificationVibration(nextValue));
         },
       ),
       LbListItemData(

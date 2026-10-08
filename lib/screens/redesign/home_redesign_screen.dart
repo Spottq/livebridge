@@ -298,8 +298,7 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
           LiveBridgePlatform.isNotificationListenerEnabled();
       final Future<bool> notificationsGrantedFuture =
           LiveBridgePlatform.isNotificationPermissionGranted();
-      final Future<bool> canPostPromotedFuture =
-          LiveBridgePlatform.canPostPromotedNotifications();
+      final promotedFuture = LiveBridgePlatform.getPromotedNotificationAccess();
       final Future<bool> converterEnabledFuture =
           LiveBridgePlatform.getConverterEnabled();
       final Future<bool> updateAvailableFuture =
@@ -315,7 +314,7 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
 
       final bool listenerEnabled = await listenerEnabledFuture;
       final bool notificationsGranted = await notificationsGrantedFuture;
-      final bool canPostPromoted = await canPostPromotedFuture;
+      final promoted = await promotedFuture;
       final bool converterEnabled = await converterEnabledFuture;
       final bool updateAvailable = await updateAvailableFuture;
       final String latestReleaseVersion = await latestReleaseVersionFuture;
@@ -345,8 +344,10 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
       setState(() {
         _listenerEnabled = listenerEnabled;
         _notificationsGranted = notificationsGranted;
-        _canPostPromoted = canPostPromoted;
-        _hidePromotedAccess = deviceInfo.shouldHideLiveUpdatesPromotion;
+        _canPostPromoted = promoted.granted;
+        _hidePromotedAccess =
+            deviceInfo.shouldHideLiveUpdatesPromotion ||
+            (!promoted.granted && !promoted.needsPermission);
         _isLiveBridgeRunning = converterEnabled;
         _updateAvailable = sanitizedUpdateAvailable;
         _latestReleaseVersion = sanitizedLatestReleaseVersion;
@@ -950,6 +951,7 @@ class _HomeRedesignScreenState extends State<HomeRedesignScreen>
       ),
       LbListItemData(
         title: strings.bypassTitle,
+        description: strings.bypassDescription,
         onTap: () {
           unawaited(LiveBridgeHaptics.selection());
           unawaited(_openRulesBypassScreen());

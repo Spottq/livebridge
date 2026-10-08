@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_strings.dart';
 import '../../models/app_models.dart';
+import '../../models/promoted_notification_access.dart';
 import '../../platform/livebridge_platform.dart';
 import '../../theme/livebridge_tokens.dart';
 import '../../utils/livebridge_haptics.dart';
@@ -24,7 +25,9 @@ class _SettingsPermissionsScreenState extends State<SettingsPermissionsScreen>
     with WidgetsBindingObserver {
   bool _listenerEnabled = false;
   bool _notificationsGranted = false;
-  bool _canPostPromoted = false;
+  PromotedNotificationAccess _promoted = const PromotedNotificationAccess(
+    status: 'unknown',
+  );
   bool _hidePromotedAccess = false;
 
   @override
@@ -62,8 +65,7 @@ class _SettingsPermissionsScreenState extends State<SettingsPermissionsScreen>
           await LiveBridgePlatform.isNotificationListenerEnabled();
       final bool notificationsGranted =
           await LiveBridgePlatform.isNotificationPermissionGranted();
-      final bool canPostPromoted =
-          await LiveBridgePlatform.canPostPromotedNotifications();
+      final promoted = await LiveBridgePlatform.getPromotedNotificationAccess();
       final DeviceInfo deviceInfo = await LiveBridgePlatform.getDeviceInfo();
 
       if (!mounted) {
@@ -73,7 +75,7 @@ class _SettingsPermissionsScreenState extends State<SettingsPermissionsScreen>
       setState(() {
         _listenerEnabled = listenerEnabled;
         _notificationsGranted = notificationsGranted;
-        _canPostPromoted = canPostPromoted;
+        _promoted = promoted;
         _hidePromotedAccess = deviceInfo.shouldHideLiveUpdatesPromotion;
       });
     } catch (_) {}
@@ -157,12 +159,28 @@ class _SettingsPermissionsScreenState extends State<SettingsPermissionsScreen>
         },
       ),
       if (!_hidePromotedAccess)
-        _buildPermissionItem(
+        LbListItemData(
           title: strings.liveUpdatesAccess,
-          enabled: _canPostPromoted,
-          onTap: () {
-            unawaited(_openPromotedSettings());
-          },
+          subtitle: _promoted.status == "unavailable"
+              ? strings.promotionUnavailableStatus
+              : _promoted.status == "unknown"
+              ? strings.promotionUnknownStatus
+              : null,
+          description: !_promoted.granted && !_promoted.needsPermission
+              ? strings.promotionUnavailableHelp
+              : null,
+          trailingIcon: _promoted.needsPermission
+              ? LbIconSymbol.alertOctagonFilled
+              : null,
+          trailingIconColor: _promoted.needsPermission
+              ? LbPalette.of(context).warning
+              : null,
+          showChevron: _promoted.settingsAvailable,
+          onTap: _promoted.settingsAvailable
+              ? () {
+                  unawaited(_openPromotedSettings());
+                }
+              : null,
         ),
     ];
 

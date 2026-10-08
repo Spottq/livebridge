@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import '../models/app_models.dart';
+import '../models/promoted_notification_access.dart';
 
 class LiveBridgePlatform {
   static const MethodChannel _channel = MethodChannel('livebridge/platform');
@@ -39,6 +40,26 @@ class LiveBridgePlatform {
       _askBool('isNotificationPermissionGranted');
   static Future<bool> requestNotificationPermission() =>
       _askBool('requestNotificationPermission');
+  static Future<PromotedNotificationAccess>
+  getPromotedNotificationAccess() async {
+    final value = await _channel.invokeMapMethod<Object?, Object?>(
+      'getPromotedNotificationAccess',
+    );
+    return PromotedNotificationAccess.fromMap(value);
+  }
+
+  static Future<bool> isWearOsLiveUpdatesAvailable() =>
+      _askBool('isWearOsLiveUpdatesAvailable');
+  static Future<bool> getWearOsLiveUpdatesEnabled() =>
+      _askBool('getWearOsLiveUpdatesEnabled');
+  static Future<bool> setWearOsLiveUpdatesEnabled(bool value) =>
+      _askBool('setWearOsLiveUpdatesEnabled', {'value': value});
+
+  static Future<bool> getNetworkSpeedHideWhenLocked() =>
+      _askBool('getNetworkSpeedHideWhenLocked');
+  static Future<bool> setNetworkSpeedHideWhenLocked(bool value) =>
+      _askBool('setNetworkSpeedHideWhenLocked', {'value': value});
+
   static Future<bool> canPostPromotedNotifications() =>
       _askBool('canPostPromotedNotifications');
   static Future<bool> openPromotedNotificationSettings() =>
@@ -51,6 +72,30 @@ class LiveBridgePlatform {
       _askStr('saveLiveBridgeSettingsBackupToDownloads');
   static Future<bool> importLiveBridgeSettingsBackup(String value) =>
       _askBool('importLiveBridgeSettingsBackup', {'value': value});
+
+  static Future<String> getNotificationTextFilters() =>
+      _askStr('getNotificationTextFilters');
+  static Future<bool> setNotificationTextFilters(String value) =>
+      _askBool('setNotificationTextFilters', {'value': value});
+  static Future<String> getDictionaryWordAdditions() =>
+      _askStr('getDictionaryWordAdditions');
+  static Future<bool> setDictionaryWordAdditions(String value) =>
+      _askBool('setDictionaryWordAdditions', {'value': value});
+
+  static Future<bool> getHideFromRecentsEnabled() =>
+      _askBool('getHideFromRecentsEnabled');
+  static Future<bool> setHideFromRecentsEnabled(bool value) =>
+      _askBool('setHideFromRecentsEnabled', {'value': value});
+  static Future<String> getSourceChannels() => _askStr('getSourceChannels');
+  static Future<bool> setSourceChannelEnabled(
+    String packageName,
+    String channelId,
+    bool enabled,
+  ) => _askBool('setSourceChannelEnabled', {
+    'packageName': packageName,
+    'channelId': channelId,
+    'enabled': enabled,
+  });
 
   static Future<String> getPackageRules() => _askStr('getPackageRules');
   static Future<bool> setPackageRules(String value) =>
@@ -89,6 +134,14 @@ class LiveBridgePlatform {
       _askBool('getHideLockscreenContentEnabled');
   static Future<bool> setHideLockscreenContentEnabled(bool value) =>
       _askBool('setHideLockscreenContentEnabled', {'value': value});
+  static Future<bool> getConvertedNotificationSoundEnabled() =>
+      _askBool('getConvertedNotificationSoundEnabled');
+  static Future<bool> setConvertedNotificationSoundEnabled(bool value) =>
+      _askBool('setConvertedNotificationSoundEnabled', {'value': value});
+  static Future<bool> getConvertedNotificationVibrationEnabled() =>
+      _askBool('getConvertedNotificationVibrationEnabled');
+  static Future<bool> setConvertedNotificationVibrationEnabled(bool value) =>
+      _askBool('setConvertedNotificationVibrationEnabled', {'value': value});
   static Future<bool> getHintsDisabled() => _askBool('getHintsDisabled');
   static Future<bool> setHintsDisabled(bool value) =>
       _askBool('setHintsDisabled', {'value': value});
@@ -136,10 +189,6 @@ class LiveBridgePlatform {
       _askBool('getNetworkSpeedChipBackgroundDisabled');
   static Future<bool> setNetworkSpeedChipBackgroundDisabled(bool value) =>
       _askBool('setNetworkSpeedChipBackgroundDisabled', {'value': value});
-  static Future<bool> getNetworkSpeedRegularNotificationEnabled() =>
-      _askBool('getNetworkSpeedRegularNotificationEnabled');
-  static Future<bool> setNetworkSpeedRegularNotificationEnabled(bool value) =>
-      _askBool('setNetworkSpeedRegularNotificationEnabled', {'value': value});
   static Future<bool> getNetworkSpeedDailyUsageEnabled() =>
       _askBool('getNetworkSpeedDailyUsageEnabled');
   static Future<bool> setNetworkSpeedDailyUsageEnabled(bool value) =>

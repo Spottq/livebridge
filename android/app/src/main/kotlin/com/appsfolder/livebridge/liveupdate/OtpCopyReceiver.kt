@@ -5,9 +5,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.widget.Toast
-import java.util.Locale
 
 class OtpCopyReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
@@ -27,14 +25,8 @@ class OtpCopyReceiver : BroadcastReceiver() {
     }
 
     private fun copiedToastText(context: Context): String {
-        val locale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            context.resources.configuration.locales.get(0)
-        } else {
-            @Suppress("DEPRECATION")
-            context.resources.configuration.locale
-        }
-        val language = locale?.language?.lowercase(Locale.ROOT).orEmpty()
-        return if (language.startsWith("ru")) "Код скопирован" else "Code copied"
+        return NativeAppStrings.text(context, "Code copied", "Код скопирован",
+            "Código copiado", "Code kopiert")
     }
 
     companion object {

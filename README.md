@@ -65,7 +65,7 @@ LiveBridge is made for users first. You do not need to build the project yoursel
 
 ## Requirements
 
-- Flutter SDK 3.9+
+- Flutter SDK 3.35.7
 - Android SDK configured to compile and target Android 16
 - Android 16+ device
 

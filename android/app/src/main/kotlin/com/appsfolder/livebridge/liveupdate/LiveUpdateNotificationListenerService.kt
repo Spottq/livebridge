@@ -32,6 +32,8 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     private var rebindAttempts = 0
     private var rebindScheduled = false
     private var snapshotSyncScheduled = false
+    @Volatile
+    private var listenerConnected = false
     private var lockscreenStateReceiverRegistered = false
     private var chargingInfoReceiverRegistered = false
 
@@ -175,6 +177,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        listenerConnected = true
         rebindAttempts = 0
         rebindScheduled = false
 
@@ -226,6 +229,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
+        listenerConnected = false
         if (isUnsupportedDevice()) {
             return
         }
@@ -425,6 +429,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     override fun onDestroy() {
+        listenerConnected = false
         unregisterLockscreenStateReceiver()
         unregisterTorchCallbackIfNeeded()
         unregisterChargingInfoReceiverIfNeeded()
@@ -439,6 +444,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     private fun processIncomingNotification(sbn: StatusBarNotification) {
+        observeSourceChannel(sbn)
         val result = LiveUpdateNotifier.maybeMirror(applicationContext, prefs, sbn)
         if (result.mirrored) {
             ConversionLogStore.upsertMirroredNotification(
@@ -452,17 +458,36 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         maybeDismissOriginalSource(sbn, result)
     }
 
+    private fun observeSourceChannel(sbn: StatusBarNotification) {
+        val ranking = Ranking()
+        val channelName = try {
+            if (currentRanking.getRanking(sbn.key, ranking)) ranking.channel?.name?.toString() else null
+        } catch (_: Exception) {
+            null
+        }
+        SourceChannelStore.observe(
+            applicationContext,
+            sbn.packageName,
+            sbn.notification.channelId,
+            channelName
+        )
+    }
+
+    private fun isSourceNotificationActive(key: String): Boolean? {
+        return try {
+            activeNotifications?.any { it.key == key } ?: false
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
     private fun extractLogTitle(sbn: StatusBarNotification): String {
         val extras = sbn.notification.extras
         return extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim()
             ?.takeIf { it.isNotEmpty() }
             ?: extras.getCharSequence(Notification.EXTRA_TITLE_BIG)?.toString()?.trim()
                 ?.takeIf { it.isNotEmpty() }
-            ?: runCatching {
-                val appInfo = packageManager.getApplicationInfo(sbn.packageName, 0)
-                packageManager.getApplicationLabel(appInfo)?.toString()?.trim()
-            }.getOrNull().takeUnless { it.isNullOrBlank() }
-            ?: sbn.packageName
+            ?: AppMetadataCache.get(applicationContext, sbn.packageName).label
     }
 
     private fun extractLogText(notification: Notification): String {
@@ -843,6 +868,9 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         result: LiveUpdateNotifier.MirrorResult
     ) {
         if (!result.mirrored) {
+            return
+        }
+        if (result.retainOriginal) {
             return
         }
         if (!result.removeSource && !sbn.isClearable) {
@@ -1249,6 +1277,17 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
     }
 
     companion object {
+        fun isConnected(): Boolean = activeInstance?.listenerConnected == true
+
+        internal fun invalidateSnapshotCache() {
+            activeInstance?.requestImmediateSnapshotSync()
+        }
+
+        fun isSourceNotificationActive(key: String): Boolean? {
+            val listener = activeInstance ?: return null
+            return if (listener.listenerConnected) listener.isSourceNotificationActive(key) else null
+        }
+
         private const val TAG = "LiveUpdateListener"
         private const val INITIAL_REBIND_DELAY_MS = 1_000L
         private const val MAX_REBIND_DELAY_MS = 30_000L
@@ -1310,7 +1349,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             listener.requestTrackedFlashlightSourceDismissal()
         }
 
-        private fun requestRebindIfEnabled(context: Context, reason: String): Boolean {
+        fun requestRebindIfEnabled(context: Context, reason: String): Boolean {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
                 return false
             }
@@ -1329,7 +1368,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
             }
         }
 
-        private fun isListenerEnabled(context: Context): Boolean {
+        fun isListenerEnabled(context: Context): Boolean {
             val enabled = Settings.Secure.getString(
                 context.contentResolver,
                 "enabled_notification_listeners"
