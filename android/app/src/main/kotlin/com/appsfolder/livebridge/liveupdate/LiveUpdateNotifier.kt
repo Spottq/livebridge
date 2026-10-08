@@ -265,6 +265,8 @@ object LiveUpdateNotifier {
     private var retainedLowBatterySnapshot: RetainedLowBatterySnapshot? = null
     private var callMirrorGenerationCounter = 0L
     private var animationGenerationCounter = 0L
+    @Volatile
+    private var lockStateRefreshInProgress = false
 
     private data class AppIconAssets(
         val smallIcon: IconCompat?,
@@ -473,29 +475,35 @@ object LiveUpdateNotifier {
     }
 
     /**
-     * Rebuilds mirrors whose source is gone (e.g. the original was auto-dismissed), so
-     * lockscreen-dependent content follows the current lock state.
+     * Rebuilds every published mirror so lockscreen-dependent content follows the current
+     * lock state. Covers mirrors whose original was already dismissed and bypasses the OTP
+     * repeat suppression, which would otherwise keep the previous lock state for a minute.
      */
-    fun refreshDetachedMirrors(
+    fun refreshMirrorsForLockState(
         context: Context,
         prefs: ConverterPrefs,
-        activeSourceKeys: Set<String>
+        activeSources: Map<String, StatusBarNotification>
     ): Int {
         val candidates = synchronized(stateLock) {
             sourceSnapshotsByMirrorKey.values
-                .filter { sbn -> sbn.key !in activeSourceKeys }
+                .map { sbn -> activeSources[sbn.key] ?: sbn }
                 .distinctBy { it.key }
         }
         var refreshed = 0
-        candidates.forEach { sbn ->
-            val mirrored = runCatching { maybeMirror(context, prefs, sbn).mirrored }
-                .onFailure { error ->
-                    Log.w(TAG, "Failed to refresh detached mirror: ${sbn.key}", error)
+        lockStateRefreshInProgress = true
+        try {
+            candidates.forEach { sbn ->
+                val mirrored = runCatching { maybeMirror(context, prefs, sbn).mirrored }
+                    .onFailure { error ->
+                        Log.w(TAG, "Failed to refresh mirror for lock state: ${sbn.key}", error)
+                    }
+                    .getOrDefault(false)
+                if (mirrored) {
+                    refreshed += 1
                 }
-                .getOrDefault(false)
-            if (mirrored) {
-                refreshed += 1
             }
+        } finally {
+            lockStateRefreshInProgress = false
         }
         return refreshed
     }
@@ -1798,7 +1806,8 @@ object LiveUpdateNotifier {
 
                             val now = System.currentTimeMillis()
                             val shouldPublish =
-                                state.lastRenderedAtMs == 0L ||
+                                lockStateRefreshInProgress ||
+                                        state.lastRenderedAtMs == 0L ||
                                         now - state.lastRenderedAtMs >= OTP_REPEAT_SUPPRESS_MS
                             if (shouldPublish) {
                                 state.lastRenderedAtMs = now
