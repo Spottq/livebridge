@@ -479,26 +479,6 @@ class MainActivity : FlutterActivity() {
                 res.success(true)
             }
 
-            "getConvertedNotificationSoundEnabled" -> {
-                res.success(prefs.getConvertedNotificationSoundEnabled())
-            }
-            "setConvertedNotificationSoundEnabled" -> {
-                prefs.setConvertedNotificationSoundEnabled(
-                    call.argument<Boolean>("value") ?: false
-                )
-                LiveUpdateNotifier.ensureChannel(applicationContext)
-                res.success(true)
-            }
-
-            "getConvertedNotificationVibrationEnabled" -> {
-                res.success(prefs.getConvertedNotificationVibrationEnabled())
-            }
-            "setConvertedNotificationVibrationEnabled" -> {
-                prefs.setConvertedNotificationVibrationEnabled(call.argument<Boolean>("value") ?: false)
-                LiveUpdateNotifier.ensureChannel(applicationContext)
-                res.success(true)
-            }
-
             "getHintsDisabled" -> res.success(prefs.getHintsDisabled())
             "setHintsDisabled" -> {
                 prefs.setHintsDisabled(call.argument<Boolean>("value") ?: false)

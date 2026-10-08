@@ -42,8 +42,6 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
   bool _syncDnd = true;
   bool _preventDismissing = false;
   bool _hideLockscreenContent = false;
-  bool _convertedNotificationSound = false;
-  bool _convertedNotificationVibration = false;
   bool _hintsDisabled = false;
   bool _conversionLogEnabled = false;
   String _appLanguageId = appLanguageSystemId;
@@ -73,10 +71,6 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
           LiveBridgePlatform.getPreventMirrorDismissEnabled();
       final Future<bool> hideLockscreenContentFuture =
           LiveBridgePlatform.getHideLockscreenContentEnabled();
-      final Future<bool> convertedNotificationSoundFuture =
-          LiveBridgePlatform.getConvertedNotificationSoundEnabled();
-      final Future<bool> convertedNotificationVibrationFuture =
-          LiveBridgePlatform.getConvertedNotificationVibrationEnabled();
       final Future<bool> hintsDisabledFuture =
           LiveBridgePlatform.getHintsDisabled();
       final Future<bool> conversionLogEnabledFuture =
@@ -93,10 +87,6 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
       final bool syncDnd = await syncDndFuture;
       final bool preventDismissing = await preventDismissingFuture;
       final bool hideLockscreenContent = await hideLockscreenContentFuture;
-      final bool convertedNotificationSound =
-          await convertedNotificationSoundFuture;
-      final bool convertedNotificationVibration =
-          await convertedNotificationVibrationFuture;
       final bool hintsDisabled = await hintsDisabledFuture;
       final bool conversionLogEnabled = await conversionLogEnabledFuture;
       final int conversionLogMaxBytes = await conversionLogMaxBytesFuture;
@@ -120,8 +110,6 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
         _syncDnd = syncDnd;
         _preventDismissing = preventDismissing;
         _hideLockscreenContent = hideLockscreenContent;
-        _convertedNotificationSound = convertedNotificationSound;
-        _convertedNotificationVibration = convertedNotificationVibration;
         _hintsDisabled = hintsDisabled;
         _conversionLogEnabled = conversionLogEnabled;
         _appLanguageId = appLanguageId;
@@ -208,23 +196,6 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
     setState(() => _hideLockscreenContent = value);
     await LiveBridgePlatform.setHideLockscreenContentEnabled(value);
   }
-
-  Future<void> _setConvertedNotificationSound(bool value) async {
-    if (value == _convertedNotificationSound) {
-      return;
-    }
-    setState(() => _convertedNotificationSound = value);
-    await LiveBridgePlatform.setConvertedNotificationSoundEnabled(value);
-  }
-
-  Future<void> _setConvertedNotificationVibration(bool value) =>
-      _savePreference(
-        key: 'vibration',
-        value: value,
-        current: _convertedNotificationVibration,
-        save: LiveBridgePlatform.setConvertedNotificationVibrationEnabled,
-        apply: (saved) => _convertedNotificationVibration = saved,
-      );
 
   Future<void> _setHintsDisabled(bool value) async {
     if (value == _hintsDisabled) {
@@ -407,35 +378,6 @@ class _SettingsAppConfigScreenState extends State<SettingsAppConfigScreen> {
           final bool nextValue = !_hideLockscreenContent;
           unawaited(LiveBridgeHaptics.toggle(nextValue));
           unawaited(_setHideLockscreenContent(nextValue));
-        },
-      ),
-      LbListItemData(
-        title: strings.convertedNotificationSoundTitle,
-        description: strings.convertedNotificationSoundDescription,
-        showChevron: false,
-        toggleValue: _convertedNotificationSound,
-        onToggle: (bool value) {
-          unawaited(_setConvertedNotificationSound(value));
-        },
-        onTap: () {
-          final bool nextValue = !_convertedNotificationSound;
-          unawaited(LiveBridgeHaptics.toggle(nextValue));
-          unawaited(_setConvertedNotificationSound(nextValue));
-        },
-      ),
-      LbListItemData(
-        title: strings.convertedNotificationVibrationTitle,
-        description: strings.convertedNotificationVibrationDescription,
-        showChevron: false,
-        enabled: !_savingPreferences.contains('vibration'),
-        toggleValue: _convertedNotificationVibration,
-        onToggle: (bool value) {
-          unawaited(_setConvertedNotificationVibration(value));
-        },
-        onTap: () {
-          final bool nextValue = !_convertedNotificationVibration;
-          unawaited(LiveBridgeHaptics.toggle(nextValue));
-          unawaited(_setConvertedNotificationVibration(nextValue));
         },
       ),
       LbListItemData(

@@ -2314,43 +2314,6 @@ class AppStrings {
     ko: '잠금화면 내용 숨기기',
   );
 
-  String get convertedNotificationSoundTitle => tr(
-    en: 'Converted notification sound',
-    es: 'Sonido de notificaciones convertidas',
-    de: 'Ton für umgewandelte Benachrichtigungen',
-    ru: 'Звук конвертированных уведомлений',
-    tr: 'Dönüştürülen bildirim sesi',
-    ptBr: 'Som das notificações convertidas',
-    zhHans: '转换通知声音',
-    zhHant: '轉換通知聲音',
-    ko: '변환된 알림 소리',
-  );
-
-  String get convertedNotificationVibrationTitle => tr(
-    en: 'Converted notification vibration',
-    es: 'Vibración de notificaciones convertidas',
-    de: 'Vibration für umgewandelte Benachrichtigungen',
-    ru: 'Вибрация конвертированных уведомлений',
-    tr: 'Dönüştürülen bildirim titreşimi',
-    ptBr: 'Vibração das notificações convertidas',
-    zhHans: '转换通知振动',
-    zhHant: '轉換通知震動',
-    ko: '변환된 알림 진동',
-  );
-
-  String get convertedNotificationVibrationDescription => tr(
-    en: 'vibrates when a converted notification first appears; system channel settings take priority',
-    es: 'vibra cuando aparece una notificación convertida por primera vez; los ajustes del canal del sistema tienen prioridad',
-    de: 'vibriert beim ersten Erscheinen einer umgewandelten Benachrichtigung; die Kanaleinstellungen des Systems haben Vorrang',
-    ru: 'вибрирует при первом появлении уведомления; системные настройки канала имеют приоритет',
-    tr: 'dönüştürülen bildirim ilk göründüğünde titreşir; sistem kanal ayarları önceliklidir',
-    ptBr:
-        'vibra quando uma notificação convertida aparece; as configurações do canal têm prioridade',
-    zhHans: '转换通知首次出现时振动；系统通知渠道设置优先',
-    zhHant: '轉換通知首次出現時震動；系統通知管道設定優先',
-    ko: '변환된 알림이 처음 표시될 때 진동합니다. 시스템 채널 설정이 우선합니다.',
-  );
-
   String get disableHintsTitle => tr(
     en: 'Disable hints',
     es: 'Desactivar consejos',
@@ -3506,19 +3469,6 @@ class AppStrings {
     zhHans: '在锁屏上显示 Content hidden 而不是通知文本',
     zhHant: '在鎖定畫面顯示 Content hidden 而不是通知文字',
     ko: '잠금화면에 알림을 표시할 때 내용을 숨깁니다.',
-  );
-
-  String get convertedNotificationSoundDescription => tr(
-    en: 'plays a sound when a converted notification first appears',
-    es: 'reproduce un sonido cuando aparece una notificación convertida por primera vez',
-    de: 'spielt beim ersten Erscheinen einer umgewandelten Benachrichtigung einen Ton ab',
-    ru: 'воспроизводит звук при первом появлении конвертированного уведомления',
-    tr: 'dönüştürülen bir bildirim ilk göründüğünde ses çalar',
-    ptBr:
-        'reproduz um som quando uma notificação convertida aparece pela primeira vez',
-    zhHans: '转换通知首次出现时播放声音',
-    zhHant: '轉換通知首次出現時播放聲音',
-    ko: '변환된 알림이 처음 표시될 때 소리를 재생합니다.',
   );
 
   String get disableHintsDescription => tr(

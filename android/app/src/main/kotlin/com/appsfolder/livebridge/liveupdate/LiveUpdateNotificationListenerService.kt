@@ -39,6 +39,7 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
 
     private val lockscreenPrivacyRefreshRunnable = Runnable {
         requestImmediateSnapshotSync()
+        refreshDetachedMirrorsForLockState()
     }
 
     private val lockscreenStateReceiver = object : BroadcastReceiver() {
@@ -654,10 +655,27 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         Log.d(TAG, "Lockscreen privacy state changed: $action")
         mainHandler.removeCallbacks(lockscreenPrivacyRefreshRunnable)
         requestImmediateSnapshotSync()
+        refreshDetachedMirrorsForLockState()
         mainHandler.postDelayed(
             lockscreenPrivacyRefreshRunnable,
             LOCKSCREEN_PRIVACY_REFRESH_DELAY_MS
         )
+    }
+
+    private fun refreshDetachedMirrorsForLockState() {
+        if (!prefs.getConverterEnabled() || !prefs.getHideLockscreenContentEnabled()) {
+            return
+        }
+        val activeKeys = try {
+            activeNotifications?.mapTo(mutableSetOf()) { it.key }
+        } catch (error: Throwable) {
+            Log.w(TAG, "Unable to read active notifications for lockscreen refresh", error)
+            null
+        } ?: return
+        val refreshed = LiveUpdateNotifier.refreshDetachedMirrors(applicationContext, prefs, activeKeys)
+        if (refreshed > 0) {
+            Log.d(TAG, "Refreshed $refreshed detached mirrors for lockscreen privacy")
+        }
     }
 
     private fun ensureTorchCallbackRegistered() {

@@ -345,16 +345,18 @@ object LiveUpdateNotifier {
         }
 
         val prefs = ConverterPrefs(context)
-        val soundEnabled = prefs.getConvertedNotificationSoundEnabled()
-        val vibrationEnabled = prefs.getConvertedNotificationVibrationEnabled()
-        val signature = "${NativeAppStrings.language(context)}|${prefs.getHideLockscreenContentEnabled()}|$soundEnabled|$vibrationEnabled"
+        val signature = "${NativeAppStrings.language(context)}|${prefs.getHideLockscreenContentEnabled()}"
         val now = SystemClock.elapsedRealtime()
         if (signature == channelSignature && now - channelsCheckedAt < 60_000L) return
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         MirrorNotificationChannel.entries.forEach { channel ->
             ensureMirrorChannel(manager, context, channel, audible = false, vibrating = false)
-            if (soundEnabled || vibrationEnabled) {
-                ensureMirrorChannel(manager, context, channel, soundEnabled, vibrationEnabled)
+            // Converted notifications are always silent; drop channels left by the removed sound/vibration options.
+            listOf(true to false, false to true, true to true).forEach { (audible, vibrating) ->
+                val legacyId = channel.id(audible, vibrating)
+                if (manager.getNotificationChannel(legacyId) != null) {
+                    manager.deleteNotificationChannel(legacyId)
+                }
             }
         }
         channelSignature = signature
@@ -468,6 +470,34 @@ object LiveUpdateNotifier {
             .forEach { statusBarNotification ->
                 manager.cancel(statusBarNotification.id)
             }
+    }
+
+    /**
+     * Rebuilds mirrors whose source is gone (e.g. the original was auto-dismissed), so
+     * lockscreen-dependent content follows the current lock state.
+     */
+    fun refreshDetachedMirrors(
+        context: Context,
+        prefs: ConverterPrefs,
+        activeSourceKeys: Set<String>
+    ): Int {
+        val candidates = synchronized(stateLock) {
+            sourceSnapshotsByMirrorKey.values
+                .filter { sbn -> sbn.key !in activeSourceKeys }
+                .distinctBy { it.key }
+        }
+        var refreshed = 0
+        candidates.forEach { sbn ->
+            val mirrored = runCatching { maybeMirror(context, prefs, sbn).mirrored }
+                .onFailure { error ->
+                    Log.w(TAG, "Failed to refresh detached mirror: ${sbn.key}", error)
+                }
+                .getOrDefault(false)
+            if (mirrored) {
+                refreshed += 1
+            }
+        }
+        return refreshed
     }
 
     fun refreshWeatherMirrors(context: Context, prefs: ConverterPrefs): Int {
@@ -3924,9 +3954,6 @@ object LiveUpdateNotifier {
         val hideLockscreenContent = runtimePrefs.getHideLockscreenContentEnabled()
         val redactSamsungNowBarContent =
             hideLockscreenContent && isDeviceShowingLockscreen(context)
-        val convertedNotificationSound =
-            runtimePrefs.getConvertedNotificationSoundEnabled()
-        val convertedNotificationVibration = runtimePrefs.getConvertedNotificationVibrationEnabled()
         val visibility = when {
             preferMediaControls &&
                     !runtimePrefs.getSmartMediaPlaybackShowOnLockScreen() ->
@@ -4068,7 +4095,7 @@ object LiveUpdateNotifier {
 
         val builder = NotificationCompat.Builder(
             context,
-            mirrorChannel.id(convertedNotificationSound, convertedNotificationVibration)
+            mirrorChannel.id
         )
             .setContentTitle(if (contentTitle == "Live update in progress") NativeAppStrings.text(context, contentTitle, contentTitle, "Actualización en curso", "Live Update läuft") else contentTitle)
             .setContentText(if (contentText == "Live update in progress") NativeAppStrings.text(context, contentText, contentText, "Actualización en curso", "Live Update läuft") else contentText)
@@ -4091,14 +4118,7 @@ object LiveUpdateNotifier {
             .setVisibility(visibility)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
-        if (!convertedNotificationSound && !convertedNotificationVibration) {
-            builder.setSilent(true).setDefaults(0)
-        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            builder.setDefaults(
-                (if (convertedNotificationSound) Notification.DEFAULT_SOUND else 0) or
-                    (if (convertedNotificationVibration) Notification.DEFAULT_VIBRATE else 0)
-            )
-        }
+        builder.setSilent(true).setDefaults(0)
 
         if (callChronometerStart != null) {
             builder.setUsesChronometer(true)

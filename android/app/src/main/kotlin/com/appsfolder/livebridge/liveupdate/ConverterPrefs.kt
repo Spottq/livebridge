@@ -154,21 +154,6 @@ class ConverterPrefs(context: Context) {
         prefs.edit().putBoolean(KEY_HIDE_LOCKSCREEN_CONTENT_ENABLED, value).apply()
     }
 
-    fun getConvertedNotificationSoundEnabled(): Boolean {
-        return prefs.getBoolean(KEY_CONVERTED_NOTIFICATION_SOUND_ENABLED, false)
-    }
-
-    fun setConvertedNotificationSoundEnabled(value: Boolean) {
-        prefs.edit().putBoolean(KEY_CONVERTED_NOTIFICATION_SOUND_ENABLED, value).apply()
-    }
-
-    fun getConvertedNotificationVibrationEnabled(): Boolean =
-        prefs.getBoolean(KEY_CONVERTED_NOTIFICATION_VIBRATION_ENABLED, false)
-
-    fun setConvertedNotificationVibrationEnabled(value: Boolean) {
-        prefs.edit().putBoolean(KEY_CONVERTED_NOTIFICATION_VIBRATION_ENABLED, value).apply()
-    }
-
     fun getHintsDisabled(): Boolean {
         return prefs.getBoolean(KEY_HINTS_DISABLED, false)
     }
@@ -1034,8 +1019,6 @@ class ConverterPrefs(context: Context) {
             .put("spring_transitions_enabled", getSpringTransitionsEnabled())
             .put("prevent_mirror_dismiss_enabled", getPreventMirrorDismissEnabled())
             .put("hide_lockscreen_content_enabled", getHideLockscreenContentEnabled())
-            .put("converted_notification_sound_enabled", getConvertedNotificationSoundEnabled())
-            .put("converted_notification_vibration_enabled", getConvertedNotificationVibrationEnabled())
             .put("hints_disabled", getHintsDisabled())
             .put("conversion_log_enabled", getConversionLogEnabled())
             .put("conversion_log_max_bytes", getConversionLogMaxBytes())
@@ -1186,10 +1169,6 @@ class ConverterPrefs(context: Context) {
         bool(settings, "spring_transitions_enabled")?.let(::setSpringTransitionsEnabled)
         bool(settings, "prevent_mirror_dismiss_enabled")?.let(::setPreventMirrorDismissEnabled)
         bool(settings, "hide_lockscreen_content_enabled")?.let(::setHideLockscreenContentEnabled)
-        bool(settings, "converted_notification_sound_enabled")
-            ?.let(::setConvertedNotificationSoundEnabled)
-        bool(settings, "converted_notification_vibration_enabled")
-            ?.let(::setConvertedNotificationVibrationEnabled)
         bool(settings, "hints_disabled")?.let(::setHintsDisabled)
         bool(settings, "conversion_log_enabled")?.let(::setConversionLogEnabled)
         int(settings, "conversion_log_max_bytes")?.let(::setConversionLogMaxBytes)
@@ -1521,10 +1500,6 @@ class ConverterPrefs(context: Context) {
             "prevent_mirror_dismiss_enabled"
         private const val KEY_HIDE_LOCKSCREEN_CONTENT_ENABLED =
             "hide_lockscreen_content_enabled"
-        private const val KEY_CONVERTED_NOTIFICATION_SOUND_ENABLED =
-            "converted_notification_sound_enabled"
-        private const val KEY_CONVERTED_NOTIFICATION_VIBRATION_ENABLED =
-            "converted_notification_vibration_enabled"
         private const val KEY_HINTS_DISABLED = "hints_disabled"
         private const val KEY_CONVERSION_LOG_ENABLED = "conversion_log_enabled"
         private const val KEY_BUG_REPORT_AUTO_COPY_ENABLED = "bug_report_auto_copy_enabled"
