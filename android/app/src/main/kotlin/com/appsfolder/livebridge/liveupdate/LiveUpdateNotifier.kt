@@ -265,8 +265,6 @@ object LiveUpdateNotifier {
     private var retainedLowBatterySnapshot: RetainedLowBatterySnapshot? = null
     private var callMirrorGenerationCounter = 0L
     private var animationGenerationCounter = 0L
-    @Volatile
-    private var lockStateRefreshInProgress = false
 
     private data class AppIconAssets(
         val smallIcon: IconCompat?,
@@ -472,40 +470,6 @@ object LiveUpdateNotifier {
             .forEach { statusBarNotification ->
                 manager.cancel(statusBarNotification.id)
             }
-    }
-
-    /**
-     * Rebuilds every published mirror so lockscreen-dependent content follows the current
-     * lock state. Covers mirrors whose original was already dismissed and bypasses the OTP
-     * repeat suppression, which would otherwise keep the previous lock state for a minute.
-     */
-    fun refreshMirrorsForLockState(
-        context: Context,
-        prefs: ConverterPrefs,
-        activeSources: Map<String, StatusBarNotification>
-    ): Int {
-        val candidates = synchronized(stateLock) {
-            sourceSnapshotsByMirrorKey.values
-                .map { sbn -> activeSources[sbn.key] ?: sbn }
-                .distinctBy { it.key }
-        }
-        var refreshed = 0
-        lockStateRefreshInProgress = true
-        try {
-            candidates.forEach { sbn ->
-                val mirrored = runCatching { maybeMirror(context, prefs, sbn).mirrored }
-                    .onFailure { error ->
-                        Log.w(TAG, "Failed to refresh mirror for lock state: ${sbn.key}", error)
-                    }
-                    .getOrDefault(false)
-                if (mirrored) {
-                    refreshed += 1
-                }
-            }
-        } finally {
-            lockStateRefreshInProgress = false
-        }
-        return refreshed
     }
 
     fun refreshWeatherMirrors(context: Context, prefs: ConverterPrefs): Int {
@@ -1806,8 +1770,7 @@ object LiveUpdateNotifier {
 
                             val now = System.currentTimeMillis()
                             val shouldPublish =
-                                lockStateRefreshInProgress ||
-                                        state.lastRenderedAtMs == 0L ||
+                                state.lastRenderedAtMs == 0L ||
                                         now - state.lastRenderedAtMs >= OTP_REPEAT_SUPPRESS_MS
                             if (shouldPublish) {
                                 state.lastRenderedAtMs = now
@@ -3721,7 +3684,7 @@ object LiveUpdateNotifier {
         )
     }
 
-    internal fun isDeviceShowingLockscreen(context: Context): Boolean {
+    private fun isDeviceShowingLockscreen(context: Context): Boolean {
         val keyguardManager =
             context.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
                 ?: return false
