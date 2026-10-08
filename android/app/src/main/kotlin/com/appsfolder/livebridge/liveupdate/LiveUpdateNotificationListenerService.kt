@@ -41,6 +41,33 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         requestImmediateSnapshotSync()
         refreshMirrorsForLockState()
     }
+    private var lastPrivacyLockState: Boolean? = null
+    private var lockStatePollDeadlineMs = 0L
+
+    // ACTION_USER_PRESENT is not reliably delivered (e.g. on One UI), so follow the keyguard
+    // until it reaches the state the screen change leads to and refresh mirrors on each change.
+    private val lockStatePollRunnable = object : Runnable {
+        override fun run() {
+            if (!prefs.getConverterEnabled() || !prefs.getHideLockscreenContentEnabled()) {
+                return
+            }
+            val locked = LiveUpdateNotifier.isDeviceShowingLockscreen(applicationContext)
+            if (locked != lastPrivacyLockState) {
+                Log.d(TAG, "Lock state changed: locked=$locked")
+                lastPrivacyLockState = locked
+                requestImmediateSnapshotSync()
+                refreshMirrorsForLockState()
+            }
+            val interactive = (getSystemService(Context.POWER_SERVICE) as PowerManager).isInteractive
+            val waitingForChange = if (interactive) locked else !locked
+            if (waitingForChange && SystemClock.elapsedRealtime() < lockStatePollDeadlineMs) {
+                mainHandler.postDelayed(
+                    this,
+                    if (interactive) LOCK_STATE_POLL_INTERACTIVE_MS else LOCK_STATE_POLL_SCREEN_OFF_MS
+                )
+            }
+        }
+    }
 
     private val lockscreenStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -656,10 +683,14 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         mainHandler.removeCallbacks(lockscreenPrivacyRefreshRunnable)
         requestImmediateSnapshotSync()
         refreshMirrorsForLockState()
+        lastPrivacyLockState = LiveUpdateNotifier.isDeviceShowingLockscreen(applicationContext)
         mainHandler.postDelayed(
             lockscreenPrivacyRefreshRunnable,
             LOCKSCREEN_PRIVACY_REFRESH_DELAY_MS
         )
+        mainHandler.removeCallbacks(lockStatePollRunnable)
+        lockStatePollDeadlineMs = SystemClock.elapsedRealtime() + LOCK_STATE_POLL_WINDOW_MS
+        mainHandler.postDelayed(lockStatePollRunnable, LOCK_STATE_POLL_INTERACTIVE_MS)
     }
 
     private fun refreshMirrorsForLockState() {
@@ -1320,6 +1351,9 @@ class LiveUpdateNotificationListenerService : NotificationListenerService() {
         private const val PROTECTED_MIRROR_REPOST_DELAY_MS = 350L
         private const val PROTECTED_MIRROR_MAX_REPOSTS = 2
         private const val LOCKSCREEN_PRIVACY_REFRESH_DELAY_MS = 650L
+        private const val LOCK_STATE_POLL_INTERACTIVE_MS = 400L
+        private const val LOCK_STATE_POLL_SCREEN_OFF_MS = 2_000L
+        private const val LOCK_STATE_POLL_WINDOW_MS = 35 * 60 * 1000L
         private const val CAPSULE_CLEAR_REFRESH_DELAY_MS = 250L
         private const val FLASHLIGHT_SOURCE_SNOOZE_MS = 1_500L
         private const val FLASHLIGHT_SOURCE_VERIFY_DELAY_MS = 300L

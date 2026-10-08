@@ -3721,7 +3721,7 @@ object LiveUpdateNotifier {
         )
     }
 
-    private fun isDeviceShowingLockscreen(context: Context): Boolean {
+    internal fun isDeviceShowingLockscreen(context: Context): Boolean {
         val keyguardManager =
             context.getSystemService(Context.KEYGUARD_SERVICE) as? KeyguardManager
                 ?: return false
