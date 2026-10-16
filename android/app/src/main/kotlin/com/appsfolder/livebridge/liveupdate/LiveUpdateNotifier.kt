@@ -2605,34 +2605,6 @@ object LiveUpdateNotifier {
         }
     }
 
-    fun handleMirroredContentTap(context: Context, sourceKey: String) {
-        val manager = NotificationManagerCompat.from(context)
-        val notificationIds = synchronized(stateLock) {
-            val aggregateKeys = listOfNotNull(
-                sbnToAggregateKey[sourceKey],
-                sbnToOtpAggregateKey[sourceKey]
-            ).toSet()
-            val ids = buildSet {
-                add(mirrorIdForKey(sourceKey))
-                aggregateKeys.forEach { add(mirrorIdForKey(it)) }
-                addAll(clearAggregateTrackingForSbnKeyLocked(sourceKey))
-            }
-            userDismissedMirrorKeys.add(sourceKey)
-            userDismissedMirrorKeys.addAll(aggregateKeys)
-            sourceContentRevisions.dismissed(sourceKey, aggregateKeys + sourceKey)
-            for (key in aggregateKeys + sourceKey) {
-                smartAnimationGenerations.remove(key)
-                smartAnimationStates.remove(key)
-                otpAnimationGenerations.remove(key)
-                callMirrorStates.remove(key)
-            }
-            ids
-        }
-        notificationIds.forEach { notificationId ->
-            cancelMirroredNotification(manager, notificationId)
-        }
-    }
-
     private fun notMirroredResult(retryNeeded: Boolean = false): MirrorResult {
         return MirrorResult(mirrored = false, retryNeeded = retryNeeded)
     }
@@ -4148,19 +4120,10 @@ object LiveUpdateNotifier {
         }
 
         source.contentIntent?.let { sourceContentIntent ->
-            val proxyIntent = Intent(context, MirrorContentIntentReceiver::class.java)
-                .putExtra(MirrorContentIntentReceiver.EXTRA_SOURCE_KEY, sbn.key)
-                .putExtra(
-                    MirrorContentIntentReceiver.EXTRA_SOURCE_CONTENT_INTENT,
-                    sourceContentIntent
-                )
-            val proxyPendingIntent = PendingIntent.getBroadcast(
-                context,
-                mirrorIdForKey(sbn.key),
-                proxyIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            builder.setContentIntent(proxyPendingIntent)
+            // Must be set directly: a receiver trampoline is blocked on Android 12+, so the
+            // tap would close the mirror without opening the app.
+            builder.setContentIntent(sourceContentIntent)
+            builder.setAutoCancel((source.flags and Notification.FLAG_AUTO_CANCEL) != 0)
         }
         copySourceActions(
             context = context,
