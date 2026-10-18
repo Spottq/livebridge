@@ -2605,34 +2605,6 @@ object LiveUpdateNotifier {
         }
     }
 
-    fun handleMirroredContentTap(context: Context, sourceKey: String) {
-        val manager = NotificationManagerCompat.from(context)
-        val notificationIds = synchronized(stateLock) {
-            val aggregateKeys = listOfNotNull(
-                sbnToAggregateKey[sourceKey],
-                sbnToOtpAggregateKey[sourceKey]
-            ).toSet()
-            val ids = buildSet {
-                add(mirrorIdForKey(sourceKey))
-                aggregateKeys.forEach { add(mirrorIdForKey(it)) }
-                addAll(clearAggregateTrackingForSbnKeyLocked(sourceKey))
-            }
-            userDismissedMirrorKeys.add(sourceKey)
-            userDismissedMirrorKeys.addAll(aggregateKeys)
-            sourceContentRevisions.dismissed(sourceKey, aggregateKeys + sourceKey)
-            for (key in aggregateKeys + sourceKey) {
-                smartAnimationGenerations.remove(key)
-                smartAnimationStates.remove(key)
-                otpAnimationGenerations.remove(key)
-                callMirrorStates.remove(key)
-            }
-            ids
-        }
-        notificationIds.forEach { notificationId ->
-            cancelMirroredNotification(manager, notificationId)
-        }
-    }
-
     private fun notMirroredResult(retryNeeded: Boolean = false): MirrorResult {
         return MirrorResult(mirrored = false, retryNeeded = retryNeeded)
     }
@@ -4147,20 +4119,13 @@ object LiveUpdateNotifier {
             builder.addAction(buildCopyOtpAction(context, sbn, otpOverride.code))
         }
 
+        // Hand the source PendingIntent to the system directly: launching it from a
+        // BroadcastReceiver trampoline is blocked on Android 12+.
         source.contentIntent?.let { sourceContentIntent ->
-            val proxyIntent = Intent(context, MirrorContentIntentReceiver::class.java)
-                .putExtra(MirrorContentIntentReceiver.EXTRA_SOURCE_KEY, sbn.key)
-                .putExtra(
-                    MirrorContentIntentReceiver.EXTRA_SOURCE_CONTENT_INTENT,
-                    sourceContentIntent
-                )
-            val proxyPendingIntent = PendingIntent.getBroadcast(
-                context,
-                mirrorIdForKey(sbn.key),
-                proxyIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            builder.setContentIntent(proxyPendingIntent)
+            builder.setContentIntent(sourceContentIntent)
+            if (source.flags and Notification.FLAG_AUTO_CANCEL != 0) {
+                builder.setAutoCancel(true)
+            }
         }
         copySourceActions(
             context = context,
